@@ -1,0 +1,275 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Self-Improving CLAUDE Reflection
+
+**CRITICAL REQUIREMENT**: ALWAYS offer Self-Improving CLAUDE Reflection opportunities to continuously improve CLAUDE.md based on user interactions and feedback.
+
+**MANDATORY Trigger**: You MUST offer reflection before completing ANY task that:
+1. Involved user feedback at any point during the conversation, OR
+2. Involved multiple non-trivial steps (e.g., 2+ file edits, complex logic generation, multi-step configurations), OR
+3. Required problem-solving or decision-making beyond simple single-step tasks
+
+**ENFORCEMENT**: After completing any qualifying task, you MUST immediately ask: "Should I offer Self-Improving CLAUDE Reflection for this task?" and proceed with the reflection process if applicable.
+
+Process:
+
+- a. Review Interaction: Synthesize all feedback provided by the user throughout the entire conversation history for the task. Analyze how this feedback relates to the active .CLAUDE.md and identify areas where modified instructions could have improved the outcome or better aligned with user preferences.
+- b. Identify Active Rules: List the specific global and workspace CLAUDE.md files active during the task.
+- c. Formulate & Propose Improvements: Generate specific, actionable suggestions for improving the content of the relevant active rule files. Prioritize suggestions directly addressing user feedback. Use replace_in_file diff blocks when practical, otherwise describe changes clearly.
+- d. Await User Action on Suggestions: Ask the user if they agree with the proposed improvements and if they'd like me to apply them now using the appropriate tool (replace_in_file or write_to_file). Apply changes if approved, then proceed to attempt_completion.
+
+Constraint: Do not offer reflection if:
+The task was very simple and involved no feedback.
+
+## Development Commands
+
+### Running the Application
+
+- `bun install` - Install dependencies
+- `bunx --bun run start` - Start the development server (alias: `npm run dev`)
+- `vite dev --port 3000` - Alternative development server command
+
+### Building and Testing
+
+- `bunx --bun run build` - Build for production (alias: `npm run build`)
+- `vite build` - Build using Vite
+- `bunx --bun run test` - Run tests with Vitest
+- `vite preview` - Preview production build
+
+### Code Quality
+
+- `bunx --bun run lint` - Run Biome linter
+- `bunx --bun run format` - Format code with Biome
+- `bunx --bun run check` - Run both linting and formatting checks
+
+### Adding Components
+
+- `pnpx shadcn@latest add [component]` - Add Shadcn components (e.g., `pnpx shadcn@latest add button`)
+
+## Architecture
+
+### Core Stack
+
+- **Framework**: TanStack Start (React SSR framework)
+- **Router**: TanStack Router with file-based routing
+- **State Management**: TanStack Query for server state, TanStack Store for client state
+- **Styling**: Tailwind CSS v4 with Shadcn components
+- **API Layer**: oRPC for type-safe API calls
+- **Environment**: T3 Env for type-safe environment variables
+- **Validation**: Zod schemas
+- **Build Tool**: Vite
+- **Code Quality**: Biome (linting + formatting)
+- **Testing**: Vitest with Testing Library
+
+### Project Structure
+
+```
+src/
+├── components/          # Reusable React components
+├── routes/             # File-based routing (TanStack Router)
+│   ├── __root.tsx      # Root layout component
+│   ├── index.tsx       # Homepage route
+│   ├── api.*.ts        # API route handlers
+│   └── demo.*          # Demo routes (can be deleted)
+├── orpc/               # oRPC API setup
+│   ├── router/         # API route definitions
+│   ├── client.ts       # oRPC client configuration
+│   └── schema.ts       # Shared Zod schemas
+├── integrations/       # Third-party integrations
+│   └── tanstack-query/ # Query client setup
+├── lib/                # Utility functions
+└── env.ts              # Environment variable configuration
+```
+
+### Key Configuration Files
+
+- `vite.config.ts` - Vite build configuration with TanStack Start plugin
+- `tsconfig.json` - TypeScript configuration with path aliases (`@/*`)
+- `biome.json` - Code formatting and linting rules (tab indentation, double quotes)
+- `components.json` - Shadcn component configuration
+
+### Environment Variables
+
+Environment variables are managed through T3 Env in `src/env.ts`:
+
+- Client variables must have `VITE_` prefix
+- Server variables: `SERVER_URL` (optional)
+- Client variables: `VITE_APP_TITLE` (optional)
+
+### API Layer (oRPC)
+
+The project uses oRPC for type-safe API communication:
+
+- API routes are defined in `src/orpc/router/`
+- Schemas are shared between client and server using Zod
+- Client is configured in `src/orpc/client.ts`
+- API endpoints are accessible at `/api/rpc`
+
+### Routing
+
+- File-based routing in `src/routes/`
+- Layout component in `src/routes/__root.tsx`
+- API routes follow the pattern `api.[name].ts`
+- Demo files can be safely deleted
+
+### State Management
+
+- **Server State**: TanStack Query for API data fetching and caching
+- **Client State**: TanStack Store for local application state
+- Query client is configured in TanStack integrations
+
+### Styling
+
+- Tailwind CSS v4 with Vite plugin
+- Shadcn components for UI primitives
+- Global styles in `src/styles.css`
+- Class utilities via `clsx` and `tailwind-merge`
+
+## TanStack Start Specific Concepts
+
+### Server Functions (RPCs)
+
+TanStack Start's most powerful feature for full-stack development:
+
+- Created using `createServerFn({ method: 'GET' | 'POST' })` from `@tanstack/react-start`
+- Can be called from both client and server code
+- Automatically extract server-only code from client bundle
+- Support input validation with `.validator()` method
+- Access server context (headers, cookies, etc.) via `@tanstack/react-start/server`
+- Use `useServerFn()` hook for client-side calls to handle redirects/errors properly
+
+Example pattern:
+
+```typescript
+const getUser = createServerFn({ method: "GET" })
+  .validator((id: string) => id)
+  .handler(async ({ data }) => {
+    return db.getUser(data)
+  })
+```
+
+### Server Routes (API Endpoints)
+
+Create API endpoints alongside your routes:
+
+- Export `ServerRoute` from route files using `createServerFileRoute()`
+- Support all HTTP methods (GET, POST, PUT, DELETE, etc.)
+- Share files between UI routes and API routes
+- Access same routing patterns (dynamic params, wildcards)
+- Use standard Web APIs (Request, Response)
+
+Example:
+
+```typescript
+export const ServerRoute = createServerFileRoute().methods({
+  GET: async ({ request }) => {
+    return new Response("Hello, API!")
+  },
+})
+```
+
+### Data Loading Patterns
+
+TanStack Start provides multiple ways to load data:
+
+- **Route Loaders**: Use `loader` in route definitions for critical data
+- **Server Functions**: Call from loaders for server-side operations
+- **TanStack Query**: Integrate for advanced caching and synchronization
+- **Static Data**: Use static server functions for build-time data
+
+### SSR and Hydration
+
+- Full-document SSR by default
+- Selective SSR with `ssr: false`, `ssr: 'data-only'`, or `ssr: true` on routes
+- Streaming support with React 18+ Suspense
+- Client-side hydration handles seamlessly
+
+### File Structure Conventions
+
+- `src/routes/__root.tsx` - Root layout (replaces Next.js layout.tsx)
+- `src/routes/index.tsx` - Homepage route (replaces Next.js page.tsx)
+- `src/routes/about.tsx` - Static route at `/about`
+- `src/routes/posts/$postId.tsx` - Dynamic route at `/posts/[postId]`
+- `src/routes/api.users.ts` - API endpoint at `/api/users`
+- `src/client.tsx` - Client entry point (optional, auto-generated if missing)
+- `src/server.tsx` - Server entry point (optional, auto-generated if missing)
+- `src/router.tsx` - Router configuration
+
+### Common Patterns and Best Practices
+
+#### Server Function Error Handling
+
+```typescript
+// Always validate inputs
+.validator((data: unknown): ValidType => {
+  if (!isValid(data)) throw new Error('Invalid input')
+  return data as ValidType
+})
+
+// Handle redirects properly
+throw redirect({ to: '/login' })
+
+// Handle not found
+throw notFound()
+```
+
+#### Route Data Loading
+
+```typescript
+export const Route = createFileRoute("/posts/$postId")({
+  loader: async ({ params }) => {
+    return await getPost({ data: params.postId })
+  },
+  component: PostPage,
+})
+
+function PostPage() {
+  const post = Route.useLoaderData()
+  // Component logic
+}
+```
+
+#### Form Handling with Server Functions
+
+```typescript
+const createPost = createServerFn({ method: "POST" })
+  .validator(PostSchema)
+  .handler(async ({ data }) => {
+    const post = await db.createPost(data)
+    throw redirect({ to: `/posts/${post.id}` })
+  })
+
+// In component
+const handleSubmit = async (formData: FormData) => {
+  await createPost({ data: formData })
+  router.invalidate() // Refresh data
+}
+```
+
+### Development Workflow
+
+1. **Routes**: Create files in `src/routes/` for pages
+2. **Server Functions**: Define in separate files and import into routes
+3. **API Endpoints**: Use `ServerRoute` exports in route files
+4. **Components**: Build reusable UI in `src/components/`
+5. **Styling**: Use Tailwind classes with Shadcn components
+6. **Data**: Leverage loaders + server functions for SSR data
+
+### Deployment Considerations
+
+- Uses Vite for bundling with SSR support
+- Outputs separate client/server bundles
+- Server functions become API endpoints at runtime
+- Can deploy to any Node.js hosting (Netlify, Vercel, etc.)
+- Environment variables follow Vite conventions
+
+## Important Notes
+
+- Demo files prefixed with `demo` can be safely deleted
+- Route tree is auto-generated in `src/routeTree.gen.ts` (ignored by Biome)
+- Uses Bun as the preferred package manager and runtime
+- Server functions are TanStack Start's killer feature for full-stack development
+- Always use type-safe patterns with Zod validation
+- File-based routing generates TypeScript definitions automatically
