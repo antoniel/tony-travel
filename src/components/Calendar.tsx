@@ -2,6 +2,17 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { DAYS_OF_WEEK, MONTHS, TIME_SLOTS } from "@/lib/constants";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Button } from "./ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "./ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 
 export interface AppEvent {
@@ -18,7 +29,13 @@ export interface AppEvent {
 	dependencies?: AppEvent[];
 }
 
-export default function Calendar({ events = [] }: { events: AppEvent[] }) {
+interface CalendarProps {
+	events: AppEvent[];
+	onAddEvent?: (event: Omit<AppEvent, "id">) => void;
+	onUpdateEvent?: (eventId: string, updatedEvent: Partial<AppEvent>) => void;
+}
+
+export default function Calendar({ events = [], onAddEvent, onUpdateEvent }: CalendarProps) {
 	const [currentDate, setCurrentDate] = useState(() => {
 		const [firstEvent] = events.sort((a, b) => {
 			const aTime = a.startDate.getTime();
@@ -106,6 +123,8 @@ export default function Calendar({ events = [] }: { events: AppEvent[] }) {
 							currentDate={currentDate}
 							setCurrentDate={setCurrentDate}
 							events={events}
+							onAddEvent={onAddEvent}
+							onUpdateEvent={onUpdateEvent}
 						/>
 					</div>
 				</TabsContent>
@@ -118,13 +137,37 @@ const RenderWeekViews = (props: {
 	events: AppEvent[];
 	currentDate: Date;
 	setCurrentDate: (date: Date) => void;
+	onAddEvent?: (event: Omit<AppEvent, "id">) => void;
+	onUpdateEvent?: (eventId: string, updatedEvent: Partial<AppEvent>) => void;
 }) => {
 	const totalDays = getHowManyDaysTravel(props.events);
 	const weekDays = getWeekDays(props.events);
 	const [dayWidth, setDayWidth] = useState(0);
 	const LEFT_GUTTER_PX = 80;
 	const containerRef = useRef<HTMLDivElement>(null);
-	console.log(containerRef.current?.clientWidth);
+
+	// Event creation modal state
+	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [newEvent, setNewEvent] = useState({
+		title: "",
+		startDate: new Date(),
+		endDate: new Date(),
+		type: "activity" as AppEvent["type"],
+		location: "",
+	});
+
+	// Drag and drop state
+	const [draggingEvent, setDraggingEvent] = useState<{
+		event: AppEvent;
+		dayIndex: number;
+		offsetY: number;
+		isDragging: boolean;
+		isResizing: boolean;
+		resizeDirection?: 'top' | 'bottom';
+		startX: number;
+		startY: number;
+		hasMoved: boolean;
+	} | null>(null);
 
 	useLayoutEffect(() => {
 		const el = containerRef.current;
@@ -249,10 +292,188 @@ const RenderWeekViews = (props: {
 		return hourPosition + minutePosition;
 	};
 
+	const getDateTimeFromClick = (dayIndex: number, yPosition: number) => {
+		const clickedDate = weekDays[dayIndex];
+		if (!clickedDate) return new Date();
+
+		// Calculate hour from Y position (48px per hour)
+		const hourFromClick = Math.floor(yPosition / 48);
+		const minuteFromClick = Math.floor(((yPosition % 48) / 48) * 60);
+
+		const resultDate = new Date(clickedDate);
+		resultDate.setHours(hourFromClick, minuteFromClick, 0, 0);
+
+		return resultDate;
+	};
+
+	const handleCellClick = (dayIndex: number, event: React.MouseEvent) => {
+		if (!props.onAddEvent) return;
+
+		// Don't create event if we just finished dragging
+		if (draggingEvent?.hasMoved) {
+			return;
+		}
+
+		const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+		const yPosition = event.clientY - rect.top;
+
+		const clickTime = getDateTimeFromClick(dayIndex, yPosition);
+		const endTime = new Date(clickTime);
+		endTime.setHours(clickTime.getHours() + 1); // Default 1 hour duration
+
+		setNewEvent({
+			title: "",
+			startDate: clickTime,
+			endDate: endTime,
+			type: "activity",
+			location: "",
+		});
+
+		setIsModalOpen(true);
+	};
+
+	const handleCreateEvent = () => {
+		if (!props.onAddEvent || !newEvent.title.trim()) return;
+
+		props.onAddEvent({
+			title: newEvent.title,
+			startDate: newEvent.startDate,
+			endDate: newEvent.endDate,
+			type: newEvent.type,
+			location: newEvent.location,
+		});
+
+		setNewEvent({
+			title: "",
+			startDate: new Date(),
+			endDate: new Date(),
+			type: "activity",
+			location: "",
+		});
+
+		setIsModalOpen(false);
+	};
+
+	// Drag and Drop handlers
+	const handleEventMouseDown = (
+		event: AppEvent,
+		dayIndex: number,
+		mouseEvent: React.MouseEvent,
+		resizeDirection?: 'top' | 'bottom'
+	) => {
+		if (!props.onUpdateEvent) return;
+		
+		mouseEvent.stopPropagation();
+		mouseEvent.preventDefault();
+		
+		const rect = (mouseEvent.currentTarget as HTMLElement).getBoundingClientRect();
+		const offsetY = mouseEvent.clientY - rect.top;
+		
+		setDraggingEvent({
+			event,
+			dayIndex,
+			offsetY,
+			isDragging: !resizeDirection,
+			isResizing: !!resizeDirection,
+			resizeDirection,
+			startX: mouseEvent.clientX,
+			startY: mouseEvent.clientY,
+			hasMoved: false,
+		});
+	};
+
+	const handleMouseMove = (mouseEvent: React.MouseEvent) => {
+		if (!draggingEvent || !props.onUpdateEvent) return;
+
+		// Check if we've moved enough to consider it a drag (threshold of 5px)
+		const deltaX = Math.abs(mouseEvent.clientX - draggingEvent.startX);
+		const deltaY = Math.abs(mouseEvent.clientY - draggingEvent.startY);
+		const hasMoved = deltaX > 5 || deltaY > 5;
+		
+		// Update the hasMoved flag
+		if (hasMoved && !draggingEvent.hasMoved) {
+			setDraggingEvent(prev => prev ? { ...prev, hasMoved: true } : null);
+		}
+		
+		if (!hasMoved) return; // Don't do anything until we've moved enough
+
+		const contentArea = document.querySelector('.content-scroll-area [data-radix-scroll-area-viewport]') as HTMLElement;
+		if (!contentArea) return;
+
+		const rect = contentArea.getBoundingClientRect();
+		const yPosition = mouseEvent.clientY - rect.top + contentArea.scrollTop;
+		
+		if (draggingEvent.isDragging) {
+			// Calculate new time based on mouse position
+			const adjustedY = yPosition - draggingEvent.offsetY;
+			const newHour = Math.max(0, Math.floor(adjustedY / 48));
+			const newMinute = Math.floor(((adjustedY % 48) / 48) * 60);
+			
+			// Calculate which day column we're in
+			const xPosition = mouseEvent.clientX - rect.left + contentArea.scrollLeft;
+			const dayIndex = Math.floor(xPosition / dayWidth);
+			const targetDay = weekDays[Math.max(0, Math.min(dayIndex, weekDays.length - 1))];
+			
+			if (targetDay) {
+				const originalDuration = draggingEvent.event.endDate.getTime() - draggingEvent.event.startDate.getTime();
+				
+				const newStartDate = new Date(targetDay);
+				newStartDate.setHours(newHour, newMinute, 0, 0);
+				
+				const newEndDate = new Date(newStartDate.getTime() + originalDuration);
+				
+				props.onUpdateEvent(draggingEvent.event.id, {
+					startDate: newStartDate,
+					endDate: newEndDate,
+				});
+			}
+		} else if (draggingEvent.isResizing) {
+			// Handle resizing
+			const newHour = Math.max(0, Math.floor(yPosition / 48));
+			const newMinute = Math.floor(((yPosition % 48) / 48) * 60);
+			
+			const targetDay = weekDays[draggingEvent.dayIndex];
+			if (targetDay) {
+				const newTime = new Date(targetDay);
+				newTime.setHours(newHour, newMinute, 0, 0);
+				
+				if (draggingEvent.resizeDirection === 'top') {
+					// Resizing from top (changing start time)
+					if (newTime.getTime() < draggingEvent.event.endDate.getTime()) {
+						props.onUpdateEvent(draggingEvent.event.id, {
+							startDate: newTime,
+						});
+					}
+				} else {
+					// Resizing from bottom (changing end time)
+					if (newTime.getTime() > draggingEvent.event.startDate.getTime()) {
+						props.onUpdateEvent(draggingEvent.event.id, {
+							endDate: newTime,
+						});
+					}
+				}
+			}
+		}
+	};
+
+	const handleMouseUp = () => {
+		// If we were dragging, wait a bit before clearing to prevent immediate click
+		if (draggingEvent?.hasMoved) {
+			setTimeout(() => {
+				setDraggingEvent(null);
+			}, 100);
+		} else {
+			setDraggingEvent(null);
+		}
+	};
+
 	return (
 		<div
 			className="relative h-[80vh] bg-white"
 			onWheel={handleWheel}
+			onMouseMove={handleMouseMove}
+			onMouseUp={handleMouseUp}
+			onMouseLeave={handleMouseUp}
 			ref={containerRef}
 		>
 			{/* Fixed Time Column */}
@@ -290,8 +511,9 @@ const RenderWeekViews = (props: {
 						>
 							{weekDays.map((date) => {
 								const isWeekend = date.getDay() === 0 || date.getDay() === 6; // Sunday or Saturday
-								const isToday = new Date().toDateString() === date.toDateString();
-								
+								const isToday =
+									new Date().toDateString() === date.toDateString();
+
 								return (
 									<div
 										key={date.toISOString()}
@@ -299,18 +521,22 @@ const RenderWeekViews = (props: {
 											isWeekend ? "bg-gray-100" : "bg-white"
 										}`}
 									>
-										<div className={`text-xs uppercase ${
-											isWeekend ? "text-gray-600" : "text-gray-500"
-										}`}>
+										<div
+											className={`text-xs uppercase ${
+												isWeekend ? "text-gray-600" : "text-gray-500"
+											}`}
+										>
 											{DAYS_OF_WEEK[date.getDay()]}
 										</div>
-										<div className={`text-lg font-medium ${
-											isToday 
-												? "text-blue-600 font-bold" 
-												: isWeekend 
-													? "text-gray-700" 
-													: "text-gray-900"
-										}`}>
+										<div
+											className={`text-lg font-medium ${
+												isToday
+													? "text-blue-600 font-bold"
+													: isWeekend
+														? "text-gray-700"
+														: "text-gray-900"
+											}`}
+										>
 											{date.getDate()}
 										</div>
 									</div>
@@ -330,16 +556,27 @@ const RenderWeekViews = (props: {
 								gridTemplateColumns: `repeat(${totalDays}, ${dayWidth}px)`,
 							}}
 						>
-							{weekDays.map((date) => {
+							{weekDays.map((date, dayIndex) => {
 								const dayEvents = getEventsForDate(props.events, date);
 								const isWeekend = date.getDay() === 0 || date.getDay() === 6; // Sunday or Saturday
 
 								return (
 									<div
 										key={date.toISOString()}
-										className={`border-r last:border-r-0 relative ${
+										className={`border-r last:border-r-0 relative cursor-pointer hover:bg-blue-50 ${
 											isWeekend ? "bg-gray-100" : ""
 										}`}
+										onClick={(e) => handleCellClick(dayIndex, e)}
+										onKeyDown={(e) => {
+											if (e.key === "Enter" || e.key === " ") {
+												e.preventDefault();
+												handleCellClick(
+													dayIndex,
+													e as unknown as React.MouseEvent,
+												);
+											}
+										}}
+										aria-label={`Create event on ${date.toLocaleDateString()}`}
 									>
 										{/* Hour lines */}
 										{TIME_SLOTS.map((slot) => (
@@ -374,14 +611,24 @@ const RenderWeekViews = (props: {
 												const showTime = eventHeight >= 40;
 												const startTimeStr = getTimeFromDate(event.startDate);
 												const endTimeStr = getTimeFromDate(event.endDate);
-												const timeDisplay = showTime && startTimeStr && endTimeStr && startTimeStr !== endTimeStr
-													? `${startTimeStr} - ${endTimeStr}`
-													: showTime ? startTimeStr : null;
+												const timeDisplay =
+													showTime &&
+													startTimeStr &&
+													endTimeStr &&
+													startTimeStr !== endTimeStr
+														? `${startTimeStr} - ${endTimeStr}`
+														: showTime
+															? startTimeStr
+															: null;
 
+												const isDragging = draggingEvent?.event.id === event.id;
+												
 												return (
 													<div
 														key={event.id}
-														className="absolute left-1 right-1 text-xs px-1 py-0.5 rounded text-white pointer-events-auto z-10 flex flex-col justify-start"
+														className={`absolute left-1 right-1 text-xs px-1 py-0.5 rounded text-white pointer-events-auto z-10 flex flex-col justify-start cursor-move hover:shadow-lg transition-shadow group ${
+															isDragging ? 'opacity-80 shadow-xl scale-105' : ''
+														}`}
 														style={{
 															backgroundColor: getEventColor(event),
 															top: `${topPosition}px`,
@@ -389,16 +636,42 @@ const RenderWeekViews = (props: {
 															minHeight: "18px",
 														}}
 														title={`${timeDisplay ? `${timeDisplay} ` : ""}${event.title}`}
+														onMouseDown={(e) => handleEventMouseDown(event, dayIndex, e)}
 													>
-														{/* Title first - always the main focus */}
-														<div className="truncate font-semibold leading-tight">
-															{event.title}
-														</div>
-														{/* Time below, only if event has sufficient height */}
-														{timeDisplay && (
-															<div className="text-xs opacity-75 leading-tight mt-0.5">
-																{timeDisplay}
+														{/* Resize handle - top */}
+														{eventHeight >= 30 && props.onUpdateEvent && (
+															<div
+																className="absolute -top-1 left-0 right-0 h-2 cursor-n-resize opacity-0 group-hover:opacity-100 bg-white/20 rounded-t"
+																onMouseDown={(e) => {
+																	e.stopPropagation();
+																	handleEventMouseDown(event, dayIndex, e, 'top');
+																}}
+															/>
+														)}
+														
+														{/* Event content */}
+														<div className="flex-1 flex flex-col justify-start pointer-events-none">
+															{/* Title first - always the main focus */}
+															<div className="truncate font-semibold leading-tight">
+																{event.title}
 															</div>
+															{/* Time below, only if event has sufficient height */}
+															{timeDisplay && (
+																<div className="text-xs opacity-75 leading-tight mt-0.5">
+																	{timeDisplay}
+																</div>
+															)}
+														</div>
+
+														{/* Resize handle - bottom */}
+														{eventHeight >= 30 && props.onUpdateEvent && (
+															<div
+																className="absolute -bottom-1 left-0 right-0 h-2 cursor-s-resize opacity-0 group-hover:opacity-100 bg-white/20 rounded-b"
+																onMouseDown={(e) => {
+																	e.stopPropagation();
+																	handleEventMouseDown(event, dayIndex, e, 'bottom');
+																}}
+															/>
 														)}
 													</div>
 												);
@@ -411,6 +684,115 @@ const RenderWeekViews = (props: {
 					</div>
 				</ScrollArea>
 			</div>
+
+			{/* Event Creation Modal */}
+			<Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+				<DialogContent className="sm:max-w-[425px]">
+					<DialogHeader>
+						<DialogTitle>Create New Event</DialogTitle>
+					</DialogHeader>
+					<div className="grid gap-4 py-4">
+						<div className="grid grid-cols-4 items-center gap-4">
+							<Label htmlFor="title" className="text-right">
+								Title
+							</Label>
+							<Input
+								id="title"
+								value={newEvent.title}
+								onChange={(e) =>
+									setNewEvent((prev) => ({ ...prev, title: e.target.value }))
+								}
+								className="col-span-3"
+								placeholder="Event title"
+							/>
+						</div>
+
+						<div className="grid grid-cols-4 items-center gap-4">
+							<Label htmlFor="type" className="text-right">
+								Type
+							</Label>
+							<Select
+								value={newEvent.type}
+								onValueChange={(value: AppEvent["type"]) =>
+									setNewEvent((prev) => ({ ...prev, type: value }))
+								}
+							>
+								<SelectTrigger className="col-span-3">
+									<SelectValue placeholder="Select event type" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="travel">Travel</SelectItem>
+									<SelectItem value="food">Food</SelectItem>
+									<SelectItem value="activity">Activity</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
+
+						<div className="grid grid-cols-4 items-center gap-4">
+							<Label htmlFor="location" className="text-right">
+								Location
+							</Label>
+							<Input
+								id="location"
+								value={newEvent.location}
+								onChange={(e) =>
+									setNewEvent((prev) => ({ ...prev, location: e.target.value }))
+								}
+								className="col-span-3"
+								placeholder="Event location (optional)"
+							/>
+						</div>
+
+						<div className="grid grid-cols-4 items-center gap-4">
+							<Label htmlFor="startTime" className="text-right">
+								Start
+							</Label>
+							<Input
+								id="startTime"
+								type="datetime-local"
+								value={newEvent.startDate.toISOString().slice(0, 16)}
+								onChange={(e) =>
+									setNewEvent((prev) => ({
+										...prev,
+										startDate: new Date(e.target.value),
+									}))
+								}
+								className="col-span-3"
+							/>
+						</div>
+
+						<div className="grid grid-cols-4 items-center gap-4">
+							<Label htmlFor="endTime" className="text-right">
+								End
+							</Label>
+							<Input
+								id="endTime"
+								type="datetime-local"
+								value={newEvent.endDate.toISOString().slice(0, 16)}
+								onChange={(e) =>
+									setNewEvent((prev) => ({
+										...prev,
+										endDate: new Date(e.target.value),
+									}))
+								}
+								className="col-span-3"
+							/>
+						</div>
+					</div>
+
+					<div className="flex justify-end gap-2">
+						<Button variant="outline" onClick={() => setIsModalOpen(false)}>
+							Cancel
+						</Button>
+						<Button
+							onClick={handleCreateEvent}
+							disabled={!newEvent.title.trim()}
+						>
+							Create Event
+						</Button>
+					</div>
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 };
