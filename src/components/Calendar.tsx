@@ -3,6 +3,7 @@ import { DAYS_OF_WEEK, MONTHS, TIME_SLOTS } from "@/lib/constants";
 import type { AppEvent } from "@/lib/types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEventDragDrop } from "@/hooks/useEventDragDrop";
 import EventDetailsPanel from "./EventDetailsPanel";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
@@ -15,6 +16,13 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "./ui/select";
+
+interface DisplayEvent extends AppEvent {
+	originalStartDate?: Date;
+	originalEndDate?: Date;
+	displayStartDate?: Date;
+	displayEndDate?: Date;
+}
 
 interface CalendarProps {
 	events: AppEvent[];
@@ -145,18 +153,12 @@ const RenderWeekViews = (props: {
 		location: "",
 	});
 
-	// Drag and drop state
-	const [draggingEvent, setDraggingEvent] = useState<{
-		event: AppEvent;
-		dayIndex: number;
-		offsetY: number;
-		isDragging: boolean;
-		isResizing: boolean;
-		resizeDirection?: "top" | "bottom";
-		startX: number;
-		startY: number;
-		hasMoved: boolean;
-	} | null>(null);
+	// Drag and drop functionality
+	const { draggingEvent, handleEventMouseDown, handleMouseMove, handleMouseUp } = useEventDragDrop({
+		dayWidth,
+		weekDays,
+		onUpdateEvent: props.onUpdateEvent,
+	});
 
 	useLayoutEffect(() => {
 		const el = containerRef.current;
@@ -343,125 +345,6 @@ const RenderWeekViews = (props: {
 		setIsModalOpen(false);
 	};
 
-	// Drag and Drop handlers
-	const handleEventMouseDown = (
-		event: AppEvent,
-		dayIndex: number,
-		mouseEvent: React.MouseEvent,
-		resizeDirection?: "top" | "bottom",
-	) => {
-		if (!props.onUpdateEvent) return;
-
-		mouseEvent.stopPropagation();
-		mouseEvent.preventDefault();
-
-		const rect = (
-			mouseEvent.currentTarget as HTMLElement
-		).getBoundingClientRect();
-		const offsetY = mouseEvent.clientY - rect.top;
-
-		setDraggingEvent({
-			event,
-			dayIndex,
-			offsetY,
-			isDragging: !resizeDirection,
-			isResizing: !!resizeDirection,
-			resizeDirection,
-			startX: mouseEvent.clientX,
-			startY: mouseEvent.clientY,
-			hasMoved: false,
-		});
-	};
-
-	const handleMouseMove = (mouseEvent: React.MouseEvent) => {
-		if (!draggingEvent || !props.onUpdateEvent) return;
-
-		// Check if we've moved enough to consider it a drag (threshold of 5px)
-		const deltaX = Math.abs(mouseEvent.clientX - draggingEvent.startX);
-		const deltaY = Math.abs(mouseEvent.clientY - draggingEvent.startY);
-		const hasMoved = deltaX > 5 || deltaY > 5;
-
-		// Update the hasMoved flag
-		if (hasMoved && !draggingEvent.hasMoved) {
-			setDraggingEvent((prev) => (prev ? { ...prev, hasMoved: true } : null));
-		}
-
-		if (!hasMoved) return; // Don't do anything until we've moved enough
-
-		const contentArea = document.querySelector(
-			".content-scroll-area [data-radix-scroll-area-viewport]",
-		) as HTMLElement;
-		if (!contentArea) return;
-
-		const rect = contentArea.getBoundingClientRect();
-		const yPosition = mouseEvent.clientY - rect.top + contentArea.scrollTop;
-
-		if (draggingEvent.isDragging) {
-			// Calculate new time based on mouse position
-			const adjustedY = yPosition - draggingEvent.offsetY;
-			const newHour = Math.max(0, Math.floor(adjustedY / 48));
-			const newMinute = Math.floor(((adjustedY % 48) / 48) * 60);
-
-			// Calculate which day column we're in
-			const xPosition = mouseEvent.clientX - rect.left + contentArea.scrollLeft;
-			const dayIndex = Math.floor(xPosition / dayWidth);
-			const targetDay =
-				weekDays[Math.max(0, Math.min(dayIndex, weekDays.length - 1))];
-
-			if (targetDay) {
-				const originalDuration =
-					draggingEvent.event.endDate.getTime() -
-					draggingEvent.event.startDate.getTime();
-
-				const newStartDate = new Date(targetDay);
-				newStartDate.setHours(newHour, newMinute, 0, 0);
-
-				const newEndDate = new Date(newStartDate.getTime() + originalDuration);
-
-				props.onUpdateEvent(draggingEvent.event.id, {
-					startDate: newStartDate,
-					endDate: newEndDate,
-				});
-			}
-		} else if (draggingEvent.isResizing) {
-			// Handle resizing
-			const newHour = Math.max(0, Math.floor(yPosition / 48));
-			const newMinute = Math.floor(((yPosition % 48) / 48) * 60);
-
-			const targetDay = weekDays[draggingEvent.dayIndex];
-			if (targetDay) {
-				const newTime = new Date(targetDay);
-				newTime.setHours(newHour, newMinute, 0, 0);
-
-				if (draggingEvent.resizeDirection === "top") {
-					// Resizing from top (changing start time)
-					if (newTime.getTime() < draggingEvent.event.endDate.getTime()) {
-						props.onUpdateEvent(draggingEvent.event.id, {
-							startDate: newTime,
-						});
-					}
-				} else {
-					// Resizing from bottom (changing end time)
-					if (newTime.getTime() > draggingEvent.event.startDate.getTime()) {
-						props.onUpdateEvent(draggingEvent.event.id, {
-							endDate: newTime,
-						});
-					}
-				}
-			}
-		}
-	};
-
-	const handleMouseUp = () => {
-		// If we were dragging, wait a bit before clearing to prevent immediate click
-		if (draggingEvent?.hasMoved) {
-			setTimeout(() => {
-				setDraggingEvent(null);
-			}, 100);
-		} else {
-			setDraggingEvent(null);
-		}
-	};
 
 	return (
 		<div
@@ -586,20 +469,38 @@ const RenderWeekViews = (props: {
 
 										{/* Events overlay */}
 										<div className="absolute inset-0 pointer-events-none">
-											{dayEvents.map((event, eventIndex) => {
-												const eventTime = getTimeFromDate(event.startDate);
-												const topPosition = eventTime
-													? getTimePositionFromDate(event.startDate)
-													: eventIndex * 20;
+											{dayEvents.map((event) => {
+												// For multi-day events, calculate display positions for this specific day
+												const currentDayStart = new Date(date);
+												currentDayStart.setHours(0, 0, 0, 0);
+												const currentDayEnd = new Date(currentDayStart);
+												currentDayEnd.setDate(currentDayEnd.getDate() + 1);
 
-												// Calculate event height and duration
-												const startTime = event.startDate.getTime();
-												const endTime = event.endDate.getTime();
-												const durationMs = endTime - startTime;
+												const eventStart = new Date(event.startDate);
+												const eventEnd = new Date(event.endDate);
+
+												// Determine actual display times for this day
+												const displayStart =
+													eventStart < currentDayStart
+														? currentDayStart
+														: eventStart;
+												// For events that end after this day, show them ending at 23:59:59
+												const endOfDay = new Date(currentDayEnd);
+												endOfDay.setMilliseconds(-1); // This sets it to 23:59:59.999
+												const displayEnd =
+													eventEnd >= currentDayEnd ? endOfDay : eventEnd;
+
+												const topPosition =
+													getTimePositionFromDate(displayStart);
+
+												// Calculate event height based on display times for this day
+												const displayStartTime = displayStart.getTime();
+												const displayEndTime = displayEnd.getTime();
+												const durationMs = displayEndTime - displayStartTime;
 												const durationMinutes = durationMs / (1000 * 60);
 
 												let eventHeight = 18; // Default minimum height
-												if (eventTime && durationMinutes > 0) {
+												if (durationMinutes > 0) {
 													// Convert duration to pixels (48px per hour = 0.8px per minute)
 													const calculatedHeight = Math.max(
 														24, // Minimum height for timed events
@@ -610,8 +511,8 @@ const RenderWeekViews = (props: {
 
 												// Only show time if event has sufficient height (>= 40px, roughly 50+ minutes)
 												const showTime = eventHeight >= 40;
-												const startTimeStr = getTimeFromDate(event.startDate);
-												const endTimeStr = getTimeFromDate(event.endDate);
+												const startTimeStr = getTimeFromDate(displayStart);
+												const endTimeStr = getTimeFromDate(displayEnd);
 												const timeDisplay =
 													showTime &&
 													startTimeStr &&
@@ -847,25 +748,37 @@ const getWeekDays = (events: AppEvent[]) => {
 	return weekDays;
 };
 
-const getEventsForDate = (events: AppEvent[], date: Date) => {
-	return events.filter((event) => {
-		const eventDate = new Date(event.startDate);
-		return (
-			eventDate.getDate() === date.getDate() &&
-			eventDate.getMonth() === date.getMonth() &&
-			eventDate.getFullYear() === date.getFullYear()
-		);
-	});
+const getEventsForDate = (events: AppEvent[], date: Date): DisplayEvent[] => {
+	const targetDay = new Date(date);
+	targetDay.setHours(0, 0, 0, 0);
+	const nextDay = new Date(targetDay);
+	nextDay.setDate(targetDay.getDate() + 1);
+
+	return events
+		.filter((event) => {
+			const eventStart = new Date(event.startDate);
+			const eventEnd = new Date(event.endDate);
+
+			// Check if the event overlaps with this day
+			return eventStart < nextDay && eventEnd > targetDay;
+		})
+		.map((event) => {
+			// Don't modify the event dates, just return the original event
+			// The rendering logic will handle the display
+			return {
+				...event,
+				// Store original dates for reference
+				originalStartDate: event.startDate,
+				originalEndDate: event.endDate,
+			};
+		});
 };
 
 const getTimeFromDate = (date: Date) => {
 	const hours = date.getHours();
 	const minutes = date.getMinutes();
 
-	if (hours === 0 && minutes === 0) {
-		return null;
-	}
-
+	// Always return a time string, even for 00:00
 	const displayHour = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours;
 	const amPm = hours >= 12 ? "p" : "a";
 	const minuteStr =
