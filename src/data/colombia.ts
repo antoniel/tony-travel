@@ -1,4 +1,4 @@
-import type { AppEvent } from "@/components/Calendar";
+import type { AppEvent } from "@/lib/types";
 
 export const colombiaEvents: AppEvent[] = [
 	{

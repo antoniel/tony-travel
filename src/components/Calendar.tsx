@@ -1,5 +1,6 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { DAYS_OF_WEEK, MONTHS, TIME_SLOTS } from "@/lib/constants";
+import type { AppEvent } from "@/lib/types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "./ui/button";
@@ -13,20 +14,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "./ui/select";
-
-export interface AppEvent {
-	id: string;
-	title: string;
-	startDate: Date;
-	endDate: Date;
-	type: "travel" | "food" | "activity";
-	location?: string;
-	/**
-	 * Some events need to include locomotion to the location.
-	 * so you should include the locomotion event as a dependency.
-	 */
-	dependencies?: AppEvent[];
-}
 
 interface CalendarProps {
 	events: AppEvent[];
