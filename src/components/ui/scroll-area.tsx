@@ -9,9 +9,11 @@ function ScrollArea({
 	className,
 	children,
 	enableThumb = true,
+	initialScrollOffset = 0,
 	...props
 }: React.ComponentProps<typeof ScrollAreaPrimitive.Root> & {
 	enableThumb?: boolean;
+	initialScrollOffset?: number;
 }) {
 	return (
 		<ScrollAreaPrimitive.Root
@@ -39,11 +41,17 @@ function ScrollBar({
 	...props
 }: React.ComponentProps<typeof ScrollAreaPrimitive.ScrollAreaScrollbar> & {
 	enableThumb?: boolean;
+	initialScrollOffset?: number;
 }) {
 	return (
 		<ScrollAreaPrimitive.ScrollAreaScrollbar
 			data-slot="scroll-area-scrollbar"
 			orientation={orientation}
+			ref={(v) => {
+				if (v) {
+					v.scrollTo({ top: props.initialScrollOffset });
+				}
+			}}
 			className={cn(
 				"flex touch-none p-px transition-colors select-none",
 				orientation === "vertical" &&

@@ -1,4 +1,5 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { DAYS_OF_WEEK, MONTHS, TIME_SLOTS } from "@/lib/constants";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
@@ -17,28 +18,18 @@ export interface AppEvent {
 	dependencies?: AppEvent[];
 }
 
-interface CalendarProps {
-	events?: AppEvent[];
-}
-
-const DAYS_OF_WEEK = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const MONTHS = [
-	"January",
-	"February",
-	"March",
-	"April",
-	"May",
-	"June",
-	"July",
-	"August",
-	"September",
-	"October",
-	"November",
-	"December",
-];
-
-export default function Calendar({ events = [] }: CalendarProps) {
-	const [currentDate, setCurrentDate] = useState(new Date(2026, 0, 1)); // January 2026
+export default function Calendar({ events = [] }: { events: AppEvent[] }) {
+	const [currentDate, setCurrentDate] = useState(() => {
+		const [firstEvent] = events.sort((a, b) => {
+			const aTime = a.startDate.getTime();
+			const bTime = b.startDate.getTime();
+			return aTime - bTime;
+		});
+		if (!firstEvent) {
+			return new Date();
+		}
+		return firstEvent.startDate;
+	});
 	const [view, setView] = useState<"month" | "week">("week"); // Week as default
 
 	const year = currentDate.getFullYear();
@@ -101,9 +92,7 @@ export default function Calendar({ events = [] }: CalendarProps) {
 					</div>
 
 					<h2 className="text-xl font-semibold text-gray-900">
-						{view === "week"
-							? `Week of ${MONTHS[month]} ${currentDate.getDate()}, ${year}`
-							: `${MONTHS[month]} ${year}`}
+						{`${MONTHS[month]} ${year}`}
 					</h2>
 
 					<TabsList>
@@ -130,8 +119,8 @@ const RenderWeekViews = (props: {
 	currentDate: Date;
 	setCurrentDate: (date: Date) => void;
 }) => {
-	const weekDays = getWeekDays({ currentDate: props.currentDate });
-	const timeSlots: string[] = [];
+	const weekDays = getWeekDays(props.events);
+	console.log({ currentDate: props.currentDate });
 	const totalDays = 35; // 5 weeks
 	const [dayWidth, setDayWidth] = useState(0);
 	const LEFT_GUTTER_PX = 80;
@@ -167,11 +156,6 @@ const RenderWeekViews = (props: {
 	const timeRulerRef = useRef<HTMLDivElement>(null);
 
 	// Create hourly time slots from 6 AM to 11 PM
-	for (let hour = 6; hour <= 23; hour++) {
-		const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
-		const amPm = hour >= 12 ? "PM" : "AM";
-		timeSlots.push(`${displayHour}:00 ${amPm}`);
-	}
 
 	// Auto-scroll to center on current week and handle infinite scrolling
 	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
@@ -262,14 +246,28 @@ const RenderWeekViews = (props: {
 			hasHorizontalScroll || isShiftScroll || atVerticalTop || atVerticalBottom;
 
 		if (shouldHandleHorizontally) {
-			// Always prevent default to stop browser navigation gestures
-			e.preventDefault();
-			e.stopPropagation();
-
 			const scrollAmount =
 				e.deltaX || (isShiftScroll ? e.deltaY : e.deltaY * 0.5);
 			headerScrollArea.scrollLeft += scrollAmount;
 			contentScrollArea.scrollLeft += scrollAmount;
+
+			// // Check for infinite scroll boundaries and adjust currentDate
+			// const maxScroll =
+			// 	contentScrollArea.scrollWidth - contentScrollArea.clientWidth;
+			// const scrollRatio = contentScrollArea.scrollLeft / maxScroll;
+
+			// // If scrolled too far left (< 20%), move currentDate back a week
+			// if (scrollRatio < 0.2) {
+			// 	const newDate = new Date(props.currentDate);
+			// 	newDate.setDate(props.currentDate.getDate() - 7);
+			// 	props.setCurrentDate(newDate);
+			// }
+			// // If scrolled too far right (> 80%), move currentDate forward a week
+			// else if (scrollRatio > 0.8) {
+			// 	const newDate = new Date(props.currentDate);
+			// 	newDate.setDate(props.currentDate.getDate() + 7);
+			// 	props.setCurrentDate(newDate);
+			// }
 		}
 	};
 
@@ -303,7 +301,7 @@ const RenderWeekViews = (props: {
 				<div className="absolute top-16 left-0 right-0 bottom-0">
 					<ScrollArea ref={timeRulerRef} className="h-full" enableThumb={false}>
 						<div>
-							{timeSlots.map((time) => (
+							{TIME_SLOTS.map((time) => (
 								<div
 									key={time}
 									className="h-12 border-b text-xs text-gray-500 p-2 bg-white"
@@ -364,7 +362,7 @@ const RenderWeekViews = (props: {
 										className={"border-r last:border-r-0 relative"}
 									>
 										{/* Hour lines */}
-										{timeSlots.map((slot) => (
+										{TIME_SLOTS.map((slot) => (
 											<div key={slot} className="h-12 border-b" />
 										))}
 
@@ -433,15 +431,22 @@ const RenderWeekViews = (props: {
 	);
 };
 
-const getWeekDays = (props: { currentDate: Date }) => {
-	const startOfWeek = new Date(props.currentDate);
-	const day = startOfWeek.getDay();
-	startOfWeek.setDate(props.currentDate.getDate() - day);
+const getWeekDays = (events: AppEvent[]) => {
+	const [firstEvent, ...rest] = events.sort((a, b) => {
+		const aTime = a.startDate.getTime();
+		const bTime = b.startDate.getTime();
+		return aTime - bTime;
+	});
+	const lastEvent = rest.at(-1);
+	if (!lastEvent) {
+		return [];
+	}
+	const startOfWeek = new Date(firstEvent.startDate);
 
 	// Create a sliding window of 5 weeks (35 days) centered on current week
 	const weekDays = [];
 	const totalWeeks = 5;
-	const startOffset = -14; // 2 weeks before
+	const startOffset = 0; // 2 weeks before
 
 	for (let i = startOffset; i < startOffset + totalWeeks * 7; i++) {
 		const date = new Date(startOfWeek);
