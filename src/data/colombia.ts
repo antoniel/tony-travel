@@ -1,6 +1,6 @@
 import type { AppEvent } from "@/lib/types";
 
-export const colombiaEvents: AppEvent[] = [
+const colombiaEvents: AppEvent[] = [
 	{
 		id: "PE-D01-FOOD-BREAKFAST",
 		title: "Café da manhã (hostel/cafeteria)",
