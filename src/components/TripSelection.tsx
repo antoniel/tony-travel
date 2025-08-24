@@ -251,7 +251,7 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 					</div>
 
 					{/* Predefined Trips */}
-					<div className="max-w-6xl mx-auto">
+					<div className=" mx-auto">
 						<h2 className="text-2xl md:text-3xl font-bold mb-8 text-center bg-gradient-to-r from-primary/90 via-foreground to-accent/80 bg-clip-text text-transparent">
 							Planejamentos em destaque
 						</h2>

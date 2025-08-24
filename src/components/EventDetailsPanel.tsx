@@ -146,27 +146,6 @@ export default function EventDetailsPanel({
 							</div>
 						)}
 
-						{event.dependencies && event.dependencies.length > 0 && (
-							<div>
-								<h3 className="font-medium text-sm text-muted-foreground mb-2">
-									DEPENDÊNCIAS
-								</h3>
-								<div className="space-y-2">
-									{event.dependencies.map((dep) => (
-										<div
-											key={dep.id}
-											className="flex items-center gap-2 text-sm"
-										>
-											<div
-												className="w-2 h-2 rounded-full"
-												style={{ backgroundColor: getEventColor(dep) }}
-											/>
-											<span>{dep.title}</span>
-										</div>
-									))}
-								</div>
-							</div>
-						)}
 					</CardContent>
 				</Card>
 			</div>

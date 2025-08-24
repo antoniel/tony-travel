@@ -24,7 +24,21 @@ function TripCalendarPage() {
 		return travels[tripId] || peruTravel; // Fallback to Peru if not found
 	}, [tripId]);
 
-	const [events, setEvents] = useState<AppEvent[]>(travel.events);
+	const [events, setEvents] = useState<AppEvent[]>(() => {
+		const eventsWithDependencies = travel.events.reduce<AppEvent[]>(
+			(acc, event) => {
+				// Add the main event
+				const mainEvent = { ...event };
+
+				// Add dependencies as separate events if they exist
+				const dependencies: AppEvent[] = event.dependencies || [];
+
+				return acc.concat([mainEvent, ...dependencies]);
+			},
+			[],
+		);
+		return eventsWithDependencies;
+	});
 
 	const handleAddEvent = (newEvent: Omit<AppEvent, "id">) => {
 		const eventWithId: AppEvent = {
@@ -53,7 +67,7 @@ function TripCalendarPage() {
 
 				{/* Main Content */}
 				<div className="flex-1 py-6">
-					<div className="max-w-6xl mx-auto px-4 h-full">
+					<div className=" mx-auto px-4 h-full">
 						<div className="mb-4">
 							<h1 className="text-3xl font-bold text-foreground mb-2">
 								{travel.name}
