@@ -164,6 +164,7 @@ const RenderWeekViews = (props: {
 	// }, [slideWindowRef.current?.clientWidth]);
 	const centerWeekStart = 14; // Index where current week starts (2 weeks * 7 days)
 	const headerScrollAreaRef = useRef<HTMLDivElement>(null);
+	const timeRulerRef = useRef<HTMLDivElement>(null);
 
 	// Create hourly time slots from 6 AM to 11 PM
 	for (let hour = 6; hour <= 23; hour++) {
@@ -200,13 +201,34 @@ const RenderWeekViews = (props: {
 			return () => source.removeEventListener("scroll", handleScroll);
 		};
 
+		// Sync vertical scroll between content and time ruler
+		const syncVerticalScroll = (source: HTMLElement, target: HTMLElement) => {
+			const handleScroll = () => {
+				if (target.scrollTop !== source.scrollTop) {
+					target.scrollTop = source.scrollTop;
+				}
+			};
+			source.addEventListener("scroll", handleScroll);
+			return () => source.removeEventListener("scroll", handleScroll);
+		};
+
+		const timeRulerScrollArea = timeRulerRef.current?.querySelector(
+			"[data-radix-scroll-area-viewport]",
+		) as HTMLElement;
+
 		const cleanupHeaderSync = syncHorizontalScroll(
 			headerScrollArea,
 			contentScrollArea,
 		);
 
+		const cleanupVerticalSync = syncVerticalScroll(
+			contentScrollArea,
+			timeRulerScrollArea,
+		);
+
 		return () => {
 			cleanupHeaderSync();
+			cleanupVerticalSync?.();
 		};
 	}, [props.currentDate]);
 
@@ -278,15 +300,19 @@ const RenderWeekViews = (props: {
 				{/* Corner space for header */}
 				<div className="h-16 border-b bg-gray-50" />
 				{/* Time slots */}
-				<div className="overflow-hidden">
-					{timeSlots.map((time) => (
-						<div
-							key={time}
-							className="h-12 border-b text-xs text-gray-500 p-2 bg-white"
-						>
-							{time}
+				<div className="absolute top-16 left-0 right-0 bottom-0">
+					<ScrollArea ref={timeRulerRef} className="h-full" enableThumb={false}>
+						<div>
+							{timeSlots.map((time) => (
+								<div
+									key={time}
+									className="h-12 border-b text-xs text-gray-500 p-2 bg-white"
+								>
+									{time}
+								</div>
+							))}
 						</div>
-					))}
+					</ScrollArea>
 				</div>
 			</div>
 
@@ -300,7 +326,7 @@ const RenderWeekViews = (props: {
 								gridTemplateColumns: `repeat(${totalDays}, ${dayWidth}px)`,
 							}}
 						>
-							{weekDays.map((date, index) => {
+							{weekDays.map((date) => {
 								return (
 									<div
 										key={date.toISOString()}
