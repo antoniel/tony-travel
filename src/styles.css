@@ -19,109 +19,113 @@ code {
 }
 
 :root {
-	--background: oklch(0.9809 0.0025 228.7836);
-	--foreground: oklch(0.4091 0.0226 200.5214);
-	--card: oklch(1.0 0 0);
-	--card-foreground: oklch(0.4091 0.0226 200.5214);
+	/* Travel-themed light mode - inspired by sky, ocean, and adventure */
+	--background: oklch(0.98 0.008 220); /* Light sky blue background */
+	--foreground: oklch(0.15 0.025 230); /* Deep navy text */
+	--card: oklch(1.0 0 0); /* Pure white cards */
+	--card-foreground: oklch(0.15 0.025 230);
 	--popover: oklch(1.0 0 0);
-	--popover-foreground: oklch(0.4091 0.0226 200.5214);
-	--primary: oklch(0.6674 0.0445 230.6319);
-	--primary-foreground: oklch(0.9809 0.0025 228.7836);
-	--secondary: oklch(0.9169 0.0162 226.9814);
-	--secondary-foreground: oklch(0.4091 0.0226 200.5214);
-	--muted: oklch(0.9022 0.0086 225.0905);
-	--muted-foreground: oklch(0.5739 0.0249 207.0446);
-	--accent: oklch(0.7857 0.1028 315.8535);
-	--accent-foreground: oklch(0.3382 0.0565 316.3947);
-	--destructive: oklch(0.677 0.2135 327.6164);
-	--destructive-foreground: oklch(0.9809 0.0025 228.7836);
-	--border: oklch(0.863 0.0138 226.5857);
-	--input: oklch(0.9424 0.0076 228.8562);
-	--ring: oklch(0.6674 0.0445 230.6319);
-	--chart-1: oklch(0.6674 0.0445 230.6319);
-	--chart-2: oklch(0.7857 0.1028 315.8535);
-	--chart-3: oklch(0.7359 0.1006 134.9926);
-	--chart-4: oklch(0.759 0.1282 354.8756);
-	--chart-5: oklch(0.8635 0.0774 167.5573);
-	--sidebar: oklch(0.9617 0.0051 228.8188);
-	--sidebar-foreground: oklch(0.4091 0.0226 200.5214);
-	--sidebar-primary: oklch(0.6674 0.0445 230.6319);
-	--sidebar-primary-foreground: oklch(0.9809 0.0025 228.7836);
-	--sidebar-accent: oklch(0.7857 0.1028 315.8535);
-	--sidebar-accent-foreground: oklch(0.3382 0.0565 316.3947);
-	--sidebar-border: oklch(0.886 0.0119 231.6713);
-	--sidebar-ring: oklch(0.6674 0.0445 230.6319);
-	--font-sans: Geist, sans-serif;
-	--font-serif: "Lora", Georgia, serif;
-	--font-mono: "Fira Code", "Courier New", monospace;
-	--radius: 0.5rem;
-	--shadow-2xs: 1px 2px 5px 1px hsl(0 0% 10.1961% / 0.03);
-	--shadow-xs: 1px 2px 5px 1px hsl(0 0% 10.1961% / 0.03);
-	--shadow-sm: 1px 2px 5px 1px hsl(0 0% 10.1961% / 0.06), 1px 1px 2px 0px
-		hsl(0 0% 10.1961% / 0.06);
-	--shadow: 1px 2px 5px 1px hsl(0 0% 10.1961% / 0.06), 1px 1px 2px 0px
-		hsl(0 0% 10.1961% / 0.06);
-	--shadow-md: 1px 2px 5px 1px hsl(0 0% 10.1961% / 0.06), 1px 2px 4px 0px
-		hsl(0 0% 10.1961% / 0.06);
-	--shadow-lg: 1px 2px 5px 1px hsl(0 0% 10.1961% / 0.06), 1px 4px 6px 0px
-		hsl(0 0% 10.1961% / 0.06);
-	--shadow-xl: 1px 2px 5px 1px hsl(0 0% 10.1961% / 0.06), 1px 8px 10px 0px
-		hsl(0 0% 10.1961% / 0.06);
-	--shadow-2xl: 1px 2px 5px 1px hsl(0 0% 10.1961% / 0.15);
-	--tracking-normal: 0em;
+	--popover-foreground: oklch(0.15 0.025 230);
+	--primary: oklch(0.55 0.15 200); /* Ocean blue primary */
+	--primary-foreground: oklch(0.98 0.008 220);
+	--secondary: oklch(0.92 0.02 200); /* Light ocean mist */
+	--secondary-foreground: oklch(0.15 0.025 230);
+	--muted: oklch(0.94 0.01 210); /* Very light blue-gray */
+	--muted-foreground: oklch(0.45 0.02 220);
+	--accent: oklch(0.65 0.12 30); /* Warm sunset orange */
+	--accent-foreground: oklch(0.98 0.008 220);
+	--destructive: oklch(0.62 0.18 25); /* Warm red */
+	--destructive-foreground: oklch(0.98 0.008 220);
+	--border: oklch(0.88 0.01 210);
+	--input: oklch(0.96 0.005 210);
+	--ring: oklch(0.55 0.15 200);
+	/* Travel event colors - more vibrant and travel-themed */
+	--chart-1: oklch(0.55 0.15 200); /* Ocean blue for travel */
+	--chart-2: oklch(0.65 0.12 30); /* Sunset orange for activities */
+	--chart-3: oklch(0.6 0.13 120); /* Forest green for food */
+	--chart-4: oklch(0.7 0.12 280); /* Mountain purple for accommodation */
+	--chart-5: oklch(0.68 0.1 60); /* Golden yellow for sightseeing */
+	--sidebar: oklch(0.97 0.005 215);
+	--sidebar-foreground: oklch(0.15 0.025 230);
+	--sidebar-primary: oklch(0.55 0.15 200);
+	--sidebar-primary-foreground: oklch(0.98 0.008 220);
+	--sidebar-accent: oklch(0.65 0.12 30);
+	--sidebar-accent-foreground: oklch(0.98 0.008 220);
+	--sidebar-border: oklch(0.9 0.01 215);
+	--sidebar-ring: oklch(0.55 0.15 200);
+	--font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+		sans-serif;
+	--font-serif: "Playfair Display", Georgia, serif;
+	--font-mono: "JetBrains Mono", "Fira Code", monospace;
+	--radius: 0.75rem; /* Slightly more rounded for modern feel */
+	--shadow-2xs: 0 1px 2px 0 hsl(220 20% 20% / 0.05);
+	--shadow-xs: 0 1px 3px 0 hsl(220 20% 20% / 0.08);
+	--shadow-sm: 0 1px 3px 0 hsl(220 20% 20% / 0.08), 0 1px 2px -1px
+		hsl(220 20% 20% / 0.08);
+	--shadow: 0 4px 6px -1px hsl(220 20% 20% / 0.08), 0 2px 4px -2px
+		hsl(220 20% 20% / 0.08);
+	--shadow-md: 0 10px 15px -3px hsl(220 20% 20% / 0.08), 0 4px 6px -4px
+		hsl(220 20% 20% / 0.08);
+	--shadow-lg: 0 20px 25px -5px hsl(220 20% 20% / 0.08), 0 8px 10px -6px
+		hsl(220 20% 20% / 0.08);
+	--shadow-xl: 0 25px 50px -12px hsl(220 20% 20% / 0.12);
+	--shadow-2xl: 0 25px 50px -12px hsl(220 20% 20% / 0.25);
+	--tracking-normal: -0.01em; /* Slightly tighter for modern look */
 	--spacing: 0.25rem;
 }
 
 .dark {
-	--background: oklch(0.2399 0.0134 212.7466);
-	--foreground: oklch(0.9328 0.0165 211.0403);
-	--card: oklch(0.2866 0.0184 213.4299);
-	--card-foreground: oklch(0.9328 0.0165 211.0403);
-	--popover: oklch(0.2866 0.0184 213.4299);
-	--popover-foreground: oklch(0.9328 0.0165 211.0403);
-	--primary: oklch(0.7561 0.0452 235.6322);
-	--primary-foreground: oklch(0.2399 0.0134 212.7466);
-	--secondary: oklch(0.5055 0.0285 219.1705);
-	--secondary-foreground: oklch(0.9328 0.0165 211.0403);
-	--muted: oklch(0.287 0.0191 218.6615);
-	--muted-foreground: oklch(0.72 0.0171 227.0676);
-	--accent: oklch(0.3291 0.0194 251.4735);
-	--accent-foreground: oklch(0.8401 0.0921 317.9069);
-	--destructive: oklch(0.7266 0.1964 327.3619);
-	--destructive-foreground: oklch(0.2399 0.0134 212.7466);
-	--border: oklch(0.3438 0.0219 214.7554);
-	--input: oklch(0.324 0.0216 210.3664);
-	--ring: oklch(0.7561 0.0452 235.6322);
-	--chart-1: oklch(0.7561 0.0452 235.6322);
-	--chart-2: oklch(0.8401 0.0921 317.9069);
-	--chart-3: oklch(0.7359 0.1006 134.9926);
-	--chart-4: oklch(0.759 0.1282 354.8756);
-	--chart-5: oklch(0.8635 0.0774 167.5573);
-	--sidebar: oklch(0.2228 0.0136 212.7948);
-	--sidebar-foreground: oklch(0.9328 0.0165 211.0403);
-	--sidebar-primary: oklch(0.7561 0.0452 235.6322);
-	--sidebar-primary-foreground: oklch(0.2399 0.0134 212.7466);
-	--sidebar-accent: oklch(0.3291 0.0194 251.4735);
-	--sidebar-accent-foreground: oklch(0.8401 0.0921 317.9069);
-	--sidebar-border: oklch(0.324 0.0216 210.3664);
-	--sidebar-ring: oklch(0.7561 0.0452 235.6322);
-	--font-sans: Geist, sans-serif;
-	--font-serif: "Lora", Georgia, serif;
-	--font-mono: "Fira Code", "Courier New", monospace;
-	--radius: 0.5rem;
-	--shadow-2xs: 1px 2px 5px 1px hsl(0 0% 10.1961% / 0.03);
-	--shadow-xs: 1px 2px 5px 1px hsl(0 0% 10.1961% / 0.03);
-	--shadow-sm: 1px 2px 5px 1px hsl(0 0% 10.1961% / 0.06), 1px 1px 2px 0px
-		hsl(0 0% 10.1961% / 0.06);
-	--shadow: 1px 2px 5px 1px hsl(0 0% 10.1961% / 0.06), 1px 1px 2px 0px
-		hsl(0 0% 10.1961% / 0.06);
-	--shadow-md: 1px 2px 5px 1px hsl(0 0% 10.1961% / 0.06), 1px 2px 4px 0px
-		hsl(0 0% 10.1961% / 0.06);
-	--shadow-lg: 1px 2px 5px 1px hsl(0 0% 10.1961% / 0.06), 1px 4px 6px 0px
-		hsl(0 0% 10.1961% / 0.06);
-	--shadow-xl: 1px 2px 5px 1px hsl(0 0% 10.1961% / 0.06), 1px 8px 10px 0px
-		hsl(0 0% 10.1961% / 0.06);
-	--shadow-2xl: 1px 2px 5px 1px hsl(0 0% 10.1961% / 0.15);
+	/* Travel-themed dark mode - inspired by night sky and adventure */
+	--background: oklch(0.08 0.015 230); /* Deep midnight blue */
+	--foreground: oklch(0.95 0.008 220); /* Light blue-white text */
+	--card: oklch(0.12 0.02 225); /* Dark navy cards */
+	--card-foreground: oklch(0.95 0.008 220);
+	--popover: oklch(0.12 0.02 225);
+	--popover-foreground: oklch(0.95 0.008 220);
+	--primary: oklch(0.65 0.15 200); /* Bright ocean blue */
+	--primary-foreground: oklch(0.08 0.015 230);
+	--secondary: oklch(0.18 0.025 220); /* Dark blue-gray */
+	--secondary-foreground: oklch(0.95 0.008 220);
+	--muted: oklch(0.15 0.02 225); /* Muted dark blue */
+	--muted-foreground: oklch(0.65 0.01 220);
+	--accent: oklch(0.7 0.15 35); /* Bright sunset orange */
+	--accent-foreground: oklch(0.08 0.015 230);
+	--destructive: oklch(0.7 0.2 25); /* Bright red */
+	--destructive-foreground: oklch(0.08 0.015 230);
+	--border: oklch(0.25 0.02 220);
+	--input: oklch(0.18 0.02 225);
+	--ring: oklch(0.65 0.15 200);
+	/* Travel event colors for dark mode - vibrant and visible */
+	--chart-1: oklch(0.65 0.15 200); /* Bright ocean blue for travel */
+	--chart-2: oklch(0.7 0.15 35); /* Bright sunset orange for activities */
+	--chart-3: oklch(0.65 0.15 120); /* Bright forest green for food */
+	--chart-4: oklch(0.75 0.15 280); /* Bright mountain purple for accommodation */
+	--chart-5: oklch(0.75 0.12 60); /* Bright golden yellow for sightseeing */
+	--sidebar: oklch(0.1 0.015 225);
+	--sidebar-foreground: oklch(0.95 0.008 220);
+	--sidebar-primary: oklch(0.65 0.15 200);
+	--sidebar-primary-foreground: oklch(0.08 0.015 230);
+	--sidebar-accent: oklch(0.7 0.15 35);
+	--sidebar-accent-foreground: oklch(0.08 0.015 230);
+	--sidebar-border: oklch(0.2 0.02 220);
+	--sidebar-ring: oklch(0.65 0.15 200);
+	--font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+		sans-serif;
+	--font-serif: "Playfair Display", Georgia, serif;
+	--font-mono: "JetBrains Mono", "Fira Code", monospace;
+	--radius: 0.75rem; /* Slightly more rounded for modern feel */
+	--shadow-2xs: 0 1px 2px 0 hsl(220 50% 5% / 0.15);
+	--shadow-xs: 0 1px 3px 0 hsl(220 50% 5% / 0.2);
+	--shadow-sm: 0 1px 3px 0 hsl(220 50% 5% / 0.2), 0 1px 2px -1px
+		hsl(220 50% 5% / 0.2);
+	--shadow: 0 4px 6px -1px hsl(220 50% 5% / 0.2), 0 2px 4px -2px
+		hsl(220 50% 5% / 0.2);
+	--shadow-md: 0 10px 15px -3px hsl(220 50% 5% / 0.25), 0 4px 6px -4px
+		hsl(220 50% 5% / 0.25);
+	--shadow-lg: 0 20px 25px -5px hsl(220 50% 5% / 0.3), 0 8px 10px -6px
+		hsl(220 50% 5% / 0.3);
+	--shadow-xl: 0 25px 50px -12px hsl(220 50% 5% / 0.4);
+	--shadow-2xl: 0 25px 50px -12px hsl(220 50% 5% / 0.6);
 }
 
 @theme inline {
@@ -184,5 +188,77 @@ code {
 	body {
 		@apply bg-background text-foreground;
 		letter-spacing: var(--tracking-normal);
+		background-image: radial-gradient(
+				circle at 20% 80%,
+				oklch(0.99 0.01 200 / 0.3) 0%,
+				transparent 50%
+			),
+			radial-gradient(
+				circle at 80% 20%,
+				oklch(0.99 0.01 30 / 0.2) 0%,
+				transparent 50%
+			);
+	}
+
+	.dark body {
+		background-image: radial-gradient(
+				circle at 20% 80%,
+				oklch(0.15 0.05 200 / 0.1) 0%,
+				transparent 50%
+			),
+			radial-gradient(
+				circle at 80% 20%,
+				oklch(0.15 0.05 30 / 0.05) 0%,
+				transparent 50%
+			);
+	}
+}
+
+/* Travel-specific component styles */
+@layer components {
+	/* Calendar event gradients for travel theme */
+	.travel-event {
+		background: linear-gradient(
+			135deg,
+			var(--chart-1),
+			oklch(from var(--chart-1) calc(l - 0.1) c h)
+		);
+	}
+
+	.activity-event {
+		background: linear-gradient(
+			135deg,
+			var(--chart-2),
+			oklch(from var(--chart-2) calc(l - 0.1) c h)
+		);
+	}
+
+	.food-event {
+		background: linear-gradient(
+			135deg,
+			var(--chart-3),
+			oklch(from var(--chart-3) calc(l - 0.1) c h)
+		);
+	}
+
+	/* Modern card styling */
+	.travel-card {
+		@apply bg-card/80 backdrop-blur-sm border border-border/50;
+		box-shadow: 0 4px 6px -1px hsl(var(--primary) / 0.03), 0 2px 4px -2px
+			hsl(var(--primary) / 0.03);
+	}
+
+	/* Enhanced buttons for travel app */
+	.travel-button-primary {
+		background: linear-gradient(
+			135deg,
+			var(--primary),
+			oklch(from var(--primary) calc(l + 0.1) c h)
+		);
+		@apply text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200;
+	}
+
+	.travel-button-secondary {
+		@apply bg-secondary/80 text-secondary-foreground backdrop-blur-sm border border-border/50 hover:bg-secondary/90 transition-all duration-200;
 	}
 }
