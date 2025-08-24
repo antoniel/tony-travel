@@ -30,7 +30,7 @@ export default function Calendar({ events = [] }: { events: AppEvent[] }) {
 		}
 		return firstEvent.startDate;
 	});
-	const [view, setView] = useState<"month" | "week">("week"); // Week as default
+	const [view, setView] = useState<"month" | "week">("week");
 
 	const year = currentDate.getFullYear();
 	const month = currentDate.getMonth();
@@ -119,15 +119,13 @@ const RenderWeekViews = (props: {
 	currentDate: Date;
 	setCurrentDate: (date: Date) => void;
 }) => {
+	const totalDays = getHowManyDaysTravel(props.events);
 	const weekDays = getWeekDays(props.events);
-	console.log({ currentDate: props.currentDate });
-	const totalDays = 35; // 5 weeks
 	const [dayWidth, setDayWidth] = useState(0);
 	const LEFT_GUTTER_PX = 80;
 	const containerRef = useRef<HTMLDivElement>(null);
 	console.log(containerRef.current?.clientWidth);
 
-	// Measure synchronously before paint so the first render already uses the correct width
 	useLayoutEffect(() => {
 		const el = containerRef.current;
 		if (!el) return;
@@ -139,25 +137,18 @@ const RenderWeekViews = (props: {
 			}
 		};
 
-		// Initial measure
 		measure();
 
-		// Watch size changes
 		const ro = new ResizeObserver(measure);
 		ro.observe(el);
 
 		return () => ro.disconnect();
 	}, []);
-	// useEffect(() => {
-	// 	setDayWidth((slideWindowRef.current?.clientWidth ?? 0) / 7);
-	// }, [slideWindowRef.current?.clientWidth]);
-	const centerWeekStart = 14; // Index where current week starts (2 weeks * 7 days)
+
+	const centerWeekStart = 14;
 	const headerScrollAreaRef = useRef<HTMLDivElement>(null);
 	const timeRulerRef = useRef<HTMLDivElement>(null);
 
-	// Create hourly time slots from 6 AM to 11 PM
-
-	// Auto-scroll to center on current week and handle infinite scrolling
 	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
 	useEffect(() => {
 		const headerScrollArea = headerScrollAreaRef.current?.querySelector(
@@ -169,12 +160,10 @@ const RenderWeekViews = (props: {
 
 		if (!headerScrollArea || !contentScrollArea) return;
 
-		// Center on current week (scroll to position of center week)
 		const centerPosition = centerWeekStart * dayWidth;
 		headerScrollArea.scrollLeft = centerPosition;
 		contentScrollArea.scrollLeft = centerPosition;
 
-		// Sync scroll between header and content
 		const syncHorizontalScroll = (source: HTMLElement, target: HTMLElement) => {
 			const handleScroll = () => {
 				if (target.scrollLeft !== source.scrollLeft) {
@@ -185,7 +174,6 @@ const RenderWeekViews = (props: {
 			return () => source.removeEventListener("scroll", handleScroll);
 		};
 
-		// Sync vertical scroll between content and time ruler
 		const syncVerticalScroll = (source: HTMLElement, target: HTMLElement) => {
 			const handleScroll = () => {
 				if (target.scrollTop !== source.scrollTop) {
@@ -216,7 +204,6 @@ const RenderWeekViews = (props: {
 		};
 	}, [props.currentDate]);
 
-	// Handle horizontal scroll with mousepad/trackpad and infinite scrolling
 	const handleWheel = (e: React.WheelEvent) => {
 		const headerScrollArea = headerScrollAreaRef.current?.querySelector(
 			"[data-radix-scroll-area-viewport]",
@@ -227,13 +214,8 @@ const RenderWeekViews = (props: {
 
 		if (!headerScrollArea || !contentScrollArea) return;
 
-		// Use content area for vertical scroll detection since header doesn't scroll vertically
 		const scrollArea = contentScrollArea;
 
-		// Enable horizontal scroll when:
-		// 1. Shift key is pressed (standard behavior)
-		// 2. Natural horizontal scroll (deltaX > 0)
-		// 3. At vertical scroll limits and trying to scroll vertically
 		const hasHorizontalScroll = e.deltaX !== 0;
 		const isShiftScroll = e.shiftKey;
 		const atVerticalTop = scrollArea.scrollTop === 0 && e.deltaY < 0;
@@ -241,7 +223,6 @@ const RenderWeekViews = (props: {
 			scrollArea.scrollTop >=
 				scrollArea.scrollHeight - scrollArea.clientHeight && e.deltaY > 0;
 
-		// Only handle if we're actually going to scroll horizontally
 		const shouldHandleHorizontally =
 			hasHorizontalScroll || isShiftScroll || atVerticalTop || atVerticalBottom;
 
@@ -250,24 +231,6 @@ const RenderWeekViews = (props: {
 				e.deltaX || (isShiftScroll ? e.deltaY : e.deltaY * 0.5);
 			headerScrollArea.scrollLeft += scrollAmount;
 			contentScrollArea.scrollLeft += scrollAmount;
-
-			// // Check for infinite scroll boundaries and adjust currentDate
-			// const maxScroll =
-			// 	contentScrollArea.scrollWidth - contentScrollArea.clientWidth;
-			// const scrollRatio = contentScrollArea.scrollLeft / maxScroll;
-
-			// // If scrolled too far left (< 20%), move currentDate back a week
-			// if (scrollRatio < 0.2) {
-			// 	const newDate = new Date(props.currentDate);
-			// 	newDate.setDate(props.currentDate.getDate() - 7);
-			// 	props.setCurrentDate(newDate);
-			// }
-			// // If scrolled too far right (> 80%), move currentDate forward a week
-			// else if (scrollRatio > 0.8) {
-			// 	const newDate = new Date(props.currentDate);
-			// 	newDate.setDate(props.currentDate.getDate() + 7);
-			// 	props.setCurrentDate(newDate);
-			// }
 		}
 	};
 
@@ -275,14 +238,13 @@ const RenderWeekViews = (props: {
 		const hours = date.getHours();
 		const minutes = date.getMinutes();
 
-		if (hours === 0 && minutes === 0) return 0; // All-day event at top
+		if (hours === 0 && minutes === 0) return 0;
 
-		// Calculate position relative to 6 AM start (each hour = 48px height)
-		const startHour = 6;
-		if (hours < startHour) return 0; // Before 6 AM
+		const startHour = 0;
+		if (hours < startHour) return 0;
 
-		const hourPosition = (hours - startHour) * 48; // 48px per hour (h-12)
-		const minutePosition = (minutes / 60) * 48; // Proportional minutes
+		const hourPosition = (hours - startHour) * 48;
+		const minutePosition = (minutes / 60) * 48;
 
 		return hourPosition + minutePosition;
 	};
@@ -295,11 +257,13 @@ const RenderWeekViews = (props: {
 		>
 			{/* Fixed Time Column */}
 			<div className="absolute left-0 top-0 bottom-0 w-20 bg-white border-r z-20">
-				{/* Corner space for header */}
 				<div className="h-16 border-b bg-gray-50" />
-				{/* Time slots */}
 				<div className="absolute top-16 left-0 right-0 bottom-0">
-					<ScrollArea ref={timeRulerRef} className="h-full" enableThumb={false}>
+					<ScrollArea
+						ref={timeRulerRef}
+						className="h-full pointer-events-none"
+						enableThumb={false}
+					>
 						<div>
 							{TIME_SLOTS.map((time) => (
 								<div
@@ -374,15 +338,13 @@ const RenderWeekViews = (props: {
 													? getTimePositionFromDate(event.startDate)
 													: eventIndex * 20;
 
-												// Calculate event height based on duration
-												let eventHeight = 18; // Default height for all-day events
+												let eventHeight = 18;
 												if (eventTime) {
 													const startTime = event.startDate.getTime();
 													const endTime = event.endDate.getTime();
 													const durationMs = endTime - startTime;
 													const durationMinutes = durationMs / (1000 * 60);
 
-													// Convert duration to pixels (48px per hour = 0.8px per minute)
 													const calculatedHeight = Math.max(
 														18,
 														(durationMinutes * 48) / 60,
@@ -432,23 +394,17 @@ const RenderWeekViews = (props: {
 };
 
 const getWeekDays = (events: AppEvent[]) => {
-	const [firstEvent, ...rest] = events.sort((a, b) => {
+	const [firstEvent] = events.sort((a, b) => {
 		const aTime = a.startDate.getTime();
 		const bTime = b.startDate.getTime();
 		return aTime - bTime;
 	});
-	const lastEvent = rest.at(-1);
-	if (!lastEvent) {
-		return [];
-	}
 	const startOfWeek = new Date(firstEvent.startDate);
 
-	// Create a sliding window of 5 weeks (35 days) centered on current week
 	const weekDays = [];
-	const totalWeeks = 5;
-	const startOffset = 0; // 2 weeks before
 
-	for (let i = startOffset; i < startOffset + totalWeeks * 7; i++) {
+	const totalDays = getHowManyDaysTravel(events);
+	for (let i = 0; i < totalDays; i++) {
 		const date = new Date(startOfWeek);
 		date.setDate(startOfWeek.getDate() + i);
 		weekDays.push(date);
@@ -472,10 +428,9 @@ const getTimeFromDate = (date: Date) => {
 	const minutes = date.getMinutes();
 
 	if (hours === 0 && minutes === 0) {
-		return null; // All-day event
+		return null;
 	}
 
-	// Format as "8:30a" or "3:00p"
 	const displayHour = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours;
 	const amPm = hours >= 12 ? "p" : "a";
 	const minuteStr =
@@ -486,10 +441,33 @@ const getTimeFromDate = (date: Date) => {
 
 const getEventColor = (event: AppEvent) => {
 	const typeColors = {
-		travel: "#10b981", // Green
-		food: "#f59e0b", // Orange
-		activity: "#8b5cf6", // Purple
+		travel: "#10b981",
+		food: "#f59e0b",
+		activity: "#8b5cf6",
 	};
 
 	return typeColors[event.type];
+};
+
+const getHowManyDaysTravel = (events: AppEvent[]) => {
+	const [firstEvent] = events.sort((a, b) => {
+		const aTime = a.startDate.getTime();
+		const bTime = b.startDate.getTime();
+		return aTime - bTime;
+	});
+	const [lastEvent] = events.sort((a, b) => {
+		const aTime = a.endDate.getTime();
+		const bTime = b.endDate.getTime();
+		return bTime - aTime;
+	});
+	if (!lastEvent) {
+		return 0;
+	}
+	const firstDay = firstEvent.startDate;
+	const lastDay = lastEvent.endDate;
+	return (
+		Math.ceil(
+			(lastDay.getTime() - firstDay.getTime()) / (1000 * 60 * 60 * 24),
+		) + 1
+	);
 };
