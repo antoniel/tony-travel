@@ -63,10 +63,10 @@ export default function Calendar({
 	};
 
 	return (
-		<div className="bg-card rounded-lg shadow-sm border">
-			<>
+		<>
+			<div className="bg-card rounded-lg mb-2 border">
 				{/* Header */}
-				<div className="flex items-center justify-between p-4 border-b">
+				<div className="flex items-center justify-between p-4">
 					<div className="flex items-center space-x-4">
 						<div className="flex items-center space-x-2">
 							<button
@@ -97,7 +97,8 @@ export default function Calendar({
 						{`${MONTHS[month]} ${year}`}
 					</h2>
 				</div>
-
+			</div>
+			<div className="bg-card rounded-xl overflow-hidden">
 				<div className="p-0">
 					<RenderWeekViews
 						currentDate={currentDate}
@@ -107,8 +108,8 @@ export default function Calendar({
 						onUpdateEvent={onUpdateEvent}
 					/>
 				</div>
-			</>
-		</div>
+			</div>
+		</>
 	);
 }
 
@@ -464,7 +465,6 @@ const RenderWeekViews = (props: {
 		>
 			{/* Fixed Time Column */}
 			<div className="absolute left-0 top-0 bottom-0 w-20 bg-card border-r z-20">
-				<div className="h-16 border-b bg-card" />
 				<div className="absolute top-16 left-0 right-0 bottom-0">
 					<ScrollArea
 						ref={timeRulerRef}

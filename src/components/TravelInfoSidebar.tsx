@@ -39,20 +39,20 @@ export default function TravelInfoSidebar({
 			title: "Food Tours & Markets",
 			description:
 				"Explore local cuisine through guided market tours and street food experiences",
-			color: "text-red-600",
+			color: "text-chart-3",
 			icon: UtensilsCrossed,
 		},
 		{
 			title: "Cultural Sites",
 			description:
 				"Visit historical landmarks and museums showcasing local heritage",
-			color: "text-blue-600",
+			color: "text-chart-1",
 			icon: Building,
 		},
 		{
 			title: "Adventure Activities",
 			description: "Sandboarding, dune buggy rides, and desert exploration",
-			color: "text-green-600",
+			color: "text-chart-5",
 			icon: Mountain,
 		},
 	];
@@ -163,7 +163,7 @@ export default function TravelInfoSidebar({
 						<div className="grid grid-cols-2 gap-3 mb-4">
 							<Card className="p-3">
 								<div className="flex items-center gap-2">
-									<Calendar className="h-4 w-4 text-blue-500" />
+									<Calendar className="h-4 w-4 text-chart-1" />
 									<div>
 										<div className="text-lg font-bold">{totalDays}</div>
 										<div className="text-xs text-muted-foreground">Days</div>
@@ -173,7 +173,7 @@ export default function TravelInfoSidebar({
 
 							<Card className="p-3">
 								<div className="flex items-center gap-2">
-									<Clock className="h-4 w-4 text-green-500" />
+									<Clock className="h-4 w-4 text-chart-3" />
 									<div>
 										<div className="text-lg font-bold">{totalEvents}</div>
 										<div className="text-xs text-muted-foreground">Events</div>
@@ -183,7 +183,7 @@ export default function TravelInfoSidebar({
 
 							<Card className="p-3">
 								<div className="flex items-center gap-2">
-									<Bed className="h-4 w-4 text-purple-500" />
+									<Bed className="h-4 w-4 text-chart-4" />
 									<div>
 										<div className="text-lg font-bold">
 											{totalAccommodations}
@@ -195,7 +195,7 @@ export default function TravelInfoSidebar({
 
 							<Card className="p-3">
 								<div className="flex items-center gap-2">
-									<DollarSign className="h-4 w-4 text-orange-500" />
+									<DollarSign className="h-4 w-4 text-chart-2" />
 									<div>
 										<div className="text-lg font-bold">${totalCost}</div>
 										<div className="text-xs text-muted-foreground">Lodging</div>
@@ -392,8 +392,8 @@ export default function TravelInfoSidebar({
 									{locationInfo.emergencyNumbers && (
 										<div className="mt-4 pt-3 border-t">
 											<div className="flex items-center gap-2 mb-2">
-												<Phone className="h-4 w-4 text-red-500" />
-												<span className="text-sm font-semibold text-red-600">
+												<Phone className="h-4 w-4 text-destructive" />
+												<span className="text-sm font-semibold text-destructive">
 													Emergency Contacts
 												</span>
 											</div>
@@ -492,7 +492,7 @@ export default function TravelInfoSidebar({
 										<ul className="space-y-1">
 											{visaInfo.vaccinations.map((vaccine) => (
 												<li key={vaccine} className="flex items-center gap-2">
-													<div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+													<div className="w-1.5 h-1.5 bg-chart-3 rounded-full" />
 													<span className="text-xs">{vaccine}</span>
 												</li>
 											))}
@@ -519,7 +519,7 @@ export default function TravelInfoSidebar({
 							<CardContent className="p-4">
 								<div className="space-y-3 text-sm">
 									<div className="flex items-start gap-3">
-										<div className="w-2 h-2 bg-blue-500 rounded-full mt-1.5 flex-shrink-0" />
+										<div className="w-2 h-2 bg-chart-1 rounded-full mt-1.5 flex-shrink-0" />
 										<div>
 											<strong>Altitude Sickness:</strong> Take it easy your
 											first day in Cusco (3,400m). Drink coca tea and avoid
@@ -528,7 +528,7 @@ export default function TravelInfoSidebar({
 									</div>
 
 									<div className="flex items-start gap-3">
-										<div className="w-2 h-2 bg-green-500 rounded-full mt-1.5 flex-shrink-0" />
+										<div className="w-2 h-2 bg-chart-3 rounded-full mt-1.5 flex-shrink-0" />
 										<div>
 											<strong>Currency:</strong> Bring USD cash for better
 											exchange rates. ATMs are widely available in cities.
@@ -536,7 +536,7 @@ export default function TravelInfoSidebar({
 									</div>
 
 									<div className="flex items-start gap-3">
-										<div className="w-2 h-2 bg-orange-500 rounded-full mt-1.5 flex-shrink-0" />
+										<div className="w-2 h-2 bg-chart-2 rounded-full mt-1.5 flex-shrink-0" />
 										<div>
 											<strong>Food Safety:</strong> Stick to bottled water and
 											well-cooked food. Street food is generally safe in tourist
@@ -545,7 +545,7 @@ export default function TravelInfoSidebar({
 									</div>
 
 									<div className="flex items-start gap-3">
-										<div className="w-2 h-2 bg-purple-500 rounded-full mt-1.5 flex-shrink-0" />
+										<div className="w-2 h-2 bg-chart-4 rounded-full mt-1.5 flex-shrink-0" />
 										<div>
 											<strong>Transportation:</strong> Book buses in advance for
 											popular routes. Uber is available in Lima and Cusco.
@@ -553,7 +553,7 @@ export default function TravelInfoSidebar({
 									</div>
 
 									<div className="flex items-start gap-3">
-										<div className="w-2 h-2 bg-red-500 rounded-full mt-1.5 flex-shrink-0" />
+										<div className="w-2 h-2 bg-destructive rounded-full mt-1.5 flex-shrink-0" />
 										<div>
 											<strong>Safety:</strong> Keep copies of important
 											documents. Avoid displaying expensive items in public.

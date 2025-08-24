@@ -39,7 +39,7 @@ function CalendarPage() {
 				<div className="flex-1 py-6">
 					<div className="max-w-6xl mx-auto px-4 h-full">
 						<div className="mb-4">
-							<h1 className="text-3xl font-bold text-gray-900 mb-2">
+							<h1 className="text-3xl font-bold text-foreground mb-2">
 								Trip Calendar
 							</h1>
 							<p className="text-muted-foreground">
