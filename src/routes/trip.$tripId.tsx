@@ -1,10 +1,10 @@
 import Calendar from "@/components/Calendar";
 import TravelInfoSidebar from "@/components/TravelInfoSidebar";
-import { colombiaTravel } from "@/data/colombia-travel";
-import { peruTravel } from "@/data/peru-travel";
-import type { AppEvent, Travel } from "@/lib/types";
+import type { AppEvent } from "@/lib/types";
+import { orpc } from "@/orpc/client";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/trip/$tripId")({
 	component: TripCalendarPage,
@@ -13,32 +13,24 @@ export const Route = createFileRoute("/trip/$tripId")({
 function TripCalendarPage() {
 	const { tripId } = Route.useParams();
 
-	// Mock data - in the future this will be fetched from DB based on tripId
-	const travel = useMemo(() => {
-		// Mock travel data lookup
-		const travels: Record<string, Travel> = {
-			[peruTravel.id]: peruTravel,
-			[colombiaTravel.id]: colombiaTravel,
-		};
+	const travelQuery = useQuery(
+		orpc.getTravel.queryOptions({ input: { id: tripId } }),
+	);
+	const travel = travelQuery.data;
 
-		return travels[tripId] || peruTravel; // Fallback to Peru if not found
-	}, [tripId]);
+	const [events, setEvents] = useState<AppEvent[]>([]);
 
-	const [events, setEvents] = useState<AppEvent[]>(() => {
-		const eventsWithDependencies = travel.events.reduce<AppEvent[]>(
+	useEffect(() => {
+		const eventsWithDependencies = travel?.events.reduce<AppEvent[]>(
 			(acc, event) => {
-				// Add the main event
 				const mainEvent = { ...event };
-
-				// Add dependencies as separate events if they exist
 				const dependencies: AppEvent[] = event.dependencies || [];
-
 				return acc.concat([mainEvent, ...dependencies]);
 			},
 			[],
 		);
-		return eventsWithDependencies;
-	});
+		setEvents(eventsWithDependencies ?? []);
+	}, [travel?.events]);
 
 	const handleAddEvent = (newEvent: Omit<AppEvent, "id">) => {
 		const eventWithId: AppEvent = {
@@ -63,14 +55,14 @@ function TripCalendarPage() {
 		<div className="min-h-screen bg-background">
 			<div className="flex h-screen">
 				{/* Travel Info Sidebar */}
-				<TravelInfoSidebar travel={travel} />
+				<TravelInfoSidebar travel={travel ?? undefined} />
 
 				{/* Main Content */}
 				<div className="flex-1 py-6">
 					<div className=" mx-auto px-4 h-full">
 						<div className="mb-4">
 							<h1 className="text-3xl font-bold text-foreground mb-2">
-								{travel.name}
+								{travel?.name}
 							</h1>
 							<p className="text-muted-foreground">
 								Gerencie seu itinerário de viagem

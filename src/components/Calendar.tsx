@@ -395,11 +395,11 @@ const RenderWeekViews = (props: {
 
 const getWeekDays = (events: AppEvent[]) => {
 	const [firstEvent] = events.sort((a, b) => {
-		const aTime = a.startDate.getTime();
-		const bTime = b.startDate.getTime();
+		const aTime = a?.startDate?.getTime();
+		const bTime = b?.startDate?.getTime();
 		return aTime - bTime;
 	});
-	const startOfWeek = new Date(firstEvent.startDate);
+	const startOfWeek = new Date(firstEvent?.startDate ?? new Date());
 
 	const weekDays = [];
 
@@ -474,7 +474,10 @@ const getEventLayout = (events: AppEvent[]) => {
 		return a.endDate.getTime() - b.endDate.getTime();
 	});
 
-	const eventLayouts = new Map<string, { column: number; totalColumns: number; width: number; left: number }>();
+	const eventLayouts = new Map<
+		string,
+		{ column: number; totalColumns: number; width: number; left: number }
+	>();
 	const columns: AppEvent[][] = [];
 
 	// Assign each event to a column
@@ -483,8 +486,10 @@ const getEventLayout = (events: AppEvent[]) => {
 
 		// Find the first column where this event can fit (no overlap)
 		for (let i = 0; i < columns.length; i++) {
-			const hasOverlap = columns[i].some(existingEvent => 
-				event.startDate < existingEvent.endDate && event.endDate > existingEvent.startDate
+			const hasOverlap = columns[i].some(
+				(existingEvent) =>
+					event.startDate < existingEvent.endDate &&
+					event.endDate > existingEvent.startDate,
 			);
 
 			if (!hasOverlap) {
@@ -516,7 +521,10 @@ const getEventLayout = (events: AppEvent[]) => {
 		// Look for other events that overlap
 		for (const otherEvent of sortedEvents) {
 			if (otherEvent.id !== event.id && !processedEvents.has(otherEvent.id)) {
-				if (eventStart < otherEvent.endDate && eventEnd > otherEvent.startDate) {
+				if (
+					eventStart < otherEvent.endDate &&
+					eventEnd > otherEvent.startDate
+				) {
 					overlappingEvents.push(otherEvent);
 				}
 			}
@@ -552,7 +560,7 @@ const getEventLayout = (events: AppEvent[]) => {
 				column: columnIndex,
 				totalColumns,
 				width,
-				left
+				left,
 			});
 
 			processedEvents.add(overlappingEvent.id);
@@ -866,74 +874,74 @@ const DayCell = ({
 				{(() => {
 					const eventLayouts = getEventLayout(dayEvents);
 					return dayEvents.map((event) => {
-					// For multi-day events, calculate display positions for this specific day
-					const currentDayStart = new Date(date);
-					currentDayStart.setHours(0, 0, 0, 0);
-					const currentDayEnd = new Date(currentDayStart);
-					currentDayEnd.setDate(currentDayEnd.getDate() + 1);
+						// For multi-day events, calculate display positions for this specific day
+						const currentDayStart = new Date(date);
+						currentDayStart.setHours(0, 0, 0, 0);
+						const currentDayEnd = new Date(currentDayStart);
+						currentDayEnd.setDate(currentDayEnd.getDate() + 1);
 
-					const eventStart = new Date(event.startDate);
-					const eventEnd = new Date(event.endDate);
+						const eventStart = new Date(event.startDate);
+						const eventEnd = new Date(event.endDate);
 
-					// Determine actual display times for this day
-					const displayStart =
-						eventStart < currentDayStart ? currentDayStart : eventStart;
-					// For events that end after this day, show them ending at 23:59:59
-					const endOfDay = new Date(currentDayEnd);
-					endOfDay.setMilliseconds(-1); // This sets it to 23:59:59.999
-					const displayEnd = eventEnd >= currentDayEnd ? endOfDay : eventEnd;
+						// Determine actual display times for this day
+						const displayStart =
+							eventStart < currentDayStart ? currentDayStart : eventStart;
+						// For events that end after this day, show them ending at 23:59:59
+						const endOfDay = new Date(currentDayEnd);
+						endOfDay.setMilliseconds(-1); // This sets it to 23:59:59.999
+						const displayEnd = eventEnd >= currentDayEnd ? endOfDay : eventEnd;
 
-					const topPosition = getTimePositionFromDate(displayStart);
+						const topPosition = getTimePositionFromDate(displayStart);
 
-					// Calculate event height based on display times for this day
-					const displayStartTime = displayStart.getTime();
-					const displayEndTime = displayEnd.getTime();
-					const durationMs = displayEndTime - displayStartTime;
-					const durationMinutes = durationMs / (1000 * 60);
+						// Calculate event height based on display times for this day
+						const displayStartTime = displayStart.getTime();
+						const displayEndTime = displayEnd.getTime();
+						const durationMs = displayEndTime - displayStartTime;
+						const durationMinutes = durationMs / (1000 * 60);
 
-					let eventHeight = 18; // Default minimum height
-					if (durationMinutes > 0) {
-						// Convert duration to pixels (48px per hour = 0.8px per minute)
-						const calculatedHeight = Math.max(
-							24, // Minimum height for timed events
-							(durationMinutes * 48) / 60,
+						let eventHeight = 18; // Default minimum height
+						if (durationMinutes > 0) {
+							// Convert duration to pixels (48px per hour = 0.8px per minute)
+							const calculatedHeight = Math.max(
+								24, // Minimum height for timed events
+								(durationMinutes * 48) / 60,
+							);
+							eventHeight = calculatedHeight;
+						}
+
+						// Only show time if event has sufficient height (>= 40px, roughly 50+ minutes)
+						const showTime = eventHeight >= 40;
+						const startTimeStr = getTimeFromDate(displayStart);
+						const endTimeStr = getTimeFromDate(displayEnd);
+						const timeDisplay =
+							showTime &&
+							startTimeStr &&
+							endTimeStr &&
+							startTimeStr !== endTimeStr
+								? `${startTimeStr} - ${endTimeStr}`
+								: showTime
+									? startTimeStr
+									: null;
+
+						const isDragging = draggingEvent?.event.id === event.id;
+
+						const layout = eventLayouts.get(event.id);
+
+						return (
+							<EventBlock
+								key={event.id}
+								event={event}
+								topPosition={topPosition}
+								eventHeight={eventHeight}
+								isDragging={isDragging}
+								onMouseDown={onEventMouseDown}
+								onEventClick={onEventClick}
+								onUpdateEvent={onUpdateEvent}
+								dayIndex={dayIndex}
+								timeDisplay={timeDisplay}
+								layout={layout}
+							/>
 						);
-						eventHeight = calculatedHeight;
-					}
-
-					// Only show time if event has sufficient height (>= 40px, roughly 50+ minutes)
-					const showTime = eventHeight >= 40;
-					const startTimeStr = getTimeFromDate(displayStart);
-					const endTimeStr = getTimeFromDate(displayEnd);
-					const timeDisplay =
-						showTime &&
-						startTimeStr &&
-						endTimeStr &&
-						startTimeStr !== endTimeStr
-							? `${startTimeStr} - ${endTimeStr}`
-							: showTime
-								? startTimeStr
-								: null;
-
-					const isDragging = draggingEvent?.event.id === event.id;
-
-					const layout = eventLayouts.get(event.id);
-
-					return (
-						<EventBlock
-							key={event.id}
-							event={event}
-							topPosition={topPosition}
-							eventHeight={eventHeight}
-							isDragging={isDragging}
-							onMouseDown={onEventMouseDown}
-							onEventClick={onEventClick}
-							onUpdateEvent={onUpdateEvent}
-							dayIndex={dayIndex}
-							timeDisplay={timeDisplay}
-							layout={layout}
-						/>
-					);
 					});
 				})()}
 			</div>

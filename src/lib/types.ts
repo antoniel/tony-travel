@@ -50,6 +50,7 @@ export interface AppEvent {
 	title: string;
 	startDate: Date;
 	endDate: Date;
+	estimatedCost?: number;
 	type: "travel" | "food" | "activity";
 	location?: string;
 	/**

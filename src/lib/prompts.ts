@@ -1,0 +1,182 @@
+type StartPlanTravelProps = {
+	tripDates: {
+		start: string;
+		end: string;
+	};
+	budget: {
+		perPerson: number;
+		currency: string;
+	};
+	destination: string;
+	groupSize: number;
+	departureCities: string[];
+	schemaOverride?: string;
+};
+export function startPlanTravel({
+	tripDates,
+	budget,
+	destination,
+	groupSize,
+	departureCities,
+}: StartPlanTravelProps) {
+	const inputsJson = {
+		TRIP_DATES: tripDates,
+		BUDGET: budget,
+		DESTINATION: destination,
+		GROUP_SIZE: groupSize,
+		DEPARTURE_CITIES: departureCities,
+	};
+
+	return `
+  <Task>
+Atuar como um “Travel Planner” para um grupo brasileiro aventureiro que prioriza experiências sobre conforto, com foco em UM ÚNICO DESTINO-ALVO. O objetivo é gerar APENAS um objeto estruturado de roteiro. O assistente deve:
+1) Analisar **voos multi-origem** (múltiplas cidades de saída no Brasil) para o **destino-alvo**, calcular **média de custo** por origem, sugerir **janelas flexíveis** e aplicar **equalização de custos de voo** (quem paga mais recebe crédito de hospedagem).
+2) Confirmar que o **destino-alvo** oferece as atividades requeridas (trilha, água/praia/laguna/rápidos, adrenalina como parapente/tirolesa/MTB/canyoning), com **preços reais** e **descontos de grupo**, e uma logística simples.
+3) Alocar orçamento com foco em aventura: **Atividades 60%**, **Comida 20%**, **Hospedagem 15%**, **Contingência 5%**, e **reserva extra de 15%** para emergências (grupo aventureiro).
+4) Planejar **logística flexível** (chegadas escalonadas, ponto de encontro, SIM local/WhatsApp, transporte até atividades).
+5) Aba “segurança & prático”: gestão de dinheiro (cartões x cash), seguro viagem com coberturas para esportes, timeline de compra de voos/atividades e apps/plataformas úteis.
+6) ENTREGAR APENAS um **OUTPUT ESTRUTURADO** seguindo o schema 'Travel', 'Accommodation', 'LocationInfo', 'VisaInfo' e 'AppEvent' (incluindo **café da manhã, almoço e jantar** todos os dias e **dependencies** para deslocamentos) — no formato JSON.
+7) Escrever **todas as cifras em R$ (BRL)**; usar valores realistas quando faltar fonte.
+</Task>
+
+
+<Inputs>
+${JSON.stringify(inputsJson, null, 2)}
+</Inputs>
+
+
+<Instructions Structure>
+1) Role & idioma (pt-BR). Escopo: UM destino-alvo.
+2) Variáveis: TRIP_DATES, BUDGET, DESTINATION, GROUP_SIZE, DEPARTURE_CITIES, SCHEMA_OVERRIDE (opcional).
+3) Validar entradas; se faltar algo, assumir valores plausíveis e prosseguir.
+4) Converter valores para BRL; refletir custos em \`estimatedCost\` de eventos e, quando apropriado, em \`accommodation.price\`.
+5) Produzir APENAS o objeto 'Travel' completo (JSON) conforme schema, cobrindo todo o período com 3 refeições/dia e dependencies de deslocamento.
+6) Garantir que o total estimado por pessoa ≤ BUDGET.perPerson; se exceder, ajustar escolhas (hostel/atividades) internamente no plano.
+7) Formato de resposta: ver seção “Formato da Resposta (Obrigatório)”.
+</Instructions Structure>
+
+
+<Instructions>
+Você será um planejador de viagem para um grupo brasileiro aventureiro. Quando eu escrever **BEGIN PLANNING**, siga estas regras.
+
+
+Entradas
+<trip_dates>
+$tripDates.start- $tripDates.end
+</trip_dates>
+
+$budget.perPerson$budget.currency
+
+<group_size>
+$groupSize
+</group_size>
+
+<destination>
+$destination
+</destination>
+
+<departure_cities>
+$departureCities.join(", ")
+</departure_cities>
+
+Regras gerais
+	•	Idioma: português (Brasil).
+	•	Não peça confirmação se as entradas já existirem; tome decisões prudentes e documente suposições.
+	•	Todas as cifras em R$ (BRL). Se não for fornecido câmbio, use taxa média do dia e informe a fonte/assunção.
+	•	Prioridade: experiências > conforto. Hospedagem = lugar para dormir/guardar bagagem.
+	•	Orçamento on-ground por dia: Atividades 60%, Comida 20%, Hospedagem 15%, Contingência 5% + Reserva extra de 15% do subtotal on-ground para emergências (fora da divisão 60/20/15/5).
+	•	Equalização de voos: calcule o custo médio RT do grupo para o destino-alvo (média das cidades de saída). Quem pagou acima da média recebe crédito de hospedagem; quem pagou abaixo da média contribui.
+	•	Logística: prever chegadas escalonadas, ponto de encontro no 1º dia, SIM/eSIM local, grupos de WhatsApp, transporte a atividades (metrô/ônibus/van).
+	•	Segurança & prático: cartões x cash, ATMs, seguro para esportes de aventura e altitude quando aplicável, timeline de compra (voos 6–8 semanas antes; passeios de alta demanda com antecedência), apps/sites úteis.
+	•	Validação das atividades: o destino-alvo deve cumprir todas as atividades requeridas (trilha/trekking; água: mar/laguna/rápidos; adrenalina: parapente/tirolesa/MTB/canyoning). Traga preços reais com faixas e aponte descontos de grupo quando existirem.
+
+Schema (padrão)
+Use estes tipos se não houver schema_override:
+
+${schema}
+
+Formato da Resposta (Obrigatório)
+	•	Responda EXCLUSIVAMENTE com UM ÚNICO bloco de código markdown anotado como \`json\`.
+	•	Dentro do bloco deve existir APENAS o objeto 'Travel' completo, seguindo exatamente o schema abaixo.
+	•	Sem texto fora do bloco, sem comentários, sem múltiplos blocos.
+	•	Datas como strings ISO 8601 (ex.: "2026-01-10T08:00:00-05:00"). Valores monetários em BRL.
+
+Cálculos & verificações
+	•	Converter tudo para R$; use taxa média atual para conversões.
+	•	Checar que o Total estimado por pessoa (voo médio + on-ground + reserva 15% + deslocamentos internos) ≤ budget.perPerson.
+	•	Se exceder, ajuste escolhas (ex.: hostel mais barato, atividade alternativa, ajuste de dias) e recalcule o total.
+	•	Assumir valores plausíveis internamente quando necessário.
+
+Estilo
+	•	Objetivo e direto.
+	•	Não inclua nenhum texto fora do bloco \`json\` exigido.
+
+Início
+BEGIN PLANNING
+
+`;
+}
+
+const schema = `
+export type Travel = {
+	id: string;
+	name: string;
+	destination: string;
+	startDate: Date;
+	endDate: Date;
+	accommodation: Accommodation[];
+	events: AppEvent[];
+	locationInfo: LocationInfo;
+	visaInfo: VisaInfo;
+};
+
+export type Accommodation = {
+	id: string;
+	name: string;
+	type: "hotel" | "hostel" | "airbnb" | "resort" | "other";
+	startDate: Date;
+	endDate: Date;
+	address?: string;
+	rating?: number;
+	price?: number;
+	currency?: string;
+};
+
+export type LocationInfo = {
+	destination: string;
+	country: string;
+	climate: string;
+	currency: string;
+	language: string;
+	timeZone: string;
+	bestTimeToVisit: string;
+	emergencyNumbers?: {
+		police?: string;
+		medical?: string;
+		embassy?: string;
+	};
+};
+
+export type VisaInfo = {
+	required: boolean;
+	stayDuration: string;
+	documents: string[];
+	vaccinations: string[];
+	entryRequirements?: string[];
+};
+
+export interface AppEvent {
+	id: string;
+	title: string;
+	startDate: Date;
+	endDate: Date;
+	estimatedCost?: number;
+	type: "travel" | "food" | "activity";
+	location?: string;
+	/**
+	 * Some events need to include locomotion to the location.
+	 * so you should include the locomotion event as a dependency.
+	 */
+	dependencies?: AppEvent[];
+}
+`;

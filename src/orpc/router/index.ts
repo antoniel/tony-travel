@@ -1,6 +1,5 @@
-import { addTodo, listTodos } from './todos'
+import * as travelRoutes from "../modules/travel/travel.routes";
 
 export default {
-  listTodos,
-  addTodo,
-}
+	...travelRoutes,
+};

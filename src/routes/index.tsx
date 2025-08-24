@@ -1,6 +1,6 @@
 import TripSelection from "@/components/TripSelection";
-import { colombiaTravel } from "@/data/colombia-travel";
-import { peruTravel } from "@/data/peru-travel";
+import { orpc } from "@/orpc/client";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
@@ -8,8 +8,7 @@ export const Route = createFileRoute("/")({
 });
 
 function HomePage() {
-	// Mock predefined trips - in the future this will come from DB
-	const predefinedTrips = [peruTravel, colombiaTravel];
+	const listTravels = useQuery(orpc.listTravels.queryOptions({ input: {} }));
 
-	return <TripSelection predefinedTrips={predefinedTrips} />;
+	return <TripSelection predefinedTrips={listTravels.data ?? []} />;
 }
