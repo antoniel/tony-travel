@@ -289,15 +289,28 @@ const RenderWeekViews = (props: {
 							}}
 						>
 							{weekDays.map((date) => {
+								const isWeekend = date.getDay() === 0 || date.getDay() === 6; // Sunday or Saturday
+								const isToday = new Date().toDateString() === date.toDateString();
+								
 								return (
 									<div
 										key={date.toISOString()}
-										className={`border-r last:border-r-0 p-2 text-center ${"bg-white"}`}
+										className={`border-r last:border-r-0 p-2 text-center ${
+											isWeekend ? "bg-gray-100" : "bg-white"
+										}`}
 									>
-										<div className="text-xs text-gray-500 uppercase">
+										<div className={`text-xs uppercase ${
+											isWeekend ? "text-gray-600" : "text-gray-500"
+										}`}>
 											{DAYS_OF_WEEK[date.getDay()]}
 										</div>
-										<div className={`text-lg font-medium ${"text-gray-900"}`}>
+										<div className={`text-lg font-medium ${
+											isToday 
+												? "text-blue-600 font-bold" 
+												: isWeekend 
+													? "text-gray-700" 
+													: "text-gray-900"
+										}`}>
 											{date.getDate()}
 										</div>
 									</div>
@@ -319,11 +332,14 @@ const RenderWeekViews = (props: {
 						>
 							{weekDays.map((date) => {
 								const dayEvents = getEventsForDate(props.events, date);
+								const isWeekend = date.getDay() === 0 || date.getDay() === 6; // Sunday or Saturday
 
 								return (
 									<div
 										key={date.toISOString()}
-										className={"border-r last:border-r-0 relative"}
+										className={`border-r last:border-r-0 relative ${
+											isWeekend ? "bg-gray-100" : ""
+										}`}
 									>
 										{/* Hour lines */}
 										{TIME_SLOTS.map((slot) => (
@@ -338,30 +354,34 @@ const RenderWeekViews = (props: {
 													? getTimePositionFromDate(event.startDate)
 													: eventIndex * 20;
 
-												let eventHeight = 18;
-												if (eventTime) {
-													const startTime = event.startDate.getTime();
-													const endTime = event.endDate.getTime();
-													const durationMs = endTime - startTime;
-													const durationMinutes = durationMs / (1000 * 60);
+												// Calculate event height and duration
+												const startTime = event.startDate.getTime();
+												const endTime = event.endDate.getTime();
+												const durationMs = endTime - startTime;
+												const durationMinutes = durationMs / (1000 * 60);
 
+												let eventHeight = 18; // Default minimum height
+												if (eventTime && durationMinutes > 0) {
+													// Convert duration to pixels (48px per hour = 0.8px per minute)
 													const calculatedHeight = Math.max(
-														18,
+														24, // Minimum height for timed events
 														(durationMinutes * 48) / 60,
 													);
 													eventHeight = calculatedHeight;
 												}
 
-												const endTime = getTimeFromDate(event.endDate);
-												const timeDisplay =
-													eventTime && endTime && eventTime !== endTime
-														? `${eventTime} - ${endTime}`
-														: eventTime;
+												// Only show time if event has sufficient height (>= 40px, roughly 50+ minutes)
+												const showTime = eventHeight >= 40;
+												const startTimeStr = getTimeFromDate(event.startDate);
+												const endTimeStr = getTimeFromDate(event.endDate);
+												const timeDisplay = showTime && startTimeStr && endTimeStr && startTimeStr !== endTimeStr
+													? `${startTimeStr} - ${endTimeStr}`
+													: showTime ? startTimeStr : null;
 
 												return (
 													<div
 														key={event.id}
-														className="absolute left-1 right-1 text-xs px-1 py-0.5 rounded text-white pointer-events-auto z-10"
+														className="absolute left-1 right-1 text-xs px-1 py-0.5 rounded text-white pointer-events-auto z-10 flex flex-col justify-start"
 														style={{
 															backgroundColor: getEventColor(event),
 															top: `${topPosition}px`,
@@ -370,14 +390,16 @@ const RenderWeekViews = (props: {
 														}}
 														title={`${timeDisplay ? `${timeDisplay} ` : ""}${event.title}`}
 													>
-														<div className="truncate">
-															{timeDisplay && (
-																<span className="font-semibold">
-																	{timeDisplay}{" "}
-																</span>
-															)}
+														{/* Title first - always the main focus */}
+														<div className="truncate font-semibold leading-tight">
 															{event.title}
 														</div>
+														{/* Time below, only if event has sufficient height */}
+														{timeDisplay && (
+															<div className="text-xs opacity-75 leading-tight mt-0.5">
+																{timeDisplay}
+															</div>
+														)}
 													</div>
 												);
 											})}
