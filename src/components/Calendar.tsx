@@ -246,28 +246,8 @@ const RenderWeekViews = (props: {
 
 			const scrollAmount =
 				e.deltaX || (isShiftScroll ? e.deltaY : e.deltaY * 0.5);
-
-			// Apply scroll to both areas (they will sync automatically)
 			headerScrollArea.scrollLeft += scrollAmount;
 			contentScrollArea.scrollLeft += scrollAmount;
-
-			// Check for infinite scroll boundaries and adjust currentDate
-			const maxScroll =
-				contentScrollArea.scrollWidth - contentScrollArea.clientWidth;
-			const scrollRatio = contentScrollArea.scrollLeft / maxScroll;
-
-			// If scrolled too far left (< 20%), move currentDate back a week
-			if (scrollRatio < 0.2) {
-				const newDate = new Date(props.currentDate);
-				newDate.setDate(props.currentDate.getDate() - 7);
-				props.setCurrentDate(newDate);
-			}
-			// If scrolled too far right (> 80%), move currentDate forward a week
-			else if (scrollRatio > 0.8) {
-				const newDate = new Date(props.currentDate);
-				newDate.setDate(props.currentDate.getDate() + 7);
-				props.setCurrentDate(newDate);
-			}
 		}
 	};
 
@@ -321,30 +301,15 @@ const RenderWeekViews = (props: {
 							}}
 						>
 							{weekDays.map((date, index) => {
-								const isToday =
-									new Date().toDateString() === date.toDateString();
-								const isCurrentWeek =
-									index >= centerWeekStart && index < centerWeekStart + 7;
-
 								return (
 									<div
 										key={date.toISOString()}
-										className={`border-r last:border-r-0 p-2 text-center ${
-											!isCurrentWeek ? "bg-gray-50 opacity-60" : "bg-white"
-										}`}
+										className={`border-r last:border-r-0 p-2 text-center ${"bg-white"}`}
 									>
 										<div className="text-xs text-gray-500 uppercase">
 											{DAYS_OF_WEEK[date.getDay()]}
 										</div>
-										<div
-											className={`text-lg font-medium ${
-												isToday
-													? "text-blue-600 font-bold"
-													: isCurrentWeek
-														? "text-gray-900"
-														: "text-gray-400"
-											}`}
-										>
+										<div className={`text-lg font-medium ${"text-gray-900"}`}>
 											{date.getDate()}
 										</div>
 									</div>
@@ -355,7 +320,6 @@ const RenderWeekViews = (props: {
 				</ScrollArea>
 			</div>
 
-			{/* Scrollable Content Area */}
 			<div className="absolute top-16 left-20 right-0 bottom-0">
 				<ScrollArea className="h-full w-full content-scroll-area">
 					<div style={{ width: `${totalDays * dayWidth}px` }}>
@@ -365,17 +329,13 @@ const RenderWeekViews = (props: {
 								gridTemplateColumns: `repeat(${totalDays}, ${dayWidth}px)`,
 							}}
 						>
-							{weekDays.map((date, index) => {
+							{weekDays.map((date) => {
 								const dayEvents = getEventsForDate(props.events, date);
-								const isCurrentWeek =
-									index >= centerWeekStart && index < centerWeekStart + 7;
 
 								return (
 									<div
 										key={date.toISOString()}
-										className={`border-r last:border-r-0 relative ${
-											!isCurrentWeek ? "bg-gray-50 opacity-60" : ""
-										}`}
+										className={"border-r last:border-r-0 relative"}
 									>
 										{/* Hour lines */}
 										{timeSlots.map((slot) => (
@@ -421,7 +381,6 @@ const RenderWeekViews = (props: {
 															top: `${topPosition}px`,
 															height: `${eventHeight}px`,
 															minHeight: "18px",
-															opacity: isCurrentWeek ? 1 : 0.7,
 														}}
 														title={`${timeDisplay ? `${timeDisplay} ` : ""}${event.title}`}
 													>
