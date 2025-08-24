@@ -139,7 +139,7 @@ export default function TravelInfoSidebar({
 
 	return (
 		<div
-			className={`w-80 bg-card border-l h-full overflow-y-auto ${className}`}
+			className={`w-96 bg-card border-r h-full overflow-y-auto ${className}`}
 		>
 			<div className="p-6">
 				<div className="flex items-center justify-between mb-6">

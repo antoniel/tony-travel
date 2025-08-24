@@ -53,15 +53,6 @@ export default function Calendar({
 		setCurrentDate(newDate);
 	};
 
-	const goToToday = () => {
-		const [firstEvent] = events.sort((a, b) => {
-			const aTime = a.startDate.getTime();
-			const bTime = b.startDate.getTime();
-			return aTime - bTime;
-		});
-		setCurrentDate(firstEvent.startDate);
-	};
-
 	return (
 		<>
 			<div className="bg-card rounded-lg mb-2 border">
@@ -84,13 +75,6 @@ export default function Calendar({
 								<ChevronRight className="h-4 w-4" />
 							</button>
 						</div>
-						<button
-							type="button"
-							onClick={goToToday}
-							className="px-3 py-1 text-sm bg-muted hover:bg-muted/80 rounded"
-						>
-							today
-						</button>
 					</div>
 
 					<h2 className="text-xl font-semibold text-foreground">
@@ -98,7 +82,7 @@ export default function Calendar({
 					</h2>
 				</div>
 			</div>
-			<div className="bg-card rounded-xl overflow-hidden">
+			<div className="bg-card rounded-xl overflow-hidden border">
 				<div className="p-0">
 					<RenderWeekViews
 						currentDate={currentDate}
@@ -456,7 +440,7 @@ const RenderWeekViews = (props: {
 
 	return (
 		<div
-			className="relative h-[80vh] bg-card"
+			className="relative h-[80vh] bg-card "
 			onWheel={handleWheel}
 			onMouseMove={handleMouseMove}
 			onMouseUp={handleMouseUp}
@@ -464,7 +448,7 @@ const RenderWeekViews = (props: {
 			ref={containerRef}
 		>
 			{/* Fixed Time Column */}
-			<div className="absolute left-0 top-0 bottom-0 w-20 bg-card border-r z-20">
+			<div className="absolute left-0 top-0 bottom-0 w-20 border-r z-20 bg-card">
 				<div className="absolute top-16 left-0 right-0 bottom-0">
 					<ScrollArea
 						ref={timeRulerRef}
@@ -475,7 +459,7 @@ const RenderWeekViews = (props: {
 							{TIME_SLOTS.map((time) => (
 								<div
 									key={time}
-									className="h-12 border-b text-xs text-muted-foreground p-2 bg-card"
+									className="h-12 flex flex-col justify-center items-center border-t text-xs text-muted-foreground p-2 bg-card"
 								>
 									{time}
 								</div>
@@ -487,7 +471,11 @@ const RenderWeekViews = (props: {
 
 			{/* Sticky Date Header */}
 			<div className="absolute top-0 left-20 right-0 h-16 bg-card border-b z-10">
-				<ScrollArea ref={headerScrollAreaRef} className="h-full">
+				<ScrollArea
+					ref={headerScrollAreaRef}
+					className="h-full"
+					enableThumb={false}
+				>
 					<div style={{ width: `${totalDays * dayWidth}px` }}>
 						<div
 							className="grid h-16"

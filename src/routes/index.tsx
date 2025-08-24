@@ -35,6 +35,9 @@ function CalendarPage() {
 	return (
 		<div className="min-h-screen bg-background">
 			<div className="flex h-screen">
+				{/* Travel Info Sidebar */}
+				<TravelInfoSidebar travel={peruTravel} />
+
 				{/* Main Content */}
 				<div className="flex-1 py-6">
 					<div className="max-w-6xl mx-auto px-4 h-full">
@@ -54,9 +57,6 @@ function CalendarPage() {
 						/>
 					</div>
 				</div>
-
-				{/* Travel Info Sidebar */}
-				<TravelInfoSidebar travel={peruTravel} />
 			</div>
 		</div>
 	);
