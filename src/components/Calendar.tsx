@@ -3,6 +3,7 @@ import { DAYS_OF_WEEK, MONTHS, TIME_SLOTS } from "@/lib/constants";
 import type { AppEvent } from "@/lib/types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import EventDetailsPanel from "./EventDetailsPanel";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Input } from "./ui/input";
@@ -26,6 +27,8 @@ export default function Calendar({
 	onAddEvent,
 	onUpdateEvent,
 }: CalendarProps) {
+	const [selectedEvent, setSelectedEvent] = useState<AppEvent | null>(null);
+	const [isPanelOpen, setIsPanelOpen] = useState(false);
 	const [currentDate, setCurrentDate] = useState(() => {
 		const [firstEvent] = events.sort((a, b) => {
 			const aTime = a.startDate.getTime();
@@ -53,46 +56,67 @@ export default function Calendar({
 		setCurrentDate(newDate);
 	};
 
+	const handleEventClick = (event: AppEvent) => {
+		setSelectedEvent(event);
+		setIsPanelOpen(true);
+	};
+
+	const handleClosePanel = () => {
+		setIsPanelOpen(false);
+		setSelectedEvent(null);
+	};
+
 	return (
 		<>
-			<div className="bg-card rounded-lg mb-2 border">
-				{/* Header */}
-				<div className="flex items-center justify-between p-4">
-					<div className="flex items-center space-x-4">
-						<div className="flex items-center space-x-2">
-							<button
-								type="button"
-								onClick={previousWeek}
-								className="p-1 hover:bg-muted rounded"
-							>
-								<ChevronLeft className="h-4 w-4" />
-							</button>
-							<button
-								type="button"
-								onClick={nextWeek}
-								className="p-1 hover:bg-muted rounded"
-							>
-								<ChevronRight className="h-4 w-4" />
-							</button>
+			<div
+				className={`transition-all duration-300 ${isPanelOpen ? "mr-96" : ""}`}
+			>
+				<div className="bg-card rounded-lg mb-2 border">
+					{/* Header */}
+					<div className="flex items-center justify-between p-4">
+						<div className="flex items-center space-x-4">
+							<div className="flex items-center space-x-2">
+								<button
+									type="button"
+									onClick={previousWeek}
+									className="p-1 hover:bg-muted rounded"
+								>
+									<ChevronLeft className="h-4 w-4" />
+								</button>
+								<button
+									type="button"
+									onClick={nextWeek}
+									className="p-1 hover:bg-muted rounded"
+								>
+									<ChevronRight className="h-4 w-4" />
+								</button>
+							</div>
 						</div>
-					</div>
 
-					<h2 className="text-xl font-semibold text-foreground">
-						{`${MONTHS[month]} ${year}`}
-					</h2>
+						<h2 className="text-xl font-semibold text-foreground">
+							{`${MONTHS[month]} ${year}`}
+						</h2>
+					</div>
+				</div>
+				<div className="bg-card rounded-xl overflow-hidden border">
+					<div className="p-0">
+						<RenderWeekViews
+							currentDate={currentDate}
+							setCurrentDate={setCurrentDate}
+							events={events}
+							onAddEvent={onAddEvent}
+							onUpdateEvent={onUpdateEvent}
+							onEventClick={handleEventClick}
+						/>
+					</div>
 				</div>
 			</div>
-			<div className="bg-card rounded-xl overflow-hidden border">
-				<div className="p-0">
-					<RenderWeekViews
-						currentDate={currentDate}
-						setCurrentDate={setCurrentDate}
-						events={events}
-						onAddEvent={onAddEvent}
-						onUpdateEvent={onUpdateEvent}
-					/>
-				</div>
-			</div>
+
+			<EventDetailsPanel
+				event={selectedEvent}
+				onClose={handleClosePanel}
+				isOpen={isPanelOpen}
+			/>
 		</>
 	);
 }
@@ -103,6 +127,7 @@ const RenderWeekViews = (props: {
 	setCurrentDate: (date: Date) => void;
 	onAddEvent?: (event: Omit<AppEvent, "id">) => void;
 	onUpdateEvent?: (eventId: string, updatedEvent: Partial<AppEvent>) => void;
+	onEventClick?: (event: AppEvent) => void;
 }) => {
 	const totalDays = getHowManyDaysTravel(props.events);
 	const weekDays = getWeekDays(props.events);
@@ -615,6 +640,24 @@ const RenderWeekViews = (props: {
 														onMouseDown={(e) =>
 															handleEventMouseDown(event, dayIndex, e)
 														}
+														onClick={(e) => {
+															e.stopPropagation();
+															if (
+																!draggingEvent?.hasMoved &&
+																props.onEventClick
+															) {
+																props.onEventClick(event);
+															}
+														}}
+														onKeyDown={(e) => {
+															if (e.key === "Enter" || e.key === " ") {
+																e.preventDefault();
+																e.stopPropagation();
+																if (props.onEventClick) {
+																	props.onEventClick(event);
+																}
+															}
+														}}
 													>
 														{/* Resize handle - top */}
 														{eventHeight >= 30 && props.onUpdateEvent && (
