@@ -13,7 +13,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "./ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 
 export interface AppEvent {
 	id: string;
@@ -35,7 +34,11 @@ interface CalendarProps {
 	onUpdateEvent?: (eventId: string, updatedEvent: Partial<AppEvent>) => void;
 }
 
-export default function Calendar({ events = [], onAddEvent, onUpdateEvent }: CalendarProps) {
+export default function Calendar({
+	events = [],
+	onAddEvent,
+	onUpdateEvent,
+}: CalendarProps) {
 	const [currentDate, setCurrentDate] = useState(() => {
 		const [firstEvent] = events.sort((a, b) => {
 			const aTime = a.startDate.getTime();
@@ -47,7 +50,6 @@ export default function Calendar({ events = [], onAddEvent, onUpdateEvent }: Cal
 		}
 		return firstEvent.startDate;
 	});
-	const [view, setView] = useState<"month" | "week">("week");
 
 	const year = currentDate.getFullYear();
 	const month = currentDate.getMonth();
@@ -74,27 +76,23 @@ export default function Calendar({ events = [], onAddEvent, onUpdateEvent }: Cal
 	};
 
 	return (
-		<div className="bg-white rounded-lg shadow-sm border">
-			<Tabs
-				defaultValue="week"
-				value={view}
-				onValueChange={(value) => setView(value as "month" | "week")}
-			>
+		<div className="bg-card rounded-lg shadow-sm border">
+			<>
 				{/* Header */}
 				<div className="flex items-center justify-between p-4 border-b">
 					<div className="flex items-center space-x-4">
 						<div className="flex items-center space-x-2">
 							<button
 								type="button"
-								onClick={view === "week" ? previousWeek : undefined}
-								className="p-1 hover:bg-gray-100 rounded"
+								onClick={previousWeek}
+								className="p-1 hover:bg-muted rounded"
 							>
 								<ChevronLeft className="h-4 w-4" />
 							</button>
 							<button
 								type="button"
-								onClick={view === "week" ? nextWeek : undefined}
-								className="p-1 hover:bg-gray-100 rounded"
+								onClick={nextWeek}
+								className="p-1 hover:bg-muted rounded"
 							>
 								<ChevronRight className="h-4 w-4" />
 							</button>
@@ -102,33 +100,27 @@ export default function Calendar({ events = [], onAddEvent, onUpdateEvent }: Cal
 						<button
 							type="button"
 							onClick={goToToday}
-							className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded"
+							className="px-3 py-1 text-sm bg-muted hover:bg-muted/80 rounded"
 						>
 							today
 						</button>
 					</div>
 
-					<h2 className="text-xl font-semibold text-gray-900">
+					<h2 className="text-xl font-semibold text-foreground">
 						{`${MONTHS[month]} ${year}`}
 					</h2>
-
-					<TabsList>
-						<TabsTrigger value="week">Week</TabsTrigger>
-					</TabsList>
 				</div>
 
-				<TabsContent value="week">
-					<div className="p-0">
-						<RenderWeekViews
-							currentDate={currentDate}
-							setCurrentDate={setCurrentDate}
-							events={events}
-							onAddEvent={onAddEvent}
-							onUpdateEvent={onUpdateEvent}
-						/>
-					</div>
-				</TabsContent>
-			</Tabs>
+				<div className="p-0">
+					<RenderWeekViews
+						currentDate={currentDate}
+						setCurrentDate={setCurrentDate}
+						events={events}
+						onAddEvent={onAddEvent}
+						onUpdateEvent={onUpdateEvent}
+					/>
+				</div>
+			</>
 		</div>
 	);
 }
@@ -163,7 +155,7 @@ const RenderWeekViews = (props: {
 		offsetY: number;
 		isDragging: boolean;
 		isResizing: boolean;
-		resizeDirection?: 'top' | 'bottom';
+		resizeDirection?: "top" | "bottom";
 		startX: number;
 		startY: number;
 		hasMoved: boolean;
@@ -359,16 +351,18 @@ const RenderWeekViews = (props: {
 		event: AppEvent,
 		dayIndex: number,
 		mouseEvent: React.MouseEvent,
-		resizeDirection?: 'top' | 'bottom'
+		resizeDirection?: "top" | "bottom",
 	) => {
 		if (!props.onUpdateEvent) return;
-		
+
 		mouseEvent.stopPropagation();
 		mouseEvent.preventDefault();
-		
-		const rect = (mouseEvent.currentTarget as HTMLElement).getBoundingClientRect();
+
+		const rect = (
+			mouseEvent.currentTarget as HTMLElement
+		).getBoundingClientRect();
 		const offsetY = mouseEvent.clientY - rect.top;
-		
+
 		setDraggingEvent({
 			event,
 			dayIndex,
@@ -389,39 +383,44 @@ const RenderWeekViews = (props: {
 		const deltaX = Math.abs(mouseEvent.clientX - draggingEvent.startX);
 		const deltaY = Math.abs(mouseEvent.clientY - draggingEvent.startY);
 		const hasMoved = deltaX > 5 || deltaY > 5;
-		
+
 		// Update the hasMoved flag
 		if (hasMoved && !draggingEvent.hasMoved) {
-			setDraggingEvent(prev => prev ? { ...prev, hasMoved: true } : null);
+			setDraggingEvent((prev) => (prev ? { ...prev, hasMoved: true } : null));
 		}
-		
+
 		if (!hasMoved) return; // Don't do anything until we've moved enough
 
-		const contentArea = document.querySelector('.content-scroll-area [data-radix-scroll-area-viewport]') as HTMLElement;
+		const contentArea = document.querySelector(
+			".content-scroll-area [data-radix-scroll-area-viewport]",
+		) as HTMLElement;
 		if (!contentArea) return;
 
 		const rect = contentArea.getBoundingClientRect();
 		const yPosition = mouseEvent.clientY - rect.top + contentArea.scrollTop;
-		
+
 		if (draggingEvent.isDragging) {
 			// Calculate new time based on mouse position
 			const adjustedY = yPosition - draggingEvent.offsetY;
 			const newHour = Math.max(0, Math.floor(adjustedY / 48));
 			const newMinute = Math.floor(((adjustedY % 48) / 48) * 60);
-			
+
 			// Calculate which day column we're in
 			const xPosition = mouseEvent.clientX - rect.left + contentArea.scrollLeft;
 			const dayIndex = Math.floor(xPosition / dayWidth);
-			const targetDay = weekDays[Math.max(0, Math.min(dayIndex, weekDays.length - 1))];
-			
+			const targetDay =
+				weekDays[Math.max(0, Math.min(dayIndex, weekDays.length - 1))];
+
 			if (targetDay) {
-				const originalDuration = draggingEvent.event.endDate.getTime() - draggingEvent.event.startDate.getTime();
-				
+				const originalDuration =
+					draggingEvent.event.endDate.getTime() -
+					draggingEvent.event.startDate.getTime();
+
 				const newStartDate = new Date(targetDay);
 				newStartDate.setHours(newHour, newMinute, 0, 0);
-				
+
 				const newEndDate = new Date(newStartDate.getTime() + originalDuration);
-				
+
 				props.onUpdateEvent(draggingEvent.event.id, {
 					startDate: newStartDate,
 					endDate: newEndDate,
@@ -431,13 +430,13 @@ const RenderWeekViews = (props: {
 			// Handle resizing
 			const newHour = Math.max(0, Math.floor(yPosition / 48));
 			const newMinute = Math.floor(((yPosition % 48) / 48) * 60);
-			
+
 			const targetDay = weekDays[draggingEvent.dayIndex];
 			if (targetDay) {
 				const newTime = new Date(targetDay);
 				newTime.setHours(newHour, newMinute, 0, 0);
-				
-				if (draggingEvent.resizeDirection === 'top') {
+
+				if (draggingEvent.resizeDirection === "top") {
 					// Resizing from top (changing start time)
 					if (newTime.getTime() < draggingEvent.event.endDate.getTime()) {
 						props.onUpdateEvent(draggingEvent.event.id, {
@@ -469,7 +468,7 @@ const RenderWeekViews = (props: {
 
 	return (
 		<div
-			className="relative h-[80vh] bg-white"
+			className="relative h-[80vh] bg-card"
 			onWheel={handleWheel}
 			onMouseMove={handleMouseMove}
 			onMouseUp={handleMouseUp}
@@ -477,8 +476,8 @@ const RenderWeekViews = (props: {
 			ref={containerRef}
 		>
 			{/* Fixed Time Column */}
-			<div className="absolute left-0 top-0 bottom-0 w-20 bg-white border-r z-20">
-				<div className="h-16 border-b bg-gray-50" />
+			<div className="absolute left-0 top-0 bottom-0 w-20 bg-card border-r z-20">
+				<div className="h-16 border-b bg-card" />
 				<div className="absolute top-16 left-0 right-0 bottom-0">
 					<ScrollArea
 						ref={timeRulerRef}
@@ -489,7 +488,7 @@ const RenderWeekViews = (props: {
 							{TIME_SLOTS.map((time) => (
 								<div
 									key={time}
-									className="h-12 border-b text-xs text-gray-500 p-2 bg-white"
+									className="h-12 border-b text-xs text-muted-foreground p-2 bg-card"
 								>
 									{time}
 								</div>
@@ -500,7 +499,7 @@ const RenderWeekViews = (props: {
 			</div>
 
 			{/* Sticky Date Header */}
-			<div className="absolute top-0 left-20 right-0 h-16 bg-white border-b z-10">
+			<div className="absolute top-0 left-20 right-0 h-16 bg-card border-b z-10">
 				<ScrollArea ref={headerScrollAreaRef} className="h-full">
 					<div style={{ width: `${totalDays * dayWidth}px` }}>
 						<div
@@ -518,12 +517,14 @@ const RenderWeekViews = (props: {
 									<div
 										key={date.toISOString()}
 										className={`border-r last:border-r-0 p-2 text-center ${
-											isWeekend ? "bg-gray-100" : "bg-white"
+											isWeekend ? "bg-muted" : "bg-card"
 										}`}
 									>
 										<div
 											className={`text-xs uppercase ${
-												isWeekend ? "text-gray-600" : "text-gray-500"
+												isWeekend
+													? "text-muted-foreground"
+													: "text-muted-foreground"
 											}`}
 										>
 											{DAYS_OF_WEEK[date.getDay()]}
@@ -531,10 +532,10 @@ const RenderWeekViews = (props: {
 										<div
 											className={`text-lg font-medium ${
 												isToday
-													? "text-blue-600 font-bold"
+													? "text-primary font-bold"
 													: isWeekend
-														? "text-gray-700"
-														: "text-gray-900"
+														? "text-foreground"
+														: "text-foreground"
 											}`}
 										>
 											{date.getDate()}
@@ -563,8 +564,8 @@ const RenderWeekViews = (props: {
 								return (
 									<div
 										key={date.toISOString()}
-										className={`border-r last:border-r-0 relative cursor-pointer hover:bg-blue-50 ${
-											isWeekend ? "bg-gray-100" : ""
+										className={`border-r last:border-r-0 relative cursor-pointer hover:bg-accent/20 ${
+											isWeekend ? "bg-muted" : ""
 										}`}
 										onClick={(e) => handleCellClick(dayIndex, e)}
 										onKeyDown={(e) => {
@@ -622,12 +623,12 @@ const RenderWeekViews = (props: {
 															: null;
 
 												const isDragging = draggingEvent?.event.id === event.id;
-												
+
 												return (
 													<div
 														key={event.id}
 														className={`absolute left-1 right-1 text-xs px-1 py-0.5 rounded text-white pointer-events-auto z-10 flex flex-col justify-start cursor-move hover:shadow-lg transition-shadow group ${
-															isDragging ? 'opacity-80 shadow-xl scale-105' : ''
+															isDragging ? "opacity-80 shadow-xl scale-105" : ""
 														}`}
 														style={{
 															backgroundColor: getEventColor(event),
@@ -636,7 +637,9 @@ const RenderWeekViews = (props: {
 															minHeight: "18px",
 														}}
 														title={`${timeDisplay ? `${timeDisplay} ` : ""}${event.title}`}
-														onMouseDown={(e) => handleEventMouseDown(event, dayIndex, e)}
+														onMouseDown={(e) =>
+															handleEventMouseDown(event, dayIndex, e)
+														}
 													>
 														{/* Resize handle - top */}
 														{eventHeight >= 30 && props.onUpdateEvent && (
@@ -644,11 +647,16 @@ const RenderWeekViews = (props: {
 																className="absolute -top-1 left-0 right-0 h-2 cursor-n-resize opacity-0 group-hover:opacity-100 bg-white/20 rounded-t"
 																onMouseDown={(e) => {
 																	e.stopPropagation();
-																	handleEventMouseDown(event, dayIndex, e, 'top');
+																	handleEventMouseDown(
+																		event,
+																		dayIndex,
+																		e,
+																		"top",
+																	);
 																}}
 															/>
 														)}
-														
+
 														{/* Event content */}
 														<div className="flex-1 flex flex-col justify-start pointer-events-none">
 															{/* Title first - always the main focus */}
@@ -669,7 +677,12 @@ const RenderWeekViews = (props: {
 																className="absolute -bottom-1 left-0 right-0 h-2 cursor-s-resize opacity-0 group-hover:opacity-100 bg-white/20 rounded-b"
 																onMouseDown={(e) => {
 																	e.stopPropagation();
-																	handleEventMouseDown(event, dayIndex, e, 'bottom');
+																	handleEventMouseDown(
+																		event,
+																		dayIndex,
+																		e,
+																		"bottom",
+																	);
 																}}
 															/>
 														)}
@@ -845,9 +858,9 @@ const getTimeFromDate = (date: Date) => {
 
 const getEventColor = (event: AppEvent) => {
 	const typeColors = {
-		travel: "#10b981",
-		food: "#f59e0b",
-		activity: "#8b5cf6",
+		travel: "var(--chart-1)",
+		food: "var(--chart-3)",
+		activity: "var(--chart-2)",
 	};
 
 	return typeColors[event.type];
