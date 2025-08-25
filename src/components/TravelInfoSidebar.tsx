@@ -6,7 +6,7 @@ import {
 	CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
-import type { Travel } from "@/lib/types";
+import type { AppEvent, Travel } from "@/lib/types";
 import {
 	Bed,
 	Building,
@@ -25,7 +25,7 @@ import {
 	Plane,
 	UtensilsCrossed,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import WeatherWidget from "./WeatherWidget";
 import { Button } from "./ui/button";
 
@@ -41,7 +41,7 @@ export default function TravelInfoSidebar({
 	// Collapsible states - accommodations open by default, others closed
 	const [isMinimized, setIsMinimized] = useState(false);
 	const [activitiesOpen, setActivitiesOpen] = useState(false);
-	const [accommodationOpen, setAccommodationOpen] = useState(true); // Open by default
+	const [accommodationOpen, setAccommodationOpen] = useState(false); // Open by default
 	const [locationOpen, setLocationOpen] = useState(false);
 	const [visaOpen, setVisaOpen] = useState(false);
 	const [tipsOpen, setTipsOpen] = useState(false);
@@ -92,6 +92,29 @@ export default function TravelInfoSidebar({
 
 	const accommodations = travel?.accommodation || [];
 
+	// Helpers
+	const formatBRL = (value: number) =>
+		new Intl.NumberFormat("pt-BR", {
+			style: "currency",
+			currency: "BRL",
+		}).format(value);
+
+	// Sum estimated costs from events (including dependencies)
+	const totalEventCostBRL = useMemo(() => {
+		if (!travel) return 0;
+		const sumEvent = (ev: AppEvent): number => {
+			const base = typeof ev.estimatedCost === "number" ? ev.estimatedCost : 0;
+			const deps = Array.isArray(ev.dependencies)
+				? ev.dependencies.reduce(
+						(acc: number, d: AppEvent) => acc + sumEvent(d),
+						0,
+					)
+				: 0;
+			return base + deps;
+		};
+		return travel.events.reduce((acc, ev) => acc + sumEvent(ev), 0);
+	}, [travel]);
+
 	// Calculate travel statistics
 	const totalDays = travel
 		? Math.ceil(
@@ -101,16 +124,6 @@ export default function TravelInfoSidebar({
 		: 0;
 	const totalEvents = travel?.events.length || 0;
 	const totalAccommodations = accommodations.length;
-	const totalCost = accommodations.reduce((sum, acc) => {
-		if (acc.price && acc.currency === "USD") {
-			const nights = Math.ceil(
-				(acc.endDate.getTime() - acc.startDate.getTime()) /
-					(1000 * 60 * 60 * 24),
-			);
-			return sum + acc.price * nights;
-		}
-		return sum;
-	}, 0);
 
 	const handleExportItinerary = () => {
 		if (!travel) return;
@@ -288,13 +301,16 @@ export default function TravelInfoSidebar({
 										</div>
 									</Card>
 
+									{/* Estimated costs from events */}
 									<Card className="p-3">
 										<div className="flex items-center gap-2">
-											<DollarSign className="h-4 w-4 text-chart-2" />
+											<DollarSign className="h-4 w-4 text-chart-5" />
 											<div>
-												<div className="text-lg font-bold">${totalCost}</div>
+												<div className="text-lg font-bold">
+													{formatBRL(totalEventCostBRL)}
+												</div>
 												<div className="text-xs text-muted-foreground">
-													Lodging
+													Events (est., BRL)
 												</div>
 											</div>
 										</div>
