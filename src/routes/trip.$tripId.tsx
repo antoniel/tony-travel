@@ -127,6 +127,7 @@ function TripCalendarPage() {
 							<TabsContent value="calendar">
 								<Calendar
 									events={events}
+									accommodations={travel?.accommodation || []}
 									onAddEvent={handleAddEvent}
 									onUpdateEvent={handleUpdateEvent}
 								/>

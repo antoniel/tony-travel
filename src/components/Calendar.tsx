@@ -2,7 +2,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useEventDragDrop } from "@/hooks/useEventDragDrop";
 import { useScrollSync } from "@/hooks/useScrollSync";
 import { DAYS_OF_WEEK, MONTHS, TIME_SLOTS } from "@/lib/constants";
-import type { AppEvent } from "@/lib/types";
+import type { Accommodation, AppEvent } from "@/lib/types";
 import { useLayoutEffect, useRef, useState } from "react";
 import EventDetailsPanel from "./EventDetailsPanel";
 import { Button } from "./ui/button";
@@ -26,6 +26,7 @@ interface DisplayEvent extends AppEvent {
 
 interface CalendarProps {
 	events: AppEvent[];
+	accommodations?: Accommodation[];
 	onAddEvent?: (event: Omit<AppEvent, "id">) => void;
 	onUpdateEvent?: (eventId: string, updatedEvent: Partial<AppEvent>) => void;
 }
@@ -34,6 +35,7 @@ const PX_PER_HOUR = 48;
 
 export default function Calendar({
 	events = [],
+	accommodations = [],
 	onAddEvent,
 	onUpdateEvent,
 }: CalendarProps) {
@@ -83,6 +85,7 @@ export default function Calendar({
 							currentDate={currentDate}
 							setCurrentDate={setCurrentDate}
 							events={events}
+							accommodations={accommodations}
 							onAddEvent={onAddEvent}
 							onUpdateEvent={onUpdateEvent}
 							onEventClick={handleEventClick}
@@ -102,6 +105,7 @@ export default function Calendar({
 
 const RenderWeekViews = (props: {
 	events: AppEvent[];
+	accommodations?: Accommodation[];
 	currentDate: Date;
 	setCurrentDate: (date: Date) => void;
 	onAddEvent?: (event: Omit<AppEvent, "id">) => void;
@@ -115,6 +119,22 @@ const RenderWeekViews = (props: {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const headerScrollAreaRef = useRef<HTMLDivElement>(null);
 	const timeRulerRef = useRef<HTMLDivElement>(null);
+	const allDayScrollAreaRef = useRef<HTMLDivElement>(null);
+
+	// Calculate dynamic all-day section height
+	const accommodationsLayout = props.accommodations
+		? getAccommodationsLayoutWithRows(props.accommodations, weekDays)
+		: [];
+	const maxRows =
+		accommodationsLayout.length > 0
+			? accommodationsLayout.reduce((max, acc) => Math.max(max, acc.row), 0) + 1
+			: 0;
+	const allDaySectionHeight =
+		props.accommodations && props.accommodations.length > 0
+			? Math.max(48, maxRows * 22 + 12)
+			: 0;
+	const headerHeight = 64; // h-16 = 4rem = 64px
+	const totalHeaderHeight = headerHeight + allDaySectionHeight;
 
 	// Event creation modal state
 	const [isModalOpen, setIsModalOpen] = useState(false);
@@ -142,6 +162,7 @@ const RenderWeekViews = (props: {
 	const { handleWheel } = useScrollSync({
 		headerScrollAreaRef,
 		timeRulerRef,
+		allDayScrollAreaRef,
 		dayWidth,
 		currentDate: props.currentDate,
 	});
@@ -263,7 +284,10 @@ const RenderWeekViews = (props: {
 		>
 			{/* Fixed Time Column */}
 			<div className="absolute left-0 top-0 bottom-0 w-20 border-r z-20 bg-card">
-				<div className="absolute top-16 left-0 right-0 bottom-0">
+				<div
+					className="absolute left-0 right-0 bottom-0"
+					style={{ top: `${totalHeaderHeight}px` }}
+				>
 					<ScrollArea
 						ref={timeRulerRef}
 						className="h-full pointer-events-none"
@@ -337,7 +361,21 @@ const RenderWeekViews = (props: {
 				</ScrollArea>
 			</div>
 
-			<div className="absolute top-16 left-20 right-0 bottom-0">
+			{/* All Day Events Section */}
+			{props.accommodations && props.accommodations.length > 0 && (
+				<AllDayEventsSection
+					accommodations={props.accommodations}
+					weekDays={weekDays}
+					dayWidth={dayWidth}
+					allDayScrollAreaRef={allDayScrollAreaRef}
+					sectionHeight={allDaySectionHeight}
+				/>
+			)}
+
+			<div
+				className="absolute left-20 right-0 bottom-0"
+				style={{ top: `${totalHeaderHeight}px` }}
+			>
 				<ScrollArea
 					ref={contentScrollAreaRef}
 					className="h-full w-full content-scroll-area"
@@ -978,4 +1016,205 @@ const getHowManyDaysTravel = (events: AppEvent[]) => {
 			(lastDay.getTime() - firstDay.getTime()) / (1000 * 60 * 60 * 24),
 		) + 1
 	);
+};
+
+// All Day Events Section Component
+const AllDayEventsSection = (props: {
+	accommodations: Accommodation[];
+	weekDays: Date[];
+	dayWidth: number;
+	allDayScrollAreaRef: React.RefObject<HTMLDivElement | null>;
+	sectionHeight: number;
+}) => {
+	const {
+		accommodations,
+		weekDays,
+		dayWidth,
+		allDayScrollAreaRef,
+		sectionHeight,
+	} = props;
+
+	// Get accommodations for the visible days and layout them to avoid overlaps
+	const accommodationsLayout = getAccommodationsLayoutWithRows(
+		accommodations,
+		weekDays,
+	);
+
+	return (
+		<div
+			className="absolute top-16 left-20 right-0 bg-muted/20 border-b z-15"
+			style={{ height: `${sectionHeight}px` }}
+		>
+			<ScrollArea
+				ref={allDayScrollAreaRef}
+				className="h-full"
+				enableThumb={false}
+			>
+				<div style={{ width: `${weekDays.length * dayWidth}px` }}>
+					<div
+						className="relative p-1"
+						style={{ height: `${sectionHeight - 8}px` }}
+					>
+						{/* Grid lines to match main calendar */}
+						<div
+							className="absolute inset-0 grid border-r-0"
+							style={{
+								gridTemplateColumns: `repeat(${weekDays.length}, ${dayWidth}px)`,
+							}}
+						>
+							{weekDays.map((date, index) => (
+								<div
+									key={date.toISOString()}
+									className={`border-r ${index === weekDays.length - 1 ? "border-r-0" : ""} ${
+										date.getDay() === 0 || date.getDay() === 6
+											? "bg-muted/20"
+											: ""
+									}`}
+								/>
+							))}
+						</div>
+
+						{/* Accommodation bars */}
+						{accommodationsLayout.map((acc) => (
+							<AccommodationBar
+								key={acc.id}
+								accommodation={acc}
+								dayWidth={dayWidth}
+								weekDays={weekDays}
+								row={acc.row}
+							/>
+						))}
+					</div>
+				</div>
+			</ScrollArea>
+		</div>
+	);
+};
+
+// Accommodation Bar Component
+const AccommodationBar = (props: {
+	accommodation: Accommodation & { row?: number };
+	dayWidth: number;
+	weekDays: Date[];
+	row: number;
+}) => {
+	const { accommodation, dayWidth, weekDays, row } = props;
+
+	// Calculate position and width
+	const startDay = weekDays.findIndex((day) => {
+		const accStart = new Date(accommodation.startDate);
+		const dayStart = new Date(day);
+		accStart.setHours(0, 0, 0, 0);
+		dayStart.setHours(0, 0, 0, 0);
+		return accStart <= dayStart;
+	});
+
+	const endDay = weekDays.findIndex((day) => {
+		const accEnd = new Date(accommodation.endDate);
+		const dayEnd = new Date(day);
+		accEnd.setHours(23, 59, 59, 999);
+		dayEnd.setHours(23, 59, 59, 999);
+		return accEnd <= dayEnd;
+	});
+
+	// If accommodation doesn't overlap with visible days, don't render
+	if (startDay === -1 && endDay === -1) return null;
+
+	const actualStartDay = Math.max(0, startDay === -1 ? 0 : startDay);
+	const actualEndDay = endDay === -1 ? weekDays.length - 1 : endDay;
+	const width = (actualEndDay - actualStartDay + 1) * dayWidth;
+	const left = actualStartDay * dayWidth;
+
+	const getAccommodationColor = (type: Accommodation["type"]) => {
+		const colors = {
+			hotel: "var(--chart-4)",
+			hostel: "var(--chart-5)",
+			airbnb: "var(--chart-1)",
+			resort: "var(--chart-2)",
+			other: "var(--chart-3)",
+		};
+		return colors[type];
+	};
+
+	return (
+		<div
+			className="absolute rounded-md px-2 text-white font-medium shadow-sm border border-white/20 cursor-pointer hover:shadow-md transition-shadow flex items-center"
+			style={{
+				left: `${left + 2}px`,
+				width: `${width - 4}px`,
+				top: `${row * 22 + 4}px`,
+				height: "20px",
+				backgroundColor: getAccommodationColor(accommodation.type),
+				minWidth: "80px",
+				lineHeight: "1.2",
+			}}
+			title={`${accommodation.name} (${accommodation.type}) - ${accommodation.startDate.toLocaleDateString("pt-BR")} até ${accommodation.endDate.toLocaleDateString("pt-BR")}`}
+		>
+			<div className="truncate text-xs">{accommodation.name}</div>
+		</div>
+	);
+};
+
+// Layout function for accommodations with row assignment
+const getAccommodationsLayoutWithRows = (
+	accommodations: Accommodation[],
+	weekDays: Date[],
+): (Accommodation & { row: number })[] => {
+	if (!accommodations || accommodations.length === 0) return [];
+
+	// Filter accommodations that overlap with visible days
+	const validAccommodations = accommodations.filter((acc) => {
+		const accStart = new Date(acc.startDate);
+		const accEnd = new Date(acc.endDate);
+		const firstDay = weekDays[0];
+		const lastDay = weekDays[weekDays.length - 1];
+
+		accStart.setHours(0, 0, 0, 0);
+		accEnd.setHours(23, 59, 59, 999);
+
+		return accStart <= lastDay && accEnd >= firstDay;
+	});
+
+	// Sort by start date
+	validAccommodations.sort(
+		(a, b) => a.startDate.getTime() - b.startDate.getTime(),
+	);
+
+	// Assign rows to avoid overlaps
+	const rows: { endDate: Date }[] = [];
+	const accommodationsWithRows = validAccommodations.map((acc) => {
+		const accStart = new Date(acc.startDate);
+		accStart.setHours(0, 0, 0, 0);
+
+		// Find the first row that doesn't have a conflict
+		let assignedRow = 0;
+		for (let i = 0; i < rows.length; i++) {
+			if (rows[i].endDate < accStart) {
+				assignedRow = i;
+				break;
+			}
+		}
+
+		// If all rows have conflicts, create a new row
+		if (assignedRow === 0 && rows.length > 0 && rows[0].endDate >= accStart) {
+			assignedRow = rows.length;
+		}
+
+		// Update or add the row
+		const accEnd = new Date(acc.endDate);
+		accEnd.setHours(23, 59, 59, 999);
+
+		if (assignedRow >= rows.length) {
+			rows.push({ endDate: accEnd });
+		} else {
+			rows[assignedRow].endDate = accEnd;
+		}
+
+		return {
+			...acc,
+			row: assignedRow,
+		};
+	});
+
+	return accommodationsWithRows;
 };

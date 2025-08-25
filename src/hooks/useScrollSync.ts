@@ -3,6 +3,7 @@ import { type RefObject, useEffect } from "react";
 interface UseScrollSyncProps {
 	headerScrollAreaRef: RefObject<HTMLDivElement | null>;
 	timeRulerRef: RefObject<HTMLDivElement | null>;
+	allDayScrollAreaRef?: RefObject<HTMLDivElement | null>;
 	dayWidth: number;
 	currentDate: Date;
 }
@@ -10,6 +11,7 @@ interface UseScrollSyncProps {
 export function useScrollSync({
 	headerScrollAreaRef,
 	timeRulerRef,
+	allDayScrollAreaRef,
 	dayWidth,
 	currentDate,
 }: UseScrollSyncProps) {
@@ -23,12 +25,18 @@ export function useScrollSync({
 		const contentScrollArea = document.querySelector(
 			".content-scroll-area [data-radix-scroll-area-viewport]",
 		) as HTMLElement;
+		const allDayScrollArea = allDayScrollAreaRef?.current?.querySelector(
+			"[data-radix-scroll-area-viewport]",
+		) as HTMLElement;
 
 		if (!headerScrollArea || !contentScrollArea) return;
 
 		const centerPosition = centerWeekStart * dayWidth;
 		headerScrollArea.scrollLeft = centerPosition;
 		contentScrollArea.scrollLeft = centerPosition;
+		if (allDayScrollArea) {
+			allDayScrollArea.scrollLeft = centerPosition;
+		}
 
 		const syncHorizontalScroll = (source: HTMLElement, target: HTMLElement) => {
 			const handleScroll = () => {
@@ -54,10 +62,38 @@ export function useScrollSync({
 			"[data-radix-scroll-area-viewport]",
 		) as HTMLElement;
 
-		const cleanupHeaderSync = syncHorizontalScroll(
+		const cleanupHeaderToContent = syncHorizontalScroll(
 			headerScrollArea,
 			contentScrollArea,
 		);
+		const cleanupContentToHeader = syncHorizontalScroll(
+			contentScrollArea,
+			headerScrollArea,
+		);
+
+		let cleanupHeaderToAllDay: (() => void) | undefined;
+		let cleanupAllDayToHeader: (() => void) | undefined;
+		let cleanupContentToAllDay: (() => void) | undefined;
+		let cleanupAllDayToContent: (() => void) | undefined;
+
+		if (allDayScrollArea) {
+			cleanupHeaderToAllDay = syncHorizontalScroll(
+				headerScrollArea,
+				allDayScrollArea,
+			);
+			cleanupAllDayToHeader = syncHorizontalScroll(
+				allDayScrollArea,
+				headerScrollArea,
+			);
+			cleanupContentToAllDay = syncHorizontalScroll(
+				contentScrollArea,
+				allDayScrollArea,
+			);
+			cleanupAllDayToContent = syncHorizontalScroll(
+				allDayScrollArea,
+				contentScrollArea,
+			);
+		}
 
 		const cleanupVerticalSync = syncVerticalScroll(
 			contentScrollArea,
@@ -65,7 +101,12 @@ export function useScrollSync({
 		);
 
 		return () => {
-			cleanupHeaderSync();
+			cleanupHeaderToContent();
+			cleanupContentToHeader();
+			cleanupHeaderToAllDay?.();
+			cleanupAllDayToHeader?.();
+			cleanupContentToAllDay?.();
+			cleanupAllDayToContent?.();
 			cleanupVerticalSync?.();
 		};
 	}, [currentDate]);
@@ -76,6 +117,9 @@ export function useScrollSync({
 		) as HTMLElement;
 		const contentScrollArea = document.querySelector(
 			".content-scroll-area [data-radix-scroll-area-viewport]",
+		) as HTMLElement;
+		const allDayScrollArea = allDayScrollAreaRef?.current?.querySelector(
+			"[data-radix-scroll-area-viewport]",
 		) as HTMLElement;
 
 		if (!headerScrollArea || !contentScrollArea) return;
@@ -97,6 +141,9 @@ export function useScrollSync({
 				e.deltaX || (isShiftScroll ? e.deltaY : e.deltaY * 0.5);
 			headerScrollArea.scrollLeft += scrollAmount;
 			contentScrollArea.scrollLeft += scrollAmount;
+			if (allDayScrollArea) {
+				allDayScrollArea.scrollLeft += scrollAmount;
+			}
 		}
 	};
 
