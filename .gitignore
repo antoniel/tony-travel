@@ -10,3 +10,9 @@ count.txt
 .output
 .vinxi
 todos.json
+
+# Database
+database.sqlite
+database.sqlite-shm
+database.sqlite-wal
+drizzle/
