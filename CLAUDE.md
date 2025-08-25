@@ -273,3 +273,25 @@ const handleSubmit = async (formData: FormData) => {
 - Server functions are TanStack Start's killer feature for full-stack development
 - Always use type-safe patterns with Zod validation
 - File-based routing generates TypeScript definitions automatically
+
+## Component Usage Guidelines
+
+**CRITICAL**: ALWAYS use existing components from the project instead of creating custom implementations from scratch. This ensures consistency with the design system and prevents code duplication.
+
+### Component Priority Order:
+1. **First**: Check `src/components/ui/` for Shadcn components (Button, Tabs, Card, etc.)
+2. **Second**: Check `src/components/` for custom project components
+3. **Last Resort**: Only create new components when existing ones cannot fulfill the requirement
+
+### Before Creating Any UI Element:
+- Search for existing Tabs, Button, Dialog, Card, Input components
+- Use Grep/Glob tools to find similar implementations in the codebase
+- Prefer composition of existing components over creating new ones
+- Follow established patterns and design system variables (primary, muted-foreground, etc.)
+
+### Examples:
+- ✅ Use `<Tabs>` component instead of custom toggle buttons
+- ✅ Use `<Button>` variants instead of custom styled buttons  
+- ✅ Use `<Card>` components instead of custom divs with styling
+- ❌ Don't create custom toggle logic when Tabs exist
+- ❌ Don't hardcode colors when design system variables exist

@@ -30,6 +30,8 @@ interface CalendarProps {
 	onUpdateEvent?: (eventId: string, updatedEvent: Partial<AppEvent>) => void;
 }
 
+const PX_PER_HOUR = 48;
+
 export default function Calendar({
 	events = [],
 	onAddEvent,
@@ -51,18 +53,6 @@ export default function Calendar({
 
 	const year = currentDate.getFullYear();
 	const month = currentDate.getMonth();
-
-	const previousWeek = () => {
-		const newDate = new Date(currentDate);
-		newDate.setDate(currentDate.getDate() - 7);
-		setCurrentDate(newDate);
-	};
-
-	const nextWeek = () => {
-		const newDate = new Date(currentDate);
-		newDate.setDate(currentDate.getDate() + 7);
-		setCurrentDate(newDate);
-	};
 
 	const handleEventClick = (event: AppEvent) => {
 		setSelectedEvent(event);
@@ -179,9 +169,10 @@ const RenderWeekViews = (props: {
 		const clickedDate = weekDays[dayIndex];
 		if (!clickedDate) return new Date();
 
-		// Calculate hour from Y position (48px per hour)
-		const hourFromClick = Math.floor(yPosition / 48);
-		const minuteFromClick = Math.floor(((yPosition % 48) / 48) * 60);
+		const hourFromClick = Math.floor(yPosition / PX_PER_HOUR);
+		const minuteFromClick = Math.floor(
+			((yPosition % PX_PER_HOUR) / PX_PER_HOUR) * 60,
+		);
 
 		const resultDate = new Date(clickedDate);
 		resultDate.setHours(hourFromClick, minuteFromClick, 0, 0);
@@ -427,8 +418,8 @@ const getTimePositionFromDate = (date: Date) => {
 	const startHour = 0;
 	if (hours < startHour) return 0;
 
-	const hourPosition = (hours - startHour) * 48;
-	const minutePosition = (minutes / 60) * 48;
+	const hourPosition = (hours - startHour) * PX_PER_HOUR;
+	const minutePosition = (minutes / 60) * PX_PER_HOUR;
 
 	return hourPosition + minutePosition;
 };
@@ -884,7 +875,7 @@ const DayCell = ({
 							// Convert duration to pixels (48px per hour = 0.8px per minute)
 							const calculatedHeight = Math.max(
 								24, // Minimum height for timed events
-								(durationMinutes * 48) / 60,
+								(durationMinutes * PX_PER_HOUR) / 60,
 							);
 							eventHeight = calculatedHeight;
 						}

@@ -1,12 +1,14 @@
 import Calendar from "@/components/Calendar";
 import { TravelTimeline } from "@/components/TravelTimeline";
 import TravelInfoSidebar from "@/components/TravelInfoSidebar";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import type { AppEvent } from "@/lib/types";
 import { orpc } from "@/orpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Calendar as CalendarIcon, Clock } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/trip/$tripId")({
 	component: TripCalendarPage,
@@ -21,7 +23,6 @@ function TripCalendarPage() {
 	const travel = travelQuery.data;
 
 	const [events, setEvents] = useState<AppEvent[]>([]);
-	const [viewMode, setViewMode] = useState<"calendar" | "timeline">("timeline");
 
 	useEffect(() => {
 		const eventsWithDependencies = travel?.events.reduce<AppEvent[]>(
@@ -65,46 +66,72 @@ function TripCalendarPage() {
 				{/* Main Content */}
 				<div className="flex-1 py-6">
 					<div className="mx-auto px-4">
-						<div className="mb-6">
-							<div className="flex items-center justify-end mb-4">
-								<div className="flex items-center bg-card rounded-lg shadow-sm border border-border p-1">
-									<button
-										type="button"
-										onClick={() => setViewMode("calendar")}
-										className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-											viewMode === "calendar"
-												? "bg-primary text-primary-foreground shadow-sm"
-												: "text-muted-foreground hover:text-foreground hover:bg-muted"
-										}`}
-									>
-										<CalendarIcon className="w-4 h-4" />
-										Calendário
-									</button>
-									<button
-										type="button"
-										onClick={() => setViewMode("timeline")}
-										className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-											viewMode === "timeline"
-												? "bg-primary text-primary-foreground shadow-sm"
-												: "text-muted-foreground hover:text-foreground hover:bg-muted"
-										}`}
-									>
+						<Tabs defaultValue="timeline" className="w-full">
+							<div className="flex justify-between items-center mb-6">
+								<div className="flex items-center gap-2">
+									{travel && (
+										<Button
+											variant="ghost"
+											size="sm"
+											onClick={() => {
+												if (!travel) return;
+												const itinerary = [
+													`${travel.name}`,
+													`${travel.destination} • ${travel.startDate.toLocaleDateString('pt-BR')} - ${travel.endDate.toLocaleDateString('pt-BR')}`,
+													"",
+													"ACOMODAÇÕES:",
+													...travel.accommodation.map(
+														(acc) => `• ${acc.name} (${acc.startDate.toLocaleDateString('pt-BR')} - ${acc.endDate.toLocaleDateString('pt-BR')})`
+													),
+													"",
+													"EVENTOS:",
+													...travel.events
+														.slice(0, 10)
+														.map(
+															(event) => `• ${event.startDate.toLocaleDateString('pt-BR')} ${event.startDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} - ${event.title}`
+														),
+													...(travel.events.length > 10 ? ["  ... e mais eventos"] : []),
+												].join("\n");
+												const blob = new Blob([itinerary], { type: "text/plain" });
+												const url = URL.createObjectURL(blob);
+												const a = document.createElement("a");
+												a.href = url;
+												a.download = `${travel.name.replace(/\s+/g, "_")}_itinerario.txt`;
+												document.body.appendChild(a);
+												a.click();
+												document.body.removeChild(a);
+												URL.revokeObjectURL(url);
+											}}
+											title="Exportar itinerário completo"
+											className="h-8 w-8 p-0"
+										>
+											<Download className="h-4 w-4" />
+										</Button>
+									)}
+								</div>
+								<TabsList>
+									<TabsTrigger value="timeline">
 										<Clock className="w-4 h-4" />
 										Timeline
-									</button>
-								</div>
+									</TabsTrigger>
+									<TabsTrigger value="calendar">
+										<CalendarIcon className="w-4 h-4" />
+										Calendário
+									</TabsTrigger>
+								</TabsList>
 							</div>
-						</div>
 
-						{viewMode === "calendar" ? (
-							<Calendar
-								events={events}
-								onAddEvent={handleAddEvent}
-								onUpdateEvent={handleUpdateEvent}
-							/>
-						) : (
-							travel && <TravelTimeline travel={travel} />
-						)}
+							<TabsContent value="timeline">
+								{travel && <TravelTimeline travel={travel} />}
+							</TabsContent>
+							<TabsContent value="calendar">
+								<Calendar
+									events={events}
+									onAddEvent={handleAddEvent}
+									onUpdateEvent={handleUpdateEvent}
+								/>
+							</TabsContent>
+						</Tabs>
 					</div>
 				</div>
 			</div>

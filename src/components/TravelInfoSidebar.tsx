@@ -15,7 +15,6 @@ import {
 	ChevronRight,
 	Clock,
 	DollarSign,
-	Download,
 	Lightbulb,
 	MapPin,
 	Mountain,
@@ -125,42 +124,6 @@ export default function TravelInfoSidebar({
 	const totalEvents = travel?.events.length || 0;
 	const totalAccommodations = accommodations.length;
 
-	const handleExportItinerary = () => {
-		if (!travel) return;
-
-		// Create a simple text export of the itinerary
-		const itinerary = [
-			`${travel.name}`,
-			`${travel.destination} • ${formatDate(travel.startDate)} - ${formatDate(travel.endDate)}`,
-			"",
-			"ACCOMMODATIONS:",
-			...accommodations.map(
-				(acc) =>
-					`• ${acc.name} (${formatDate(acc.startDate)} - ${formatDate(acc.endDate)})`,
-			),
-			"",
-			"EVENTS:",
-			...travel.events
-				.slice(0, 10)
-				.map(
-					(event) =>
-						`• ${formatDate(event.startDate)} ${event.startDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} - ${event.title}`,
-				),
-			...(travel.events.length > 10 ? ["  ... and more events"] : []),
-		].join("\n");
-
-		// Create and download file
-		const blob = new Blob([itinerary], { type: "text/plain" });
-		const url = URL.createObjectURL(blob);
-		const a = document.createElement("a");
-		a.href = url;
-		a.download = `${travel.name.replace(/\s+/g, "_")}_itinerary.txt`;
-		document.body.appendChild(a);
-		a.click();
-		document.body.removeChild(a);
-		URL.revokeObjectURL(url);
-	};
-
 	// Format date in dd/mm/yyyy format
 	const formatDate = (date: Date) => {
 		return date.toLocaleDateString("pt-BR", {
@@ -179,32 +142,18 @@ export default function TravelInfoSidebar({
 					{!isMinimized && (
 						<h2 className="text-2xl font-bold">Travel Information</h2>
 					)}
-					<div className="flex items-center gap-2">
-						<Button
-							variant="ghost"
-							size="sm"
-							onClick={() => setIsMinimized(!isMinimized)}
-							className="flex items-center gap-2"
-						>
-							{isMinimized ? (
-								<PanelLeft className="h-4 w-4" />
-							) : (
-								<PanelLeftClose className="h-4 w-4" />
-							)}
-							{!isMinimized && (isMinimized ? "Expand" : "Minimize")}
-						</Button>
-						{travel && !isMinimized && (
-							<Button
-								variant="outline"
-								size="sm"
-								onClick={handleExportItinerary}
-								className="flex items-center gap-2"
-							>
-								<Download className="h-4 w-4" />
-								Export
-							</Button>
+					<Button
+						variant="ghost"
+						size="sm"
+						onClick={() => setIsMinimized(!isMinimized)}
+						className="flex items-center gap-2"
+					>
+						{isMinimized ? (
+							<PanelLeft className="h-4 w-4" />
+						) : (
+							<PanelLeftClose className="h-4 w-4" />
 						)}
-					</div>
+					</Button>
 				</div>
 
 				{isMinimized ? (
