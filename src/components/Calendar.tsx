@@ -146,6 +146,30 @@ const RenderWeekViews = (props: {
 		currentDate: props.currentDate,
 	});
 
+	const contentScrollAreaRef = useRef<HTMLDivElement>(null);
+	useLayoutEffect(() => {
+		if (!contentScrollAreaRef.current || props.events.length === 0) return;
+		const todayEvents = props.events.sort(
+			(a, b) => a.startDate.getTime() - b.startDate.getTime(),
+		);
+		if (todayEvents.length === 0) return;
+		const firstEvent = todayEvents[0];
+		const scrollPosition = getTimePositionFromDate(firstEvent.startDate);
+
+		const paddingOffset = 160;
+		const finalScrollPosition = Math.max(0, scrollPosition - paddingOffset);
+		requestAnimationFrame(() => {
+			if (contentScrollAreaRef.current) {
+				const scrollElement = contentScrollAreaRef.current.querySelector(
+					"[data-radix-scroll-area-viewport]",
+				);
+				if (scrollElement) {
+					scrollElement.scrollTop = finalScrollPosition;
+				}
+			}
+		});
+	}, [props.events]);
+
 	useLayoutEffect(() => {
 		const el = containerRef.current;
 		if (!el) return;
@@ -314,7 +338,10 @@ const RenderWeekViews = (props: {
 			</div>
 
 			<div className="absolute top-16 left-20 right-0 bottom-0">
-				<ScrollArea className="h-full w-full content-scroll-area">
+				<ScrollArea
+					ref={contentScrollAreaRef}
+					className="h-full w-full content-scroll-area"
+				>
 					<div style={{ width: `${totalDays * dayWidth}px` }}>
 						<div
 							className="grid"
