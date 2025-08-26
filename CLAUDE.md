@@ -274,6 +274,70 @@ const handleSubmit = async (formData: FormData) => {
 - Always use type-safe patterns with Zod validation
 - File-based routing generates TypeScript definitions automatically
 
+## Database Integration Patterns
+
+### ORM Integration Guidelines
+
+When integrating ORMs (Drizzle, Prisma, etc.):
+
+- **Schema Design**: 
+  - Define relationships explicitly with proper foreign keys
+  - Use TypeScript-first schemas when available (e.g., Drizzle schema definitions)
+  - Consider cascading operations for dependent data (events, accommodations)
+
+- **DAO Pattern Implementation**:
+  - Create dedicated DAO files (e.g., `travel.dao.ts`) to abstract query logic
+  - Group related operations by domain entity
+  - Use parallel queries for list operations when fetching related data
+  - Implement proper error handling and type safety
+
+- **Migration Strategy**:
+  - Generate and run migrations before implementing DAO logic
+  - Seed database with existing data to maintain continuity
+  - Test database operations before replacing mocked data
+
+### Type Safety with ORMs
+
+- Leverage TypeScript inference from schema definitions
+- Use proper type mapping between database models and API responses
+- Implement validation at the DAO level for data integrity
+- Ensure return types match API contract expectations
+
+## Multi-Step Technical Task Management
+
+### Complex Integration Tasks
+
+For multi-step technical integrations (database setup, API integration, etc.):
+
+- **Discovery Phase**: Always explore existing setup and identify integration points
+- **Architecture Planning**: Propose architectural patterns (DAO, Repository, Service layers) early
+- **Incremental Implementation**: Replace mocked data systematically, maintaining API contracts
+- **Abstraction Opportunities**: Identify and implement patterns to reduce code duplication
+- **Validation**: Ensure type safety and data integrity throughout the process
+
+### Task Breakdown Best Practices
+
+- Break complex integrations into 6-10 specific, actionable tasks
+- Include discovery, setup, implementation, and validation phases
+- Explicitly plan for data migration and seeding when replacing mocked data
+- Consider architectural improvements (DAO patterns, abstractions) as separate tasks
+
+## Code Organization Principles
+
+### Domain-Driven File Structure
+
+- **DAO Pattern**: Create `.dao.ts` files for database operations by domain
+- **Type Definitions**: Keep database models and API types properly mapped
+- **Query Optimization**: Use parallel queries for related data fetching
+- **Error Handling**: Implement consistent error patterns across DAOs
+
+### Abstraction Guidelines
+
+- Identify query duplication early and abstract into reusable patterns
+- Prefer composition over inheritance for database operations
+- Maintain clear separation between database logic and API routing
+- Use TypeScript generics for reusable query patterns when appropriate
+
 ## Component Usage Guidelines
 
 **CRITICAL**: ALWAYS use existing components from the project instead of creating custom implementations from scratch. This ensures consistency with the design system and prevents code duplication.

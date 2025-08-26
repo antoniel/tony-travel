@@ -1,15 +1,8 @@
 import { startPlanTravel } from "@/lib/prompts";
 import { os } from "@orpc/server";
 import * as z from "zod";
-import { colombiaTravel, peruTravel } from "./travel.data";
 import { TravelSchema } from "./travel.model";
-
-type TravelStored = z.infer<typeof TravelSchema> & { id: string };
-
-// In-memory store (replace with DB later)
-const travelStore = new Map<string, TravelStored>();
-travelStore.set(colombiaTravel.id, colombiaTravel);
-travelStore.set(peruTravel.id, peruTravel);
+import { travelDAO } from "./travel.dao";
 
 export const generatePrompt = os
 	.input(
@@ -30,9 +23,7 @@ export const saveTravel = os
 	.input(z.object({ travel: TravelSchema }))
 	.output(z.object({ id: z.string() }))
 	.handler(async ({ input }) => {
-		const id = `custom-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-		const record: TravelStored = { id, ...input.travel };
-		travelStore.set(id, record);
+		const id = await travelDAO.createTravel(input.travel);
 		return { id };
 	});
 
@@ -40,16 +31,18 @@ export const getTravel = os
 	.input(z.object({ id: z.string() }))
 	.output(TravelSchema.extend({ id: z.string() }))
 	.handler(async ({ input }) => {
-		const found = travelStore.get(input.id);
-		if (!found) {
+		const travel = await travelDAO.getTravelById(input.id);
+		
+		if (!travel) {
 			throw new Error("Travel not found");
 		}
-		return found;
+		
+		return travel;
 	});
 
 export const listTravels = os
 	.input(z.object({}).optional())
 	.output(z.array(TravelSchema.extend({ id: z.string() })))
 	.handler(async () => {
-		return Array.from(travelStore.values());
+		return await travelDAO.getAllTravels();
 	});

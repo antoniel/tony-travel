@@ -133,6 +133,7 @@ export const accommodationRelations = relations(Accommodation, ({ one }) => ({
 	}),
 }));
 
+export type AppEvent = typeof AppEvent.$inferSelect;
 export const AppEvent = sqliteTable("app_event", {
 	id: text("id").primaryKey(),
 	title: text("title").notNull(),

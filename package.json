@@ -13,7 +13,8 @@
     "check": "biome check",
     "migration:gen": "drizzle-kit generate",
     "migration:run": "drizzle-kit migrate",
-    "migration:drop": "drizzle-kit drop"
+    "migration:drop": "drizzle-kit drop",
+    "db:seed": "bun run scripts/seed.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
