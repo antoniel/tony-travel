@@ -58,3 +58,18 @@ export const TravelSchema = z.object({
 	locationInfo: LocationInfoSchema,
 	visaInfo: VisaInfoSchema,
 });
+// Airport schema - updated to include grouped options and state/province
+
+export const AirportSchema = z.object({
+	code: z.string(), // IATA code or grouped identifier
+	name: z.string(),
+	city: z.string(),
+	state: z.string().nullable(),
+	stateCode: z.string().nullable(),
+	country: z.string(),
+	countryCode: z.string(),
+	type: z.enum(["airport", "city_group", "state_group", "country_group"]),
+	airportCount: z.number().optional(), // For grouped options
+	airportCodes: z.array(z.string()).optional(), // IATA codes for grouped options
+});
+export type Airport = z.infer<typeof AirportSchema>;

@@ -23,12 +23,14 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { useAirportsSearch } from "@/hooks/useAirportsSearch";
 import { useUser } from "@/hooks/useUser";
 import { signIn } from "@/lib/auth-client";
 import { startPlanTravel } from "@/lib/prompts";
 import type { AppEvent, Travel } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { orpc } from "@/orpc/client";
+import type { Airport } from "@/orpc/modules/travel/travel.model";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { format } from "date-fns";
@@ -44,15 +46,10 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import type { DateRange } from "react-day-picker";
+import { match } from "ts-pattern";
 
 interface TripSelectionProps {
 	predefinedTrips: Travel[];
-}
-
-interface Airport {
-	code: string;
-	name: string;
-	city: string;
 }
 
 interface TripSearchForm {
@@ -72,75 +69,11 @@ const destinations = [
 	{ value: "bolivia", label: "Bolívia" },
 ];
 
-const brazilianAirports: Airport[] = [
-	{
-		code: "GRU",
-		name: "Aeroporto Internacional de São Paulo",
-		city: "São Paulo",
-	},
-	{
-		code: "GIG",
-		name: "Aeroporto Internacional Tom Jobim",
-		city: "Rio de Janeiro",
-	},
-	{ code: "CGH", name: "Aeroporto de Congonhas", city: "São Paulo" },
-	{
-		code: "BSB",
-		name: "Aeroporto Internacional de Brasília",
-		city: "Brasília",
-	},
-	{
-		code: "SSA",
-		name: "Aeroporto Deputado Luís Eduardo Magalhães",
-		city: "Salvador",
-	},
-	{
-		code: "CNF",
-		name: "Aeroporto Internacional Tancredo Neves",
-		city: "Belo Horizonte",
-	},
-	{
-		code: "FOR",
-		name: "Aeroporto Internacional Pinto Martins",
-		city: "Fortaleza",
-	},
-	{
-		code: "REC",
-		name: "Aeroporto Internacional dos Guararapes",
-		city: "Recife",
-	},
-	{
-		code: "POA",
-		name: "Aeroporto Internacional Salgado Filho",
-		city: "Porto Alegre",
-	},
-	{
-		code: "CWB",
-		name: "Aeroporto Internacional Afonso Pena",
-		city: "Curitiba",
-	},
-	{
-		code: "MAO",
-		name: "Aeroporto Internacional Eduardo Gomes",
-		city: "Manaus",
-	},
-	{ code: "BEL", name: "Aeroporto Internacional Val de Cans", city: "Belém" },
-	{
-		code: "VCP",
-		name: "Aeroporto Internacional de Viracopos",
-		city: "Campinas",
-	},
-	{ code: "SDU", name: "Aeroporto Santos Dumont", city: "Rio de Janeiro" },
-	{
-		code: "FLN",
-		name: "Aeroporto Internacional Hercílio Luz",
-		city: "Florianópolis",
-	},
-];
+// Removed hardcoded brazilianAirports - now using backend data
 
 export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 	const navigate = useNavigate();
-	const { user, isAuthenticated } = useUser();
+	const { isAuthenticated } = useUser();
 	const [form, setForm] = useState<TripSearchForm>({
 		destination: "",
 		dateRange: undefined,
@@ -154,6 +87,8 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 	// Airport selector state
 	const [airportSearch, setAirportSearch] = useState("");
 	const [isAirportPopoverOpen, setIsAirportPopoverOpen] = useState(false);
+
+	const { data: searchResults = [] } = useAirportsSearch(airportSearch, 10);
 
 	// Login modal state
 	const [loginModalOpen, setLoginModalOpen] = useState(false);
@@ -299,14 +234,8 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 		});
 	}
 
-	const filteredAirports = brazilianAirports
-		.filter(
-			(airport) =>
-				airport.name.toLowerCase().includes(airportSearch.toLowerCase()) ||
-				airport.city.toLowerCase().includes(airportSearch.toLowerCase()) ||
-				airport.code.toLowerCase().includes(airportSearch.toLowerCase()),
-		)
-		.slice(0, 8); // Limit to 8 results for performance
+	// Use search results from backend
+	const filteredAirports = searchResults;
 
 	const getDurationInDays = (startDate: Date, endDate: Date) => {
 		const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
@@ -360,7 +289,7 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 															{form.departureAirports.length > 0 ? (
 																<span className="truncate">
 																	{form.departureAirports
-																		.map((a) => a.code)
+																		.map((a) => renderAiportName(a))
 																		.join(", ")}
 																	{form.departureAirports.length > 1 &&
 																		` (+${form.departureAirports.length - 1})`}
@@ -402,7 +331,7 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 																					removeAirport(airport.code);
 																				}}
 																			>
-																				{airport.code} - {airport.city}
+																				{renderAiportName(airport)}
 																				<X className="h-3 w-3 cursor-pointer hover:text-destructive" />
 																			</Badge>
 																		))}
@@ -424,7 +353,7 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 																	>
 																		<div>
 																			<div className="font-medium">
-																				{airport.code} - {airport.city}
+																				{renderAiportName(airport)}
 																			</div>
 																			<div className="text-xs text-muted-foreground truncate">
 																				{airport.name}
@@ -952,3 +881,11 @@ function DialogCreateTravel(props: {
 		</Dialog>
 	);
 }
+
+const renderAiportName = (airport: Airport) => {
+	return match(airport.type)
+		.with("city_group", () => `${airport.city} - ${airport.stateCode}`)
+		.with("state_group", () => `${airport.state}`)
+		.with("country_group", () => `${airport.country}`)
+		.otherwise(() => `${airport.city} - ${airport.code}`);
+};

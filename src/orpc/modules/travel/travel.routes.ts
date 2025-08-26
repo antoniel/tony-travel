@@ -2,8 +2,9 @@ import { startPlanTravel } from "@/lib/prompts";
 import { pixabayService } from "@/lib/services/pixabay";
 import { os } from "@orpc/server";
 import * as z from "zod";
+import enhancedAirports from "./enhanced-airports.json";
 import { travelDAO } from "./travel.dao";
-import { TravelSchema } from "./travel.model";
+import { type Airport, AirportSchema, TravelSchema } from "./travel.model";
 
 export const generatePrompt = os
 	.input(
@@ -160,4 +161,109 @@ export const updateEventImage = os
 			console.error("Error updating event image:", error);
 			return { success: false };
 		}
+	});
+
+export const searchAirports = os
+	.input(
+		z.object({
+			query: z.string().optional().default(""),
+			limit: z.number().int().min(1).max(50).optional().default(10),
+		}),
+	)
+	.output(z.array(AirportSchema))
+	.handler(({ input }) => {
+		const { query, limit } = input;
+
+		// Convert enhanced airports data to our Airport type
+		let filteredAirports: Airport[] = enhancedAirports.map((airport) => ({
+			code: airport.iata,
+			name: airport.name,
+			city: airport.city,
+			state: airport.state,
+			stateCode: airport.stateCode,
+			country: airport.country,
+			countryCode: airport.countryCode,
+			type: airport.type as
+				| "airport"
+				| "city_group"
+				| "state_group"
+				| "country_group",
+			airportCount: airport.airportCount,
+			airportCodes: airport.airportCodes,
+		}));
+
+		if (query.trim()) {
+			const searchTerm = query.toLowerCase().trim();
+
+			filteredAirports = filteredAirports.filter((airport) => {
+				const matchesName = airport.name.toLowerCase().includes(searchTerm);
+				const matchesCity = airport.city.toLowerCase().includes(searchTerm);
+				const matchesState =
+					airport.state?.toLowerCase().includes(searchTerm) || false;
+				const matchesCountry = airport.country
+					.toLowerCase()
+					.includes(searchTerm);
+				const matchesIata = airport.code.toLowerCase().includes(searchTerm);
+				const matchesCountryCode = airport.countryCode
+					.toLowerCase()
+					.includes(searchTerm);
+
+				return (
+					matchesName ||
+					matchesCity ||
+					matchesState ||
+					matchesCountry ||
+					matchesIata ||
+					matchesCountryCode
+				);
+			});
+		}
+
+		return filteredAirports.slice(0, limit).sort((a, b) => {
+			// Country groups come first
+			if (a.type === "country_group" && b.type !== "country_group") return -1;
+			if (a.type !== "country_group" && b.type === "country_group") return 1;
+
+			// State groups come second
+			if (
+				a.type === "state_group" &&
+				b.type !== "state_group" &&
+				b.type !== "country_group"
+			)
+				return -1;
+			if (
+				a.type !== "state_group" &&
+				a.type !== "country_group" &&
+				b.type === "state_group"
+			)
+				return 1;
+
+			// City groups come third
+			if (a.type === "city_group" && b.type === "airport") return -1;
+			if (a.type === "airport" && b.type === "city_group") return 1;
+
+			if (query.trim()) {
+				const searchTerm = query.toLowerCase().trim();
+
+				// Among individual airports, exact IATA code match comes first
+				if (a.type === "airport" && b.type === "airport") {
+					const aExactIata = a.code.toLowerCase() === searchTerm;
+					const bExactIata = b.code.toLowerCase() === searchTerm;
+					if (aExactIata && !bExactIata) return -1;
+					if (!aExactIata && bExactIata) return 1;
+
+					// Exact city match comes second
+					const aExactCity = a.city.toLowerCase() === searchTerm;
+					const bExactCity = b.city.toLowerCase() === searchTerm;
+					if (aExactCity && !bExactCity) return -1;
+					if (!aExactCity && bExactCity) return 1;
+				}
+			}
+
+			// Default sort by country, then by city
+			const countryCompare = a.country.localeCompare(b.country);
+			if (countryCompare !== 0) return countryCompare;
+
+			return a.city.localeCompare(b.city);
+		});
 	});
