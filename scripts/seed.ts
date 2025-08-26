@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { Travel, Accommodation, AppEvent } from "@/lib/db/schema";
+import { Accommodation, AppEvent, Travel } from "@/lib/db/schema";
 import { colombiaTravel, peruTravel } from "@/orpc/modules/travel/travel.data";
 
 async function seed() {
@@ -14,29 +14,29 @@ async function seed() {
 
 		// Seed Colombia travel
 		console.log("Seeding Colombia travel...");
-		await db.insert(Travel).values({
-			id: colombiaTravel.id,
+		const [colombiaTravelResult] = await db.insert(Travel).values({
 			name: colombiaTravel.name,
 			destination: colombiaTravel.destination,
 			startDate: colombiaTravel.startDate,
 			endDate: colombiaTravel.endDate,
 			locationInfo: colombiaTravel.locationInfo,
 			visaInfo: colombiaTravel.visaInfo,
-		});
+		}).returning({ id: Travel.id });
+
+		const colombiaTravelId = colombiaTravelResult.id;
 
 		// Insert accommodations for Colombia
 		for (const accommodation of colombiaTravel.accommodation) {
 			await db.insert(Accommodation).values({
 				...accommodation,
-				travelId: colombiaTravel.id,
+				travelId: colombiaTravelId,
 			});
 		}
 
 		// Insert events for Colombia (with dependencies)
 		const insertEvents = async (events: typeof colombiaTravel.events, travelId: string, parentEventId?: string) => {
 			for (const event of events) {
-				await db.insert(AppEvent).values({
-					id: event.id,
+				const [insertedEvent] = await db.insert(AppEvent).values({
 					title: event.title,
 					startDate: event.startDate,
 					endDate: event.endDate,
@@ -45,39 +45,41 @@ async function seed() {
 					location: event.location,
 					travelId,
 					parentEventId,
-				});
+				}).returning({ id: AppEvent.id });
 				
 				// Insert dependencies recursively
 				if (event.dependencies && event.dependencies.length > 0) {
-					await insertEvents(event.dependencies, travelId, event.id);
+					await insertEvents(event.dependencies, travelId, insertedEvent.id);
 				}
 			}
 		};
 
-		await insertEvents(colombiaTravel.events, colombiaTravel.id);
+		await insertEvents(colombiaTravel.events, colombiaTravelId);
 
 		// Seed Peru travel
 		console.log("Seeding Peru travel...");
-		await db.insert(Travel).values({
-			id: peruTravel.id,
+		const [peruTravelResult] = await db.insert(Travel).values({
 			name: peruTravel.name,
 			destination: peruTravel.destination,
 			startDate: peruTravel.startDate,
 			endDate: peruTravel.endDate,
 			locationInfo: peruTravel.locationInfo,
 			visaInfo: peruTravel.visaInfo,
-		});
+		}).returning({ id: Travel.id });
+
+		const peruTravelId = peruTravelResult.id;
 
 		// Insert accommodations for Peru
 		for (const accommodation of peruTravel.accommodation) {
 			await db.insert(Accommodation).values({
 				...accommodation,
-				travelId: peruTravel.id,
+				// ID is auto-generated via $defaultFn
+				travelId: peruTravelId,
 			});
 		}
 
 		// Insert events for Peru
-		await insertEvents(peruTravel.events, peruTravel.id);
+		await insertEvents(peruTravel.events, peruTravelId);
 
 		console.log("Database seed completed successfully!");
 	} catch (error) {

@@ -1,28 +1,52 @@
 import { relations } from "drizzle-orm";
 import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { customAlphabet } from "nanoid";
+
+const nanoid = customAlphabet(
+	"123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz",
+	16,
+);
+
+const prefixes = {
+	user: "usr",
+	session: "ses",
+	account: "acc",
+	verification: "ver",
+	travel: "trv",
+	accommodation: "acm",
+	event: "evt",
+} as const;
+const defaultColumn = (prefix: keyof typeof prefixes) => ({
+	id: text("id")
+		.primaryKey()
+		.$defaultFn(() => newId(prefix)),
+	createdAt: integer("created_at", { mode: "timestamp" })
+		.$defaultFn(() => new Date())
+		.notNull(),
+	updatedAt: integer("updated_at", { mode: "timestamp" })
+		.$defaultFn(() => new Date())
+		.$onUpdate(() => new Date())
+		.notNull(),
+});
+
+export function newId(prefix: keyof typeof prefixes): string {
+	return [prefixes[prefix], nanoid()].join("_");
+}
 
 export const User = sqliteTable("user", {
-	id: text("id").primaryKey(),
+	...defaultColumn("user"),
 	name: text("name").notNull(),
 	email: text("email").notNull().unique(),
 	emailVerified: integer("email_verified", { mode: "boolean" })
 		.$defaultFn(() => false)
 		.notNull(),
 	image: text("image"),
-	createdAt: integer("created_at", { mode: "timestamp" })
-		.$defaultFn(() => /* @__PURE__ */ new Date())
-		.notNull(),
-	updatedAt: integer("updated_at", { mode: "timestamp" })
-		.$defaultFn(() => /* @__PURE__ */ new Date())
-		.notNull(),
 });
 
 export const Session = sqliteTable("session", {
-	id: text("id").primaryKey(),
+	...defaultColumn("session"),
 	expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
 	token: text("token").notNull().unique(),
-	createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-	updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
 	ipAddress: text("ip_address"),
 	userAgent: text("user_agent"),
 	userId: text("user_id")
@@ -31,7 +55,7 @@ export const Session = sqliteTable("session", {
 });
 
 export const Account = sqliteTable("account", {
-	id: text("id").primaryKey(),
+	...defaultColumn("account"),
 	accountId: text("account_id").notNull(),
 	providerId: text("provider_id").notNull(),
 	userId: text("user_id")
@@ -48,25 +72,17 @@ export const Account = sqliteTable("account", {
 	}),
 	scope: text("scope"),
 	password: text("password"),
-	createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-	updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
 });
 
 export const Verification = sqliteTable("verification", {
-	id: text("id").primaryKey(),
+	...defaultColumn("verification"),
 	identifier: text("identifier").notNull(),
 	value: text("value").notNull(),
 	expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
-	createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(
-		() => /* @__PURE__ */ new Date(),
-	),
-	updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(
-		() => /* @__PURE__ */ new Date(),
-	),
 });
 
 export const Travel = sqliteTable("travel", {
-	id: text("id").primaryKey(),
+	...defaultColumn("travel"),
 	name: text("name").notNull(),
 	destination: text("destination").notNull(),
 	startDate: integer("start_date", { mode: "timestamp" }).notNull(),
@@ -92,12 +108,6 @@ export const Travel = sqliteTable("travel", {
 		vaccinations: string[];
 		entryRequirements?: string[];
 	}>(),
-	createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(
-		() => new Date(),
-	),
-	updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(
-		() => new Date(),
-	),
 });
 export const TravelRelations = relations(Travel, ({ many }) => ({
 	accommodations: many(Accommodation),
@@ -105,7 +115,7 @@ export const TravelRelations = relations(Travel, ({ many }) => ({
 }));
 
 export const Accommodation = sqliteTable("accommodation", {
-	id: text("id").primaryKey(),
+	...defaultColumn("accommodation"),
 	name: text("name").notNull(),
 	type: text("type", {
 		enum: ["hotel", "hostel", "airbnb", "resort", "other"],
@@ -119,12 +129,6 @@ export const Accommodation = sqliteTable("accommodation", {
 	travelId: text("travel_id")
 		.notNull()
 		.references(() => Travel.id, { onDelete: "cascade" }),
-	createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(
-		() => new Date(),
-	),
-	updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(
-		() => new Date(),
-	),
 });
 export const accommodationRelations = relations(Accommodation, ({ one }) => ({
 	travel: one(Travel, {
@@ -135,7 +139,7 @@ export const accommodationRelations = relations(Accommodation, ({ one }) => ({
 
 export type AppEvent = typeof AppEvent.$inferSelect;
 export const AppEvent = sqliteTable("app_event", {
-	id: text("id").primaryKey(),
+	...defaultColumn("event"),
 	title: text("title").notNull(),
 	startDate: integer("start_date", { mode: "timestamp" }).notNull(),
 	endDate: integer("end_date", { mode: "timestamp" }).notNull(),
@@ -146,12 +150,6 @@ export const AppEvent = sqliteTable("app_event", {
 		.notNull()
 		.references(() => Travel.id, { onDelete: "cascade" }),
 	parentEventId: text("parent_event_id"),
-	createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(
-		() => new Date(),
-	),
-	updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(
-		() => new Date(),
-	),
 });
 export const appEventRelations = relations(AppEvent, ({ one, many }) => ({
 	travel: one(Travel, {

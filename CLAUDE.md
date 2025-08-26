@@ -57,11 +57,13 @@ The task was very simple and involved no feedback.
 - **State Management**: TanStack Query for server state, TanStack Store for client state
 - **Styling**: Tailwind CSS v4 with Shadcn components
 - **API Layer**: oRPC for type-safe API calls
+- **Database**: Drizzle ORM with user-friendly ID generation using nanoid and base58 encoding
 - **Environment**: T3 Env for type-safe environment variables
 - **Validation**: Zod schemas
 - **Build Tool**: Vite
 - **Code Quality**: Biome (linting + formatting)
 - **Testing**: Vitest with Testing Library
+- **ID Generation**: nanoid for base58-encoded, user-friendly IDs with typed prefixes
 
 ### Project Structure
 
@@ -295,6 +297,24 @@ When integrating ORMs (Drizzle, Prisma, etc.):
   - Generate and run migrations before implementing DAO logic
   - Seed database with existing data to maintain continuity
   - Test database operations before replacing mocked data
+
+### Database Schema Patterns
+
+#### ID Generation Strategy
+- Prefer user-friendly IDs with descriptive prefixes (e.g., `trv_`, `acm_`, `evt_`)
+- Use base58 encoding to avoid ambiguous characters (0, O, I, l)
+- Implement via `$defaultFn` in Drizzle schemas for automatic generation
+- Create typed prefix systems for compile-time validation
+
+#### Schema Consistency
+- Use `defaultColumn` helpers to reduce duplication of common fields (id, createdAt, updatedAt)
+- Leverage `.returning()` in DAOs when working with auto-generated fields
+- Maintain type safety throughout schema definitions and DAO operations
+
+#### Best Practices
+- Always consider UX implications of technical IDs (readability, copy-paste friendliness)
+- Use declarative database-level solutions over application-level ID generation
+- Implement consistent patterns across all entity schemas
 
 ### Type Safety with ORMs
 

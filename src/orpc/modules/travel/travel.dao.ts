@@ -9,18 +9,17 @@ type TravelWithId = TravelInput & { id: string };
 
 export class TravelDAO {
 	async createTravel(travelData: TravelInput): Promise<string> {
-		const id = `custom-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-		
-		// Insert travel record
-		await db.insert(Travel).values({
-			id,
+		// Insert travel record (ID is auto-generated via $defaultFn)
+		const [travel] = await db.insert(Travel).values({
 			name: travelData.name,
 			destination: travelData.destination,
 			startDate: travelData.startDate,
 			endDate: travelData.endDate,
 			locationInfo: travelData.locationInfo,
 			visaInfo: travelData.visaInfo,
-		});
+		}).returning({ id: Travel.id });
+
+		const travelId = travel.id;
 
 		// Insert accommodations
 		if (travelData.accommodation.length > 0) {
@@ -28,16 +27,17 @@ export class TravelDAO {
 				travelData.accommodation.map(accommodation =>
 					db.insert(Accommodation).values({
 						...accommodation,
-						travelId: id,
+						// ID is auto-generated via $defaultFn
+						travelId,
 					})
 				)
 			);
 		}
 
 		// Insert events with dependencies
-		await this.insertEventsRecursively(travelData.events, id);
+		await this.insertEventsRecursively(travelData.events, travelId);
 
-		return id;
+		return travelId;
 	}
 
 	async getTravelById(id: string): Promise<TravelWithId | null> {
@@ -127,8 +127,8 @@ export class TravelDAO {
 		parentEventId?: string
 	): Promise<void> {
 		for (const event of events) {
-			await db.insert(AppEvent).values({
-				id: event.id,
+			// Insert event (ID is auto-generated via $defaultFn)
+			const [insertedEvent] = await db.insert(AppEvent).values({
 				title: event.title,
 				startDate: event.startDate,
 				endDate: event.endDate,
@@ -137,11 +137,11 @@ export class TravelDAO {
 				location: event.location,
 				travelId,
 				parentEventId,
-			});
+			}).returning({ id: AppEvent.id });
 			
 			// Insert dependencies recursively
 			if (event.dependencies && event.dependencies.length > 0) {
-				await this.insertEventsRecursively(event.dependencies, travelId, event.id);
+				await this.insertEventsRecursively(event.dependencies, travelId, insertedEvent.id);
 			}
 		}
 	}
