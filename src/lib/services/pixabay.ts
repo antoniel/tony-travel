@@ -90,10 +90,7 @@ export class PixabayService {
 		return keywords.trim() || "travel activity";
 	}
 
-	private async fetchFromPixabay(
-		query: string,
-		category?: string,
-	): Promise<PixabayImage[]> {
+	private async fetchFromPixabay(query: string): Promise<PixabayImage[]> {
 		if (!this.apiKey) {
 			console.warn("Pixabay API key not configured");
 			return [];
@@ -104,11 +101,8 @@ export class PixabayService {
 			q: encodeURIComponent(query),
 			image_type: "photo",
 			orientation: "horizontal",
-			category: category || "places",
 			min_width: "640",
 			min_height: "480",
-			per_page: "5",
-			safesearch: "true",
 			order: "popular",
 		});
 
@@ -143,31 +137,18 @@ export class PixabayService {
 			return cached.data;
 		}
 
-		// Try different search strategies
-		const searchStrategies = [
-			{ query: keywords, category: "places" },
-			{ query: keywords, category: "sports" },
-			{ query: keywords, category: "travel" },
-			{ query: location || "travel", category: "places" }, // Fallback to location only
-		];
+		const images = await this.fetchFromPixabay(keywords);
 
-		for (const strategy of searchStrategies) {
-			const images = await this.fetchFromPixabay(
-				strategy.query,
-				strategy.category,
-			);
+		if (images && images.length > 0) {
+			const selectedImage = images[0]; // Use the most popular image
 
-			if (images && images.length > 0) {
-				const selectedImage = images[0]; // Use the most popular image
+			// Cache the result
+			this.cache.set(cacheKey, {
+				data: selectedImage,
+				timestamp: Date.now(),
+			});
 
-				// Cache the result
-				this.cache.set(cacheKey, {
-					data: selectedImage,
-					timestamp: Date.now(),
-				});
-
-				return selectedImage;
-			}
+			return selectedImage;
 		}
 
 		return null;

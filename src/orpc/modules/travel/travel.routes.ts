@@ -51,6 +51,7 @@ export const listTravels = os
 export const fetchActivityImage = os
 	.input(
 		z.object({
+			eventId: z.string(),
 			title: z.string().min(1),
 			location: z.string().optional(),
 		}),
@@ -107,6 +108,13 @@ export const fetchActivityImage = os
 			}
 
 			const metadata = pixabayService.createImageMetadata(image);
+			if (input.eventId) {
+				await travelDAO.updateEventImage(
+					input.eventId,
+					image.webformatURL,
+					metadata,
+				);
+			}
 
 			return {
 				success: true,

@@ -1,5 +1,6 @@
-import type { AppEvent } from "@/lib/types";
 import { useActivityImage } from "@/hooks/useActivityImage";
+import type { AppEvent } from "@/lib/types";
+import { useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import ActivityImage from "./ActivityImage";
 import { Button } from "./ui/button";
@@ -16,15 +17,10 @@ export default function EventDetailsPanel({
 	onClose,
 	isOpen,
 }: EventDetailsPanelProps) {
-	// Use the activity image hook for lazy loading
-	const {
-		imageUrl,
-		imageMetadata,
-		isLoading: imageLoading,
-		refetch: refetchImage,
-	} = useActivityImage({
+	const queryClient = useQueryClient();
+	const activityImageQuery = useActivityImage({
 		event: event || ({} as AppEvent),
-		autoFetch: isOpen && !!event, // Only fetch when panel is open and event exists
+		enabled: isOpen && !!event && !event.imageUrl,
 	});
 
 	if (!isOpen || !event) return null;
@@ -123,14 +119,24 @@ export default function EventDetailsPanel({
 						{event.type === "activity" && (
 							<div>
 								<ActivityImage
-									imageUrl={imageUrl}
-									imageMetadata={imageMetadata}
+									imageUrl={
+										event.imageUrl ??
+										activityImageQuery.data?.imageUrl ??
+										undefined
+									}
+									imageMetadata={
+										event.imageMetadata ??
+										activityImageQuery.data?.metadata ??
+										undefined
+									}
 									title={event.title}
 									location={event.location}
 									className="mb-4"
-									isLoading={imageLoading}
+									isLoading={activityImageQuery.isLoading}
 									showRefreshButton={true}
-									onRefreshImage={refetchImage}
+									onRefreshImage={() =>
+										useActivityImage.refetch(queryClient, event)
+									}
 								/>
 							</div>
 						)}

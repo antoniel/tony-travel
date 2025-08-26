@@ -107,14 +107,6 @@ export default function ActivityImage({
 					</Button>
 				</div>
 			)}
-
-			{imageMetadata && imageMetadata.source === "pixabay" && (
-				<div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-2 rounded-b-lg">
-					<p className="text-xs opacity-75">
-						Foto por {imageMetadata.photographer || "Pixabay"}
-					</p>
-				</div>
-			)}
 		</div>
 	);
 }

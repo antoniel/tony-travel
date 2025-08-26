@@ -86,6 +86,33 @@ export const getExample = os
   })
 ```
 
+#### React Hooks with oRPC Pattern:
+**CRITICAL**: React hooks should ONLY call oRPC functions, never implement business logic or custom abstractions.
+
+```typescript
+// ✅ CORRECT: Simple hook returning orpc query directly
+function useExample(input: ExampleInput) {
+  return orpc.getExample.useQuery(input)
+  // OR use queryOptions for advanced cases:
+  // return useQuery(orpc.getExample.queryOptions(input))
+}
+
+// ❌ WRONG: Custom queryKey helpers, data transformations, business logic
+function useExample(input: ExampleInput) {
+  return useQuery({
+    queryKey: useExample.queryKey(input), // Don't create custom queryKey helpers
+    queryFn: async () => transform(await api.call()), // Don't transform in hooks
+    // ...custom logic
+  })
+}
+```
+
+**Hook Guidelines**:
+- Return the entire useQuery result, let callers handle the response
+- Use orpc.functionName.queryOptions() for advanced query configuration
+- Never implement business logic or database operations in hooks
+- Avoid custom queryKey abstractions - use orpc's built-in patterns
+
 #### Integration Architecture:
 - **External APIs**: Create service classes with caching and rate limiting
 - **Database Operations**: Use DAO pattern with proper type safety
