@@ -372,16 +372,14 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 																				key={airport.code}
 																				variant="secondary"
 																				className="flex items-center gap-1"
+																				onClick={(e) => {
+																					e.preventDefault();
+																					e.stopPropagation();
+																					removeAirport(airport.code);
+																				}}
 																			>
 																				{airport.code} - {airport.city}
-																				<X
-																					className="h-3 w-3 cursor-pointer hover:text-destructive"
-																					onClick={(e) => {
-																						e.preventDefault();
-																						e.stopPropagation();
-																						removeAirport(airport.code);
-																					}}
-																				/>
+																				<X className="h-3 w-3 cursor-pointer hover:text-destructive" />
 																			</Badge>
 																		))}
 																	</div>
