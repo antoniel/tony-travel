@@ -1,4 +1,4 @@
-import { env } from "@/env";
+import { serverEnv } from "@/env";
 import { db } from "@/lib/db";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -16,12 +16,9 @@ export const auth = betterAuth({
 	}),
 	socialProviders: {
 		google: {
-			clientId: env.GOOGLE_CLIENT_ID || "",
-			clientSecret: env.GOOGLE_CLIENT_SECRET || "",
+			clientId: serverEnv.GOOGLE_CLIENT_ID || "",
+			clientSecret: serverEnv.GOOGLE_CLIENT_SECRET || "",
 		},
 	},
-	secret: env.BETTER_AUTH_SECRET || "fallback-secret-for-dev",
+	secret: serverEnv.BETTER_AUTH_SECRET || "fallback-secret-for-dev",
 });
-
-export type Session = typeof auth.$Infer.Session.session;
-export type User = typeof auth.$Infer.Session.user;
