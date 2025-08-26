@@ -376,9 +376,11 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 																				{airport.code} - {airport.city}
 																				<X
 																					className="h-3 w-3 cursor-pointer hover:text-destructive"
-																					onClick={() =>
-																						removeAirport(airport.code)
-																					}
+																					onClick={(e) => {
+																						e.preventDefault();
+																						e.stopPropagation();
+																						removeAirport(airport.code);
+																					}}
 																				/>
 																			</Badge>
 																		))}
