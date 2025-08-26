@@ -1,14 +1,14 @@
 import Calendar from "@/components/Calendar";
-import { TravelTimeline } from "@/components/TravelTimeline";
 import TravelInfoSidebar from "@/components/TravelInfoSidebar";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { TravelTimeline } from "@/components/TravelTimeline";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { AppEvent } from "@/lib/types";
 import { orpc } from "@/orpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
 import { Calendar as CalendarIcon, Clock, Download } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/trip/$tripId")({
 	component: TripCalendarPage,
@@ -77,22 +77,28 @@ function TripCalendarPage() {
 												if (!travel) return;
 												const itinerary = [
 													`${travel.name}`,
-													`${travel.destination} • ${travel.startDate.toLocaleDateString('pt-BR')} - ${travel.endDate.toLocaleDateString('pt-BR')}`,
+													`${travel.destination} • ${travel.startDate.toLocaleDateString("pt-BR")} - ${travel.endDate.toLocaleDateString("pt-BR")}`,
 													"",
 													"ACOMODAÇÕES:",
 													...travel.accommodation.map(
-														(acc) => `• ${acc.name} (${acc.startDate.toLocaleDateString('pt-BR')} - ${acc.endDate.toLocaleDateString('pt-BR')})`
+														(acc) =>
+															`• ${acc.name} (${acc.startDate.toLocaleDateString("pt-BR")} - ${acc.endDate.toLocaleDateString("pt-BR")})`,
 													),
 													"",
 													"EVENTOS:",
 													...travel.events
 														.slice(0, 10)
 														.map(
-															(event) => `• ${event.startDate.toLocaleDateString('pt-BR')} ${event.startDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} - ${event.title}`
+															(event) =>
+																`• ${event.startDate.toLocaleDateString("pt-BR")} ${event.startDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} - ${event.title}`,
 														),
-													...(travel.events.length > 10 ? ["  ... e mais eventos"] : []),
+													...(travel.events.length > 10
+														? ["  ... e mais eventos"]
+														: []),
 												].join("\n");
-												const blob = new Blob([itinerary], { type: "text/plain" });
+												const blob = new Blob([itinerary], {
+													type: "text/plain",
+												});
 												const url = URL.createObjectURL(blob);
 												const a = document.createElement("a");
 												a.href = url;

@@ -8,6 +8,13 @@
       "when": 1756169128854,
       "tag": "0000_long_boom_boom",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1756174715916,
+      "tag": "0001_exotic_skullbuster",
+      "breakpoints": true
     }
   ]
 }

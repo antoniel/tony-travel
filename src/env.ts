@@ -9,6 +9,7 @@ export const serverEnv = createEnv({
 		BETTER_AUTH_SECRET: z.string().optional(),
 		DATABASE_URL: z.string().optional(),
 		DATABASE_AUTH_TOKEN: z.string().optional(),
+		PIXABAY_API_KEY: z.string().optional(),
 	},
 
 	/**

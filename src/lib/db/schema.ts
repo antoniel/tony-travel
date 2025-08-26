@@ -146,6 +146,14 @@ export const AppEvent = sqliteTable("app_event", {
 	estimatedCost: real("estimated_cost"),
 	type: text("type", { enum: ["travel", "food", "activity"] }).notNull(),
 	location: text("location"),
+	imageUrl: text("image_url"),
+	imageMetadata: text("image_metadata", { mode: "json" }).$type<{
+		source: "pixabay" | "manual";
+		tags: string[];
+		photographer?: string;
+		fetchedAt: Date;
+		pixabayId?: number;
+	}>(),
 	travelId: text("travel_id")
 		.notNull()
 		.references(() => Travel.id, { onDelete: "cascade" }),

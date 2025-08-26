@@ -65,6 +65,33 @@ The task was very simple and involved no feedback.
 - **Testing**: Vitest with Testing Library
 - **ID Generation**: nanoid for base58-encoded, user-friendly IDs with typed prefixes
 
+### oRPC Integration Patterns
+
+**Mandatory Usage**: All API functionality MUST be implemented using oRPC, never as direct API routes.
+
+#### Creating New API Functionality:
+1. **Define Functions**: Create oRPC functions in `src/orpc/router/` modules
+2. **Add Schemas**: Define Zod schemas for input/output validation  
+3. **Export from Index**: Ensure functions are exported from router index
+4. **Client Usage**: Import and use via oRPC client, not direct HTTP calls
+
+#### Pattern Example:
+```typescript
+// ❌ NEVER: src/routes/api.example.ts
+// ✅ ALWAYS: src/orpc/router/example.ts
+export const getExample = os
+  .input(ExampleSchema)
+  .handler(async ({ input }) => {
+    // Implementation
+  })
+```
+
+#### Integration Architecture:
+- **External APIs**: Create service classes with caching and rate limiting
+- **Database Operations**: Use DAO pattern with proper type safety
+- **Complex Logic**: Implement in oRPC functions, not route handlers
+- **Error Handling**: Use oRPC error handling patterns consistently
+
 ### Project Structure
 
 ```
@@ -104,7 +131,9 @@ Environment variables are managed through T3 Env in `src/env.ts`:
 
 The project uses oRPC for type-safe API communication:
 
-- API routes are defined in `src/orpc/router/`
+**CRITICAL RULE**: NEVER create direct API routes (`src/routes/api.*.ts`). ALWAYS use oRPC functions for all API functionality.
+
+- ALL API functionality must be implemented as oRPC functions in `src/orpc/router/`
 - Schemas are shared between client and server using Zod
 - Client is configured in `src/orpc/client.ts`
 - API endpoints are accessible at `/api/rpc`
@@ -113,7 +142,7 @@ The project uses oRPC for type-safe API communication:
 
 - File-based routing in `src/routes/`
 - Layout component in `src/routes/__root.tsx`
-- API routes follow the pattern `api.[name].ts`
+- **IMPORTANT**: Do NOT create API routes (`api.[name].ts`) - use oRPC functions instead
 - Demo files can be safely deleted
 
 ### State Management

@@ -1,8 +1,9 @@
 import { db } from "@/lib/db";
-import { Travel, Accommodation, AppEvent } from "@/lib/db/schema";
+import { Accommodation, AppEvent, Travel } from "@/lib/db/schema";
+import type { ImageMetadata } from "@/lib/types";
 import { eq } from "drizzle-orm";
-import type { TravelSchema } from "./travel.model";
 import type * as z from "zod";
+import type { TravelSchema } from "./travel.model";
 
 type TravelInput = z.infer<typeof TravelSchema>;
 type TravelWithId = TravelInput & { id: string };
@@ -10,27 +11,30 @@ type TravelWithId = TravelInput & { id: string };
 export class TravelDAO {
 	async createTravel(travelData: TravelInput): Promise<string> {
 		// Insert travel record (ID is auto-generated via $defaultFn)
-		const [travel] = await db.insert(Travel).values({
-			name: travelData.name,
-			destination: travelData.destination,
-			startDate: travelData.startDate,
-			endDate: travelData.endDate,
-			locationInfo: travelData.locationInfo,
-			visaInfo: travelData.visaInfo,
-		}).returning({ id: Travel.id });
+		const [travel] = await db
+			.insert(Travel)
+			.values({
+				name: travelData.name,
+				destination: travelData.destination,
+				startDate: travelData.startDate,
+				endDate: travelData.endDate,
+				locationInfo: travelData.locationInfo,
+				visaInfo: travelData.visaInfo,
+			})
+			.returning({ id: Travel.id });
 
 		const travelId = travel.id;
 
 		// Insert accommodations
 		if (travelData.accommodation.length > 0) {
 			await Promise.all(
-				travelData.accommodation.map(accommodation =>
+				travelData.accommodation.map((accommodation) =>
 					db.insert(Accommodation).values({
 						...accommodation,
 						// ID is auto-generated via $defaultFn
 						travelId,
-					})
-				)
+					}),
+				),
 			);
 		}
 
@@ -41,18 +45,15 @@ export class TravelDAO {
 	}
 
 	async getTravelById(id: string): Promise<TravelWithId | null> {
-		const [travel] = await db
-			.select()
-			.from(Travel)
-			.where(eq(Travel.id, id));
-		
+		const [travel] = await db.select().from(Travel).where(eq(Travel.id, id));
+
 		if (!travel) {
 			return null;
 		}
 
 		const [accommodations, events] = await Promise.all([
 			this.getAccommodationsByTravelId(id),
-			this.getEventsByTravelId(id)
+			this.getEventsByTravelId(id),
 		]);
 
 		return {
@@ -75,7 +76,7 @@ export class TravelDAO {
 			travels.map(async (travel) => {
 				const [accommodations, events] = await Promise.all([
 					this.getAccommodationsByTravelId(travel.id),
-					this.getEventsByTravelId(travel.id)
+					this.getEventsByTravelId(travel.id),
 				]);
 
 				return {
@@ -89,10 +90,24 @@ export class TravelDAO {
 					locationInfo: travel.locationInfo,
 					visaInfo: travel.visaInfo,
 				};
-			})
+			}),
 		);
 
 		return result;
+	}
+
+	async updateEventImage(
+		eventId: string,
+		imageUrl: string,
+		imageMetadata: ImageMetadata,
+	): Promise<void> {
+		await db
+			.update(AppEvent)
+			.set({
+				imageUrl,
+				imageMetadata,
+			})
+			.where(eq(AppEvent.id, eventId));
 	}
 
 	private async getAccommodationsByTravelId(travelId: string) {
@@ -122,31 +137,40 @@ export class TravelDAO {
 	}
 
 	private async insertEventsRecursively(
-		events: TravelInput["events"], 
-		travelId: string, 
-		parentEventId?: string
+		events: TravelInput["events"],
+		travelId: string,
+		parentEventId?: string,
 	): Promise<void> {
 		for (const event of events) {
 			// Insert event (ID is auto-generated via $defaultFn)
-			const [insertedEvent] = await db.insert(AppEvent).values({
-				title: event.title,
-				startDate: event.startDate,
-				endDate: event.endDate,
-				estimatedCost: event.estimatedCost,
-				type: event.type,
-				location: event.location,
-				travelId,
-				parentEventId,
-			}).returning({ id: AppEvent.id });
-			
+			const [insertedEvent] = await db
+				.insert(AppEvent)
+				.values({
+					title: event.title,
+					startDate: event.startDate,
+					endDate: event.endDate,
+					estimatedCost: event.estimatedCost,
+					type: event.type,
+					location: event.location,
+					travelId,
+					parentEventId,
+				})
+				.returning({ id: AppEvent.id });
+
 			// Insert dependencies recursively
 			if (event.dependencies && event.dependencies.length > 0) {
-				await this.insertEventsRecursively(event.dependencies, travelId, insertedEvent.id);
+				await this.insertEventsRecursively(
+					event.dependencies,
+					travelId,
+					insertedEvent.id,
+				);
 			}
 		}
 	}
 
-	private transformEventsWithDependencies(dbEvents: Awaited<ReturnType<typeof this.getEventsByTravelId>>) {
+	private transformEventsWithDependencies(
+		dbEvents: Awaited<ReturnType<typeof this.getEventsByTravelId>>,
+	) {
 		type TransformedEvent = {
 			id: string;
 			title: string;
@@ -155,6 +179,8 @@ export class TravelDAO {
 			estimatedCost?: number;
 			type: "travel" | "food" | "activity";
 			location?: string;
+			imageUrl?: string;
+			imageMetadata?: ImageMetadata;
 			dependencies: TransformedEvent[];
 		};
 
@@ -171,6 +197,8 @@ export class TravelDAO {
 				estimatedCost: event.estimatedCost || undefined,
 				type: event.type as "travel" | "food" | "activity",
 				location: event.location || undefined,
+				imageUrl: event.imageUrl || undefined,
+				imageMetadata: event.imageMetadata || undefined,
 				dependencies: [],
 			};
 			eventMap.set(event.id, transformedEvent);
@@ -192,7 +220,9 @@ export class TravelDAO {
 		return rootEvents;
 	}
 
-	private transformEventsFlat(dbEvents: Awaited<ReturnType<typeof this.getEventsByTravelId>>) {
+	private transformEventsFlat(
+		dbEvents: Awaited<ReturnType<typeof this.getEventsByTravelId>>,
+	) {
 		return dbEvents.map((event) => ({
 			id: event.id,
 			title: event.title,
@@ -201,6 +231,8 @@ export class TravelDAO {
 			estimatedCost: event.estimatedCost || undefined,
 			type: event.type as "travel" | "food" | "activity",
 			location: event.location || undefined,
+			imageUrl: event.imageUrl || undefined,
+			imageMetadata: event.imageMetadata || undefined,
 		}));
 	}
 }

@@ -1,7 +1,14 @@
-import { format, differenceInDays, isSameDay, parseISO, isSameWeek, startOfDay } from "date-fns";
+import type { Accommodation, AppEvent, Travel } from "@/lib/types";
+import { differenceInDays, format, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar, Clock, MapPin, Plane, Hotel, UtensilsCrossed, Camera, Wallet } from "lucide-react";
-import type { Travel, AppEvent, Accommodation } from "@/lib/types";
+import {
+	Calendar,
+	Camera,
+	Hotel,
+	MapPin,
+	Plane,
+	UtensilsCrossed,
+} from "lucide-react";
 
 interface TravelTimelineProps {
 	travel: Travel;
@@ -25,15 +32,13 @@ export function TravelTimeline({ travel }: TravelTimelineProps) {
 
 	return (
 		<div className="max-w-4xl mx-auto space-y-8">
-
 			<div className="relative">
 				<div className="absolute left-8 top-16 bottom-0 w-0.5 bg-gradient-to-b from-primary via-accent to-chart-3 opacity-30" />
-				
+
 				{groupedByDay.map(({ date, items }) => (
 					<DaySection key={date} date={date} items={items} />
 				))}
 			</div>
-
 		</div>
 	);
 }
@@ -48,9 +53,9 @@ function DaySection({ date, items }: { date: string; items: TimelineItem[] }) {
 				<div className="w-12 h-0.5 bg-primary rounded-full" />
 			</div>
 			{items.map((item, index) => (
-				<TimelineItemComponent 
-					key={item.id} 
-					item={item} 
+				<TimelineItemComponent
+					key={item.id}
+					item={item}
 					index={index}
 					isLast={index === items.length - 1}
 				/>
@@ -59,26 +64,28 @@ function DaySection({ date, items }: { date: string; items: TimelineItem[] }) {
 	);
 }
 
-function TimelineItemComponent({ 
-	item, 
-	index, 
-	isLast 
-}: { 
-	item: TimelineItem; 
+function TimelineItemComponent({
+	item,
+	index,
+	isLast,
+}: {
+	item: TimelineItem;
 	index: number;
 	isLast: boolean;
 }) {
 	const Icon = item.icon;
 	const iconColor = getEventColor(item.type);
-	
+
 	return (
 		<div className="relative flex items-start gap-6 pb-8">
 			<div className="relative z-10 flex-shrink-0">
-				<div className={`w-16 h-16 rounded-full border-2 shadow-sm flex items-center justify-center ${iconColor}`}>
+				<div
+					className={`w-16 h-16 rounded-full border-2 shadow-sm flex items-center justify-center ${iconColor}`}
+				>
 					<Icon className="w-6 h-6" />
 				</div>
 			</div>
-			
+
 			<div className="flex-1 min-w-0 pt-2">
 				<div className="travel-card rounded-lg p-6 hover:shadow-md transition-all duration-300">
 					<div className="flex items-start justify-between mb-3">
@@ -96,11 +103,11 @@ function TimelineItemComponent({
 							</div>
 						)}
 					</div>
-					
+
 					<p className="text-foreground/80 mb-3 leading-relaxed">
 						{item.description}
 					</p>
-					
+
 					{item.location && (
 						<div className="flex items-center gap-2 text-sm text-muted-foreground">
 							<MapPin className="w-4 h-4" />
@@ -113,33 +120,38 @@ function TimelineItemComponent({
 	);
 }
 
-function groupItemsByDay(items: TimelineItem[]): { date: string; items: TimelineItem[] }[] {
+function groupItemsByDay(
+	items: TimelineItem[],
+): { date: string; items: TimelineItem[] }[] {
 	const groups = new Map<string, TimelineItem[]>();
-	
-	items.forEach(item => {
-		const dayKey = format(item.date, 'yyyy-MM-dd');
+
+	items.forEach((item) => {
+		const dayKey = format(item.date, "yyyy-MM-dd");
 		if (!groups.has(dayKey)) {
 			groups.set(dayKey, []);
 		}
 		groups.get(dayKey)!.push(item);
 	});
-	
+
 	return Array.from(groups.entries())
 		.sort(([a], [b]) => a.localeCompare(b))
-		.map(([date, items]) => ({ date, items: items.sort((a, b) => a.date.getTime() - b.date.getTime()) }));
+		.map(([date, items]) => ({
+			date,
+			items: items.sort((a, b) => a.date.getTime() - b.date.getTime()),
+		}));
 }
 
-function getEventColor(type: TimelineItem['type']): string {
+function getEventColor(type: TimelineItem["type"]): string {
 	switch (type) {
-		case 'travel-start':
-		case 'travel-end':
-			return 'text-white border-chart-1/20 bg-chart-1';
-		case 'accommodation':
-			return 'text-white border-chart-4/20 bg-chart-4';
-		case 'event':
-			return 'text-white border-accent/20 bg-accent';
+		case "travel-start":
+		case "travel-end":
+			return "text-white border-chart-1/20 bg-chart-1";
+		case "accommodation":
+			return "text-white border-chart-4/20 bg-chart-4";
+		case "event":
+			return "text-white border-accent/20 bg-accent";
 		default:
-			return 'text-white border-primary/20 bg-primary';
+			return "text-white border-primary/20 bg-primary";
 	}
 }
 
@@ -156,7 +168,7 @@ function createTimelineItems(travel: Travel): TimelineItem[] {
 		icon: Plane,
 	});
 
-	travel.accommodation.forEach(acc => {
+	travel.accommodation.forEach((acc) => {
 		items.push({
 			id: acc.id,
 			type: "accommodation",
@@ -170,10 +182,10 @@ function createTimelineItems(travel: Travel): TimelineItem[] {
 		});
 	});
 
-	travel.events.forEach(event => {
+	travel.events.forEach((event) => {
 		const icon = getEventIcon(event.type);
 		const description = getEventDescription(event);
-		
+
 		items.push({
 			id: event.id,
 			type: "event",
@@ -200,7 +212,9 @@ function createTimelineItems(travel: Travel): TimelineItem[] {
 	return items.sort((a, b) => a.date.getTime() - b.date.getTime());
 }
 
-function getEventIcon(type: AppEvent["type"]): React.ComponentType<{ className?: string }> {
+function getEventIcon(
+	type: AppEvent["type"],
+): React.ComponentType<{ className?: string }> {
 	switch (type) {
 		case "travel":
 			return Plane;
@@ -215,7 +229,7 @@ function getEventIcon(type: AppEvent["type"]): React.ComponentType<{ className?:
 
 function getEventDescription(event: AppEvent): string {
 	const duration = differenceInDays(event.endDate, event.startDate);
-	const timeInfo = isSameDay(event.startDate, event.endDate) 
+	const timeInfo = isSameDay(event.startDate, event.endDate)
 		? `às ${format(event.startDate, "HH:mm")}`
 		: `por ${duration + 1} dias`;
 

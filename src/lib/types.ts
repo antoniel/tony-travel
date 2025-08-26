@@ -53,9 +53,19 @@ export interface AppEvent {
 	estimatedCost?: number;
 	type: "travel" | "food" | "activity";
 	location?: string;
+	imageUrl?: string;
+	imageMetadata?: ImageMetadata;
 	/**
 	 * Some events need to include locomotion to the location.
 	 * so you should include the locomotion event as a dependency.
 	 */
 	dependencies?: AppEvent[];
+}
+
+export interface ImageMetadata {
+	source: "pixabay" | "manual";
+	tags: string[];
+	photographer?: string;
+	fetchedAt: Date;
+	pixabayId?: number;
 }

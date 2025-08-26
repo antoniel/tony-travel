@@ -1,5 +1,7 @@
 import type { AppEvent } from "@/lib/types";
+import { useActivityImage } from "@/hooks/useActivityImage";
 import { X } from "lucide-react";
+import ActivityImage from "./ActivityImage";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 
@@ -14,6 +16,17 @@ export default function EventDetailsPanel({
 	onClose,
 	isOpen,
 }: EventDetailsPanelProps) {
+	// Use the activity image hook for lazy loading
+	const {
+		imageUrl,
+		imageMetadata,
+		isLoading: imageLoading,
+		refetch: refetchImage,
+	} = useActivityImage({
+		event: event || ({} as AppEvent),
+		autoFetch: isOpen && !!event, // Only fetch when panel is open and event exists
+	});
+
 	if (!isOpen || !event) return null;
 
 	const getEventColor = (event: AppEvent) => {
@@ -106,6 +119,22 @@ export default function EventDetailsPanel({
 					</CardHeader>
 
 					<CardContent className="space-y-4">
+						{/* Activity Image - only show for activities */}
+						{event.type === "activity" && (
+							<div>
+								<ActivityImage
+									imageUrl={imageUrl}
+									imageMetadata={imageMetadata}
+									title={event.title}
+									location={event.location}
+									className="mb-4"
+									isLoading={imageLoading}
+									showRefreshButton={true}
+									onRefreshImage={refetchImage}
+								/>
+							</div>
+						)}
+
 						<div>
 							<h3 className="font-medium text-sm text-muted-foreground mb-2">
 								HORÁRIO
@@ -145,7 +174,6 @@ export default function EventDetailsPanel({
 								<p className="text-sm">{event.location}</p>
 							</div>
 						)}
-
 					</CardContent>
 				</Card>
 			</div>
