@@ -414,7 +414,7 @@ For multi-step technical integrations (database setup, API integration, etc.):
 - Maintain clear separation between database logic and API routing
 - Use TypeScript generics for reusable query patterns when appropriate
 
-## Component Usage Guidelines
+## Component Development Guidelines
 
 **CRITICAL**: ALWAYS use existing components from the project instead of creating custom implementations from scratch. This ensures consistency with the design system and prevents code duplication.
 
@@ -429,9 +429,39 @@ For multi-step technical integrations (database setup, API integration, etc.):
 - Prefer composition of existing components over creating new ones
 - Follow established patterns and design system variables (primary, muted-foreground, etc.)
 
+### Component Abstraction Patterns
+
+**When to Abstract into Reusable Components**:
+- When similar UI patterns appear in 2+ locations
+- When user explicitly requests component abstraction or reusability
+- When complex component logic can be simplified through abstraction
+- When component state and behavior can be generalized
+
+**Component Placement Strategy**:
+- **`src/components/ui/`**: For general-purpose, highly reusable components (form controls, selectors, etc.)
+- **`src/components/`**: For domain-specific or application-specific components
+- **Shadcn Integration**: Extend Shadcn components rather than replacing them
+
+**Component API Design Principles**:
+- Design flexible APIs that handle multiple use cases without becoming overly complex
+- Use discriminated unions for components with multiple modes/variants
+- Provide sensible defaults while allowing customization
+- Maintain type safety throughout component props and callbacks
+- Follow controlled/uncontrolled component patterns for state management
+
+**Implementation Workflow for New Reusable Components**:
+1. **Analyze Usage Patterns**: Identify common props, state, and behavior across existing implementations
+2. **Design Component API**: Define props interface with proper TypeScript types
+3. **Create in Appropriate Location**: Place in `ui/` for general use, `components/` for domain-specific
+4. **Implement with Composition**: Build on existing Shadcn/project components where possible
+5. **Update Existing Usage**: Replace duplicated implementations with new reusable component
+
 ### Examples:
 - ✅ Use `<Tabs>` component instead of custom toggle buttons
 - ✅ Use `<Button>` variants instead of custom styled buttons  
 - ✅ Use `<Card>` components instead of custom divs with styling
+- ✅ Abstract common form patterns (LocationSelector, DatePicker) into `ui/` components
+- ✅ Create flexible component APIs that handle multiple use cases
 - ❌ Don't create custom toggle logic when Tabs exist
 - ❌ Don't hardcode colors when design system variables exist
+- ❌ Don't create overly specific components that can't be reused

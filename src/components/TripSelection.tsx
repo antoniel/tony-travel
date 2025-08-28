@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LocationSelector } from "@/components/ui/location-selector";
 import {
 	Popover,
 	PopoverContent,
@@ -24,9 +25,10 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { useAirportsSearch } from "@/hooks/useAirportsSearch";
+import { useDestinationsSearch } from "@/hooks/useDestinationsSearch";
 import { useUser } from "@/hooks/useUser";
 import { signIn } from "@/lib/auth-client";
-import { startPlanTravel } from "@/lib/prompts";
+import { startPlanTravel } from "@/lib/planTravel.prompt";
 import type { AppEvent, Travel } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { orpc } from "@/orpc/client";
@@ -54,6 +56,7 @@ interface TripSelectionProps {
 
 interface TripSearchForm {
 	destination: string;
+	destinations: { value: string; label: string }[];
 	dateRange: DateRange | undefined;
 	budget: string;
 	customBudget: string;
@@ -62,20 +65,12 @@ interface TripSearchForm {
 	departureAirports: Airport[];
 }
 
-const destinations = [
-	{ value: "colombia", label: "Colômbia" },
-	{ value: "peru", label: "Peru" },
-	{ value: "ecuador", label: "Equador" },
-	{ value: "bolivia", label: "Bolívia" },
-];
-
-// Removed hardcoded brazilianAirports - now using backend data
-
 export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 	const navigate = useNavigate();
 	const { isAuthenticated } = useUser();
 	const [form, setForm] = useState<TripSearchForm>({
 		destination: "",
+		destinations: [],
 		dateRange: undefined,
 		budget: "",
 		customBudget: "",
@@ -88,7 +83,16 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 	const [airportSearch, setAirportSearch] = useState("");
 	const [isAirportPopoverOpen, setIsAirportPopoverOpen] = useState(false);
 
+	// Destination selector state
+	const [destinationSearch, setDestinationSearch] = useState("");
+	const [isDestinationPopoverOpen, setIsDestinationPopoverOpen] =
+		useState(false);
+
 	const { data: searchResults = [] } = useAirportsSearch(airportSearch, 10);
+	const { data: destinationResults = [] } = useDestinationsSearch(
+		destinationSearch,
+		10,
+	);
 
 	// Login modal state
 	const [loginModalOpen, setLoginModalOpen] = useState(false);
@@ -195,26 +199,6 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 		}
 	};
 
-	const addAirport = (airport: Airport) => {
-		if (!form.departureAirports.some((a) => a.code === airport.code)) {
-			setForm((prev) => ({
-				...prev,
-				departureAirports: [...prev.departureAirports, airport],
-			}));
-		}
-		setAirportSearch("");
-		setIsAirportPopoverOpen(false);
-	};
-
-	const removeAirport = (airportCode: string) => {
-		setForm((prev) => ({
-			...prev,
-			departureAirports: prev.departureAirports.filter(
-				(a) => a.code !== airportCode,
-			),
-		}));
-	};
-
 	function formatISODate(d: Date) {
 		const year = d.getFullYear();
 		const month = String(d.getMonth() + 1).padStart(2, "0");
@@ -236,6 +220,7 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 
 	// Use search results from backend
 	const filteredAirports = searchResults;
+	const filteredDestinations = destinationResults;
 
 	const getDurationInDays = (startDate: Date, endDate: Date) => {
 		const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
@@ -272,133 +257,57 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 									<div className="pb-8 border-b border-border/50">
 										<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
 											{/* Departure Airport */}
-											<div className="space-y-3">
-												<Label className="text-base font-medium">
-													De onde você vai partir?
-												</Label>
-												<Popover
-													open={isAirportPopoverOpen}
-													onOpenChange={setIsAirportPopoverOpen}
-												>
-													<PopoverTrigger asChild>
-														<Button
-															variant="outline"
-															className="h-12 w-full justify-start text-left font-normal text-base"
-														>
-															<Plane className="mr-3 h-4 w-4" />
-															{form.departureAirports.length > 0 ? (
-																<span className="truncate">
-																	{form.departureAirports
-																		.map((a) => renderAiportName(a))
-																		.join(", ")}
-																	{form.departureAirports.length > 1 &&
-																		` (+${form.departureAirports.length - 1})`}
-																</span>
-															) : (
-																<span className="text-muted-foreground">
-																	Selecione aeroporto(s) de partida
-																</span>
-															)}
-														</Button>
-													</PopoverTrigger>
-													<PopoverContent className="w-80 p-0" align="start">
-														<div className="p-4 space-y-4">
-															{/* Search */}
-															<Input
-																placeholder="Buscar por cidade, aeroporto ou código..."
-																value={airportSearch}
-																onChange={(e) =>
-																	setAirportSearch(e.target.value)
-																}
-																className="w-full"
-															/>
-
-															{/* Selected Airports */}
-															{form.departureAirports.length > 0 && (
-																<div className="space-y-2">
-																	<div className="text-sm font-medium">
-																		Aeroportos selecionados:
-																	</div>
-																	<div className="flex flex-wrap gap-2">
-																		{form.departureAirports.map((airport) => (
-																			<Badge
-																				key={airport.code}
-																				variant="secondary"
-																				className="flex items-center gap-1"
-																				onClick={(e) => {
-																					e.preventDefault();
-																					e.stopPropagation();
-																					removeAirport(airport.code);
-																				}}
-																			>
-																				{renderAiportName(airport)}
-																				<X className="h-3 w-3 cursor-pointer hover:text-destructive" />
-																			</Badge>
-																		))}
-																	</div>
-																</div>
-															)}
-
-															{/* Airport List */}
-															<div className="space-y-1 max-h-64 overflow-y-auto">
-																{filteredAirports.map((airport) => (
-																	<Button
-																		key={airport.code}
-																		variant="ghost"
-																		className="w-full justify-start text-left p-2 h-auto"
-																		onClick={() => addAirport(airport)}
-																		disabled={form.departureAirports.some(
-																			(a) => a.code === airport.code,
-																		)}
-																	>
-																		<div>
-																			<div className="font-medium">
-																				{renderAiportName(airport)}
-																			</div>
-																			<div className="text-xs text-muted-foreground truncate">
-																				{airport.name}
-																			</div>
-																		</div>
-																	</Button>
-																))}
-																{airportSearch &&
-																	filteredAirports.length === 0 && (
-																		<div className="text-center text-sm text-muted-foreground py-4">
-																			Nenhum aeroporto encontrado
-																		</div>
-																	)}
-															</div>
-														</div>
-													</PopoverContent>
-												</Popover>
-											</div>
+											<LocationSelector
+												label="De onde você vai partir?"
+												placeholder="Selecione aeroporto(s) de partida"
+												searchPlaceholder="Buscar por cidade, aeroporto ou código..."
+												selectedLabel="Aeroportos selecionados"
+												icon={<Plane className="h-4 w-4" />}
+												options={filteredAirports.map((airport) => ({
+													value: airport.code,
+													label: renderAiportName(airport),
+												}))}
+												selected={form.departureAirports.map((airport) => ({
+													value: airport.code,
+													label: renderAiportName(airport),
+												}))}
+												onSelectionChange={(selected) => {
+													const selectedCodes = selected.map((s) => s.value);
+													setForm((prev) => ({
+														...prev,
+														departureAirports: filteredAirports.filter(
+															(airport) => selectedCodes.includes(airport.code),
+														),
+													}));
+												}}
+												searchValue={airportSearch}
+												onSearchChange={setAirportSearch}
+												isOpen={isAirportPopoverOpen}
+												onOpenChange={setIsAirportPopoverOpen}
+												multiple
+											/>
 
 											{/* Destination */}
-											<div className="space-y-3">
-												<Label
-													htmlFor="destination"
-													className="text-base font-medium"
-												>
-													Para onde você quer ir?
-												</Label>
-												<Select
-													value={form.destination}
-													onValueChange={(value) =>
-														setForm((prev) => ({ ...prev, destination: value }))
-													}
-												>
-													<SelectTrigger className="h-12 text-base w-full">
-														<SelectValue placeholder="Escolha seu destino" />
-													</SelectTrigger>
-													<SelectContent>
-														{destinations.map((dest) => (
-															<SelectItem key={dest.value} value={dest.value}>
-																{dest.label}
-															</SelectItem>
-														))}
-													</SelectContent>
-												</Select>
-											</div>
+											<LocationSelector
+												label="Para onde você quer ir?"
+												placeholder="Selecione destino(s)"
+												searchPlaceholder="Buscar destino..."
+												selectedLabel="Destinos selecionados"
+												icon={<MapPin className="h-4 w-4" />}
+												options={filteredDestinations}
+												selected={form.destinations}
+												onSelectionChange={(selected) => {
+													setForm((prev) => ({
+														...prev,
+														destinations: selected,
+													}));
+												}}
+												searchValue={destinationSearch}
+												onSearchChange={setDestinationSearch}
+												isOpen={isDestinationPopoverOpen}
+												onOpenChange={setIsDestinationPopoverOpen}
+												multiple
+											/>
 										</div>
 
 										{/* People and Budget */}

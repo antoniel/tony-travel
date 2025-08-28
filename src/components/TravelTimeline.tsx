@@ -66,8 +66,6 @@ function DaySection({ date, items }: { date: string; items: TimelineItem[] }) {
 
 function TimelineItemComponent({
 	item,
-	index,
-	isLast,
 }: {
 	item: TimelineItem;
 	index: number;
@@ -125,13 +123,13 @@ function groupItemsByDay(
 ): { date: string; items: TimelineItem[] }[] {
 	const groups = new Map<string, TimelineItem[]>();
 
-	items.forEach((item) => {
+	for (const item of items) {
 		const dayKey = format(item.date, "yyyy-MM-dd");
 		if (!groups.has(dayKey)) {
 			groups.set(dayKey, []);
 		}
-		groups.get(dayKey)!.push(item);
-	});
+		groups.get(dayKey)?.push(item);
+	}
 
 	return Array.from(groups.entries())
 		.sort(([a], [b]) => a.localeCompare(b))
@@ -168,7 +166,7 @@ function createTimelineItems(travel: Travel): TimelineItem[] {
 		icon: Plane,
 	});
 
-	travel.accommodation.forEach((acc) => {
+	for (const acc of travel.accommodation) {
 		items.push({
 			id: acc.id,
 			type: "accommodation",
@@ -180,9 +178,9 @@ function createTimelineItems(travel: Travel): TimelineItem[] {
 			cost: acc.price,
 			icon: Hotel,
 		});
-	});
+	}
 
-	travel.events.forEach((event) => {
+	for (const event of travel.events) {
 		const icon = getEventIcon(event.type);
 		const description = getEventDescription(event);
 
@@ -197,7 +195,7 @@ function createTimelineItems(travel: Travel): TimelineItem[] {
 			cost: event.estimatedCost,
 			icon,
 		});
-	});
+	}
 
 	items.push({
 		id: "travel-end",

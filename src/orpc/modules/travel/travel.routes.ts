@@ -1,4 +1,4 @@
-import { startPlanTravel } from "@/lib/prompts";
+import { startPlanTravel } from "@/lib/planTravel.prompt";
 import { pixabayService } from "@/lib/services/pixabay";
 import { os } from "@orpc/server";
 import * as z from "zod";
@@ -266,4 +266,51 @@ export const searchAirports = os
 
 			return a.city.localeCompare(b.city);
 		});
+	});
+
+export const searchDestinations = os
+	.input(
+		z.object({
+			query: z.string().optional().default(""),
+			limit: z.number().int().min(1).max(50).optional().default(10),
+		}),
+	)
+	.output(z.array(z.object({
+		value: z.string(),
+		label: z.string(),
+		country: z.string(),
+		countryCode: z.string(),
+	})))
+	.handler(({ input }) => {
+		const { query, limit } = input;
+
+		// Get unique countries from airports data for destinations
+		const countries = Array.from(
+			new Set(
+				enhancedAirports
+					.filter((airport) => airport.type === "country_group")
+					.map((airport) => ({
+						value: airport.countryCode.toLowerCase(),
+						label: airport.country,
+						country: airport.country,
+						countryCode: airport.countryCode,
+					}))
+			)
+		);
+
+		let filteredDestinations = countries;
+
+		if (query.trim()) {
+			const searchTerm = query.toLowerCase().trim();
+			filteredDestinations = countries.filter((dest) => {
+				const matchesLabel = dest.label.toLowerCase().includes(searchTerm);
+				const matchesCountry = dest.country.toLowerCase().includes(searchTerm);
+				const matchesCode = dest.countryCode.toLowerCase().includes(searchTerm);
+				return matchesLabel || matchesCountry || matchesCode;
+			});
+		}
+
+		return filteredDestinations
+			.slice(0, limit)
+			.sort((a, b) => a.label.localeCompare(b.label));
 	});

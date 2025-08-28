@@ -183,10 +183,7 @@ export class PixabayService {
 			},
 		};
 	}
-
-	// Helper method to clear old cache entries
 	clearExpiredCache(): void {
-		const now = Date.now();
 		for (const [key, value] of this.cache.entries()) {
 			if (!this.isValidCacheEntry(value.timestamp)) {
 				this.cache.delete(key);

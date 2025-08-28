@@ -1,3 +1,6 @@
+import z from "zod";
+import { TravelSchema } from "./db/schema";
+
 type StartPlanTravelProps = {
 	tripDates: {
 		start: string;
@@ -117,66 +120,17 @@ BEGIN PLANNING
 `;
 }
 
-const schema = `
-export type Travel = {
-	id: string;
-	name: string;
-	destination: string;
-	startDate: Date;
-	endDate: Date;
-	accommodation: Accommodation[];
-	events: AppEvent[];
-	locationInfo: LocationInfo;
-	visaInfo: VisaInfo;
-};
-
-export type Accommodation = {
-	id: string;
-	name: string;
-	type: "hotel" | "hostel" | "airbnb" | "resort" | "other";
-	startDate: Date;
-	endDate: Date;
-	address?: string;
-	rating?: number;
-	price?: number;
-	currency?: string;
-};
-
-export type LocationInfo = {
-	destination: string;
-	country: string;
-	climate: string;
-	currency: string;
-	language: string;
-	timeZone: string;
-	bestTimeToVisit: string;
-	emergencyNumbers?: {
-		police?: string;
-		medical?: string;
-		embassy?: string;
-	};
-};
-
-export type VisaInfo = {
-	required: boolean;
-	stayDuration: string;
-	documents: string[];
-	vaccinations: string[];
-	entryRequirements?: string[];
-};
-
-export interface AppEvent {
-	id: string;
-	title: string;
-	startDate: Date;
-	endDate: Date;
-	estimatedCost?: number;
-	type: "travel" | "food" | "activity";
-	location?: string;
-	/**
-	 * Some events need to include locomotion to the location.
-	 * so you should include the locomotion event as a dependency.
-	 */
-	dependencies?: AppEvent[];
-}
-`;
+const schema = JSON.stringify(
+	z.toJSONSchema(TravelSchema, {
+		unrepresentable: "any",
+		override: (ctx) => {
+			const def = ctx.zodSchema._zod.def;
+			if (def.type === "date") {
+				ctx.jsonSchema.type = "string";
+				ctx.jsonSchema.format = "date-time";
+			}
+		},
+	}),
+	null,
+	2,
+);

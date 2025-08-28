@@ -17,7 +17,6 @@ interface ActivityImageProps {
 
 export default function ActivityImage({
 	imageUrl,
-	imageMetadata,
 	title,
 	location,
 	className = "",
