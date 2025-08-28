@@ -1,6 +1,3 @@
-import z from "zod";
-import { TravelSchema } from "./db/schema";
-
 type StartPlanTravelProps = {
 	tripDates: {
 		start: string;
@@ -120,17 +117,44 @@ BEGIN PLANNING
 `;
 }
 
-const schema = JSON.stringify(
-	z.toJSONSchema(TravelSchema, {
-		unrepresentable: "any",
-		override: (ctx) => {
-			const def = ctx.zodSchema._zod.def;
-			if (def.type === "date") {
-				ctx.jsonSchema.type = "string";
-				ctx.jsonSchema.format = "date-time";
-			}
-		},
-	}),
-	null,
-	2,
-);
+const schema = `
+type Travel = {
+    name: string;
+    destination: string;
+    startDate: Date;
+    endDate: Date;
+    accommodations: {
+        id: string;
+        name: string;
+        type: "hotel" | "hostel" | "airbnb" | "resort" | "other";
+        startDate: Date;
+        endDate: Date;
+        address?: string | null | undefined;
+        rating?: number | null | undefined;
+        price?: number | null | undefined;
+        currency?: string | null | undefined;
+    }[];
+    events: any[];
+    locationInfo: {
+        destination: string;
+        country: string;
+        climate: string;
+        currency: string;
+        language: string;
+        timeZone: string;
+        bestTimeToVisit: string;
+        emergencyNumbers?: {
+            police?: string | undefined;
+            medical?: string | undefined;
+            embassy?: string | undefined;
+        } | undefined;
+    };
+    visaInfo: {
+        required: boolean;
+        stayDuration: string;
+        documents: string[];
+        vaccinations: string[];
+        entryRequirements?: string[] | undefined;
+    };
+}
+`;

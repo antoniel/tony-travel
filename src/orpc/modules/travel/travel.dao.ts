@@ -1,11 +1,16 @@
 import { db } from "@/lib/db";
-import { Accommodation, AppEvent, Travel } from "@/lib/db/schema";
+import {
+	Accommodation,
+	AppEvent,
+	type InsertAppEvent,
+	Travel,
+} from "@/lib/db/schema";
 import type { ImageMetadata, TravelWithRelations } from "@/lib/types";
 import { eq } from "drizzle-orm";
 import type * as z from "zod";
-import type { InsertTrevelSchema } from "./travel.model";
+import type { InsertFullTravel } from "./travel.model";
 
-type TravelInput = z.infer<typeof InsertTrevelSchema>;
+type TravelInput = z.infer<typeof InsertFullTravel>;
 
 export class TravelDAO {
 	async createTravel(travelData: TravelInput): Promise<string> {
@@ -76,6 +81,15 @@ export class TravelDAO {
 		});
 
 		return travels;
+	}
+
+	async createEvent(eventData: InsertAppEvent): Promise<string> {
+		const [event] = await db
+			.insert(AppEvent)
+			.values(eventData)
+			.returning({ id: AppEvent.id });
+
+		return event.id;
 	}
 
 	async updateEventImage(

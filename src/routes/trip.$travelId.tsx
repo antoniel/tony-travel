@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { InsertAppEvent } from "@/lib/db/schema";
 import type { AppEvent } from "@/lib/types";
 import { orpc } from "@/orpc/client";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Calendar as CalendarIcon, Clock, Download } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -23,6 +23,8 @@ function TripCalendarPage() {
 	);
 	const travel = travelQuery.data;
 
+	const createEventMutation = useMutation(orpc.createEvent.mutationOptions());
+
 	const [events, setEvents] = useState<AppEvent[]>([]);
 
 	useEffect(() => {
@@ -38,12 +40,7 @@ function TripCalendarPage() {
 	}, [travel?.events]);
 
 	const handleAddEvent = (newEvent: InsertAppEvent) => {
-		const eventWithId: InsertAppEvent = {
-			...newEvent,
-			id: `event-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-		};
-		// TODO: integrar com o backend
-		setEvents((prevEvents) => [...prevEvents, eventWithId]);
+		createEventMutation.mutate(newEvent);
 	};
 
 	const handleUpdateEvent = (

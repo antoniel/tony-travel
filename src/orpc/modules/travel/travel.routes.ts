@@ -1,14 +1,11 @@
+import { InsertAppEventSchema } from "@/lib/db/schema";
 import { startPlanTravel } from "@/lib/planTravel.prompt";
 import { pixabayService } from "@/lib/services/pixabay";
 import { os } from "@orpc/server";
 import * as z from "zod";
 import enhancedAirports from "./enhanced-airports.json";
 import { travelDAO } from "./travel.dao";
-import {
-	type Airport,
-	AirportSchema,
-	InsertTrevelSchema,
-} from "./travel.model";
+import { type Airport, AirportSchema, InsertFullTravel } from "./travel.model";
 
 export const generatePrompt = os
 	.input(
@@ -26,7 +23,7 @@ export const generatePrompt = os
 	});
 
 export const saveTravel = os
-	.input(z.object({ travel: InsertTrevelSchema }))
+	.input(z.object({ travel: InsertFullTravel }))
 	.output(z.object({ id: z.string() }))
 	.handler(async ({ input }) => {
 		const id = await travelDAO.createTravel(input.travel);
@@ -319,4 +316,12 @@ export const searchDestinations = os
 		return filteredDestinations
 			.slice(0, limit)
 			.sort((a, b) => a.label.localeCompare(b.label));
+	});
+
+export const createEvent = os
+	.input(InsertAppEventSchema)
+	.output(z.object({ id: z.string() }))
+	.handler(async ({ input }) => {
+		const id = await travelDAO.createEvent(input);
+		return { id };
 	});

@@ -26,6 +26,9 @@ export type InferResultType<
 		with: With;
 	}
 >;
+export type ExpandType<T> = T extends infer O
+	? { [K in keyof O]: O[K] }
+	: never;
 
 /**
  * A stricter version of TypeScript's Omit utility type that ensures the omitted keys cannot be present.

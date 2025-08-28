@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **CRITICAL REQUIREMENT**: ALWAYS offer Self-Improving CLAUDE Reflection opportunities to continuously improve CLAUDE.md based on user interactions and feedback.
 
 **MANDATORY Trigger**: You MUST offer reflection before completing ANY task that:
+
 1. Involved user feedback at any point during the conversation, OR
 2. Involved multiple non-trivial steps (e.g., 2+ file edits, complex logic generation, multi-step configurations), OR
 3. Required problem-solving or decision-making beyond simple single-step tasks
@@ -70,23 +71,24 @@ The task was very simple and involved no feedback.
 **Mandatory Usage**: All API functionality MUST be implemented using oRPC, never as direct API routes.
 
 #### Creating New API Functionality:
+
 1. **Define Functions**: Create oRPC functions in `src/orpc/router/` modules
-2. **Add Schemas**: Define Zod schemas for input/output validation  
+2. **Add Schemas**: Define Zod schemas for input/output validation
 3. **Export from Index**: Ensure functions are exported from router index
 4. **Client Usage**: Import and use via oRPC client, not direct HTTP calls
 
 #### Pattern Example:
+
 ```typescript
 // ❌ NEVER: src/routes/api.example.ts
 // ✅ ALWAYS: src/orpc/router/example.ts
-export const getExample = os
-  .input(ExampleSchema)
-  .handler(async ({ input }) => {
-    // Implementation
-  })
+export const getExample = os.input(ExampleSchema).handler(async ({ input }) => {
+  // Implementation
+})
 ```
 
 #### React Hooks with oRPC Pattern:
+
 **CRITICAL**: React hooks should ONLY call oRPC functions, never implement business logic or custom abstractions.
 
 ```typescript
@@ -107,13 +109,52 @@ function useExample(input: ExampleInput) {
 }
 ```
 
+#### oRPC Mutation Patterns:
+
+**CRITICAL**: Use proper oRPC mutation patterns for data modifications.
+
+```typescript
+// ✅ CORRECT: Using mutationOptions() with .mutate()
+function CreateEventForm() {
+  const createEventMutation = useMutation(orpc.createEvent.mutationOptions())
+
+  const handleSubmit = (data: CreateEventInput) => {
+    createEventMutation.mutate(data, {
+      onSuccess: () => {
+        // Handle success
+      },
+      onError: (error) => {
+        // Handle error
+      },
+    })
+  }
+}
+
+// ❌ WRONG: Using mutateAsync without proper error boundaries
+function CreateEventForm() {
+  const createEventMutation = useMutation(orpc.createEvent.mutationOptions())
+
+  const handleSubmit = async (data: CreateEventInput) => {
+    try {
+      await createEventMutation.mutateAsync(data) // Prefer .mutate() with callbacks
+    } catch (error) {
+      // Error handling
+    }
+  }
+}
+```
+
 **Hook Guidelines**:
+
 - Return the entire useQuery result, let callers handle the response
 - Use orpc.functionName.queryOptions() for advanced query configuration
+- Use orpc.functionName.mutationOptions() for mutations with .mutate()
+- Prefer .mutate() with onSuccess/onError callbacks over mutateAsync
 - Never implement business logic or database operations in hooks
 - Avoid custom queryKey abstractions - use orpc's built-in patterns
 
 #### Integration Architecture:
+
 - **External APIs**: Create service classes with caching and rate limiting
 - **Database Operations**: Use DAO pattern with proper type safety
 - **Complex Logic**: Implement in oRPC functions, not route handlers
@@ -338,7 +379,7 @@ const handleSubmit = async (formData: FormData) => {
 
 When integrating ORMs (Drizzle, Prisma, etc.):
 
-- **Schema Design**: 
+- **Schema Design**:
   - Define relationships explicitly with proper foreign keys
   - Use TypeScript-first schemas when available (e.g., Drizzle schema definitions)
   - Consider cascading operations for dependent data (events, accommodations)
@@ -357,17 +398,45 @@ When integrating ORMs (Drizzle, Prisma, etc.):
 ### Database Schema Patterns
 
 #### ID Generation Strategy
+
 - Prefer user-friendly IDs with descriptive prefixes (e.g., `trv_`, `acm_`, `evt_`)
 - Use base58 encoding to avoid ambiguous characters (0, O, I, l)
 - Implement via `$defaultFn` in Drizzle schemas for automatic generation
 - Create typed prefix systems for compile-time validation
 
 #### Schema Consistency
+
 - Use `defaultColumn` helpers to reduce duplication of common fields (id, createdAt, updatedAt)
 - Leverage `.returning()` in DAOs when working with auto-generated fields
 - Maintain type safety throughout schema definitions and DAO operations
 
+#### Drizzle-Zod Schema Location Guidelines
+
+**CRITICAL**: Follow strict location patterns for schema definitions and validation:
+
+- **Schema Definitions**: Define all Drizzle table schemas in `src/lib/db/schema.ts`
+- **Validation Schemas**: Use `createInsertSchema()` and `createSelectSchema()` in `src/lib/db/schema.ts` alongside table definitions
+- **oRPC Integration**: Import validation schemas from `src/lib/db/schema.ts` into oRPC router files
+- **Model Files**: Avoid creating separate `*.model.ts` files for schema validation - consolidate in schema.ts
+
+```typescript
+// ✅ CORRECT: src/lib/db/schema.ts
+export const Event = pgTable("event", {
+  /* table definition */
+})
+export const EventSchema = createSelectSchema(Event)
+export const createEventSchema = createInsertSchema(Event)
+
+// ✅ CORRECT: src/orpc/router/travel.ts
+import { createEventSchema } from "@/lib/db/schema"
+export const createEvent = os.input(createEventSchema).handler(/* ... */)
+
+// ❌ WRONG: src/lib/travel.model.ts
+export const createEventSchema = createInsertSchema(eventsTable) // Don't separate validation from schema
+```
+
 #### Best Practices
+
 - Always consider UX implications of technical IDs (readability, copy-paste friendliness)
 - Use declarative database-level solutions over application-level ID generation
 - Implement consistent patterns across all entity schemas
@@ -419,11 +488,13 @@ For multi-step technical integrations (database setup, API integration, etc.):
 **CRITICAL**: ALWAYS use existing components from the project instead of creating custom implementations from scratch. This ensures consistency with the design system and prevents code duplication.
 
 ### Component Priority Order:
+
 1. **First**: Check `src/components/ui/` for Shadcn components (Button, Tabs, Card, etc.)
 2. **Second**: Check `src/components/` for custom project components
 3. **Last Resort**: Only create new components when existing ones cannot fulfill the requirement
 
 ### Before Creating Any UI Element:
+
 - Search for existing Tabs, Button, Dialog, Card, Input components
 - Use Grep/Glob tools to find similar implementations in the codebase
 - Prefer composition of existing components over creating new ones
@@ -432,17 +503,20 @@ For multi-step technical integrations (database setup, API integration, etc.):
 ### Component Abstraction Patterns
 
 **When to Abstract into Reusable Components**:
+
 - When similar UI patterns appear in 2+ locations
 - When user explicitly requests component abstraction or reusability
 - When complex component logic can be simplified through abstraction
 - When component state and behavior can be generalized
 
 **Component Placement Strategy**:
+
 - **`src/components/ui/`**: For general-purpose, highly reusable components (form controls, selectors, etc.)
 - **`src/components/`**: For domain-specific or application-specific components
 - **Shadcn Integration**: Extend Shadcn components rather than replacing them
 
 **Component API Design Principles**:
+
 - Design flexible APIs that handle multiple use cases without becoming overly complex
 - Use discriminated unions for components with multiple modes/variants
 - Provide sensible defaults while allowing customization
@@ -450,6 +524,7 @@ For multi-step technical integrations (database setup, API integration, etc.):
 - Follow controlled/uncontrolled component patterns for state management
 
 **Implementation Workflow for New Reusable Components**:
+
 1. **Analyze Usage Patterns**: Identify common props, state, and behavior across existing implementations
 2. **Design Component API**: Define props interface with proper TypeScript types
 3. **Create in Appropriate Location**: Place in `ui/` for general use, `components/` for domain-specific
@@ -457,8 +532,9 @@ For multi-step technical integrations (database setup, API integration, etc.):
 5. **Update Existing Usage**: Replace duplicated implementations with new reusable component
 
 ### Examples:
+
 - ✅ Use `<Tabs>` component instead of custom toggle buttons
-- ✅ Use `<Button>` variants instead of custom styled buttons  
+- ✅ Use `<Button>` variants instead of custom styled buttons
 - ✅ Use `<Card>` components instead of custom divs with styling
 - ✅ Abstract common form patterns (LocationSelector, DatePicker) into `ui/` components
 - ✅ Create flexible component APIs that handle multiple use cases

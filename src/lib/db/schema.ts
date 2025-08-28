@@ -1,6 +1,6 @@
 import { relations } from "drizzle-orm";
 import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
-import { createSelectSchema } from "drizzle-zod";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { customAlphabet } from "nanoid";
 
 const nanoid = customAlphabet(
@@ -136,6 +136,8 @@ export const Accommodation = sqliteTable("accommodation", {
 		.notNull()
 		.references(() => Travel.id, { onDelete: "cascade" }),
 });
+export const AccommodationSchema = createSelectSchema(Accommodation);
+export const InsertAccommodationSchema = createInsertSchema(Accommodation);
 export const accommodationRelations = relations(Accommodation, ({ one }) => ({
 	travel: one(Travel, {
 		fields: [Accommodation.travelId],
@@ -166,6 +168,7 @@ export const AppEvent = sqliteTable("app_event", {
 		.references(() => Travel.id, { onDelete: "cascade" }),
 	parentEventId: text("parent_event_id"),
 });
+export const InsertAppEventSchema = createInsertSchema(AppEvent);
 export const appEventRelations = relations(AppEvent, ({ one, many }) => ({
 	travel: one(Travel, {
 		fields: [AppEvent.travelId],

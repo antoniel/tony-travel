@@ -1,3 +1,7 @@
+import {
+	InsertAccommodationSchema,
+	InsertAppEventSchema,
+} from "@/lib/db/schema";
 import * as z from "zod";
 
 const VisaInfoSchema = z.object({
@@ -23,42 +27,19 @@ const LocationInfoSchema = z.object({
 		})
 		.optional(),
 });
-const AccommodationSchema = z.object({
-	id: z.string(),
-	name: z.string(),
-	type: z.enum(["hotel", "hostel", "airbnb", "resort", "other"]),
-	startDate: z.date(),
-	endDate: z.date(),
-	address: z.string().optional().nullable(),
-	rating: z.number().optional().nullable(),
-	price: z.number().optional().nullable(),
-	currency: z.string().optional().nullable(),
-});
-// biome-ignore lint: fix later
-const AppEventSchema: z.ZodType<any> = z.lazy(() =>
-	z.object({
-		id: z.string(),
-		title: z.string(),
-		startDate: z.date(),
-		endDate: z.date(),
-		estimatedCost: z.number().optional(),
-		type: z.enum(["travel", "food", "activity"]),
-		location: z.string().optional(),
-		dependencies: z.array(AppEventSchema).optional(),
-	}),
-);
-export const InsertTrevelSchema = z.object({
+
+export const InsertFullTravel = z.object({
 	// id is assigned server-side
 	name: z.string(),
 	destination: z.string(),
 	startDate: z.date(),
 	endDate: z.date(),
-	accommodations: z.array(AccommodationSchema),
-	events: z.array(AppEventSchema),
+	accommodations: z.array(InsertAccommodationSchema),
+	events: z.array(InsertAppEventSchema),
 	locationInfo: LocationInfoSchema,
 	visaInfo: VisaInfoSchema,
 });
-// Airport schema - updated to include grouped options and state/province
+export type InsertFullTravel = z.infer<typeof InsertFullTravel>;
 
 export const AirportSchema = z.object({
 	code: z.string(), // IATA code or grouped identifier
