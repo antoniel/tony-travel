@@ -6,7 +6,13 @@ import {
 	CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
-import type { AppEvent, Travel } from "@/lib/types";
+import {
+	calculateTravelDays,
+	calculateTravelTotalCost,
+	formatBRL,
+	formatDateBR,
+} from "@/lib/domain/travel";
+import type { TravelWithRelations } from "@/lib/types";
 import {
 	Bed,
 	Building,
@@ -29,7 +35,7 @@ import WeatherWidget from "./WeatherWidget";
 import { Button } from "./ui/button";
 
 interface TravelInfoSidebarProps {
-	travel?: Travel;
+	travel: TravelWithRelations | undefined;
 	className?: string;
 }
 
@@ -89,49 +95,15 @@ export default function TravelInfoSidebar({
 		vaccinations: ["Yellow fever (recommended)", "Hepatitis A/B"],
 	};
 
-	const accommodations = travel?.accommodation || [];
+	const accommodations = travel?.accommodations || [];
 
-	// Helpers
-	const formatBRL = (value: number) =>
-		new Intl.NumberFormat("pt-BR", {
-			style: "currency",
-			currency: "BRL",
-		}).format(value);
-
-	// Sum estimated costs from events (including dependencies)
-	const totalEventCostBRL = useMemo(() => {
-		if (!travel) return 0;
-		const sumEvent = (ev: AppEvent): number => {
-			const base = typeof ev.estimatedCost === "number" ? ev.estimatedCost : 0;
-			const deps = Array.isArray(ev.dependencies)
-				? ev.dependencies.reduce(
-						(acc: number, d: AppEvent) => acc + sumEvent(d),
-						0,
-					)
-				: 0;
-			return base + deps;
-		};
-		return travel.events.reduce((acc, ev) => acc + sumEvent(ev), 0);
-	}, [travel]);
-
-	// Calculate travel statistics
-	const totalDays = travel
-		? Math.ceil(
-				(travel.endDate.getTime() - travel.startDate.getTime()) /
-					(1000 * 60 * 60 * 24),
-			)
-		: 0;
+	const totalEventCostBRL = useMemo(
+		() => calculateTravelTotalCost(travel),
+		[travel],
+	);
+	const totalDays = useMemo(() => calculateTravelDays(travel), [travel]);
 	const totalEvents = travel?.events.length || 0;
 	const totalAccommodations = accommodations.length;
-
-	// Format date in dd/mm/yyyy format
-	const formatDate = (date: Date) => {
-		return date.toLocaleDateString("pt-BR", {
-			day: "2-digit",
-			month: "2-digit",
-			year: "numeric",
-		});
-	};
 
 	return (
 		<div
@@ -363,13 +335,15 @@ export default function TravelInfoSidebar({
 															<span className="text-muted-foreground">
 																Check-in:
 															</span>
-															<span>{formatDate(accommodation.startDate)}</span>
+															<span>
+																{formatDateBR(accommodation.startDate)}
+															</span>
 														</div>
 														<div className="flex justify-between">
 															<span className="text-muted-foreground">
 																Check-out:
 															</span>
-															<span>{formatDate(accommodation.endDate)}</span>
+															<span>{formatDateBR(accommodation.endDate)}</span>
 														</div>
 														<div className="flex justify-between">
 															<span className="text-muted-foreground">

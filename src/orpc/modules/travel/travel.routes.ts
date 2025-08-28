@@ -4,7 +4,11 @@ import { os } from "@orpc/server";
 import * as z from "zod";
 import enhancedAirports from "./enhanced-airports.json";
 import { travelDAO } from "./travel.dao";
-import { type Airport, AirportSchema, TravelSchema } from "./travel.model";
+import {
+	type Airport,
+	AirportSchema,
+	InsertTrevelSchema,
+} from "./travel.model";
 
 export const generatePrompt = os
 	.input(
@@ -22,7 +26,7 @@ export const generatePrompt = os
 	});
 
 export const saveTravel = os
-	.input(z.object({ travel: TravelSchema }))
+	.input(z.object({ travel: InsertTrevelSchema }))
 	.output(z.object({ id: z.string() }))
 	.handler(async ({ input }) => {
 		const id = await travelDAO.createTravel(input.travel);
@@ -31,7 +35,6 @@ export const saveTravel = os
 
 export const getTravel = os
 	.input(z.object({ id: z.string() }))
-	.output(TravelSchema.extend({ id: z.string() }))
 	.handler(async ({ input }) => {
 		const travel = await travelDAO.getTravelById(input.id);
 
@@ -44,7 +47,6 @@ export const getTravel = os
 
 export const listTravels = os
 	.input(z.object({}).optional())
-	.output(z.array(TravelSchema.extend({ id: z.string() })))
 	.handler(async () => {
 		return await travelDAO.getAllTravels();
 	});
@@ -275,12 +277,16 @@ export const searchDestinations = os
 			limit: z.number().int().min(1).max(50).optional().default(10),
 		}),
 	)
-	.output(z.array(z.object({
-		value: z.string(),
-		label: z.string(),
-		country: z.string(),
-		countryCode: z.string(),
-	})))
+	.output(
+		z.array(
+			z.object({
+				value: z.string(),
+				label: z.string(),
+				country: z.string(),
+				countryCode: z.string(),
+			}),
+		),
+	)
 	.handler(({ input }) => {
 		const { query, limit } = input;
 
@@ -294,8 +300,8 @@ export const searchDestinations = os
 						label: airport.country,
 						country: airport.country,
 						countryCode: airport.countryCode,
-					}))
-			)
+					})),
+			),
 		);
 
 		let filteredDestinations = countries;

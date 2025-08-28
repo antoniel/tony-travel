@@ -3,6 +3,7 @@ import TravelInfoSidebar from "@/components/TravelInfoSidebar";
 import { TravelTimeline } from "@/components/TravelTimeline";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { InsertAppEvent } from "@/lib/db/schema";
 import type { AppEvent } from "@/lib/types";
 import { orpc } from "@/orpc/client";
 import { useQuery } from "@tanstack/react-query";
@@ -10,15 +11,15 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Calendar as CalendarIcon, Clock, Download } from "lucide-react";
 import { useEffect, useState } from "react";
 
-export const Route = createFileRoute("/trip/$tripId")({
+export const Route = createFileRoute("/trip/$travelId")({
 	component: TripCalendarPage,
 });
 
 function TripCalendarPage() {
-	const { tripId } = Route.useParams();
+	const { travelId } = Route.useParams();
 
 	const travelQuery = useQuery(
-		orpc.getTravel.queryOptions({ input: { id: tripId } }),
+		orpc.getTravel.queryOptions({ input: { id: travelId } }),
 	);
 	const travel = travelQuery.data;
 
@@ -36,11 +37,12 @@ function TripCalendarPage() {
 		setEvents(eventsWithDependencies ?? []);
 	}, [travel?.events]);
 
-	const handleAddEvent = (newEvent: Omit<AppEvent, "id">) => {
-		const eventWithId: AppEvent = {
+	const handleAddEvent = (newEvent: InsertAppEvent) => {
+		const eventWithId: InsertAppEvent = {
 			...newEvent,
 			id: `event-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
 		};
+		// TODO: integrar com o backend
 		setEvents((prevEvents) => [...prevEvents, eventWithId]);
 	};
 
@@ -76,11 +78,11 @@ function TripCalendarPage() {
 											onClick={() => {
 												if (!travel) return;
 												const itinerary = [
-													`${travel.name}`,
+													"${travel.name}",
 													`${travel.destination} • ${travel.startDate.toLocaleDateString("pt-BR")} - ${travel.endDate.toLocaleDateString("pt-BR")}`,
 													"",
 													"ACOMODAÇÕES:",
-													...travel.accommodation.map(
+													...travel.accommodations.map(
 														(acc) =>
 															`• ${acc.name} (${acc.startDate.toLocaleDateString("pt-BR")} - ${acc.endDate.toLocaleDateString("pt-BR")})`,
 													),
@@ -132,8 +134,9 @@ function TripCalendarPage() {
 							</TabsContent>
 							<TabsContent value="calendar">
 								<Calendar
+									travelId={travel?.id ?? ""}
 									events={events}
-									accommodations={travel?.accommodation || []}
+									accommodations={travel?.accommodations || []}
 									onAddEvent={handleAddEvent}
 									onUpdateEvent={handleUpdateEvent}
 								/>

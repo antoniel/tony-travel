@@ -29,10 +29,10 @@ const AccommodationSchema = z.object({
 	type: z.enum(["hotel", "hostel", "airbnb", "resort", "other"]),
 	startDate: z.date(),
 	endDate: z.date(),
-	address: z.string().optional(),
-	rating: z.number().optional(),
-	price: z.number().optional(),
-	currency: z.string().optional(),
+	address: z.string().optional().nullable(),
+	rating: z.number().optional().nullable(),
+	price: z.number().optional().nullable(),
+	currency: z.string().optional().nullable(),
 });
 // biome-ignore lint: fix later
 const AppEventSchema: z.ZodType<any> = z.lazy(() =>
@@ -47,13 +47,13 @@ const AppEventSchema: z.ZodType<any> = z.lazy(() =>
 		dependencies: z.array(AppEventSchema).optional(),
 	}),
 );
-export const TravelSchema = z.object({
+export const InsertTrevelSchema = z.object({
 	// id is assigned server-side
 	name: z.string(),
 	destination: z.string(),
 	startDate: z.date(),
 	endDate: z.date(),
-	accommodation: z.array(AccommodationSchema),
+	accommodations: z.array(AccommodationSchema),
 	events: z.array(AppEventSchema),
 	locationInfo: LocationInfoSchema,
 	visaInfo: VisaInfoSchema,

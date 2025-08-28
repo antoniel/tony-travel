@@ -2,6 +2,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useEventDragDrop } from "@/hooks/useEventDragDrop";
 import { useScrollSync } from "@/hooks/useScrollSync";
 import { DAYS_OF_WEEK, MONTHS, TIME_SLOTS } from "@/lib/constants";
+import type { InsertAppEvent } from "@/lib/db/schema";
 import type { Accommodation, AppEvent } from "@/lib/types";
 import { useLayoutEffect, useRef, useState } from "react";
 import EventDetailsPanel from "./EventDetailsPanel";
@@ -25,24 +26,20 @@ interface DisplayEvent extends AppEvent {
 }
 
 interface CalendarProps {
+	travelId: string;
 	events: AppEvent[];
 	accommodations?: Accommodation[];
-	onAddEvent?: (event: Omit<AppEvent, "id">) => void;
+	onAddEvent?: (event: InsertAppEvent) => void;
 	onUpdateEvent?: (eventId: string, updatedEvent: Partial<AppEvent>) => void;
 }
 
 const PX_PER_HOUR = 48;
 
-export default function Calendar({
-	events = [],
-	accommodations = [],
-	onAddEvent,
-	onUpdateEvent,
-}: CalendarProps) {
+export default function Calendar(props: CalendarProps) {
 	const [selectedEvent, setSelectedEvent] = useState<AppEvent | null>(null);
 	const [isPanelOpen, setIsPanelOpen] = useState(false);
 	const [currentDate, setCurrentDate] = useState(() => {
-		const [firstEvent] = events.sort((a, b) => {
+		const [firstEvent] = props.events.sort((a, b) => {
 			const aTime = a.startDate.getTime();
 			const bTime = b.startDate.getTime();
 			return aTime - bTime;
@@ -82,12 +79,13 @@ export default function Calendar({
 				<div className="bg-card rounded-xl overflow-hidden border">
 					<div className="p-0">
 						<RenderWeekViews
+							travelId={props.travelId}
 							currentDate={currentDate}
 							setCurrentDate={setCurrentDate}
-							events={events}
-							accommodations={accommodations}
-							onAddEvent={onAddEvent}
-							onUpdateEvent={onUpdateEvent}
+							events={props.events}
+							accommodations={props.accommodations}
+							onAddEvent={props.onAddEvent}
+							onUpdateEvent={props.onUpdateEvent}
 							onEventClick={handleEventClick}
 						/>
 					</div>
@@ -104,11 +102,12 @@ export default function Calendar({
 }
 
 const RenderWeekViews = (props: {
+	travelId: string;
 	events: AppEvent[];
 	accommodations?: Accommodation[];
 	currentDate: Date;
 	setCurrentDate: (date: Date) => void;
-	onAddEvent?: (event: Omit<AppEvent, "id">) => void;
+	onAddEvent?: (event: InsertAppEvent) => void;
 	onUpdateEvent?: (eventId: string, updatedEvent: Partial<AppEvent>) => void;
 	onEventClick?: (event: AppEvent) => void;
 }) => {
@@ -255,11 +254,8 @@ const RenderWeekViews = (props: {
 		if (!props.onAddEvent || !newEvent.title.trim()) return;
 
 		props.onAddEvent({
-			title: newEvent.title,
-			startDate: newEvent.startDate,
-			endDate: newEvent.endDate,
-			type: newEvent.type,
-			location: newEvent.location,
+			...newEvent,
+			travelId: props.travelId,
 		});
 
 		setNewEvent({

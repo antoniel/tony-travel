@@ -12,9 +12,9 @@ export function useActivityImage({ event, enabled }: UseActivityImageProps) {
 	return useQuery({
 		...orpc.fetchActivityImage.queryOptions({
 			input: {
+				eventId: event.id ?? "",
 				title: event.title,
-				location: event.location,
-				eventId: event.id,
+				location: event.location ?? undefined,
 			},
 		}),
 		enabled: shouldFetch && enabled,
@@ -26,7 +26,7 @@ useActivityImage.refetch = (queryClient: QueryClient, event: AppEvent) => {
 			input: {
 				eventId: event.id,
 				title: event.title,
-				location: event.location,
+				location: event.location ?? undefined,
 			},
 		}),
 	});

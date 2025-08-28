@@ -1,4 +1,4 @@
-import type { Accommodation, AppEvent, Travel } from "@/lib/types";
+import type { Accommodation, AppEvent, TravelWithRelations } from "@/lib/types";
 import { differenceInDays, format, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 
 interface TravelTimelineProps {
-	travel: Travel;
+	travel: TravelWithRelations;
 }
 
 type TimelineItem = {
@@ -153,7 +153,7 @@ function getEventColor(type: TimelineItem["type"]): string {
 	}
 }
 
-function createTimelineItems(travel: Travel): TimelineItem[] {
+function createTimelineItems(travel: TravelWithRelations): TimelineItem[] {
 	const items: TimelineItem[] = [];
 
 	items.push({
@@ -166,7 +166,7 @@ function createTimelineItems(travel: Travel): TimelineItem[] {
 		icon: Plane,
 	});
 
-	for (const acc of travel.accommodation) {
+	for (const acc of travel.accommodations) {
 		items.push({
 			id: acc.id,
 			type: "accommodation",
@@ -174,8 +174,8 @@ function createTimelineItems(travel: Travel): TimelineItem[] {
 			data: acc,
 			title: `Check-in: ${acc.name}`,
 			description: `Hospedagem em ${acc.type}${acc.rating ? ` com avaliação ${acc.rating}/5` : ""}. ${acc.address ? `Localizado em ${acc.address}.` : ""} Sua estadia vai até ${format(acc.endDate, "d 'de' MMMM", { locale: ptBR })}.`,
-			location: acc.address,
-			cost: acc.price,
+			location: acc.address ?? undefined,
+			cost: acc.price ?? undefined,
 			icon: Hotel,
 		});
 	}
@@ -191,8 +191,8 @@ function createTimelineItems(travel: Travel): TimelineItem[] {
 			data: event,
 			title: event.title,
 			description,
-			location: event.location,
-			cost: event.estimatedCost,
+			location: event.location ?? undefined,
+			cost: event.estimatedCost ?? undefined,
 			icon,
 		});
 	}

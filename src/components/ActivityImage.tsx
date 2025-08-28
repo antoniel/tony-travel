@@ -8,7 +8,7 @@ interface ActivityImageProps {
 	imageUrl?: string;
 	imageMetadata?: ImageMetadata;
 	title: string;
-	location?: string;
+	location: string | null;
 	className?: string;
 	onRefreshImage?: () => void;
 	showRefreshButton?: boolean;

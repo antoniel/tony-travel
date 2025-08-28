@@ -28,8 +28,9 @@ import { useAirportsSearch } from "@/hooks/useAirportsSearch";
 import { useDestinationsSearch } from "@/hooks/useDestinationsSearch";
 import { useUser } from "@/hooks/useUser";
 import { signIn } from "@/lib/auth-client";
+import type { Travel } from "@/lib/db/schema";
 import { startPlanTravel } from "@/lib/planTravel.prompt";
-import type { AppEvent, Travel } from "@/lib/types";
+import type { AppEvent, TravelWithRelations } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { orpc } from "@/orpc/client";
 import type { Airport } from "@/orpc/modules/travel/travel.model";
@@ -650,7 +651,7 @@ function DialogCreateTravel(props: {
 	const saveTravelMutation = useMutation(
 		orpc.saveTravel.mutationOptions({
 			onSuccess: (data) => {
-				navigate({ to: "/trip/$tripId", params: { tripId: data.id } });
+				navigate({ to: "/trip/$travelId", params: { travelId: data.id } });
 			},
 		}),
 	);
@@ -661,7 +662,7 @@ function DialogCreateTravel(props: {
 	}
 
 	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-	function normalizeTravelForSave(raw: any): Omit<Travel, "id"> {
+	function normalizeTravelForSave(raw: any): Omit<TravelWithRelations, "id"> {
 		// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 		const toDate = (v: any) => {
 			if (v instanceof Date) return v;
@@ -684,7 +685,7 @@ function DialogCreateTravel(props: {
 			startDate: toDate(raw.startDate) as Date,
 			endDate: toDate(raw.endDate) as Date,
 			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-			accommodation: (raw.accommodation ?? []).map((a: any) => ({
+			accommodations: (raw.accommodation ?? []).map((a: any) => ({
 				...a,
 				startDate: toDate(a.startDate) as Date,
 				endDate: toDate(a.endDate) as Date,
@@ -692,6 +693,8 @@ function DialogCreateTravel(props: {
 			events: (raw.events ?? []).map(normalizeEvent),
 			locationInfo: raw.locationInfo,
 			visaInfo: raw.visaInfo,
+			createdAt: new Date(),
+			updatedAt: new Date(),
 		};
 	}
 	function tryImportTravel() {
@@ -719,7 +722,7 @@ function DialogCreateTravel(props: {
 		}
 
 		// Ensure Travel shape minimally
-		const t = parsed as Travel;
+		const t = parsed as TravelWithRelations;
 		if (!t || !t.name || !t.startDate || !t.endDate || !t.events) {
 			setImportError(
 				"Objeto inválido: faltam campos obrigatórios (name, dates, events).",

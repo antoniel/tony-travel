@@ -82,6 +82,8 @@ export const Verification = sqliteTable("verification", {
 	expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
 });
 
+export type Travel = typeof Travel.$inferSelect;
+export type InsertTravel = typeof Travel.$inferInsert;
 export const Travel = sqliteTable("travel", {
 	...defaultColumn("travel"),
 	name: text("name").notNull(),
@@ -110,13 +112,14 @@ export const Travel = sqliteTable("travel", {
 		entryRequirements?: string[];
 	}>(),
 });
-export type Travel = typeof Travel.$inferSelect;
 export const TravelSchema = createSelectSchema(Travel);
 export const TravelRelations = relations(Travel, ({ many }) => ({
 	accommodations: many(Accommodation),
 	events: many(AppEvent),
 }));
 
+export type Accommodation = typeof Accommodation.$inferSelect;
+export type InsertAccommodation = typeof Accommodation.$inferInsert;
 export const Accommodation = sqliteTable("accommodation", {
 	...defaultColumn("accommodation"),
 	name: text("name").notNull(),
@@ -141,6 +144,7 @@ export const accommodationRelations = relations(Accommodation, ({ one }) => ({
 }));
 
 export type AppEvent = typeof AppEvent.$inferSelect;
+export type InsertAppEvent = typeof AppEvent.$inferInsert;
 export const AppEvent = sqliteTable("app_event", {
 	...defaultColumn("event"),
 	title: text("title").notNull(),
