@@ -2,10 +2,9 @@ import Calendar from "@/components/Calendar";
 import TravelInfoSidebar from "@/components/TravelInfoSidebar";
 import { TravelTimeline } from "@/components/TravelTimeline";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { InsertAppEvent } from "@/lib/db/schema";
 import type { AppEvent } from "@/lib/types";
 import { orpc } from "@/orpc/client";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Calendar as CalendarIcon, Clock } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -22,25 +21,13 @@ function TripCalendarPage() {
 	);
 	const travel = travelQuery.data;
 
-	const createEventMutation = useMutation(orpc.createEvent.mutationOptions());
-
 	const [events, setEvents] = useState<AppEvent[]>([]);
 
 	useEffect(() => {
-		const eventsWithDependencies = travel?.events.reduce<AppEvent[]>(
-			(acc, event) => {
-				const mainEvent = { ...event };
-				const dependencies: AppEvent[] = event.dependencies || [];
-				return acc.concat([mainEvent, ...dependencies]);
-			},
-			[],
-		);
-		setEvents(eventsWithDependencies ?? []);
+		if (travel?.events) {
+			setEvents(travel.events);
+		}
 	}, [travel?.events]);
-
-	const handleAddEvent = (newEvent: InsertAppEvent) => {
-		createEventMutation.mutate(newEvent);
-	};
 
 	const handleUpdateEvent = (
 		eventId: string,
@@ -86,7 +73,6 @@ function TripCalendarPage() {
 									travelId={travel?.id ?? ""}
 									events={events}
 									accommodations={travel?.accommodations || []}
-									onAddEvent={handleAddEvent}
 									onUpdateEvent={handleUpdateEvent}
 								/>
 							</TabsContent>

@@ -1,4 +1,7 @@
+import type { InsertAppEvent } from "@/lib/db/schema";
 import type { Accommodation, AppEvent, TravelWithRelations } from "@/lib/types";
+import { orpc } from "@/orpc/client";
+import { useMutation } from "@tanstack/react-query";
 import { differenceInDays, format, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -7,11 +10,22 @@ import {
 	Hotel,
 	MapPin,
 	Plane,
+	Plus,
 	UtensilsCrossed,
 } from "lucide-react";
+import { useState } from "react";
+import { EventCreateModal } from "./EventCreateModal";
 
 interface TravelTimelineProps {
 	travel: TravelWithRelations;
+	onAddEvent?: (event: {
+		title: string;
+		startDate: Date;
+		endDate: Date;
+		type: AppEvent["type"];
+		location: string;
+		travelId: string;
+	}) => void;
 }
 
 type TimelineItem = {
@@ -30,27 +44,121 @@ export function TravelTimeline({ travel }: TravelTimelineProps) {
 	const timelineItems = createTimelineItems(travel);
 	const groupedByDay = groupItemsByDay(timelineItems);
 
-	return (
-		<div className="max-w-4xl mx-auto space-y-8">
-			<div className="relative">
-				<div className="absolute left-8 top-16 bottom-0 w-0.5 bg-gradient-to-b from-primary via-accent to-chart-3 opacity-30" />
+	const createEventMutation = useMutation(orpc.createEvent.mutationOptions());
+	const onAddEvent = (newEvent: InsertAppEvent) => {
+		createEventMutation.mutate(newEvent);
+	};
 
-				{groupedByDay.map(({ date, items }) => (
-					<DaySection key={date} date={date} items={items} />
-				))}
+	// Modal state
+	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [newEvent, setNewEvent] = useState({
+		title: "",
+		startDate: new Date(),
+		endDate: new Date(),
+		type: "activity" as AppEvent["type"],
+		location: "",
+	});
+
+	const handleCreateEvent = () => {
+		if (!onAddEvent || !newEvent.title.trim()) return;
+
+		onAddEvent({
+			...newEvent,
+			travelId: travel.id,
+		});
+
+		setNewEvent({
+			title: "",
+			startDate: new Date(),
+			endDate: new Date(),
+			type: "activity",
+			location: "",
+		});
+
+		setIsModalOpen(false);
+	};
+
+	return (
+		<>
+			<div className="max-w-4xl mx-auto space-y-8">
+				<div className="relative">
+					<div className="absolute left-8 top-16 bottom-0 w-0.5 bg-gradient-to-b from-primary via-accent to-chart-3 opacity-30" />
+
+					{groupedByDay.map(({ date, items }) => (
+						<DaySection
+							key={date}
+							date={date}
+							items={items}
+							onAddEvent={(selectedDate) => {
+								const dateObj = new Date(selectedDate);
+								// Set a default time if none is set (e.g., 9:00 AM)
+								if (dateObj.getHours() === 0 && dateObj.getMinutes() === 0) {
+									dateObj.setHours(9, 0);
+								}
+								const endDate = new Date(dateObj);
+								endDate.setHours(dateObj.getHours() + 1);
+
+								setNewEvent({
+									title: "",
+									startDate: dateObj,
+									endDate,
+									type: "activity",
+									location: "",
+								});
+								setIsModalOpen(true);
+							}}
+						/>
+					))}
+				</div>
 			</div>
-		</div>
+
+			<EventCreateModal
+				isOpen={isModalOpen}
+				newEvent={newEvent}
+				onClose={() => setIsModalOpen(false)}
+				onCreate={handleCreateEvent}
+				onEventChange={setNewEvent}
+				travelStartDate={travel.startDate}
+				travelEndDate={travel.endDate}
+			/>
+		</>
 	);
 }
 
-function DaySection({ date, items }: { date: string; items: TimelineItem[] }) {
+function DaySection({
+	date,
+	items,
+	onAddEvent,
+}: {
+	date: string;
+	items: TimelineItem[];
+	onAddEvent?: (date: string) => void;
+}) {
+	const handleAddEvent = () => {
+		if (onAddEvent) {
+			onAddEvent(date);
+		}
+	};
+
 	return (
 		<div className="mb-12">
-			<div className="mb-6 pl-20">
-				<h2 className="text-xl font-semibold text-foreground mb-1">
-					{format(new Date(date), "EEEE, d 'de' MMMM", { locale: ptBR })}
-				</h2>
-				<div className="w-12 h-0.5 bg-primary rounded-full" />
+			<div className="sticky top-0 z-20 bg-background/35 backdrop-blur-sm border-b border-border/40 mb-6 pl-20 py-4 -mx-4 px-4">
+				<div className="flex items-center gap-4">
+					<div>
+						<h2 className="text-xl font-semibold text-foreground mb-1">
+							{format(new Date(date), "EEEE, d 'de' MMMM", { locale: ptBR })}
+						</h2>
+						<div className="w-12 h-0.5 bg-primary rounded-full" />
+					</div>
+					<button
+						type="button"
+						onClick={handleAddEvent}
+						className="flex items-center justify-center w-4 h-7 pb-1 rounded-full cursor-pointer text-black"
+						title="Adicionar evento"
+					>
+						<Plus className="w-4 h-4" />
+					</button>
+				</div>
 			</div>
 			{items.map((item, index) => (
 				<TimelineItemComponent

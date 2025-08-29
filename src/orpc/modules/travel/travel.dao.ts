@@ -14,7 +14,6 @@ type TravelInput = z.infer<typeof InsertFullTravel>;
 
 export class TravelDAO {
 	async createTravel(travelData: TravelInput): Promise<string> {
-		// Insert travel record (ID is auto-generated via $defaultFn)
 		const [travel] = await db
 			.insert(Travel)
 			.values({
@@ -29,21 +28,13 @@ export class TravelDAO {
 
 		const travelId = travel.id;
 
-		// Insert accommodations
 		if (travelData.accommodations.length > 0) {
-			await Promise.all(
-				travelData.accommodations.map((accommodation) =>
-					db.insert(Accommodation).values({
-						...accommodation,
-						// ID is auto-generated via $defaultFn
-						travelId,
-					}),
-				),
-			);
+			await db
+				.insert(Accommodation)
+				.values(travelData.accommodations.map((a) => ({ ...a, travelId })));
 		}
 
-		// Insert events with dependencies
-		await this.insertEventsRecursively(travelData.events, travelId);
+		await this.insertEvents(travelData.events, travelId);
 
 		return travelId;
 	}
@@ -106,14 +97,13 @@ export class TravelDAO {
 			.where(eq(AppEvent.id, eventId));
 	}
 
-	private async insertEventsRecursively(
+	private async insertEvents(
 		events: TravelInput["events"],
 		travelId: string,
 		parentEventId?: string,
 	): Promise<void> {
 		for (const event of events) {
-			// Insert event (ID is auto-generated via $defaultFn)
-			const [insertedEvent] = await db
+			await db
 				.insert(AppEvent)
 				.values({
 					title: event.title,
@@ -126,15 +116,6 @@ export class TravelDAO {
 					parentEventId,
 				})
 				.returning({ id: AppEvent.id });
-
-			// Insert dependencies recursively
-			if (event.dependencies && event.dependencies.length > 0) {
-				await this.insertEventsRecursively(
-					event.dependencies,
-					travelId,
-					insertedEvent.id,
-				);
-			}
 		}
 	}
 }

@@ -4,19 +4,11 @@ import { useScrollSync } from "@/hooks/useScrollSync";
 import { DAYS_OF_WEEK, MONTHS, TIME_SLOTS } from "@/lib/constants";
 import type { InsertAppEvent } from "@/lib/db/schema";
 import type { Accommodation, AppEvent } from "@/lib/types";
+import { orpc } from "@/orpc/client";
+import { useMutation } from "@tanstack/react-query";
 import { useLayoutEffect, useRef, useState } from "react";
+import { EventCreateModal } from "./EventCreateModal";
 import EventDetailsPanel from "./EventDetailsPanel";
-import { Button } from "./ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "./ui/select";
 
 interface DisplayEvent extends AppEvent {
 	originalStartDate?: Date;
@@ -31,6 +23,8 @@ interface CalendarProps {
 	accommodations?: Accommodation[];
 	onAddEvent?: (event: InsertAppEvent) => void;
 	onUpdateEvent?: (eventId: string, updatedEvent: Partial<AppEvent>) => void;
+	travelStartDate?: Date;
+	travelEndDate?: Date;
 }
 
 const PX_PER_HOUR = 48;
@@ -83,8 +77,9 @@ export default function Calendar(props: CalendarProps) {
 							currentDate={currentDate}
 							setCurrentDate={setCurrentDate}
 							events={props.events}
+							travelStartDate={props.travelStartDate}
+							travelEndDate={props.travelEndDate}
 							accommodations={props.accommodations}
-							onAddEvent={props.onAddEvent}
 							onUpdateEvent={props.onUpdateEvent}
 							onEventClick={handleEventClick}
 						/>
@@ -107,9 +102,10 @@ const RenderWeekViews = (props: {
 	accommodations?: Accommodation[];
 	currentDate: Date;
 	setCurrentDate: (date: Date) => void;
-	onAddEvent?: (event: InsertAppEvent) => void;
 	onUpdateEvent?: (eventId: string, updatedEvent: Partial<AppEvent>) => void;
 	onEventClick?: (event: AppEvent) => void;
+	travelStartDate?: Date;
+	travelEndDate?: Date;
 }) => {
 	const totalDays = getHowManyDaysTravel(props.events);
 	const weekDays = getWeekDays(props.events);
@@ -224,9 +220,8 @@ const RenderWeekViews = (props: {
 		return resultDate;
 	};
 
+	const createEventMutation = useMutation(orpc.createEvent.mutationOptions());
 	const handleCellClick = (dayIndex: number, event: React.MouseEvent) => {
-		if (!props.onAddEvent) return;
-
 		// Don't create event if we just finished dragging
 		if (draggingEvent?.hasMoved) {
 			return;
@@ -251,9 +246,9 @@ const RenderWeekViews = (props: {
 	};
 
 	const handleCreateEvent = () => {
-		if (!props.onAddEvent || !newEvent.title.trim()) return;
+		if (!newEvent.title.trim()) return;
 
-		props.onAddEvent({
+		createEventMutation.mutate({
 			...newEvent,
 			travelId: props.travelId,
 		});
@@ -420,6 +415,8 @@ const RenderWeekViews = (props: {
 				onClose={() => setIsModalOpen(false)}
 				onCreate={handleCreateEvent}
 				onEventChange={setNewEvent}
+				travelStartDate={props.travelStartDate}
+				travelEndDate={props.travelEndDate}
 			/>
 		</div>
 	);
@@ -710,143 +707,6 @@ const EventBlock = ({
 				/>
 			)}
 		</div>
-	);
-};
-
-interface EventCreateModalProps {
-	isOpen: boolean;
-	newEvent: {
-		title: string;
-		startDate: Date;
-		endDate: Date;
-		type: AppEvent["type"];
-		location: string;
-	};
-	onClose: () => void;
-	onCreate: () => void;
-	onEventChange: React.Dispatch<
-		React.SetStateAction<{
-			title: string;
-			startDate: Date;
-			endDate: Date;
-			type: AppEvent["type"];
-			location: string;
-		}>
-	>;
-}
-
-const EventCreateModal = ({
-	isOpen,
-	newEvent,
-	onClose,
-	onCreate,
-	onEventChange,
-}: EventCreateModalProps) => {
-	return (
-		<Dialog open={isOpen} onOpenChange={onClose}>
-			<DialogContent className="sm:max-w-[425px]">
-				<DialogHeader>
-					<DialogTitle>Create New Event</DialogTitle>
-				</DialogHeader>
-				<div className="grid gap-4 py-4">
-					<div className="grid grid-cols-4 items-center gap-4">
-						<Label htmlFor="title" className="text-right">
-							Title
-						</Label>
-						<Input
-							id="title"
-							value={newEvent.title}
-							onChange={(e) =>
-								onEventChange((prev) => ({ ...prev, title: e.target.value }))
-							}
-							className="col-span-3"
-							placeholder="Event title"
-						/>
-					</div>
-
-					<div className="grid grid-cols-4 items-center gap-4">
-						<Label htmlFor="type" className="text-right">
-							Type
-						</Label>
-						<Select
-							value={newEvent.type}
-							onValueChange={(value: AppEvent["type"]) =>
-								onEventChange((prev) => ({ ...prev, type: value }))
-							}
-						>
-							<SelectTrigger className="col-span-3">
-								<SelectValue placeholder="Select event type" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="travel">Travel</SelectItem>
-								<SelectItem value="food">Food</SelectItem>
-								<SelectItem value="activity">Activity</SelectItem>
-							</SelectContent>
-						</Select>
-					</div>
-
-					<div className="grid grid-cols-4 items-center gap-4">
-						<Label htmlFor="location" className="text-right">
-							Location
-						</Label>
-						<Input
-							id="location"
-							value={newEvent.location}
-							onChange={(e) =>
-								onEventChange((prev) => ({ ...prev, location: e.target.value }))
-							}
-							className="col-span-3"
-							placeholder="Event location (optional)"
-						/>
-					</div>
-
-					<div className="grid grid-cols-4 items-center gap-4">
-						<Label htmlFor="startTime" className="text-right">
-							Start
-						</Label>
-						<Input
-							id="startTime"
-							type="datetime-local"
-							value={newEvent.startDate.toISOString().slice(0, 16)}
-							onChange={(e) =>
-								onEventChange((prev) => ({
-									...prev,
-									startDate: new Date(e.target.value),
-								}))
-							}
-							className="col-span-3"
-						/>
-					</div>
-
-					<div className="grid grid-cols-4 items-center gap-4">
-						<Label htmlFor="endTime" className="text-right">
-							End
-						</Label>
-						<Input
-							id="endTime"
-							type="datetime-local"
-							value={newEvent.endDate.toISOString().slice(0, 16)}
-							onChange={(e) =>
-								onEventChange((prev) => ({
-									...prev,
-									endDate: new Date(e.target.value),
-								}))
-							}
-							className="col-span-3"
-						/>
-					</div>
-				</div>
-
-				<div className="flex justify-end gap-2">
-					<Button variant="outline" onClick={onClose}>
-						Cancel
-					</Button>
-					<Button onClick={onCreate} disabled={!newEvent.title.trim()}>
-						Create Event
-					</Button>
-				</div>
-			</DialogContent>
-		</Dialog>
 	);
 };
 
