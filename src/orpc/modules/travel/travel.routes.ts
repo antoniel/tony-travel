@@ -1,3 +1,4 @@
+import { optionalAuth, requireAuth } from "@/lib/auth-middleware";
 import { InsertAppEventSchema } from "@/lib/db/schema";
 import { startPlanTravel } from "@/lib/planTravel.prompt";
 import { pixabayService } from "@/lib/services/pixabay";
@@ -23,28 +24,56 @@ export const generatePrompt = os
 	});
 
 export const saveTravel = os
+	.use(requireAuth)
 	.input(z.object({ travel: InsertFullTravel }))
 	.output(z.object({ id: z.string() }))
-	.handler(async ({ input }) => {
-		const id = await travelDAO.createTravel(input.travel);
+	.handler(async ({ input, context }) => {
+		// Associar o travel ao usuário logado
+		const travelWithUser = {
+			...input.travel,
+			userId: context.user.id,
+		};
+		const id = await travelDAO.createTravel(travelWithUser);
 		return { id };
 	});
 
 export const getTravel = os
+	.use(optionalAuth)
 	.input(z.object({ id: z.string() }))
-	.handler(async ({ input }) => {
+	.handler(async ({ input, context }) => {
 		const travel = await travelDAO.getTravelById(input.id);
 
 		if (!travel) {
 			throw new Error("Travel not found");
 		}
 
+		// Se não estiver logado ou não for o owner, só pode ver travels públicas
+		if (!context.user || travel.userId !== context.user.id) {
+			// Aqui você pode implementar lógica para travels públicas/privadas
+			// Por agora, vamos permitir visualizar todos
+		}
+
 		return travel;
 	});
 
 export const listTravels = os
-	.input(z.object({}).optional())
-	.handler(async () => {
+	.use(optionalAuth)
+	.input(
+		z
+			.object({
+				userId: z.string().optional(),
+				limit: z.number().default(10).optional(),
+			})
+			.optional(),
+	)
+	.handler(async ({ input, context }) => {
+		// Se especificou userId e não é o próprio usuário, só mostra públicas
+		if (input?.userId && input.userId !== context.user?.id) {
+			// Implementar filtro para travels públicas
+			return await travelDAO.getAllTravels();
+		}
+
+		// Se é o próprio usuário ou não especificou, mostra todas
 		return await travelDAO.getAllTravels();
 	});
 
@@ -319,9 +348,11 @@ export const searchDestinations = os
 	});
 
 export const createEvent = os
+	.use(requireAuth)
 	.input(InsertAppEventSchema)
 	.output(z.object({ id: z.string() }))
-	.handler(async ({ input }) => {
+	.handler(async ({ input, context }) => {
+		// TODO: Verificar se o usuário tem permissão para criar evento no travel
 		const id = await travelDAO.createEvent(input);
 		return { id };
 	});

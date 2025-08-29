@@ -1,10 +1,13 @@
+import router from "@/orpc/router";
 import "@/polyfill";
 
-import router from "@/orpc/router";
 import { RPCHandler } from "@orpc/server/fetch";
+import { RequestHeadersPlugin } from "@orpc/server/plugins";
 import { createServerFileRoute } from "@tanstack/react-start/server";
 
-const handler = new RPCHandler(router);
+const handler = new RPCHandler(router, {
+	plugins: [new RequestHeadersPlugin()],
+});
 
 async function handle({ request }: { request: Request }) {
 	const { response } = await handler.handle(request, {
