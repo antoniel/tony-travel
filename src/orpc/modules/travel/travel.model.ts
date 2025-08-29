@@ -29,7 +29,6 @@ const LocationInfoSchema = z.object({
 });
 
 export const InsertFullTravel = z.object({
-	// id is assigned server-side
 	name: z.string(),
 	destination: z.string(),
 	startDate: z.date(),

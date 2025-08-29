@@ -26,9 +26,13 @@ export type InferResultType<
 		with: With;
 	}
 >;
-export type ExpandType<T> = T extends infer O
-	? { [K in keyof O]: O[K] }
-	: never;
+export type ExpandRecursively<T> = T extends (...args: infer A) => infer R
+	? (...args: ExpandRecursively<A>) => ExpandRecursively<R>
+	: T extends object
+		? T extends infer O
+			? { [K in keyof O]: ExpandRecursively<O[K]> }
+			: never
+		: T;
 
 /**
  * A stricter version of TypeScript's Omit utility type that ensures the omitted keys cannot be present.

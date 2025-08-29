@@ -14,7 +14,7 @@ export const generatePrompt = os
 			budget: z.object({ perPerson: z.number(), currency: z.string() }),
 			destination: z.string(),
 			groupSize: z.number().int().min(1),
-			departureCities: z.array(z.string()).min(1),
+			departureAirports: z.array(AirportSchema).min(1),
 		}),
 	)
 	.output(z.string())

@@ -1,3 +1,16 @@
+type Airport = {
+	code: string;
+	name: string;
+	city: string;
+	state: string | null;
+	stateCode: string | null;
+	country: string;
+	countryCode: string;
+	type: "airport" | "city_group" | "state_group" | "country_group";
+	airportCount?: number;
+	airportCodes?: string[];
+};
+
 type StartPlanTravelProps = {
 	tripDates: {
 		start: string;
@@ -9,7 +22,7 @@ type StartPlanTravelProps = {
 	};
 	destination: string;
 	groupSize: number;
-	departureCities: string[];
+	departureAirports: Airport[];
 	schemaOverride?: string;
 };
 export function startPlanTravel({
@@ -17,14 +30,33 @@ export function startPlanTravel({
 	budget,
 	destination,
 	groupSize,
-	departureCities,
+	departureAirports,
 }: StartPlanTravelProps) {
+	// Create enhanced departure airports information with city, state/country details
+	const departureAirportsInfo = departureAirports.map(airport => ({
+		code: airport.code,
+		name: airport.name,
+		city: airport.city,
+		state: airport.state,
+		stateCode: airport.stateCode,
+		country: airport.country,
+		countryCode: airport.countryCode,
+		type: airport.type,
+		displayName: airport.type === 'city_group' 
+			? `${airport.city} - ${airport.stateCode}` 
+			: airport.type === 'state_group' 
+			? airport.state 
+			: airport.type === 'country_group' 
+			? airport.country 
+			: `${airport.city} - ${airport.code}`,
+	}));
+
 	const inputsJson = {
 		TRIP_DATES: tripDates,
 		BUDGET: budget,
 		DESTINATION: destination,
 		GROUP_SIZE: groupSize,
-		DEPARTURE_CITIES: departureCities,
+		DEPARTURE_AIRPORTS: departureAirportsInfo,
 	};
 
 	return `
@@ -75,9 +107,9 @@ $groupSize
 $destination
 </destination>
 
-<departure_cities>
-$departureCities.join(", ")
-</departure_cities>
+<departure_airports>
+${departureAirportsInfo.map(a => `${a.displayName} (${a.code})`).join(", ")}
+</departure_airports>
 
 Regras gerais
 	•	Idioma: português (Brasil).
@@ -119,42 +151,140 @@ BEGIN PLANNING
 
 const schema = `
 type Travel = {
-    name: string;
-    destination: string;
-    startDate: Date;
-    endDate: Date;
-    accommodations: {
-        id: string;
-        name: string;
-        type: "hotel" | "hostel" | "airbnb" | "resort" | "other";
-        startDate: Date;
-        endDate: Date;
-        address?: string | null | undefined;
-        rating?: number | null | undefined;
-        price?: number | null | undefined;
-        currency?: string | null | undefined;
-    }[];
-    events: any[];
-    locationInfo: {
-        destination: string;
-        country: string;
-        climate: string;
-        currency: string;
-        language: string;
-        timeZone: string;
-        bestTimeToVisit: string;
-        emergencyNumbers?: {
-            police?: string | undefined;
-            medical?: string | undefined;
-            embassy?: string | undefined;
-        } | undefined;
-    };
-    visaInfo: {
-        required: boolean;
-        stayDuration: string;
-        documents: string[];
-        vaccinations: string[];
-        entryRequirements?: string[] | undefined;
-    };
-}
+	destination: string;
+	locationInfo: {
+		destination: string;
+		country: string;
+		climate: string;
+		currency: string;
+		language: string;
+		timeZone: string;
+		bestTimeToVisit: string;
+		emergencyNumbers?: {
+			police?: string;
+			medical?: string;
+			embassy?: string;
+		};
+	};
+	visaInfo: {
+		required: boolean;
+		stayDuration: string;
+		documents: string[];
+		vaccinations: string[];
+		entryRequirements?: string[];
+	};
+	name: string;
+	startDate: Date;
+	endDate: Date;
+	id?: string | undefined;
+	createdAt?: Date | undefined;
+	updatedAt?: Date | undefined;
+	accommodations: {
+		name: string;
+		type: "hotel" | "hostel" | "airbnb" | "resort" | "other";
+		startDate: Date;
+		endDate: Date;
+		travelId: string;
+		address?: string | null | undefined;
+		rating?: number | null | undefined;
+		price?: number | null | undefined;
+		currency?: string | null | undefined;
+		id?: string | undefined;
+		createdAt?: Date | undefined;
+		updatedAt?: Date | undefined;
+	}[];
+	events: {
+		startDate: Date;
+		endDate: Date;
+		type: "travel" | "food" | "activity";
+		travelId: string;
+		title: string;
+		id: string | undefined;
+		createdAt: Date | undefined;
+		updatedAt: Date | undefined;
+		estimatedCost: number | null | undefined;
+		location: string | null | undefined;
+		imageUrl?: string | null | undefined;
+		imageMetadata?:
+			| {
+					source: "pixabay" | "manual";
+					tags: string[];
+					photographer?: string;
+					fetchedAt: Date;
+					pixabayId?: number;
+			  }
+			| null
+			| undefined;
+		parentEventId: string | null | undefined;
+	}[];
+};
 `;
+
+export type TravelPrompt = {
+	destination: string;
+	locationInfo: {
+		destination: string;
+		country: string;
+		climate: string;
+		currency: string;
+		language: string;
+		timeZone: string;
+		bestTimeToVisit: string;
+		emergencyNumbers?: {
+			police?: string;
+			medical?: string;
+			embassy?: string;
+		};
+	};
+	visaInfo: {
+		required: boolean;
+		stayDuration: string;
+		documents: string[];
+		vaccinations: string[];
+		entryRequirements?: string[];
+	};
+	name: string;
+	startDate: Date;
+	endDate: Date;
+	id?: string | undefined;
+	createdAt?: Date | undefined;
+	updatedAt?: Date | undefined;
+	accommodations: {
+		name: string;
+		type: "hotel" | "hostel" | "airbnb" | "resort" | "other";
+		startDate: Date;
+		endDate: Date;
+		travelId: string;
+		address?: string | null | undefined;
+		rating?: number | null | undefined;
+		price?: number | null | undefined;
+		currency?: string | null | undefined;
+		id?: string | undefined;
+		createdAt?: Date | undefined;
+		updatedAt?: Date | undefined;
+	}[];
+	events: {
+		startDate: Date;
+		endDate: Date;
+		type: "travel" | "food" | "activity";
+		travelId: string;
+		title: string;
+		id: string | undefined;
+		createdAt: Date | undefined;
+		updatedAt: Date | undefined;
+		estimatedCost: number | null | undefined;
+		location: string | null | undefined;
+		imageUrl?: string | null | undefined;
+		imageMetadata?:
+			| {
+					source: "pixabay" | "manual";
+					tags: string[];
+					photographer?: string;
+					fetchedAt: Date;
+					pixabayId?: number;
+			  }
+			| null
+			| undefined;
+		parentEventId: string | null | undefined;
+	}[];
+};

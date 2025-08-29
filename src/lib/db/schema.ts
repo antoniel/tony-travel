@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { customAlphabet } from "nanoid";
@@ -23,6 +23,7 @@ const defaultColumn = (prefix: keyof typeof prefixes) => ({
 		.$defaultFn(() => newId(prefix)),
 	createdAt: integer("created_at", { mode: "timestamp" })
 		.$defaultFn(() => new Date())
+		.default(sql`CURRENT_TIMESTAMP`)
 		.notNull(),
 	updatedAt: integer("updated_at", { mode: "timestamp" })
 		.$defaultFn(() => new Date())

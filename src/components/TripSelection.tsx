@@ -25,15 +25,17 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { useAirportsSearch } from "@/hooks/useAirportsSearch";
-import { useDestinationsSearch } from "@/hooks/useDestinationsSearch";
 import { useUser } from "@/hooks/useUser";
 import { signIn } from "@/lib/auth-client";
-import type { Travel } from "@/lib/db/schema";
+import type { InsertAppEvent, Travel } from "@/lib/db/schema";
 import { startPlanTravel } from "@/lib/planTravel.prompt";
-import type { AppEvent, TravelWithRelations } from "@/lib/types";
+import type { TravelWithRelations } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { orpc } from "@/orpc/client";
-import type { Airport } from "@/orpc/modules/travel/travel.model";
+import type {
+	Airport,
+	InsertFullTravel,
+} from "@/orpc/modules/travel/travel.model";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { format } from "date-fns";
@@ -84,16 +86,10 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 	const [airportSearch, setAirportSearch] = useState("");
 	const [isAirportPopoverOpen, setIsAirportPopoverOpen] = useState(false);
 
-	// Destination selector state
-	const [destinationSearch, setDestinationSearch] = useState("");
 	const [isDestinationPopoverOpen, setIsDestinationPopoverOpen] =
 		useState(false);
 
 	const { data: searchResults = [] } = useAirportsSearch(airportSearch, 10);
-	const { data: destinationResults = [] } = useDestinationsSearch(
-		destinationSearch,
-		10,
-	);
 
 	// Login modal state
 	const [loginModalOpen, setLoginModalOpen] = useState(false);
@@ -142,18 +138,32 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 			return Number.isFinite(n) && n > 0 ? n : 2;
 		})();
 
-		// Departure airport codes
-		const departureCities = form.departureAirports.length
-			? form.departureAirports.map((a) => a.code)
-			: ["GRU"]; // default
+		// Departure airports with full information
+		const departureAirports = form.departureAirports.length
+			? form.departureAirports
+			: [
+					{
+						code: "GRU",
+						name: "Guarulhos",
+						city: "São Paulo",
+						state: "São Paulo",
+						stateCode: "SP",
+						country: "Brazil",
+						countryCode: "BR",
+						type: "airport" as const,
+					},
+				]; // default
 
 		generatePromptMutation.mutate(
 			{
 				tripDates: { start, end },
 				budget: { perPerson, currency: "BRL" },
-				destination: form.destination || "",
+				destination:
+					form.destinations.length > 0
+						? form.destinations.map((d) => d.label).join(", ")
+						: "",
 				groupSize,
-				departureCities,
+				departureAirports,
 			},
 			{
 				onError: (error) => {
@@ -161,9 +171,12 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 					return startPlanTravel({
 						tripDates: { start, end },
 						budget: { perPerson, currency: "BRL" },
-						destination: form.destination || "",
+						destination:
+							form.destinations.length > 0
+								? form.destinations.map((d) => d.label).join(", ")
+								: "",
 						groupSize,
-						departureCities,
+						departureAirports,
 					});
 				},
 			},
@@ -219,15 +232,15 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 		});
 	}
 
-	// Use search results from backend
-	const filteredAirports = searchResults;
-	const filteredDestinations = destinationResults;
-
 	const getDurationInDays = (startDate: Date, endDate: Date) => {
 		const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
 		return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 	};
 
+	const searchDestionationOption = searchResults.map((airport) => ({
+		value: airport.code,
+		label: renderAiportName(airport),
+	}));
 	return (
 		<div className="relative h-full bg-gradient-to-b from-primary/10 via-background to-background">
 			<div className="relative isolate min-h-screen pb-6 inset-0">
@@ -264,10 +277,7 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 												searchPlaceholder="Buscar por cidade, aeroporto ou código..."
 												selectedLabel="Aeroportos selecionados"
 												icon={<Plane className="h-4 w-4" />}
-												options={filteredAirports.map((airport) => ({
-													value: airport.code,
-													label: renderAiportName(airport),
-												}))}
+												options={searchDestionationOption}
 												selected={form.departureAirports.map((airport) => ({
 													value: airport.code,
 													label: renderAiportName(airport),
@@ -276,8 +286,8 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 													const selectedCodes = selected.map((s) => s.value);
 													setForm((prev) => ({
 														...prev,
-														departureAirports: filteredAirports.filter(
-															(airport) => selectedCodes.includes(airport.code),
+														departureAirports: searchResults.filter((airport) =>
+															selectedCodes.includes(airport.code),
 														),
 													}));
 												}}
@@ -295,7 +305,7 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 												searchPlaceholder="Buscar destino..."
 												selectedLabel="Destinos selecionados"
 												icon={<MapPin className="h-4 w-4" />}
-												options={filteredDestinations}
+												options={searchDestionationOption}
 												selected={form.destinations}
 												onSelectionChange={(selected) => {
 													setForm((prev) => ({
@@ -303,8 +313,8 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 														destinations: selected,
 													}));
 												}}
-												searchValue={destinationSearch}
-												onSearchChange={setDestinationSearch}
+												searchValue={airportSearch}
+												onSearchChange={setAirportSearch}
 												isOpen={isDestinationPopoverOpen}
 												onOpenChange={setIsDestinationPopoverOpen}
 												multiple
@@ -662,7 +672,7 @@ function DialogCreateTravel(props: {
 	}
 
 	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-	function normalizeTravelForSave(raw: any): Omit<TravelWithRelations, "id"> {
+	function normalizeTravelForSave(raw: any): InsertFullTravel {
 		// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 		const toDate = (v: any) => {
 			if (v instanceof Date) return v;
@@ -673,7 +683,7 @@ function DialogCreateTravel(props: {
 			return v;
 		};
 		// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-		const normalizeEvent = (ev: any): AppEvent => ({
+		const normalizeEvent = (ev: any): InsertAppEvent => ({
 			...ev,
 			startDate: toDate(ev.startDate) as Date,
 			endDate: toDate(ev.endDate) as Date,
@@ -693,8 +703,6 @@ function DialogCreateTravel(props: {
 			events: (raw.events ?? []).map(normalizeEvent),
 			locationInfo: raw.locationInfo,
 			visaInfo: raw.visaInfo,
-			createdAt: new Date(),
-			updatedAt: new Date(),
 		};
 	}
 	function tryImportTravel() {
@@ -704,16 +712,18 @@ function DialogCreateTravel(props: {
 			setImportError("Cole a resposta do ChatGPT para continuar.");
 			return;
 		}
-		const jsonBlock = extractJsonCodeBlock(text);
-		if (!jsonBlock) {
-			setImportError(
-				"Responda e cole APENAS um bloco ```json``` com o objeto Travel.",
-			);
-			return;
+
+		// First try to extract JSON from code block
+		let jsonText = extractJsonCodeBlock(text);
+
+		// If no code block found, try parsing the entire text as JSON
+		if (!jsonText) {
+			jsonText = text;
 		}
+
 		let parsed: unknown;
 		try {
-			parsed = JSON.parse(jsonBlock);
+			parsed = JSON.parse(jsonText);
 		} catch {
 			setImportError(
 				"JSON inválido. Verifique vírgulas, aspas e datas como strings ISO.",
@@ -775,7 +785,7 @@ function DialogCreateTravel(props: {
 						</div>
 						<textarea
 							className="w-full h-40 text-sm rounded-md border p-3"
-							placeholder="Cole apenas o bloco ```json``` com o objeto Travel..."
+							placeholder="Cole a resposta do ChatGPT aqui"
 							value={props.chatgptResponse}
 							onChange={(e) => props.setChatgptResponse(e.target.value)}
 						/>
