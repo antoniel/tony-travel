@@ -33,7 +33,7 @@ export function startPlanTravel({
 	departureAirports,
 }: StartPlanTravelProps) {
 	// Create enhanced departure airports information with city, state/country details
-	const departureAirportsInfo = departureAirports.map(airport => ({
+	const departureAirportsInfo = departureAirports.map((airport) => ({
 		code: airport.code,
 		name: airport.name,
 		city: airport.city,
@@ -42,13 +42,14 @@ export function startPlanTravel({
 		country: airport.country,
 		countryCode: airport.countryCode,
 		type: airport.type,
-		displayName: airport.type === 'city_group' 
-			? `${airport.city} - ${airport.stateCode}` 
-			: airport.type === 'state_group' 
-			? airport.state 
-			: airport.type === 'country_group' 
-			? airport.country 
-			: `${airport.city} - ${airport.code}`,
+		displayName:
+			airport.type === "city_group"
+				? `${airport.city} - ${airport.stateCode}`
+				: airport.type === "state_group"
+					? airport.state
+					: airport.type === "country_group"
+						? airport.country
+						: `${airport.city} - ${airport.code}`,
 	}));
 
 	const inputsJson = {
@@ -79,7 +80,7 @@ ${JSON.stringify(inputsJson, null, 2)}
 
 <Instructions Structure>
 1) Role & idioma (pt-BR). Escopo: UM destino-alvo.
-2) Variáveis: TRIP_DATES, BUDGET, DESTINATION, GROUP_SIZE, DEPARTURE_CITIES, SCHEMA_OVERRIDE (opcional).
+2) Variáveis: TRIP_DATES, BUDGET, DESTINATION, GROUP_SIZE, DEPARTURE_CITIES
 3) Validar entradas; se faltar algo, assumir valores plausíveis e prosseguir.
 4) Converter valores para BRL; refletir custos em \`estimatedCost\` de eventos e, quando apropriado, em \`accommodation.price\`.
 5) Produzir APENAS o objeto 'Travel' completo (JSON) conforme schema, cobrindo todo o período com 3 refeições/dia e dependencies de deslocamento.
@@ -94,21 +95,21 @@ Você será um planejador de viagem para um grupo brasileiro aventureiro. Quando
 
 Entradas
 <trip_dates>
-$tripDates.start- $tripDates.end
+${tripDates.start} - ${tripDates.end}
 </trip_dates>
 
-$budget.perPerson$budget.currency
+${budget.perPerson} ${budget.currency}
 
 <group_size>
-$groupSize
+${groupSize}
 </group_size>
 
 <destination>
-$destination
+${destination}
 </destination>
 
 <departure_airports>
-${departureAirportsInfo.map(a => `${a.displayName} (${a.code})`).join(", ")}
+${departureAirportsInfo.map((a) => `${a.displayName} (${a.code})`).join(", ")}
 </departure_airports>
 
 Regras gerais
@@ -116,10 +117,9 @@ Regras gerais
 	•	Não peça confirmação se as entradas já existirem; tome decisões prudentes e documente suposições.
 	•	Todas as cifras em R$ (BRL). Se não for fornecido câmbio, use taxa média do dia e informe a fonte/assunção.
 	•	Prioridade: experiências > conforto. Hospedagem = lugar para dormir/guardar bagagem.
-	•	Orçamento on-ground por dia: Atividades 60%, Comida 20%, Hospedagem 15%, Contingência 5% + Reserva extra de 15% do subtotal on-ground para emergências (fora da divisão 60/20/15/5).
-	•	Equalização de voos: calcule o custo médio RT do grupo para o destino-alvo (média das cidades de saída). Quem pagou acima da média recebe crédito de hospedagem; quem pagou abaixo da média contribui.
-	•	Logística: prever chegadas escalonadas, ponto de encontro no 1º dia, SIM/eSIM local, grupos de WhatsApp, transporte a atividades (metrô/ônibus/van).
-	•	Segurança & prático: cartões x cash, ATMs, seguro para esportes de aventura e altitude quando aplicável, timeline de compra (voos 6–8 semanas antes; passeios de alta demanda com antecedência), apps/sites úteis.
+	•	Orçamento on-ground por dia: Atividades 60%, Comida 20%, Hospedagem 15%, Contingência 5%
+	•	Equalização de voos: calcule o custo médio RT do grupo para o destino-alvo (média das cidades de saída).
+	•	Logística: prever chegadas escalonadas, transporte a atividades (metrô/ônibus/van).
 	•	Validação das atividades: o destino-alvo deve cumprir todas as atividades requeridas (trilha/trekking; água: mar/laguna/rápidos; adrenalina: parapente/tirolesa/MTB/canyoning). Traga preços reais com faixas e aponte descontos de grupo quando existirem.
 
 Schema (padrão)

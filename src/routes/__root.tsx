@@ -7,6 +7,7 @@ import {
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
+import { TopbarMenu } from "../components/ui/topbar-menu";
 
 import appCss from "../styles.css?url";
 
@@ -48,6 +49,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<HeadContent />
 			</head>
 			<body>
+				<TopbarMenu />
 				{children}
 				<TanstackDevtools
 					config={{

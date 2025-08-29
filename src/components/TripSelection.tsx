@@ -342,7 +342,7 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 																	customPeople: e.target.value,
 																}))
 															}
-															className="h-12 text-base flex-1"
+															className="h-12 text-base flex-1 bg-background"
 															min="1"
 															max="50"
 														/>
@@ -367,7 +367,7 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 															setForm((prev) => ({ ...prev, people: value }))
 														}
 													>
-														<SelectTrigger className="h-12 text-base w-full">
+														<SelectTrigger className="h-12 text-base w-full bg-background border border-border shadow-xs">
 															<SelectValue placeholder="Número de viajantes" />
 														</SelectTrigger>
 														<SelectContent>
@@ -432,7 +432,7 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 															setForm((prev) => ({ ...prev, budget: value }))
 														}
 													>
-														<SelectTrigger className="h-12 text-base w-full">
+														<SelectTrigger className="h-12 text-base w-full bg-background border border-border shadow-xs">
 															<SelectValue placeholder="Faixa de orçamento" />
 														</SelectTrigger>
 														<SelectContent>

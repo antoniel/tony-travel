@@ -72,6 +72,8 @@ code {
 	--shadow-2xl: 0 25px 50px -12px hsl(220 20% 20% / 0.25);
 	--tracking-normal: -0.01em; /* Slightly tighter for modern look */
 	--spacing: 0.25rem;
+
+	--text-base: 1rem;
 }
 
 .dark {
@@ -179,6 +181,15 @@ code {
 	--shadow-lg: var(--shadow-lg);
 	--shadow-xl: var(--shadow-xl);
 	--shadow-2xl: var(--shadow-2xl);
+
+	@keyframes moveBackground {
+		from {
+			background-position: 0% 0%;
+		}
+		to {
+			background-position: 0% -1000%;
+		}
+	}
 }
 
 @layer base {
