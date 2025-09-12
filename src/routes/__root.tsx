@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 
 import { Toaster } from "@/components/ui/sonner";
 import type { QueryClient } from "@tanstack/react-query";
+import { Meta } from "@tanstack/react-start";
 
 interface MyRouterContext {
 	queryClient: QueryClient;
@@ -48,6 +49,12 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 		<html lang="en">
 			<head>
 				<HeadContent />
+				<link rel="icon" href="data:image/x-icon;base64,AA" />
+				<Meta />
+				<script
+					crossOrigin="anonymous"
+					src="//unpkg.com/react-scan/dist/auto.global.js"
+				/>
 			</head>
 			<body>
 				<TopbarMenu />

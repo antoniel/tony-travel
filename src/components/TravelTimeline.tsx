@@ -283,7 +283,7 @@ function createTimelineItems(travel: TravelWithRelations): TimelineItem[] {
 			date: acc.startDate,
 			data: acc,
 			title: `Check-in: ${acc.name}`,
-			description: `Hospedagem em ${acc.type}${acc.rating ? ` com avaliação ${acc.rating}/5` : ""}. ${acc.address ? `Localizado em ${acc.address}.` : ""} Sua estadia vai até ${format(acc.endDate, "d 'de' MMMM", { locale: ptBR })}.`,
+			description: `Hospedagem em ${acc.type}. ${acc.address ? `Localizado em ${acc.address}.` : ""} Sua estadia vai até ${format(acc.endDate, "d 'de' MMMM", { locale: ptBR })}.`,
 			location: acc.address ?? undefined,
 			cost: acc.price ?? undefined,
 			icon: Hotel,

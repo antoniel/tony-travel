@@ -137,10 +137,8 @@ export const Accommodation = sqliteTable("accommodation", {
 	}).notNull(),
 	startDate: integer("start_date", { mode: "timestamp" }).notNull(),
 	endDate: integer("end_date", { mode: "timestamp" }).notNull(),
-	address: text("address"),
-	rating: real("rating"),
-	price: real("price"),
-	currency: text("currency"),
+	address: text("address").notNull(),
+	price: real("price").notNull(),
 	travelId: text("travel_id")
 		.notNull()
 		.references(() => Travel.id, { onDelete: "cascade" }),

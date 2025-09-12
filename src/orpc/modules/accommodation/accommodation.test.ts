@@ -261,7 +261,6 @@ describe("accommodation routes", () => {
 					id: inserted.id,
 					accommodation: {
 						name: "Updated Hotel",
-						rating: 5.0,
 					},
 				},
 			);
@@ -278,7 +277,6 @@ describe("accommodation routes", () => {
 				},
 			);
 			expect(updated?.name).toBe("Updated Hotel");
-			expect(updated?.rating).toBe(5.0);
 		});
 
 		it("returns error for non-existent accommodation", async () => {

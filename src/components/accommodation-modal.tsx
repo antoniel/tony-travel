@@ -22,7 +22,11 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { InsertAccommodationSchema, type Accommodation, type Travel } from "@/lib/db/schema";
+import {
+	type Accommodation,
+	InsertAccommodationSchema,
+	type Travel,
+} from "@/lib/db/schema";
 import { orpc } from "@/orpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -66,9 +70,7 @@ export function AccommodationModal({
 			startDate: new Date(),
 			endDate: new Date(),
 			address: "",
-			rating: undefined,
 			price: undefined,
-			currency: "BRL",
 		},
 	});
 
@@ -85,20 +87,20 @@ export function AccommodationModal({
 					? new Date(editingAccommodation.endDate)
 					: new Date(),
 				address: editingAccommodation.address || "",
-				rating: editingAccommodation.rating || undefined,
 				price: editingAccommodation.price || undefined,
-				currency: editingAccommodation.currency || "BRL",
 			});
 		} else {
 			form.reset({
 				name: "",
 				type: "hotel",
-				startDate: travelData?.startDate ? new Date(travelData.startDate) : new Date(),
-				endDate: travelData?.endDate ? new Date(travelData.endDate) : new Date(),
+				startDate: travelData?.startDate
+					? new Date(travelData.startDate)
+					: new Date(),
+				endDate: travelData?.endDate
+					? new Date(travelData.endDate)
+					: new Date(),
 				address: "",
-				rating: undefined,
 				price: undefined,
-				currency: "BRL",
 			});
 		}
 	}, [editingAccommodation, travelData, form]);
@@ -149,11 +151,10 @@ export function AccommodationModal({
 
 					// Invalidate queries to refresh the data
 					await queryClient.invalidateQueries({
-						queryKey: orpc.accommodationRoutes.getAccommodationsByTravel.queryKey(
-							{
+						queryKey:
+							orpc.accommodationRoutes.getAccommodationsByTravel.queryKey({
 								input: { travelId },
-							},
-						),
+							}),
 					});
 				}
 			} else {
@@ -182,11 +183,10 @@ export function AccommodationModal({
 
 					// Invalidate queries to refresh the data
 					await queryClient.invalidateQueries({
-						queryKey: orpc.accommodationRoutes.getAccommodationsByTravel.queryKey(
-							{
+						queryKey:
+							orpc.accommodationRoutes.getAccommodationsByTravel.queryKey({
 								input: { travelId },
-							},
-						),
+							}),
 					});
 				}
 			}
@@ -200,7 +200,7 @@ export function AccommodationModal({
 	// Calculate date constraints based on travel dates
 	const getDateConstraints = () => {
 		if (!travelData) return {};
-		
+
 		return {
 			min: travelData.startDate
 				? new Date(travelData.startDate).toISOString().split("T")[0]
@@ -226,7 +226,9 @@ export function AccommodationModal({
 			<DialogContent className="sm:max-w-[500px]">
 				<DialogHeader>
 					<DialogTitle>
-						{editingAccommodation ? "Editar Acomodação" : "Adicionar Acomodação"}
+						{editingAccommodation
+							? "Editar Acomodação"
+							: "Adicionar Acomodação"}
 					</DialogTitle>
 				</DialogHeader>
 
@@ -378,54 +380,7 @@ export function AccommodationModal({
 									</FormItem>
 								)}
 							/>
-
-							<FormField
-								control={form.control}
-								name="currency"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Moeda</FormLabel>
-										<FormControl>
-											<Input
-												placeholder="BRL"
-												{...field}
-												value={field.value || ""}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
 						</div>
-
-						<FormField
-							control={form.control}
-							name="rating"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Avaliação (0-5)</FormLabel>
-									<FormControl>
-										<Input
-											type="number"
-											step="0.1"
-											min="0"
-											max="5"
-											placeholder="4.5"
-											{...field}
-											value={field.value || ""}
-											onChange={(e) =>
-												field.onChange(
-													e.target.value
-														? Number.parseFloat(e.target.value)
-														: undefined,
-												)
-											}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
 
 						<div className="flex gap-3 pt-4">
 							<Button

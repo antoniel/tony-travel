@@ -62,12 +62,12 @@ function AccommodationCard({ accommodation, onEdit }: AccommodationCardProps) {
 		return Math.max(0, nights);
 	};
 
-	const formatCurrency = (amount: number | null, currency: string | null) => {
+	const formatCurrency = (amount: number | null) => {
 		if (!amount) return null;
 
 		const formatter = new Intl.NumberFormat("pt-BR", {
 			style: "currency",
-			currency: currency || "BRL",
+			currency: "BRL",
 		});
 
 		return formatter.format(amount);
@@ -108,22 +108,11 @@ function AccommodationCard({ accommodation, onEdit }: AccommodationCardProps) {
 								</div>
 							</div>
 						</div>
-						{(accommodation.price || accommodation.rating) && (
+						{accommodation.price && (
 							<div className="flex items-center gap-4 mt-2">
 								{accommodation.price && (
 									<div className="text-lg font-bold text-primary">
-										{formatCurrency(
-											accommodation.price,
-											accommodation.currency,
-										)}
-									</div>
-								)}
-								{accommodation.rating && (
-									<div className="flex items-center gap-1 text-orange-500">
-										<span className="text-lg">⭐</span>
-										<span className="font-semibold text-base">
-											{accommodation.rating}
-										</span>
+										{formatCurrency(accommodation.price)}
 									</div>
 								)}
 							</div>

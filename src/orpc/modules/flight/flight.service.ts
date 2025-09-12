@@ -4,7 +4,10 @@ import type * as z from "zod";
 import type { TravelDAO } from "../travel/travel.dao";
 import type { FlightDAO } from "./flight.dao";
 import { flightErrors } from "./flight.errors";
-import type { CreateFlightWithParticipantsSchema, FlightWithParticipants } from "./flight.model";
+import type {
+	CreateFlightWithParticipantsSchema,
+	FlightWithParticipants,
+} from "./flight.model";
 
 /**
  * Create flight with smart duplicate detection and participant management
@@ -12,12 +15,16 @@ import type { CreateFlightWithParticipantsSchema, FlightWithParticipants } from 
 export async function createFlightService(
 	flightDAO: FlightDAO,
 	travelDAO: TravelDAO,
-	input: z.infer<typeof CreateFlightWithParticipantsSchema> & { travelId: string },
-): Promise<AppResult<{
-	id: string;
-	isDuplicate: boolean;
-	existingFlightId: string | null;
-}>> {
+	input: z.infer<typeof CreateFlightWithParticipantsSchema> & {
+		travelId: string;
+	},
+): Promise<
+	AppResult<{
+		id: string;
+		isDuplicate: boolean;
+		existingFlightId: string | null;
+	}>
+> {
 	// Verify travel exists
 	const travel = await travelDAO.getTravelById(input.travelId);
 	if (!travel) {
@@ -78,7 +85,9 @@ export async function createFlightService(
 export async function getFlightsByTravelService(
 	flightDAO: FlightDAO,
 	travelId: string,
-): Promise<AppResult<Array<{ originAirport: string; flights: FlightWithParticipants[] }>>> {
+): Promise<
+	AppResult<Array<{ originAirport: string; flights: FlightWithParticipants[] }>>
+> {
 	const flights = await flightDAO.getFlightsByTravel(travelId);
 
 	const grouped = flights.reduce(
@@ -134,19 +143,6 @@ export async function updateFlightService(
 		);
 	}
 
-	// Check if flight has already departed (if departure date is being checked)
-	if (existingFlight.departureDate) {
-		const departureDate = new Date(existingFlight.departureDate);
-		if (departureDate < new Date()) {
-			return AppResult.failure(
-				flightErrors,
-				"FLIGHT_DEPARTURE_PASSED",
-				"Não é possível modificar voo após a data de partida",
-				{ flightId, departureDate: departureDate.toISOString() },
-			);
-		}
-	}
-
 	await flightDAO.updateFlight(flightId, flightData);
 	return AppResult.success({ success: true });
 }
@@ -167,19 +163,6 @@ export async function deleteFlightService(
 			"Voo não encontrado",
 			{ flightId },
 		);
-	}
-
-	// Check if flight has already departed
-	if (existingFlight.departureDate) {
-		const departureDate = new Date(existingFlight.departureDate);
-		if (departureDate < new Date()) {
-			return AppResult.failure(
-				flightErrors,
-				"CANCELLATION_NOT_ALLOWED",
-				"Não é possível cancelar voo após a data de partida",
-				{ flightId, reason: "Flight has already departed" },
-			);
-		}
 	}
 
 	await flightDAO.deleteFlight(flightId);
@@ -205,19 +188,6 @@ export async function addFlightParticipantService(
 		);
 	}
 
-	// Check if flight has already departed
-	if (existingFlight.departureDate) {
-		const departureDate = new Date(existingFlight.departureDate);
-		if (departureDate < new Date()) {
-			return AppResult.failure(
-				flightErrors,
-				"PARTICIPANT_CANNOT_BE_ADDED",
-				"Não é possível adicionar participante após a data de partida",
-				{ userId, flightId, reason: "Flight has already departed" },
-			);
-		}
-	}
-
 	// Add participant (DAO handles duplicate check)
 	const participantId = await flightDAO.addFlightParticipant(flightId, userId);
 	return AppResult.success({ id: participantId });
@@ -240,19 +210,6 @@ export async function removeFlightParticipantService(
 			"Voo não encontrado",
 			{ flightId },
 		);
-	}
-
-	// Check if flight has already departed
-	if (existingFlight.departureDate) {
-		const departureDate = new Date(existingFlight.departureDate);
-		if (departureDate < new Date()) {
-			return AppResult.failure(
-				flightErrors,
-				"PARTICIPANT_CANNOT_BE_REMOVED",
-				"Não é possível remover participante após a data de partida",
-				{ userId, flightId, reason: "Flight has already departed" },
-			);
-		}
 	}
 
 	// Verify participant exists on flight
@@ -281,11 +238,13 @@ export async function checkDuplicateFlightService(
 	originAirport: string,
 	destinationAirport: string,
 	cost?: number,
-): Promise<AppResult<{
-	isDuplicate: boolean;
-	existingFlightId: string | null;
-	message?: string;
-}>> {
+): Promise<
+	AppResult<{
+		isDuplicate: boolean;
+		existingFlightId: string | null;
+		message?: string;
+	}>
+> {
 	const existingFlightId = await flightDAO.findDuplicateFlight(
 		travelId,
 		originAirport,
