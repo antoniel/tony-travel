@@ -18,6 +18,7 @@
     "db:seed": "bun run scripts/seed.ts"
   },
   "dependencies": {
+    "@anatine/zod-mock": "^3.14.0",
     "@hookform/resolvers": "^5.2.1",
     "@libsql/client": "^0.15.12",
     "@orpc/client": "^1.7.5",

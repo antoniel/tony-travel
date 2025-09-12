@@ -1,4 +1,5 @@
 import { betterAuthApp } from "@/lib/auth";
+import { ALWAYS_USER_TEST } from "@/tests/utils";
 import { ORPCError, os } from "@orpc/server";
 import type { Session, User } from "better-auth/types";
 import type { ORPCContext } from "../procedure";
@@ -26,6 +27,24 @@ export const requireAuth = os
 		const authResult = await betterAuthApp.api.getSession({
 			headers: context.reqHeaders,
 		});
+
+		if (
+			process.env.NODE_ENV === "test" &&
+			context.reqHeaders.get("Authorization") === "Bearer test-token"
+		) {
+			return next({
+				context: {
+					user: ALWAYS_USER_TEST,
+					session: {
+						id: "test-session",
+						userId: ALWAYS_USER_TEST.id,
+						expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
+						createdAt: new Date(),
+						updatedAt: new Date(),
+					},
+				} as AuthContext,
+			});
+		}
 
 		if (!authResult?.user || !authResult?.session) {
 			throw new ORPCError("UNAUTHORIZED", {

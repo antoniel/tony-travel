@@ -45,6 +45,7 @@ export const User = sqliteTable("user", {
 		.notNull(),
 	image: text("image"),
 });
+export type User = typeof User.$inferSelect;
 
 export const Session = sqliteTable("session", {
 	...defaultColumn("session"),
