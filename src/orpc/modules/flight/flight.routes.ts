@@ -1,18 +1,32 @@
 import { FlightSchema, InsertFlightSchema } from "@/lib/db/schema";
+import { AppResult } from "@/orpc/appResult";
 import { requireAuth } from "@/orpc/middleware/auth-middleware";
 import { authProcedure, baseProcedure } from "@/orpc/procedure";
+import { ORPCError } from "@orpc/client";
 import * as z from "zod";
+import { createTravelDAO } from "../travel/travel.dao";
 import { createFlightDAO } from "./flight.dao";
+import { flightErrors } from "./flight.errors";
 import {
 	CreateFlightWithParticipantsSchema,
 	DuplicateFlightResultSchema,
 	FlightGroupSchema,
-	type FlightWithParticipants,
 } from "./flight.model";
+import {
+	addFlightParticipantService,
+	checkDuplicateFlightService,
+	createFlightService,
+	deleteFlightService,
+	getFlightService,
+	getFlightsByTravelService,
+	removeFlightParticipantService,
+	updateFlightService,
+} from "./flight.service";
 
 // Create flight with smart duplicate detection
 export const createFlight = authProcedure
 	.use(requireAuth)
+	.errors(flightErrors)
 	.input(
 		CreateFlightWithParticipantsSchema.extend({
 			travelId: z.string(),
@@ -27,78 +41,41 @@ export const createFlight = authProcedure
 	)
 	.handler(async ({ input, context }) => {
 		const flightDAO = createFlightDAO(context.db);
-		// Check for duplicate flight
-		const existingFlightId = await flightDAO.findDuplicateFlight(
-			input.travelId,
-			input.flight.originAirport,
-			input.flight.destinationAirport,
-			input.flight.cost || undefined,
-		);
+		const travelDAO = createTravelDAO(context.db);
 
-		// If duplicate found, add participants to existing flight
-		if (existingFlightId) {
-			// Add new participants to existing flight
-			for (const userId of input.participantIds) {
-				await flightDAO.addFlightParticipant(existingFlightId, userId);
-			}
+		const result = await createFlightService(flightDAO, travelDAO, input);
 
-			return {
-				id: existingFlightId,
-				isDuplicate: true,
-				existingFlightId,
-			};
+		if (AppResult.isFailure(result)) {
+			throw new ORPCError(result.error.type, {
+				message: result.error.message,
+				data: result.error.data,
+			});
 		}
 
-		// Create new flight
-		const flightData = {
-			...input.flight,
-			travelId: input.travelId,
-		};
-		const flightId = await flightDAO.createFlight(flightData);
-
-		// Add participants to new flight
-		for (const userId of input.participantIds) {
-			await flightDAO.addFlightParticipant(flightId, userId);
-		}
-
-		return {
-			id: flightId,
-			isDuplicate: false,
-			existingFlightId: null,
-		};
+		return result.data;
 	});
 
 export const getFlightsByTravel = baseProcedure
+	.errors(flightErrors)
 	.input(z.object({ travelId: z.string() }))
 	.output(z.array(FlightGroupSchema))
 	.handler(async ({ input, context }) => {
 		const flightDAO = createFlightDAO(context.db);
-		const flights = await flightDAO.getFlightsByTravel(input.travelId);
 
-		const grouped = flights.reduce(
-			(acc, flight) => {
-				const existing = acc.find(
-					(g) => g.originAirport === flight.originAirport,
-				);
+		const result = await getFlightsByTravelService(flightDAO, input.travelId);
 
-				if (existing) {
-					existing.flights.push(flight);
-				} else {
-					acc.push({
-						originAirport: flight.originAirport,
-						flights: [flight],
-					});
-				}
+		if (AppResult.isFailure(result)) {
+			throw new ORPCError(result.error.type, {
+				message: result.error.message,
+				data: result.error.data,
+			});
+		}
 
-				return acc;
-			},
-			[] as Array<{ originAirport: string; flights: FlightWithParticipants[] }>,
-		);
-
-		return grouped;
+		return result.data;
 	});
 
 export const getFlight = baseProcedure
+	.errors(flightErrors)
 	.input(z.object({ id: z.string() }))
 	.output(
 		FlightSchema.extend({
@@ -117,13 +94,23 @@ export const getFlight = baseProcedure
 	)
 	.handler(async ({ input, context }) => {
 		const flightDAO = createFlightDAO(context.db);
-		const flight = await flightDAO.getFlightById(input.id);
-		return flight || null;
+
+		const result = await getFlightService(flightDAO, input.id);
+
+		if (AppResult.isFailure(result)) {
+			throw new ORPCError(result.error.type, {
+				message: result.error.message,
+				data: result.error.data,
+			});
+		}
+
+		return result.data;
 	});
 
 // Update flight
 export const updateFlight = authProcedure
 	.use(requireAuth)
+	.errors(flightErrors)
 	.input(
 		z.object({
 			id: z.string(),
@@ -133,24 +120,44 @@ export const updateFlight = authProcedure
 	.output(z.object({ success: z.boolean() }))
 	.handler(async ({ input, context }) => {
 		const flightDAO = createFlightDAO(context.db);
-		await flightDAO.updateFlight(input.id, input.flight);
-		return { success: true };
+
+		const result = await updateFlightService(flightDAO, input.id, input.flight);
+
+		if (AppResult.isFailure(result)) {
+			throw new ORPCError(result.error.type, {
+				message: result.error.message,
+				data: result.error.data,
+			});
+		}
+
+		return result.data;
 	});
 
 // Delete flight
 export const deleteFlight = authProcedure
 	.use(requireAuth)
+	.errors(flightErrors)
 	.input(z.object({ id: z.string() }))
 	.output(z.object({ success: z.boolean() }))
 	.handler(async ({ input, context }) => {
 		const flightDAO = createFlightDAO(context.db);
-		await flightDAO.deleteFlight(input.id);
-		return { success: true };
+
+		const result = await deleteFlightService(flightDAO, input.id);
+
+		if (AppResult.isFailure(result)) {
+			throw new ORPCError(result.error.type, {
+				message: result.error.message,
+				data: result.error.data,
+			});
+		}
+
+		return result.data;
 	});
 
 // Add participant to flight
 export const addFlightParticipant = authProcedure
 	.use(requireAuth)
+	.errors(flightErrors)
 	.input(
 		z.object({
 			flightId: z.string(),
@@ -160,16 +167,27 @@ export const addFlightParticipant = authProcedure
 	.output(z.object({ id: z.string() }))
 	.handler(async ({ input, context }) => {
 		const flightDAO = createFlightDAO(context.db);
-		const id = await flightDAO.addFlightParticipant(
+
+		const result = await addFlightParticipantService(
+			flightDAO,
 			input.flightId,
 			input.userId,
 		);
-		return { id };
+
+		if (AppResult.isFailure(result)) {
+			throw new ORPCError(result.error.type, {
+				message: result.error.message,
+				data: result.error.data,
+			});
+		}
+
+		return result.data;
 	});
 
 // Remove participant from flight
 export const removeFlightParticipant = authProcedure
 	.use(requireAuth)
+	.errors(flightErrors)
 	.input(
 		z.object({
 			flightId: z.string(),
@@ -179,13 +197,27 @@ export const removeFlightParticipant = authProcedure
 	.output(z.object({ success: z.boolean() }))
 	.handler(async ({ input, context }) => {
 		const flightDAO = createFlightDAO(context.db);
-		await flightDAO.removeFlightParticipant(input.flightId, input.userId);
-		return { success: true };
+
+		const result = await removeFlightParticipantService(
+			flightDAO,
+			input.flightId,
+			input.userId,
+		);
+
+		if (AppResult.isFailure(result)) {
+			throw new ORPCError(result.error.type, {
+				message: result.error.message,
+				data: result.error.data,
+			});
+		}
+
+		return result.data;
 	});
 
 // Check for duplicate flight without creating
 export const checkDuplicateFlight = authProcedure
 	.use(requireAuth)
+	.errors(flightErrors)
 	.input(
 		z.object({
 			travelId: z.string(),
@@ -197,18 +229,21 @@ export const checkDuplicateFlight = authProcedure
 	.output(DuplicateFlightResultSchema)
 	.handler(async ({ input, context }) => {
 		const flightDAO = createFlightDAO(context.db);
-		const existingFlightId = await flightDAO.findDuplicateFlight(
+
+		const result = await checkDuplicateFlightService(
+			flightDAO,
 			input.travelId,
 			input.originAirport,
 			input.destinationAirport,
 			input.cost,
 		);
 
-		return {
-			isDuplicate: !!existingFlightId,
-			existingFlightId: existingFlightId || null,
-			message: existingFlightId
-				? "Um voo com essas características já existe. Deseja adicionar participantes ao voo existente?"
-				: undefined,
-		};
+		if (AppResult.isFailure(result)) {
+			throw new ORPCError(result.error.type, {
+				message: result.error.message,
+				data: result.error.data,
+			});
+		}
+
+		return result.data;
 	});

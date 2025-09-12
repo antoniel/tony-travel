@@ -24,386 +24,54 @@ Process:
 Constraint: Do not offer reflection if:
 The task was very simple and involved no feedback.
 
-## Development Commands
+## Specialist Agent Invocation (Backend)
 
-### Running the Application
+**MANDATORY**: When the user requests backend activities or your plan includes backend work, INVOKE the `@backend-specialist` agent to lead and execute those steps.
 
-- `bun install` - Install dependencies
-- `bunx --bun run start` - Start the development server (alias: `npm run dev`)
-- `vite dev --port 3000` - Alternative development server command
+What counts as backend activities (non-exhaustive):
 
-### Building and Testing
+- oRPC modules and domain layers: creating/updating `[domain].routes.ts`, `[domain].service.ts`, `[domain].dao.ts`, and `[domain].errors.ts`
+- Error handling contracts: enforcing `AppResult<T>` in services and throwing `AppError` in routes
+- Database work: Drizzle schema design/changes, queries, transactions, IDs via nanoid/base58 with typed prefixes
+- Validation and contracts: Zod schemas, input/output validation, domain rule enforcement in services
+- Backend testing: Vitest suites for modules using `getFakeDb()`, `createAppCall*`, FK-first seeding
+- Security/auth: authentication/authorization flows and server-only logic
+- External integrations performed server-side: service classes with caching/rate limiting
 
-- `bunx --bun run build` - Build for production (alias: `npm run build`)
-- `vite build` - Build using Vite
-- `bunx --bun run test` - Run tests with Vitest
-- `vite preview` - Preview production build
+Execution protocol when backend is requested:
 
-### Code Quality
+1. Announce invocation: "Invoking @backend-specialist for backend tasks".
+2. Hand off backend design/implementation to `@backend-specialist`, which MUST follow all rules in this CLAUDE.md.
+3. After completion, resume with the base assistant only for non-backend follow-ups (e.g., UI wiring), preserving the backend contracts.
+4. If the task qualifies, offer Self-Improving CLAUDE Reflection as usual.
 
-- `bunx --bun run lint` - Run Biome linter
-- `bunx --bun run format` - Format code with Biome
-- `bunx --bun run check` - Run both linting and formatting checks
+Nota (PT-BR): Sempre que o pedido envolver backend (oRPC, services, DAOs, Drizzle, validação/erros, testes de backend), acione obrigatoriamente o `@backend-specialist` para garantir a separação de camadas e o cumprimento estrito das regras deste arquivo.
 
-### Adding Components
+## Specialist Agent Invocation (Frontend)
 
-- `pnpx shadcn@latest add [component]` - Add Shadcn components (e.g., `pnpx shadcn@latest add button`)
+**MANDATORY**: When the user requests frontend activities or your plan includes frontend work, INVOKE the `@frontend-specialist` agent to lead and execute those steps.
 
-## Architecture
+What counts as frontend activities (non-exhaustive):
 
-### Core Stack
+- UI components and pages: creating/updating React components, TanStack routing, layouts, and client-side logic
+- Modern design implementation: stunning interfaces, component decomposition, design system integration, accessibility
+- Client-side data management: TanStack Query integration, state management, form handling with react-hook-form + Zod
+- Component architecture: breaking down large components, state colocation, reusable component patterns
+- Styling and theming: Tailwind CSS, Shadcn components, modern visual effects, responsive design
+- Frontend testing: component tests, UI interaction testing, accessibility validation
+- Client-side integrations: oRPC client integration, optimistic updates, error handling
+- **UI/UX improvements**: modal enhancements, form validation improvements, card styling, visual design updates
+- **Component refactoring**: fixing layout issues, improving spacing, adding borders/visual effects
+- **Interactive features**: button functionality, modal behavior, form interactions
 
-- **Framework**: TanStack Start (React SSR framework)
-- **Router**: TanStack Router with file-based routing
-- **State Management**: TanStack Query for server state, TanStack Store for client state
-- **Styling**: Tailwind CSS v4 with Shadcn components
-- **API Layer**: oRPC for type-safe API calls
-- **Database**: Drizzle ORM with user-friendly ID generation using nanoid and base58 encoding
-- **Environment**: T3 Env for type-safe environment variables
-- **Validation**: Zod schemas
-- **Build Tool**: Vite
-- **Code Quality**: Biome (linting + formatting)
-- **Testing**: Vitest with Testing Library
-- **ID Generation**: nanoid for base58-encoded, user-friendly IDs with typed prefixes
+Execution protocol when frontend is requested:
 
-### oRPC Integration Patterns
+1. Announce invocation: "Invoking @frontend-specialist for frontend tasks".
+2. Hand off frontend design/implementation to `@frontend-specialist`, which MUST follow all rules in this CLAUDE.md.
+3. After completion, resume with the base assistant only for non-frontend follow-ups (e.g., backend integration), preserving the frontend contracts.
+4. If the task qualifies, offer Self-Improving CLAUDE Reflection as usual.
 
-**Mandatory Usage**: All API functionality MUST be implemented using oRPC, never as direct API routes.
-
-#### oRPC Architecture: Routes vs Services Pattern
-
-**CRITICAL ARCHITECTURAL PRINCIPLE**: "Não deve existir lógica no .routes apenas no service o routes é só resposável por chamar os services e lidar com os Results<T> retornados pelo .service"
-
-**Translation**: There should be no logic in .routes, only in service. Routes are only responsible for calling services and handling Results<T> returned by .service
-
-**MANDATORY SEPARATION**:
-
-- **Routes Layer** (`*.routes.ts`):
-  - ONLY handle oRPC procedure definitions and input validation
-  - ONLY call corresponding service functions
-  - ONLY handle `AppResult<T>` success/error responses
-  - NEVER contain business logic, database operations, or complex transformations
-
-- **Service Layer** (`*.service.ts`):
-  - Contains ALL business logic and validation rules
-  - Handles database operations via DAO layer
-  - Returns `AppResult<T>` with proper error handling
-  - Implements complex data transformations and business rules
-
-#### Creating New API Functionality:
-
-1. **Define Service Functions**: Create business logic in `src/orpc/modules/[domain]/[domain].service.ts`
-2. **Define Route Handlers**: Create thin oRPC handlers in `src/orpc/modules/[domain]/[domain].routes.ts` that only call services
-3. **Add Schemas**: Define Zod schemas for input/output validation
-4. **Export from Index**: Ensure functions are exported from router index
-5. **Client Usage**: Import and use via oRPC client, not direct HTTP calls
-
-#### Correct Route/Service Pattern:
-
-```typescript
-// ✅ CORRECT: src/orpc/modules/example/example.service.ts
-export async function getExampleService(input: GetExampleInput): Promise<AppResult<Example>> {
-  try {
-    // ALL business logic goes here
-    const result = await exampleDao.findById(input.id)
-    if (!result) {
-      return error("EXAMPLE_NOT_FOUND", "Example not found")
-    }
-    return success(result)
-  } catch (err) {
-    return error("INTERNAL_ERROR", "Failed to get example")
-  }
-}
-
-// ✅ CORRECT: src/orpc/modules/example/example.routes.ts
-export const getExample = os.input(GetExampleSchema).handler(async ({ input }) => {
-  // ONLY call service and handle Result<T>
-  const result = await getExampleService(input)
-  if (!result.success) {
-    throw new AppError(result.error.code, result.error.message)
-  }
-  return result.data
-})
-
-// ❌ WRONG: Business logic in routes
-export const getExample = os.input(GetExampleSchema).handler(async ({ input }) => {
-  // ❌ DON'T: Database operations in routes
-  const result = await db.select().from(Example).where(eq(Example.id, input.id))
-  // ❌ DON'T: Business validation in routes
-  if (!result) {
-    throw new AppError("NOT_FOUND", "Example not found")
-  }
-  return result
-})
-```
-
-#### React Hooks with oRPC Pattern:
-
-**CRITICAL**: React hooks should ONLY call oRPC functions, never implement business logic or custom abstractions.
-
-```typescript
-// ✅ CORRECT: Simple hook returning orpc query directly
-function useExample(input: ExampleInput) {
-  return orpc.getExample.useQuery(input)
-  // OR use queryOptions for advanced cases:
-  // return useQuery(orpc.getExample.queryOptions(input))
-}
-
-// ❌ WRONG: Custom queryKey helpers, data transformations, business logic
-function useExample(input: ExampleInput) {
-  return useQuery({
-    queryKey: useExample.queryKey(input), // Don't create custom queryKey helpers
-    queryFn: async () => transform(await api.call()), // Don't transform in hooks
-    // ...custom logic
-  })
-}
-```
-
-#### oRPC Mutation Patterns:
-
-**MANDATORY RULE**: ALWAYS use `.mutate()` with onSuccess/onError callbacks. NEVER use `.mutateAsync()`.
-
-**User Feedback Integration**: "É sempre SEMPRE mutate, nunca mutate async com os triggers de onError e onSuccess pra adicionar o toaster do sonner"
-
-**Translation**: "It's always ALWAYS mutate, never mutate async with the onError and onSuccess triggers to add the sonner toaster"
-
-```typescript
-// ✅ CORRECT: Using mutationOptions() with .mutate() and Sonner toast integration
-function CreateEventForm() {
-  const createEventMutation = useMutation(orpc.createEvent.mutationOptions())
-
-  const handleSubmit = (data: CreateEventInput) => {
-    createEventMutation.mutate(data, {
-      onSuccess: (result) => {
-        toast.success("Event created successfully")
-        // Additional success handling (navigation, form reset, etc.)
-      },
-      onError: (error) => {
-        toast.error(error.message || "Failed to create event")
-        // Additional error handling if needed
-      },
-    })
-  }
-}
-
-// ❌ ABSOLUTELY FORBIDDEN: Using mutateAsync
-function CreateEventForm() {
-  const createEventMutation = useMutation(orpc.createEvent.mutationOptions())
-
-  const handleSubmit = async (data: CreateEventInput) => {
-    try {
-      await createEventMutation.mutateAsync(data) // ❌ NEVER USE mutateAsync
-    } catch (error) {
-      // ❌ This pattern is forbidden
-    }
-  }
-}
-```
-
-**Hook Guidelines**:
-
-- Return the entire useQuery result, let callers handle the response
-- Use orpc.functionName.queryOptions() for advanced query configuration
-- **MANDATORY**: Use orpc.functionName.mutationOptions() with `.mutate()` ONLY - `.mutateAsync()` is FORBIDDEN
-- **ALWAYS** implement Sonner toast notifications via onSuccess/onError callbacks
-- **CRITICAL**: Never use try/catch with mutateAsync - use callback pattern exclusively
-- Never implement business logic or database operations in hooks
-- Avoid custom queryKey abstractions - use orpc's built-in patterns
-
-**Sonner Toast Integration Pattern**:
-```typescript
-// ✅ MANDATORY pattern for all mutations
-const mutation = useMutation(orpc.someAction.mutationOptions())
-
-const handleAction = (data: ActionInput) => {
-  mutation.mutate(data, {
-    onSuccess: () => {
-      toast.success("Action completed successfully")
-    },
-    onError: (error) => {
-      toast.error(error.message || "Action failed")
-    },
-  })
-}
-```
-
-#### Integration Architecture:
-
-- **External APIs**: Create service classes with caching and rate limiting
-- **Database Operations**: Use DAO pattern with proper type safety in service layer
-- **Business Logic**: Implement in service functions, never in route handlers
-- **Error Handling**: Use `AppResult<T>` pattern consistently in services
-- **Route Handlers**: Thin wrappers that only call services and handle `AppResult<T>`
-
-#### Backend Error Responsibility - CRITICAL ARCHITECTURAL RULE
-
-**FUNDAMENTAL PRINCIPLE**: "Não faz sentido o erro deve ser enviado SEMPRE do backend, NUNCA tratado no front, o front só tem a função de exibir a message ou lidar com algum data do erro mas nesse caso o endpoint tem que retornar um erro"
-
-**Translation**: "It doesn't make sense, the error should ALWAYS be sent from the backend, NEVER handled in the front, the front only has the function of displaying the message or handling some error data but in this case the endpoint has to return an error"
-
-**MANDATORY ERROR SEPARATION**:
-
-- **Backend Services**: MUST return `AppResult.error()` for ALL error conditions (validation failures, business rule violations, conflicts)
-- **Frontend Components**: ONLY display error messages via `onError` callbacks - NEVER implement business logic error handling
-- **Route Handlers**: MUST throw `AppError` for all service error responses
-- **Validation Errors**: ALWAYS returned as proper errors from backend, never as success responses with error flags
-
-**ABSOLUTELY FORBIDDEN PATTERNS**:
-
-```typescript
-// ❌ CRITICAL ERROR: "Success with error flags" pattern - NEVER DO THIS
-export async function createAccommodationService(input: CreateAccommodationInput): Promise<AppResult<AccommodationResponse>> {
-  if (overlapCheck.hasOverlap) {
-    return AppResult.success({
-      id: "",
-      hasOverlap: true, // ❌ ERROR FLAG IN SUCCESS RESPONSE
-      conflictingAccommodation: overlapCheck.conflictingAccommodation,
-      validationError: "Existe conflito com uma acomodação existente", // ❌ ERROR IN SUCCESS
-    });
-  }
-}
-
-// ❌ CRITICAL ERROR: Frontend handling business logic errors
-const handleSubmit = (data) => {
-  mutation.mutate(data, {
-    onSuccess: (result) => {
-      if (result.validationError) { // ❌ FRONTEND CHECKING ERROR FLAGS
-        toast.error(result.validationError);
-        return;
-      }
-      if (result.conflictingAccommodation) { // ❌ FRONTEND BUSINESS LOGIC
-        toast.error(`Existe conflito com a acomodação "${result.conflictingAccommodation.name}"`);
-        return;
-      }
-    }
-  });
-}
-```
-
-**MANDATORY CORRECT PATTERNS**:
-
-```typescript
-// ✅ CORRECT: Backend returns proper errors for ALL error conditions
-export async function createAccommodationService(input: CreateAccommodationInput): Promise<AppResult<Accommodation>> {
-  if (overlapCheck.hasOverlap) {
-    return AppResult.error(
-      "ACCOMMODATION_OVERLAP", 
-      `Existe conflito com a acomodação "${overlapCheck.conflictingAccommodation?.name}"`,
-      { conflictingAccommodation: overlapCheck.conflictingAccommodation } // Optional error data
-    );
-  }
-  
-  const accommodation = await accommodationDao.create(input);
-  return AppResult.success(accommodation); // Clean success response
-}
-
-// ✅ CORRECT: Route throws proper errors
-export const createAccommodation = os.input(CreateAccommodationSchema).handler(async ({ input }) => {
-  const result = await createAccommodationService(input);
-  if (!result.success) {
-    throw new AppError(result.error.code, result.error.message, result.error.data);
-  }
-  return result.data; // Clean data only
-});
-
-// ✅ CORRECT: Frontend only displays errors, no business logic
-const handleSubmit = (data) => {
-  mutation.mutate(data, {
-    onSuccess: (result) => {
-      toast.success("Acomodação criada com sucesso");
-      // Only success handling - no error checking
-    },
-    onError: (error) => {
-      toast.error(error.message); // Only display error message
-      // Backend handles all business logic and validation
-    },
-  });
-}
-```
-
-#### AppResult<T> Handling Pattern:
-
-**MANDATORY**: All service functions MUST return `AppResult<T>` for consistent error handling.
-
-**CRITICAL**: Services MUST return `AppResult.error()` for ALL error conditions - never `AppResult.success()` with error flags.
-
-```typescript
-// ✅ CORRECT: Service with proper AppResult<T> error handling
-export async function createExampleService(input: CreateExampleInput): Promise<AppResult<Example>> {
-  // Validation errors = AppResult.error()
-  if (!isValid(input)) {
-    return AppResult.error("VALIDATION_FAILED", "Invalid input data");
-  }
-  
-  // Business rule violations = AppResult.error()
-  if (violatesBusinessRule(input)) {
-    return AppResult.error("BUSINESS_RULE_VIOLATION", "Business rule violated");
-  }
-  
-  try {
-    const example = await exampleDao.create(input);
-    return AppResult.success(example); // Clean success with data only
-  } catch (err) {
-    return AppResult.error("CREATE_FAILED", "Failed to create example");
-  }
-}
-
-// ✅ CORRECT: Route handling AppResult<T>
-export const createExample = os.input(CreateExampleSchema).handler(async ({ input }) => {
-  const result = await createExampleService(input);
-  if (!result.success) {
-    throw new AppError(result.error.code, result.error.message);
-  }
-  return result.data;
-})
-```
-
-### Project Structure
-
-```
-src/
-├── components/          # Reusable React components
-├── routes/             # File-based routing (TanStack Router)
-│   ├── __root.tsx      # Root layout component
-│   ├── index.tsx       # Homepage route
-│   ├── api.*.ts        # API route handlers
-│   └── demo.*          # Demo routes (can be deleted)
-├── orpc/               # oRPC API setup
-│   ├── modules/        # Domain-organized API modules
-│   │   └── [domain]/   # Each domain contains:
-│   │       ├── [domain].dao.ts      # Database operations
-│   │       ├── [domain].service.ts  # Business logic
-│   │       ├── [domain].routes.ts   # oRPC route handlers
-│   │       ├── [domain].errors.ts   # Domain-specific errors
-│   │       └── [domain].test.ts     # Domain tests
-│   ├── router/         # Legacy API route definitions (to be migrated to modules)
-│   ├── client.ts       # oRPC client configuration
-│   └── schema.ts       # Shared Zod schemas
-├── integrations/       # Third-party integrations
-│   └── tanstack-query/ # Query client setup
-├── lib/                # Utility functions
-└── env.ts              # Environment variable configuration
-```
-
-### oRPC Module Organization Pattern
-
-**MANDATORY STRUCTURE**: All new API functionality MUST follow the domain module pattern:
-
-```
-src/orpc/modules/[domain]/
-├── [domain].dao.ts      # Database operations and queries
-├── [domain].service.ts  # Business logic and validation
-├── [domain].routes.ts   # Thin oRPC handlers that call services
-├── [domain].errors.ts   # Domain-specific error definitions
-└── [domain].test.ts     # Comprehensive domain testing
-```
-
-**Benefits of Module Organization**:
-- **Clear Separation**: Each layer has distinct responsibilities
-- **Domain Cohesion**: Related functionality grouped together  
-- **Testing Isolation**: Each module can be tested independently
-- **Architectural Clarity**: Service layer separated from route handlers
-- **Maintainability**: Changes confined to specific domain modules
+Nota (PT-BR): Sempre que o pedido envolver frontend (UI/UX, componentes React, TanStack Start, design system, formulários, estados de UI), acione obrigatoriamente o `@frontend-specialist` para garantir a implementação correta dos padrões de interface e arquitetura de componentes.
 
 ### Key Configuration Files
 
@@ -419,24 +87,6 @@ Environment variables are managed through T3 Env in `src/env.ts`:
 - Client variables must have `VITE_` prefix
 - Server variables: `SERVER_URL` (optional)
 - Client variables: `VITE_APP_TITLE` (optional)
-
-### API Layer (oRPC)
-
-The project uses oRPC for type-safe API communication:
-
-**CRITICAL RULE**: NEVER create direct API routes (`src/routes/api.*.ts`). ALWAYS use oRPC functions for all API functionality.
-
-- ALL API functionality must be implemented as oRPC functions in `src/orpc/router/`
-- Schemas are shared between client and server using Zod
-- Client is configured in `src/orpc/client.ts`
-- API endpoints are accessible at `/api/rpc`
-
-### Routing
-
-- File-based routing in `src/routes/`
-- Layout component in `src/routes/__root.tsx`
-- **IMPORTANT**: Do NOT create API routes (`api.[name].ts`) - use oRPC functions instead
-- Demo files can be safely deleted
 
 ### State Management
 
@@ -633,7 +283,7 @@ const handleSubmit = async (formData: FormData) => {
 
 **CRITICAL COMMENTING RULES**:
 
-- **IMPORTANT: DO NOT ADD ***ANY*** COMMENTS unless explicitly asked by the user**
+- **IMPORTANT: DO NOT ADD \***ANY**\* COMMENTS unless explicitly asked by the user**
 - **NEVER add redundant comments that simply restate function or variable names**
   - ❌ WRONG: `// Handle delete flight` before `const handleDeleteFlight`
   - ❌ WRONG: `// Update user profile` before `const updateUserProfile`
@@ -765,15 +415,18 @@ export const createEventSchema = createInsertSchema(eventsTable) // Don't separa
 
 **Fluxo de teste sugerido (modelo)**
 
-1) Arrange
+1. Arrange
+
 - `const db = await getFakeDb()` em `beforeAll`
 - Gerar stubs com `testStub.*`
 - Inserir pais de FK diretamente (ex.: `db.insert(Travel).values(travelStub).returning({ id })`)
 
-2) Act
+2. Act
+
 - Invocar o procedimento oRPC sob teste com `createAppCall`/`createAppCallAuthenticated`
 
-3) Assert
+3. Assert
+
 - Recuperar estado via oRPC (ou consultar o DB quando a verificação é puramente estrutural)
 - Validar regras de negócio principais e relações
 
@@ -820,7 +473,7 @@ describe("flight", () => {
 - Invoca comportamentos via oRPC; usa DB direto apenas para seed/validação estrutural
 - Testes legíveis com AAA e nomes descritivos
 - Evita testes triviais/duplicados e dependência de ordem
-- Executa `bunx --bun run test` e `bunx --bun run check`
+- Executa `bunx --bun run test` e `npm run tscheck `
 
 **Anti‑padrões a evitar**
 
@@ -883,6 +536,7 @@ await expect(appCall(router.createAccommodation, input)).rejects.toThrow("INVALI
 ### TODO Implementation Success Patterns
 
 **Example from Accommodation Refactoring**:
+
 - **Discovered**: Hardcoded travel dates in service validation (TODO comment)
 - **Impact**: Blocked proper service layer implementation and testing
 - **Resolution**: Implemented proper `getTravelById` function to retrieve actual travel dates
@@ -891,21 +545,25 @@ await expect(appCall(router.createAccommodation, input)).rejects.toThrow("INVALI
 ### TODO Context Examples
 
 **Service Layer Implementation Scenarios** (High Priority):
+
 - **Hardcoded Values in Business Logic**: Replace placeholder values with proper data retrieval (e.g., travel date validation)
 - **Missing DAO Operations**: When services need proper database integration
 - **Incomplete Result<T> Handling**: When error handling patterns are not fully implemented
 
 **Testing Scenarios**:
+
 - **Incomplete Validation**: When validation logic uses hardcoded values instead of proper business logic
-- **Missing Service Integration**: When services use placeholder data instead of real integrations  
+- **Missing Service Integration**: When services use placeholder data instead of real integrations
 - **Incomplete Error Handling**: When error paths are marked as TODO
 
 **Implementation Scenarios**:
+
 - **Partial Feature Logic**: When core functionality is marked with implementation TODOs
 - **Missing Business Rules**: When validation or business logic is incomplete
 - **Incomplete Data Flow**: When data transformations or persistence logic has TODOs
 
 **Route/Service Separation Scenarios**:
+
 - **Business Logic in Routes**: When route handlers contain logic that should be in services
 - **Missing Service Functions**: When routes need corresponding service implementations
 - **Incomplete AppResult<T> Integration**: When error handling needs proper Result pattern implementation
@@ -917,6 +575,7 @@ await expect(appCall(router.createAccommodation, input)).rejects.toThrow("INVALI
 **Translation**: When there's a TODO in the code, stop changing tests and signal that we should implement instead of modifying tests to pass in any way.
 
 **Application**:
+
 - Tests should reflect **intended behavior**, not accommodate broken implementations
 - Implementation completeness takes precedence over working around limitations
 - Quality assurance requires complete functionality, not workarounds

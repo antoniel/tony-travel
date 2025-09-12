@@ -22,11 +22,11 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { InsertAccommodationSchema } from "@/lib/db/schema";
+import { InsertAccommodationSchema, type Accommodation, type Travel } from "@/lib/db/schema";
 import { orpc } from "@/orpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
@@ -44,12 +44,16 @@ interface AccommodationModalProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	travelId: string;
+	travelData?: Travel | null;
+	editingAccommodation?: Accommodation | null;
 }
 
 export function AccommodationModal({
 	open,
 	onOpenChange,
 	travelId,
+	travelData,
+	editingAccommodation,
 }: AccommodationModalProps) {
 	const queryClient = useQueryClient();
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -68,8 +72,47 @@ export function AccommodationModal({
 		},
 	});
 
+	// Update form when editing accommodation changes
+	useEffect(() => {
+		if (editingAccommodation) {
+			form.reset({
+				name: editingAccommodation.name,
+				type: editingAccommodation.type,
+				startDate: editingAccommodation.startDate
+					? new Date(editingAccommodation.startDate)
+					: new Date(),
+				endDate: editingAccommodation.endDate
+					? new Date(editingAccommodation.endDate)
+					: new Date(),
+				address: editingAccommodation.address || "",
+				rating: editingAccommodation.rating || undefined,
+				price: editingAccommodation.price || undefined,
+				currency: editingAccommodation.currency || "BRL",
+			});
+		} else {
+			form.reset({
+				name: "",
+				type: "hotel",
+				startDate: travelData?.startDate ? new Date(travelData.startDate) : new Date(),
+				endDate: travelData?.endDate ? new Date(travelData.endDate) : new Date(),
+				address: "",
+				rating: undefined,
+				price: undefined,
+				currency: "BRL",
+			});
+		}
+	}, [editingAccommodation, travelData, form]);
+
 	const createAccommodationMutation = useMutation(
 		orpc.accommodationRoutes.createAccommodation.mutationOptions({
+			onError: (error) => {
+				toast.error(error.message);
+			},
+		}),
+	);
+
+	const updateAccommodationMutation = useMutation(
+		orpc.accommodationRoutes.updateAccommodation.mutationOptions({
 			onError: (error) => {
 				toast.error(error.message);
 			},
@@ -80,43 +123,95 @@ export function AccommodationModal({
 		setIsSubmitting(true);
 
 		try {
-			const result = await createAccommodationMutation.mutateAsync({
-				accommodation: data,
-				travelId,
-			});
-
-			if (result.validationError) {
-				toast.error(result.validationError);
-				return;
-			}
-
-			if (result.conflictingAccommodation) {
-				toast.error(
-					`Existe conflito com a acomodação "${result.conflictingAccommodation.name}"`,
-				);
-				return;
-			}
-
-			if (result.id) {
-				toast.success("Acomodação criada com sucesso!");
-				form.reset();
-				onOpenChange(false);
-
-				// Invalidate queries to refresh the data
-				await queryClient.invalidateQueries({
-					queryKey: orpc.accommodationRoutes.getAccommodationsByTravel.queryKey(
-						{
-							input: { travelId },
-						},
-					),
+			if (editingAccommodation) {
+				// Update existing accommodation
+				const result = await updateAccommodationMutation.mutateAsync({
+					id: editingAccommodation.id,
+					accommodation: data,
 				});
+
+				if (result.validationError) {
+					toast.error(result.validationError);
+					return;
+				}
+
+				if (result.conflictingAccommodation) {
+					toast.error(
+						`Existe conflito com a acomodação "${result.conflictingAccommodation.name}"`,
+					);
+					return;
+				}
+
+				if (result.success) {
+					toast.success("Acomodação atualizada com sucesso!");
+					form.reset();
+					onOpenChange(false);
+
+					// Invalidate queries to refresh the data
+					await queryClient.invalidateQueries({
+						queryKey: orpc.accommodationRoutes.getAccommodationsByTravel.queryKey(
+							{
+								input: { travelId },
+							},
+						),
+					});
+				}
+			} else {
+				// Create new accommodation
+				const result = await createAccommodationMutation.mutateAsync({
+					accommodation: data,
+					travelId,
+				});
+
+				if (result.validationError) {
+					toast.error(result.validationError);
+					return;
+				}
+
+				if (result.conflictingAccommodation) {
+					toast.error(
+						`Existe conflito com a acomodação "${result.conflictingAccommodation.name}"`,
+					);
+					return;
+				}
+
+				if (result.id) {
+					toast.success("Acomodação criada com sucesso!");
+					form.reset();
+					onOpenChange(false);
+
+					// Invalidate queries to refresh the data
+					await queryClient.invalidateQueries({
+						queryKey: orpc.accommodationRoutes.getAccommodationsByTravel.queryKey(
+							{
+								input: { travelId },
+							},
+						),
+					});
+				}
 			}
 		} catch (error) {
-			console.error("Error creating accommodation:", error);
+			console.error("Error saving accommodation:", error);
 		} finally {
 			setIsSubmitting(false);
 		}
 	};
+
+	// Calculate date constraints based on travel dates
+	const getDateConstraints = () => {
+		if (!travelData) return {};
+		
+		return {
+			min: travelData.startDate
+				? new Date(travelData.startDate).toISOString().split("T")[0]
+				: undefined,
+			max: travelData.endDate
+				? new Date(travelData.endDate).toISOString().split("T")[0]
+				: undefined,
+		};
+	};
+
+	const dateConstraints = getDateConstraints();
 
 	const accommodationTypes = [
 		{ value: "hotel", label: "Hotel" },
@@ -130,7 +225,9 @@ export function AccommodationModal({
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent className="sm:max-w-[500px]">
 				<DialogHeader>
-					<DialogTitle>Adicionar Acomodação</DialogTitle>
+					<DialogTitle>
+						{editingAccommodation ? "Editar Acomodação" : "Adicionar Acomodação"}
+					</DialogTitle>
 				</DialogHeader>
 
 				<Form {...form}>
@@ -196,6 +293,8 @@ export function AccommodationModal({
 														? field.value.toISOString().split("T")[0]
 														: field.value
 												}
+												min={dateConstraints.min}
+												max={dateConstraints.max}
 												onChange={(e) =>
 													field.onChange(new Date(e.target.value))
 												}
@@ -221,6 +320,8 @@ export function AccommodationModal({
 														? field.value.toISOString().split("T")[0]
 														: field.value
 												}
+												min={dateConstraints.min}
+												max={dateConstraints.max}
 												onChange={(e) =>
 													field.onChange(new Date(e.target.value))
 												}
@@ -336,7 +437,13 @@ export function AccommodationModal({
 								Cancelar
 							</Button>
 							<Button type="submit" disabled={isSubmitting} className="flex-1">
-								{isSubmitting ? "Criando..." : "Criar Acomodação"}
+								{isSubmitting
+									? editingAccommodation
+										? "Salvando..."
+										: "Criando..."
+									: editingAccommodation
+										? "Salvar Alterações"
+										: "Criar Acomodação"}
 							</Button>
 						</div>
 					</form>

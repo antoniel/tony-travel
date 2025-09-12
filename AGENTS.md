@@ -23,7 +23,7 @@ ALWAYS ACK THE @CALUDE.md
 - Build (SSR): `bunx --bun run build` (outputs to `.output/`).
 - Preview: `bunx --bun run serve`.
 - Start built server: `bunx --bun run start`.
-- Lint: `bunx --bun run lint` • Format: `bunx --bun run format` • Check both: `bunx --bun run check`.
+- Lint: `bunx --bun run lint` • Format: `bunx --bun run format` • Check both: `npm run tscheck `.
 - Tests (Vitest): `bunx --bun run test`.
 
 ## Data Fetching & oRPC
@@ -51,7 +51,7 @@ ALWAYS ACK THE @CALUDE.md
 ## Commit & PR Guidelines
 
 - Commits: Imperative, concise subject with optional details, mirroring history (e.g., “Add EventDetailsPanel to Calendar: integrate and handle click”). Prefer small, scoped commits.
-- PRs: Include clear description, linked issues, screenshots for UI changes, and a test plan. Ensure `bunx --bun run check` and tests pass; update docs when behavior changes.
+- PRs: Include clear description, linked issues, screenshots for UI changes, and a test plan. Ensure `npm run tscheck ` and tests pass; update docs when behavior changes.
 
 ## Security & Configuration
 
