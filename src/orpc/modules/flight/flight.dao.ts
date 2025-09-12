@@ -1,11 +1,5 @@
+import { Flight, FlightParticipant, type InsertFlight } from "@/lib/db/schema";
 import type { DB } from "@/lib/db/types";
-import {
-	Flight,
-	FlightParticipant,
-	type InsertFlight,
-	type InsertFlightParticipant,
-	User,
-} from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 
 export class FlightDAO {
@@ -111,11 +105,11 @@ export class FlightDAO {
 			);
 	}
 
-	async updateFlight(flightId: string, flightData: Partial<InsertFlight>): Promise<void> {
-		await this.db
-			.update(Flight)
-			.set(flightData)
-			.where(eq(Flight.id, flightId));
+	async updateFlight(
+		flightId: string,
+		flightData: Partial<InsertFlight>,
+	): Promise<void> {
+		await this.db.update(Flight).set(flightData).where(eq(Flight.id, flightId));
 	}
 
 	async deleteFlight(flightId: string): Promise<void> {
@@ -123,15 +117,8 @@ export class FlightDAO {
 		await this.db
 			.delete(FlightParticipant)
 			.where(eq(FlightParticipant.flightId, flightId));
-		
-		// Delete the flight
-		await this.db.delete(Flight).where(eq(Flight.id, flightId));
-	}
 
-	async getUsersByTravel(travelId: string) {
-		// This would need to be implemented based on how travel membership is handled
-		// For now, returning empty array - this should be updated when travel membership is implemented
-		return [];
+		await this.db.delete(Flight).where(eq(Flight.id, flightId));
 	}
 }
 

@@ -100,7 +100,7 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 	const [chatgptResponse, setChatgptResponse] = useState("");
 
 	const generatePromptMutation = useMutation(
-		orpc.generatePrompt.mutationOptions({
+		orpc.travelRoutes.generatePrompt.mutationOptions({
 			onSuccess: (data) => {
 				setGeneratedPrompt(data);
 				setPromptOpen(true);
@@ -659,7 +659,7 @@ function DialogCreateTravel(props: {
 	const navigate = useNavigate();
 
 	const saveTravelMutation = useMutation(
-		orpc.saveTravel.mutationOptions({
+		orpc.travelRoutes.saveTravel.mutationOptions({
 			onSuccess: (data) => {
 				navigate({ to: "/trip/$travelId", params: { travelId: data.id } });
 			},

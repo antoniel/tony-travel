@@ -220,7 +220,9 @@ const RenderWeekViews = (props: {
 		return resultDate;
 	};
 
-	const createEventMutation = useMutation(orpc.createEvent.mutationOptions());
+	const createEventMutation = useMutation(
+		orpc.travelRoutes.createEvent.mutationOptions(),
+	);
 	const handleCellClick = (dayIndex: number, event: React.MouseEvent) => {
 		// Don't create event if we just finished dragging
 		if (draggingEvent?.hasMoved) {

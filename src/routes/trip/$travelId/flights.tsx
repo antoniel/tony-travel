@@ -163,7 +163,7 @@ function FlightsPage() {
 
 	// Fetch flights grouped by airport
 	const flightsQuery = useQuery(
-		orpc.getFlightsByTravel.queryOptions({ input: { travelId } }),
+		orpc.flightRoutes.getFlightsByTravel.queryOptions({ input: { travelId } }),
 	);
 
 	// Mock members data - in real app this would come from travel members API
@@ -184,11 +184,6 @@ function FlightsPage() {
 	// Calculate stats
 	const allFlights = flightGroups.flatMap((group) => group.flights);
 	const totalFlights = allFlights.length;
-	const flightsWithCost = allFlights.filter((f) => f.cost);
-	const totalCost = flightsWithCost.reduce(
-		(sum, flight) => sum + (flight.cost || 0),
-		0,
-	);
 	const flightsWithoutParticipants = allFlights.filter(
 		(f) => f.participants.length === 0,
 	);
@@ -272,21 +267,6 @@ function EmptyFlightState({ onAddFlight }: { onAddFlight: () => void }) {
 							<Plus className="w-5 h-5 mr-2" />
 							Adicionar Primeiro Voo
 						</Button>
-					</div>
-
-					<div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-8 max-w-2xl mx-auto text-sm text-muted-foreground">
-						<div className="flex items-center gap-2">
-							<Users className="w-4 h-4 text-primary" />
-							<span>Associe participantes</span>
-						</div>
-						<div className="flex items-center gap-2">
-							<DollarSign className="w-4 h-4 text-green-600" />
-							<span>Controle custos</span>
-						</div>
-						<div className="flex items-center gap-2">
-							<Calendar className="w-4 h-4 text-blue-600" />
-							<span>Organize horários</span>
-						</div>
 					</div>
 				</div>
 			</CardContent>
@@ -609,9 +589,11 @@ function AddFlightForm({
 		null,
 	);
 
-	const createFlightMutation = useMutation(orpc.createFlight.mutationOptions());
+	const createFlightMutation = useMutation(
+		orpc.flightRoutes.createFlight.mutationOptions(),
+	);
 	const checkDuplicateMutation = useMutation(
-		orpc.checkDuplicateFlight.mutationOptions(),
+		orpc.flightRoutes.checkDuplicateFlight.mutationOptions(),
 	);
 
 	const handleParticipantChange = (participantId: string, checked: boolean) => {
@@ -664,7 +646,9 @@ function AddFlightForm({
 
 			// Refresh flights data
 			queryClient.invalidateQueries(
-				orpc.getFlightsByTravel.queryOptions({ input: { travelId } }),
+				orpc.flightRoutes.getFlightsByTravel.queryOptions({
+					input: { travelId },
+				}),
 			);
 
 			onClose();

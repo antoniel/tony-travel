@@ -46,6 +46,8 @@ export const User = sqliteTable("user", {
 	image: text("image"),
 });
 export type User = typeof User.$inferSelect;
+export const UserSchema = createSelectSchema(User);
+export const InsertUserSchema = createInsertSchema(User);
 
 export const Session = sqliteTable("session", {
 	...defaultColumn("session"),
@@ -175,6 +177,7 @@ export const AppEvent = sqliteTable("app_event", {
 		.references(() => Travel.id, { onDelete: "cascade" }),
 	parentEventId: text("parent_event_id"),
 });
+export const AppEventSchema = createSelectSchema(AppEvent);
 export const InsertAppEventSchema = createInsertSchema(AppEvent);
 export const appEventRelations = relations(AppEvent, ({ one, many }) => ({
 	travel: one(Travel, {

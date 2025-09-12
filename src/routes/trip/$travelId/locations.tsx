@@ -1,10 +1,10 @@
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { orpc } from "@/orpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { MapPin, Plus, Star, ExternalLink } from "lucide-react";
+import { ExternalLink, MapPin, Plus, Star } from "lucide-react";
 
 export const Route = createFileRoute("/trip/$travelId/locations")({
 	component: LocationsPage,
@@ -14,81 +14,88 @@ function LocationsPage() {
 	const { travelId } = Route.useParams();
 
 	const travelQuery = useQuery(
-		orpc.getTravel.queryOptions({ input: { id: travelId } }),
+		orpc.travelRoutes.getTravel.queryOptions({ input: { id: travelId } }),
 	);
 	const travel = travelQuery.data;
 	const isLoading = travelQuery.isLoading;
 
 	// Para esta demonstração, vamos usar os eventos que têm location
-	const locationsFromEvents = travel?.events?.filter(event => event.location) || [];
-	
+	const locationsFromEvents =
+		travel?.events?.filter((event) => event.location) || [];
+
 	// Group locations by type/category for better organization
-	const locationsByCategory = locationsFromEvents.reduce((acc, event) => {
-		const category = event.type || 'other';
-		if (!acc[category]) {
-			acc[category] = [];
-		}
-		acc[category].push(event);
-		return acc;
-	}, {} as Record<string, typeof locationsFromEvents>);
+	const locationsByCategory = locationsFromEvents.reduce(
+		(acc, event) => {
+			const category = event.type || "other";
+			if (!acc[category]) {
+				acc[category] = [];
+			}
+			acc[category].push(event);
+			return acc;
+		},
+		{} as Record<string, typeof locationsFromEvents>,
+	);
 
 	const getLocationTypeIcon = (type: string) => {
 		switch (type?.toLowerCase()) {
-			case 'restaurant':
-				return '🍽️';
-			case 'hotel':
-				return '🏨';
-			case 'attraction':
-				return '🎭';
-			case 'museum':
-				return '🏛️';
-			case 'park':
-				return '🌳';
-			case 'shopping':
-				return '🛍️';
-			case 'nightlife':
-				return '🌙';
+			case "restaurant":
+				return "🍽️";
+			case "hotel":
+				return "🏨";
+			case "attraction":
+				return "🎭";
+			case "museum":
+				return "🏛️";
+			case "park":
+				return "🌳";
+			case "shopping":
+				return "🛍️";
+			case "nightlife":
+				return "🌙";
 			default:
-				return '📍';
+				return "📍";
 		}
 	};
 
 	// Mock data for demonstration - in real app, this would come from the backend
 	const mockLocations = [
 		{
-			id: '1',
-			name: 'Cristo Redentor',
-			type: 'attraction',
+			id: "1",
+			name: "Cristo Redentor",
+			type: "attraction",
 			rating: 4.8,
-			category: 'Ponto Turístico',
-			estimatedTime: '2-3 horas',
-			price: 'R$ 25',
-			address: 'Parque Nacional da Tijuca - Alto da Boa Vista, Rio de Janeiro',
-			description: 'Uma das Sete Maravilhas do Mundo Moderno, localizada no topo do Corcovado.',
+			category: "Ponto Turístico",
+			estimatedTime: "2-3 horas",
+			price: "R$ 25",
+			address: "Parque Nacional da Tijuca - Alto da Boa Vista, Rio de Janeiro",
+			description:
+				"Uma das Sete Maravilhas do Mundo Moderno, localizada no topo do Corcovado.",
 			imageUrl: null,
 		},
 		{
-			id: '2', 
-			name: 'Pão de Açúcar',
-			type: 'attraction',
+			id: "2",
+			name: "Pão de Açúcar",
+			type: "attraction",
 			rating: 4.7,
-			category: 'Ponto Turístico',
-			estimatedTime: '3-4 horas',
-			price: 'R$ 85',
-			address: 'Av. Pasteur, 520 - Urca, Rio de Janeiro',
-			description: 'Complexo de morros que oferece uma vista panorâmica única da cidade.',
+			category: "Ponto Turístico",
+			estimatedTime: "3-4 horas",
+			price: "R$ 85",
+			address: "Av. Pasteur, 520 - Urca, Rio de Janeiro",
+			description:
+				"Complexo de morros que oferece uma vista panorâmica única da cidade.",
 			imageUrl: null,
 		},
 		{
-			id: '3',
-			name: 'Aprazível',
-			type: 'restaurant',
+			id: "3",
+			name: "Aprazível",
+			type: "restaurant",
 			rating: 4.6,
-			category: 'Restaurante',
-			estimatedTime: '1-2 horas',
-			price: 'R$ 120',
-			address: 'R. Aprazível, 62 - Santa Teresa, Rio de Janeiro',
-			description: 'Restaurante charmoso com vista da cidade e culinária brasileira contemporânea.',
+			category: "Restaurante",
+			estimatedTime: "1-2 horas",
+			price: "R$ 120",
+			address: "R. Aprazível, 62 - Santa Teresa, Rio de Janeiro",
+			description:
+				"Restaurante charmoso com vista da cidade e culinária brasileira contemporânea.",
 			imageUrl: null,
 		},
 	];
@@ -108,19 +115,24 @@ function LocationsPage() {
 	};
 
 	const allLocations: Location[] = [
-		...locationsFromEvents.map(event => ({
+		...locationsFromEvents.map((event) => ({
 			id: event.id,
 			name: event.location || event.title,
 			type: event.type,
-			category: event.type === 'food' ? 'Restaurante' : event.type === 'activity' ? 'Atividade' : 'Transporte',
+			category:
+				event.type === "food"
+					? "Restaurante"
+					: event.type === "activity"
+						? "Atividade"
+						: "Transporte",
 			address: event.location,
 			description: undefined,
 			rating: undefined,
 			estimatedTime: undefined,
 			price: event.estimatedCost || undefined,
 			imageUrl: event.imageUrl,
-		})), 
-		...mockLocations
+		})),
+		...mockLocations,
 	];
 
 	if (isLoading) {
@@ -136,24 +148,32 @@ function LocationsPage() {
 			{/* Header with Stats */}
 			<div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-6">
 				<div className="space-y-3">
-					<h1 className="text-3xl font-bold tracking-tight">Pontos de Interesse</h1>
+					<h1 className="text-3xl font-bold tracking-tight">
+						Pontos de Interesse
+					</h1>
 					<p className="text-lg text-muted-foreground">
 						Descubra e organize os locais que você quer visitar
 					</p>
 				</div>
-				
+
 				<div className="flex flex-col sm:flex-row gap-3">
 					{/* Quick stats */}
 					{allLocations.length > 0 && (
 						<div className="flex gap-4 text-sm">
 							<Badge variant="secondary" className="gap-2">
 								<MapPin className="w-4 h-4" />
-								<span>{allLocations.length} local{allLocations.length !== 1 ? 'ais' : ''}</span>
+								<span>
+									{allLocations.length} local
+									{allLocations.length !== 1 ? "ais" : ""}
+								</span>
 							</Badge>
 							{Object.keys(locationsByCategory).length > 0 && (
 								<Badge variant="outline" className="gap-2">
 									<span>🏷️</span>
-									<span>{Object.keys(locationsByCategory).length} categoria{Object.keys(locationsByCategory).length !== 1 ? 's' : ''}</span>
+									<span>
+										{Object.keys(locationsByCategory).length} categoria
+										{Object.keys(locationsByCategory).length !== 1 ? "s" : ""}
+									</span>
 								</Badge>
 							)}
 						</div>
@@ -172,12 +192,17 @@ function LocationsPage() {
 					{/* Location Cards */}
 					<div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
 						{allLocations.map((location) => (
-							<Card key={location.id} className="group hover:shadow-xl transition-all duration-300 overflow-hidden">
+							<Card
+								key={location.id}
+								className="group hover:shadow-xl transition-all duration-300 overflow-hidden"
+							>
 								<CardHeader className="pb-6">
 									<div className="flex items-start justify-between">
 										<div className="space-y-2 flex-1">
 											<CardTitle className="flex items-center gap-3 text-lg group-hover:text-primary transition-colors">
-												<span className="text-2xl">{getLocationTypeIcon(location.type)}</span>
+												<span className="text-2xl">
+													{getLocationTypeIcon(location.type)}
+												</span>
 												<span className="truncate">{location.name}</span>
 											</CardTitle>
 											<div className="flex items-center gap-2">
@@ -187,14 +212,16 @@ function LocationsPage() {
 												{location.rating && (
 													<div className="flex items-center gap-1">
 														<Star className="w-3 h-3 text-yellow-500 fill-current" />
-														<span className="text-xs font-medium">{location.rating}</span>
+														<span className="text-xs font-medium">
+															{location.rating}
+														</span>
 													</div>
 												)}
 											</div>
 										</div>
 									</div>
 								</CardHeader>
-								
+
 								<CardContent className="space-y-6">
 									{location.address && (
 										<div className="flex items-start gap-3">
@@ -204,7 +231,7 @@ function LocationsPage() {
 											</span>
 										</div>
 									)}
-									
+
 									{location.description && (
 										<p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
 											{location.description}
@@ -216,13 +243,17 @@ function LocationsPage() {
 										{location.estimatedTime && (
 											<div className="flex items-center gap-2">
 												<span className="text-muted-foreground">⏱️</span>
-												<span className="font-medium">{location.estimatedTime}</span>
+												<span className="font-medium">
+													{location.estimatedTime}
+												</span>
 											</div>
 										)}
 										{location.price && (
 											<div className="flex items-center gap-2">
 												<span className="text-muted-foreground">💰</span>
-												<span className="font-medium text-primary">{location.price}</span>
+												<span className="font-medium text-primary">
+													{location.price}
+												</span>
 											</div>
 										)}
 									</div>
@@ -270,11 +301,14 @@ function LocationsPage() {
 									<div className="space-y-2">
 										<h3 className="font-semibold text-lg">Mapa Interativo</h3>
 										<p className="text-muted-foreground max-w-sm">
-											Visualize todos os seus locais de interesse plotados no mapa com rotas otimizadas.
+											Visualize todos os seus locais de interesse plotados no
+											mapa com rotas otimizadas.
 										</p>
 									</div>
 									<div className="flex flex-wrap justify-center gap-2 text-sm">
-										<Badge variant="secondary">📍 {allLocations.length} locais</Badge>
+										<Badge variant="secondary">
+											📍 {allLocations.length} locais
+										</Badge>
 										<Badge variant="secondary">🗺️ Vista satélite</Badge>
 										<Badge variant="secondary">🚗 Rotas otimizadas</Badge>
 									</div>
@@ -290,9 +324,12 @@ function LocationsPage() {
 							<MapPin className="w-16 h-16 text-primary/60" />
 						</div>
 						<div className="space-y-4">
-							<h3 className="text-2xl font-semibold">Descubra locais incríveis</h3>
+							<h3 className="text-2xl font-semibold">
+								Descubra locais incríveis
+							</h3>
 							<p className="text-muted-foreground leading-relaxed text-lg max-w-md mx-auto">
-								Adicione pontos turísticos, restaurantes, museus e outros locais interessantes para criar o roteiro perfeito da sua viagem.
+								Adicione pontos turísticos, restaurantes, museus e outros locais
+								interessantes para criar o roteiro perfeito da sua viagem.
 							</p>
 						</div>
 						<div className="space-y-6">
@@ -339,7 +376,8 @@ function LocationsPage() {
 									<span>🔍</span> Pesquise por Categoria
 								</h4>
 								<p className="text-sm text-muted-foreground">
-									Use filtros por tipo: restaurantes, pontos turísticos, museus, parques, compras, vida noturna.
+									Use filtros por tipo: restaurantes, pontos turísticos, museus,
+									parques, compras, vida noturna.
 								</p>
 							</div>
 							<div className="space-y-3">
@@ -347,7 +385,8 @@ function LocationsPage() {
 									<span>⭐</span> Confira Avaliações
 								</h4>
 								<p className="text-sm text-muted-foreground">
-									Veja as avaliações de outros viajantes para escolher os melhores locais.
+									Veja as avaliações de outros viajantes para escolher os
+									melhores locais.
 								</p>
 							</div>
 							<div className="space-y-3">
@@ -355,7 +394,8 @@ function LocationsPage() {
 									<span>📍</span> Considere a Localização
 								</h4>
 								<p className="text-sm text-muted-foreground">
-									Agrupe locais por região para otimizar seu tempo e reduzir deslocamentos.
+									Agrupe locais por região para otimizar seu tempo e reduzir
+									deslocamentos.
 								</p>
 							</div>
 							<div className="space-y-3">
@@ -363,7 +403,8 @@ function LocationsPage() {
 									<span>💡</span> Dicas Locais
 								</h4>
 								<p className="text-sm text-muted-foreground">
-									Procure por experiências autênticas e locais frequentados pelos moradores.
+									Procure por experiências autênticas e locais frequentados
+									pelos moradores.
 								</p>
 							</div>
 						</div>

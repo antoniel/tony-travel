@@ -2,7 +2,7 @@ import { betterAuthApp } from "@/lib/auth";
 import { ALWAYS_USER_TEST } from "@/tests/utils";
 import { ORPCError, os } from "@orpc/server";
 import type { Session, User } from "better-auth/types";
-import type { ORPCContext } from "../procedure";
+import type { AppOrpcContext } from "../procedure";
 
 // Context types
 interface AuthContext {
@@ -16,7 +16,7 @@ interface OptionalAuthContext {
 }
 
 export const requireAuth = os
-	.$context<ORPCContext>()
+	.$context<AppOrpcContext>()
 	.middleware(async ({ context, next }) => {
 		if (!context.reqHeaders) {
 			throw new ORPCError("UNAUTHORIZED", {
@@ -61,7 +61,7 @@ export const requireAuth = os
 	});
 
 export const optionalAuth = os
-	.$context<ORPCContext>()
+	.$context<AppOrpcContext>()
 	.middleware(async ({ context, next }) => {
 		if (!context.reqHeaders) {
 			return next({

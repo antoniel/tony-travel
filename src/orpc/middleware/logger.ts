@@ -70,7 +70,7 @@ export const logger = os.middleware(async ({ path, next, signal }) => {
 			signale.error(
 				`[${requestId}] ${methodPath} - ${errorMessage} (${duration}ms)`,
 			);
-			signale.fatal(error);
+			// signale.fatal(error);
 		}
 
 		throw error;

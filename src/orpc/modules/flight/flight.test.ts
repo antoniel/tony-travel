@@ -1,7 +1,12 @@
+import { Travel } from "@/lib/db/schema";
 import type { DB } from "@/lib/db/types";
 import router from "@/orpc/router";
-import { ALWAYS_USER_TEST, AUTH_TEST_HEADERS, getFakeDb } from "@/tests/utils";
-import { call } from "@orpc/server";
+import {
+	ALWAYS_USER_TEST,
+	createAppCallAuthenticated,
+	getFakeDb,
+	testStub,
+} from "@/tests/utils";
 import { beforeAll, describe, expect, it } from "vitest";
 
 describe("flight", () => {
@@ -9,16 +14,28 @@ describe("flight", () => {
 	beforeAll(async () => {
 		db = await getFakeDb();
 	});
-	it("addFlightParticipant", async () => {
-		await expect(
-			call(
-				router.flightRoutes.addFlightParticipant,
-				{ flightId: "1", userId: ALWAYS_USER_TEST.id },
-				{ context: { db: db, reqHeaders: AUTH_TEST_HEADERS } },
-			),
-		).resolves.toEqual([
-			{ id: "1", name: "Earth" },
-			{ id: "2", name: "Mars" },
-		]);
+	it("createFlight", async () => {
+		const appCall = createAppCallAuthenticated(db);
+		const travelStub = testStub.travel();
+		const [travel] = await db
+			.insert(Travel)
+			.values(travelStub)
+			.returning({ id: Travel.id });
+
+		const flightStub = testStub.flight.generate();
+
+		await appCall(router.flightRoutes.createFlight, {
+			flight: flightStub,
+			travelId: travel.id,
+			participantIds: [ALWAYS_USER_TEST.id],
+		});
+
+		const flightsByTravel = await appCall(
+			router.flightRoutes.getFlightsByTravel,
+			{
+				travelId: travel.id,
+			},
+		);
+		await expect(flightsByTravel.length).toEqual(1);
 	});
 });

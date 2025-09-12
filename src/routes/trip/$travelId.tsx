@@ -17,7 +17,7 @@ function TripLayout() {
 	const location = useLocation();
 
 	const travelQuery = useQuery(
-		orpc.getTravel.queryOptions({ input: { id: travelId } }),
+		orpc.travelRoutes.getTravel.queryOptions({ input: { id: travelId } }),
 	);
 	const travel = travelQuery.data;
 

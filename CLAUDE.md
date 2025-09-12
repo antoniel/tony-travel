@@ -364,6 +364,46 @@ const handleSubmit = async (formData: FormData) => {
 - Can deploy to any Node.js hosting (Netlify, Vercel, etc.)
 - Environment variables follow Vite conventions
 
+## Modern UI Design Patterns
+
+### Stunning Interface Requirements
+
+**PLATFORM EXPECTATION**: Modern and stunning design that the platform requires.
+
+**Implementation Guidelines**:
+
+1. **Visual Enhancement Techniques**:
+   - **Backdrop Effects**: Apply `backdrop-blur-sm` for modern glass-morphism effects
+   - **Elevation Shadows**: Use multiple shadow layers for depth (`shadow-sm shadow-primary/10`)
+   - **Hover Transformations**: Implement subtle scale and glow effects on interactive elements
+
+2. **Animation and Interaction Patterns**:
+   - **Smooth Transitions**: Apply `transition-all duration-200 ease-in-out` for polished interactions
+   - **Progressive Enhancement**: Start with base functionality, layer visual enhancements
+   - **Loading States**: Implement skeleton loaders and progressive content reveal
+   - **Micro-interactions**: Add subtle animations that provide feedback without distraction
+
+3. **Color and Typography Application**:
+   - **Semantic Color Usage**: Use `destructive`, `warning`, `success` colors meaningfully
+   - **Contrast Management**: Ensure accessibility while maintaining visual impact
+   - **Typography Hierarchy**: Apply font weights and sizes to create clear information structure
+   - **Muted Text Patterns**: Use `text-muted-foreground` for secondary information
+
+4. **Component Enhancement Strategy**:
+   - **Base Component Extension**: Enhance existing Shadcn components rather than replacing
+   - **Variant Creation**: Add new variants to existing components for different contexts
+   - **Composition Patterns**: Combine multiple components for complex interfaces
+   - **Design System Compliance**: Always use design tokens, never hardcode values
+
+### Design Implementation Checklist:
+
+- [ ] Uses only design system tokens (no hardcoded colors/spacing)
+- [ ] Implements modern visual effects (, shadows, blur)
+- [ ] Includes smooth transitions and hover states
+- [ ] Maintains accessibility standards
+- [ ] Follows component decomposition patterns (no comment sections)
+- [ ] Creates stunning visual impact appropriate for the platform
+
 ## Important Notes
 
 - Demo files prefixed with `demo` can be safely deleted
@@ -372,6 +412,7 @@ const handleSubmit = async (formData: FormData) => {
 - Server functions are TanStack Start's killer feature for full-stack development
 - Always use type-safe patterns with Zod validation
 - File-based routing generates TypeScript definitions automatically
+- **Design Philosophy**: Create interfaces that are both functionally excellent and visually stunning
 
 ## Database Integration Patterns
 
@@ -493,39 +534,54 @@ For multi-step technical integrations (database setup, API integration, etc.):
 2. **Second**: Check `src/components/` for custom project components
 3. **Last Resort**: Only create new components when existing ones cannot fulfill the requirement
 
+### Modern Design System Integration:
+
+**MANDATORY**: Create stunning, modern interfaces that align with platform requirements:
+
+- **Design Tokens Only**: Use ONLY design system tokens (colors, spacing, typography)
+- **Modern Visual Elements**: subtle animations, and hover effects
+- **Sophisticated Styling**: Apply backdrop blur, border gradients, and elevated shadows
+- **Responsive Design**: Ensure all interfaces work across device sizes
+- **Accessibility**: Maintain proper contrast ratios and interactive states
+
 ### Before Creating Any UI Element:
 
 - Search for existing Tabs, Button, Dialog, Card, Input components
 - Use Grep/Glob tools to find similar implementations in the codebase
 - Prefer composition of existing components over creating new ones
 - Follow established patterns and design system variables (primary, muted-foreground, etc.)
+- Apply modern styling techniques (gradients, animations, hover effects) within design system constraints
 
 ### Component Decomposition and Architecture
 
-**MANDATORY PATTERN**: Never use comment sections to organize large components. Instead, decompose into smaller, focused components.
+**CRITICAL USER FEEDBACK INTEGRATION**: "Sempre que você for definir sections assim com comentários entenda que é melhor você criar um novo componente no mesmo arquivo e descer todos os states que possível pra o nível mais baixo fica mais fácil de entender"
+
+**MANDATORY PATTERN**: NEVER use comment sections to organize large components. ALWAYS decompose into smaller, focused components.
 
 **Component Decomposition Rules**:
 
 - **Immediate Decomposition**: When you find yourself adding comment sections like `// Header Section`, `// Stats Section`, etc., STOP and create separate components instead
+- **Same-File Components**: Create new components in the same file when they're tightly coupled
+- **State Descent**: Move ALL possible states down to the lowest component level where they're actually needed
 - **Single Responsibility**: Each component should have one clear purpose and responsibility
-- **State Colocation**: Move state down to the lowest possible component level where it's actually needed
-- **File Organization**: Create multiple components in the same file when they're tightly coupled, rather than creating separate files for simple components
+- **Readability First**: Component decomposition makes code easier to understand and maintain
 
 **Anti-Patterns to Avoid**:
+
 ```tsx
 // ❌ WRONG: Large component with comment sections
 function LargePage() {
   const [state1, setState1] = useState()
   const [state2, setState2] = useState()
-  
+
   return (
     <div>
       {/* Header Section */}
       <div>...</div>
-      
+
       {/* Stats Section */}
       <div>...</div>
-      
+
       {/* Content Section */}
       <div>...</div>
     </div>
@@ -534,6 +590,7 @@ function LargePage() {
 ```
 
 **Correct Patterns**:
+
 ```tsx
 // ✅ CORRECT: Decomposed into focused components
 function PageHeader() {
@@ -621,19 +678,35 @@ function MainPage() {
 - [ ] Components are reusable and well-named
 - [ ] TypeScript interfaces are properly defined (no `any` types)
 
+### Design Enhancement Patterns
+
+**Modern Interface Creation Guidelines**:
+
+- **Visual Hierarchy**: Use size, color, and spacing to create clear information hierarchy
+- **Interactive Feedback**: Implement hover states, loading states, and micro-animations
+- **Surface Design**: Apply subtle shadows, border gradients, and backdrop effects
+- **Color Psychology**: Use design system colors meaningfully (success, warning, destructive)
+- **Typography Scale**: Leverage font sizes and weights from design system appropriately
+- **Spacing Consistency**: Use design system spacing tokens for consistent rhythm
+
 ### Examples:
 
 **Component Usage**:
+
 - ✅ Use `<Tabs>` component instead of custom toggle buttons
 - ✅ Use `<Button>` variants instead of custom styled buttons
 - ✅ Use `<Card>` components instead of custom divs with styling
 - ✅ Abstract common form patterns (LocationSelector, DatePicker) into `ui/` components
 - ✅ Create flexible component APIs that handle multiple use cases
+- ✅ Enhance existing components with modern styling (gradients, animations)
+- ✅ Apply design system tokens for consistent visual language
 - ❌ Don't create custom toggle logic when Tabs exist
 - ❌ Don't hardcode colors when design system variables exist
 - ❌ Don't create overly specific components that can't be reused
+- ❌ Don't use comment sections to organize component structure
 
 **Component Architecture**:
+
 - ✅ Break down `FlightsPage` into `FlightStatsCards`, `FlightWarnings`, `FlightsList` components
 - ✅ Move flight filtering state to `FlightsList` where it's actually used
 - ✅ Keep dialog state in `PageHeader` component where the dialog exists

@@ -10,7 +10,7 @@ export function useDestinationsSearch(query: string, limit = 10) {
 	// Create query options using orpc
 	const queryOptions = useMemo(
 		() =>
-			orpc.searchDestinations.queryOptions({
+			orpc.travelRoutes.searchDestinations.queryOptions({
 				input: {
 					query: debouncedQuery,
 					limit,

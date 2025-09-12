@@ -1,10 +1,10 @@
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { orpc } from "@/orpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Home, MapPin, Plus, Calendar } from "lucide-react";
+import { Calendar, Home, MapPin, Plus } from "lucide-react";
 
 export const Route = createFileRoute("/trip/$travelId/accommodations")({
 	component: AccommodationsPage,
@@ -14,7 +14,7 @@ function AccommodationsPage() {
 	const { travelId } = Route.useParams();
 
 	const travelQuery = useQuery(
-		orpc.getTravel.queryOptions({ input: { id: travelId } }),
+		orpc.travelRoutes.getTravel.queryOptions({ input: { id: travelId } }),
 	);
 	const travel = travelQuery.data;
 	const isLoading = travelQuery.isLoading;
@@ -22,7 +22,10 @@ function AccommodationsPage() {
 	const accommodations = travel?.accommodations || [];
 	const totalNights = accommodations.reduce((total, acc) => {
 		if (acc.startDate && acc.endDate) {
-			const nights = Math.ceil((new Date(acc.endDate).getTime() - new Date(acc.startDate).getTime()) / (1000 * 60 * 60 * 24));
+			const nights = Math.ceil(
+				(new Date(acc.endDate).getTime() - new Date(acc.startDate).getTime()) /
+					(1000 * 60 * 60 * 24),
+			);
 			return total + Math.max(0, nights);
 		}
 		return total;
@@ -30,47 +33,49 @@ function AccommodationsPage() {
 
 	const getAccommodationTypeIcon = (type: string) => {
 		switch (type?.toLowerCase()) {
-			case 'hotel':
-				return '🏨';
-			case 'hostel':
-				return '🏠';
-			case 'airbnb':
-				return '🏡';
-			case 'resort':
-				return '🏖️';
+			case "hotel":
+				return "🏨";
+			case "hostel":
+				return "🏠";
+			case "airbnb":
+				return "🏡";
+			case "resort":
+				return "🏖️";
 			default:
-				return '🏨';
+				return "🏨";
 		}
 	};
 
 	const getAccommodationTypeLabel = (type: string) => {
 		switch (type?.toLowerCase()) {
-			case 'hotel':
-				return 'Hotel';
-			case 'hostel':
-				return 'Hostel';
-			case 'airbnb':
-				return 'Airbnb';
-			case 'resort':
-				return 'Resort';
+			case "hotel":
+				return "Hotel";
+			case "hostel":
+				return "Hostel";
+			case "airbnb":
+				return "Airbnb";
+			case "resort":
+				return "Resort";
 			default:
-				return 'Hotel';
+				return "Hotel";
 		}
 	};
 
 	const calculateNights = (startDate: Date, endDate: Date) => {
-		const nights = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+		const nights = Math.ceil(
+			(endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
+		);
 		return Math.max(0, nights);
 	};
 
 	const formatCurrency = (amount: number | null, currency: string | null) => {
 		if (!amount) return null;
-		
-		const formatter = new Intl.NumberFormat('pt-BR', {
-			style: 'currency',
-			currency: currency || 'BRL',
+
+		const formatter = new Intl.NumberFormat("pt-BR", {
+			style: "currency",
+			currency: currency || "BRL",
 		});
-		
+
 		return formatter.format(amount);
 	};
 
@@ -92,19 +97,24 @@ function AccommodationsPage() {
 						Organize onde você vai se hospedar durante a viagem
 					</p>
 				</div>
-				
+
 				<div className="flex flex-col sm:flex-row gap-3">
 					{/* Quick stats */}
 					{accommodations.length > 0 && (
 						<div className="flex gap-4 text-sm">
 							<Badge variant="secondary" className="gap-2">
 								<Home className="w-4 h-4" />
-								<span>{accommodations.length} local{accommodations.length !== 1 ? 'ais' : ''}</span>
+								<span>
+									{accommodations.length} local
+									{accommodations.length !== 1 ? "ais" : ""}
+								</span>
 							</Badge>
 							{totalNights > 0 && (
 								<Badge variant="outline" className="gap-2">
 									<Calendar className="w-4 h-4" />
-									<span>{totalNights} noite{totalNights !== 1 ? 's' : ''}</span>
+									<span>
+										{totalNights} noite{totalNights !== 1 ? "s" : ""}
+									</span>
 								</Badge>
 							)}
 						</div>
@@ -121,17 +131,26 @@ function AccommodationsPage() {
 			{accommodations.length > 0 ? (
 				<div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
 					{accommodations.map((accommodation) => {
-						const nights = accommodation.startDate && accommodation.endDate 
-							? calculateNights(new Date(accommodation.startDate), new Date(accommodation.endDate))
-							: 0;
-						
+						const nights =
+							accommodation.startDate && accommodation.endDate
+								? calculateNights(
+										new Date(accommodation.startDate),
+										new Date(accommodation.endDate),
+									)
+								: 0;
+
 						return (
-							<Card key={accommodation.id} className="group hover:shadow-xl transition-all duration-300 overflow-hidden">
+							<Card
+								key={accommodation.id}
+								className="group hover:shadow-xl transition-all duration-300 overflow-hidden"
+							>
 								<CardHeader className="pb-6">
 									<div className="flex items-start justify-between">
 										<div className="space-y-1 flex-1">
 											<CardTitle className="flex items-center gap-3 text-lg group-hover:text-primary transition-colors">
-												<span className="text-2xl">{getAccommodationTypeIcon(accommodation.type)}</span>
+												<span className="text-2xl">
+													{getAccommodationTypeIcon(accommodation.type)}
+												</span>
 												<span className="truncate">{accommodation.name}</span>
 											</CardTitle>
 											<Badge variant="outline" className="w-fit">
@@ -140,7 +159,7 @@ function AccommodationsPage() {
 										</div>
 									</div>
 								</CardHeader>
-								
+
 								<CardContent className="space-y-6">
 									{accommodation.address && (
 										<div className="flex items-start gap-3">
@@ -150,7 +169,7 @@ function AccommodationsPage() {
 											</span>
 										</div>
 									)}
-									
+
 									{accommodation.startDate && accommodation.endDate && (
 										<div className="space-y-3">
 											<div className="flex items-center gap-3">
@@ -158,26 +177,34 @@ function AccommodationsPage() {
 												<div className="text-sm space-y-1">
 													<div className="flex items-center gap-2">
 														<span className="font-medium">Check-in:</span>
-														<span>{new Date(accommodation.startDate).toLocaleDateString('pt-BR', { 
-															day: '2-digit', 
-															month: 'short',
-															year: 'numeric'
-														})}</span>
+														<span>
+															{new Date(
+																accommodation.startDate,
+															).toLocaleDateString("pt-BR", {
+																day: "2-digit",
+																month: "short",
+																year: "numeric",
+															})}
+														</span>
 													</div>
 													<div className="flex items-center gap-2">
 														<span className="font-medium">Check-out:</span>
-														<span>{new Date(accommodation.endDate).toLocaleDateString('pt-BR', { 
-															day: '2-digit', 
-															month: 'short',
-															year: 'numeric'
-														})}</span>
+														<span>
+															{new Date(
+																accommodation.endDate,
+															).toLocaleDateString("pt-BR", {
+																day: "2-digit",
+																month: "short",
+																year: "numeric",
+															})}
+														</span>
 													</div>
 												</div>
 											</div>
 											{nights > 0 && (
 												<div className="px-3 py-2 bg-muted/50 rounded-lg">
 													<span className="text-sm font-medium">
-														{nights} noite{nights !== 1 ? 's' : ''}
+														{nights} noite{nights !== 1 ? "s" : ""}
 													</span>
 												</div>
 											)}
@@ -190,13 +217,22 @@ function AccommodationsPage() {
 											{accommodation.rating && (
 												<div className="flex items-center gap-1">
 													<span className="text-sm">⭐</span>
-													<span className="text-sm font-medium">{accommodation.rating}</span>
+													<span className="text-sm font-medium">
+														{accommodation.rating}
+													</span>
 												</div>
 											)}
 											{accommodation.price && (
 												<div className="text-sm font-semibold text-primary">
-													{formatCurrency(accommodation.price, accommodation.currency)}
-													{nights > 0 && <span className="text-muted-foreground font-normal">/{nights}n</span>}
+													{formatCurrency(
+														accommodation.price,
+														accommodation.currency,
+													)}
+													{nights > 0 && (
+														<span className="text-muted-foreground font-normal">
+															/{nights}n
+														</span>
+													)}
 												</div>
 											)}
 										</div>
@@ -225,7 +261,8 @@ function AccommodationsPage() {
 						<div className="space-y-4">
 							<h3 className="text-2xl font-semibold">Ainda sem acomodações</h3>
 							<p className="text-muted-foreground leading-relaxed text-lg max-w-md mx-auto">
-								Adicione hotéis, hostels, Airbnbs ou outras acomodações para organizar onde você vai se hospedar durante a viagem.
+								Adicione hotéis, hostels, Airbnbs ou outras acomodações para
+								organizar onde você vai se hospedar durante a viagem.
 							</p>
 						</div>
 						<div className="space-y-6">
@@ -270,25 +307,29 @@ function AccommodationsPage() {
 							<div className="space-y-2">
 								<h4 className="font-medium">📍 Localização</h4>
 								<p className="text-sm text-muted-foreground">
-									Escolha acomodações próximas aos pontos turísticos principais ou com bom acesso ao transporte público.
+									Escolha acomodações próximas aos pontos turísticos principais
+									ou com bom acesso ao transporte público.
 								</p>
 							</div>
 							<div className="space-y-2">
 								<h4 className="font-medium">💰 Orçamento</h4>
 								<p className="text-sm text-muted-foreground">
-									Compare preços entre diferentes tipos de acomodação e considere a relação custo-benefício.
+									Compare preços entre diferentes tipos de acomodação e
+									considere a relação custo-benefício.
 								</p>
 							</div>
 							<div className="space-y-2">
 								<h4 className="font-medium">⭐ Avaliações</h4>
 								<p className="text-sm text-muted-foreground">
-									Verifique as avaliações de outros hóspedes para ter uma ideia da qualidade do local.
+									Verifique as avaliações de outros hóspedes para ter uma ideia
+									da qualidade do local.
 								</p>
 							</div>
 							<div className="space-y-2">
 								<h4 className="font-medium">🛏️ Comodidades</h4>
 								<p className="text-sm text-muted-foreground">
-									Considere as comodidades oferecidas como Wi-Fi, café da manhã, academia, piscina, etc.
+									Considere as comodidades oferecidas como Wi-Fi, café da manhã,
+									academia, piscina, etc.
 								</p>
 							</div>
 						</div>

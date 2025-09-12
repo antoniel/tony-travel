@@ -16,7 +16,7 @@ function ItineraryPage() {
 	const { travelId } = Route.useParams();
 
 	const travelQuery = useQuery(
-		orpc.getTravel.queryOptions({ input: { id: travelId } }),
+		orpc.travelRoutes.getTravel.queryOptions({ input: { id: travelId } }),
 	);
 	const travel = travelQuery.data;
 	const isLoading = travelQuery.isLoading;
