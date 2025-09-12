@@ -189,91 +189,7 @@ function LocationsPage() {
 
 			{allLocations.length > 0 ? (
 				<div className="space-y-12">
-					{/* Location Cards */}
-					<div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
-						{allLocations.map((location) => (
-							<Card
-								key={location.id}
-								className="group hover:shadow-xl transition-all duration-300 overflow-hidden"
-							>
-								<CardHeader className="pb-6">
-									<div className="flex items-start justify-between">
-										<div className="space-y-2 flex-1">
-											<CardTitle className="flex items-center gap-3 text-lg group-hover:text-primary transition-colors">
-												<span className="text-2xl">
-													{getLocationTypeIcon(location.type)}
-												</span>
-												<span className="truncate">{location.name}</span>
-											</CardTitle>
-											<div className="flex items-center gap-2">
-												<Badge variant="outline" className="w-fit text-xs">
-													{location.category}
-												</Badge>
-												{location.rating && (
-													<div className="flex items-center gap-1">
-														<Star className="w-3 h-3 text-yellow-500 fill-current" />
-														<span className="text-xs font-medium">
-															{location.rating}
-														</span>
-													</div>
-												)}
-											</div>
-										</div>
-									</div>
-								</CardHeader>
-
-								<CardContent className="space-y-6">
-									{location.address && (
-										<div className="flex items-start gap-3">
-											<MapPin className="w-4 h-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-											<span className="text-sm text-muted-foreground leading-relaxed">
-												{location.address}
-											</span>
-										</div>
-									)}
-
-									{location.description && (
-										<p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-											{location.description}
-										</p>
-									)}
-
-									{/* Additional Info */}
-									<div className="grid grid-cols-2 gap-3 text-sm">
-										{location.estimatedTime && (
-											<div className="flex items-center gap-2">
-												<span className="text-muted-foreground">⏱️</span>
-												<span className="font-medium">
-													{location.estimatedTime}
-												</span>
-											</div>
-										)}
-										{location.price && (
-											<div className="flex items-center gap-2">
-												<span className="text-muted-foreground">💰</span>
-												<span className="font-medium text-primary">
-													{location.price}
-												</span>
-											</div>
-										)}
-									</div>
-
-									{/* Actions */}
-									<div className="flex gap-2 pt-2">
-										<Button variant="outline" size="sm" className="flex-1">
-											<ExternalLink className="w-4 h-4 mr-1" />
-											Detalhes
-										</Button>
-										<Button variant="outline" size="sm">
-											<MapPin className="w-4 h-4" />
-										</Button>
-									</div>
-								</CardContent>
-							</Card>
-						))}
-					</div>
-
-					{/* Interactive Map Section */}
+					{/* Interactive Map Section - Moved to top */}
 					<Card className="overflow-hidden">
 						<CardHeader>
 							<div className="flex items-center justify-between">
@@ -316,6 +232,104 @@ function LocationsPage() {
 							</div>
 						</CardContent>
 					</Card>
+
+					{/* Location Cards - Moved below map */}
+					<div className="space-y-6">
+						<div className="flex items-center justify-between">
+							<h2 className="text-xl font-semibold">Lista de Localizações</h2>
+							<div className="flex gap-2">
+								<Button variant="outline" size="sm">
+									Ordenar
+								</Button>
+								<Button variant="outline" size="sm">
+									Filtrar
+								</Button>
+							</div>
+						</div>
+
+						<div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
+							{allLocations.map((location) => (
+								<Card
+									key={location.id}
+									className="group hover:shadow-xl transition-all duration-300 overflow-hidden"
+								>
+									<CardHeader className="pb-6">
+										<div className="flex items-start justify-between">
+											<div className="space-y-2 flex-1">
+												<CardTitle className="flex items-center gap-3 text-lg group-hover:text-primary transition-colors">
+													<span className="text-2xl">
+														{getLocationTypeIcon(location.type)}
+													</span>
+													<span className="truncate">{location.name}</span>
+												</CardTitle>
+												<div className="flex items-center gap-2">
+													<Badge variant="outline" className="w-fit text-xs">
+														{location.category}
+													</Badge>
+													{location.rating && (
+														<div className="flex items-center gap-1">
+															<Star className="w-3 h-3 text-yellow-500 fill-current" />
+															<span className="text-xs font-medium">
+																{location.rating}
+															</span>
+														</div>
+													)}
+												</div>
+											</div>
+										</div>
+									</CardHeader>
+
+									<CardContent className="space-y-6">
+										{location.address && (
+											<div className="flex items-start gap-3">
+												<MapPin className="w-4 h-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+												<span className="text-sm text-muted-foreground leading-relaxed">
+													{location.address}
+												</span>
+											</div>
+										)}
+
+										{location.description && (
+											<p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+												{location.description}
+											</p>
+										)}
+
+										{/* Additional Info */}
+										<div className="grid grid-cols-2 gap-3 text-sm">
+											{location.estimatedTime && (
+												<div className="flex items-center gap-2">
+													<span className="text-muted-foreground">⏱️</span>
+													<span className="font-medium">
+														{location.estimatedTime}
+													</span>
+												</div>
+											)}
+											{location.price && (
+												<div className="flex items-center gap-2">
+													<span className="text-muted-foreground">💰</span>
+													<span className="font-medium text-primary">
+														{location.price}
+													</span>
+												</div>
+											)}
+										</div>
+
+										{/* Actions */}
+										<div className="flex gap-2 pt-2">
+											<Button variant="outline" size="sm" className="flex-1">
+												<ExternalLink className="w-4 h-4 mr-1" />
+												Detalhes
+											</Button>
+											<Button variant="outline" size="sm">
+												<MapPin className="w-4 h-4" />
+											</Button>
+										</div>
+									</CardContent>
+								</Card>
+							))}
+						</div>
+					</div>
 				</div>
 			) : (
 				<div className="text-center py-24">

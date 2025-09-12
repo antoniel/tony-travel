@@ -22,7 +22,7 @@ describe("flight", () => {
 			.values(travelStub)
 			.returning({ id: Travel.id });
 
-		const flightStub = testStub.flight.generate();
+		const flightStub = testStub.flight();
 
 		await appCall(router.flightRoutes.createFlight, {
 			flight: flightStub,

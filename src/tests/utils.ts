@@ -109,42 +109,57 @@ export const createAppCallAuthenticated =
 export const AUTH_TEST_HEADERS = new Headers();
 AUTH_TEST_HEADERS.set("Authorization", "Bearer test-token");
 
-const flight = zocker(schema.FlightSchema);
-const flightParticipant = zocker(schema.FlightParticipantSchema);
-const user = zocker(schema.UserSchema);
-const travel = (): schema.Travel => {
-	return {
-		...zocker(schema.TravelSchema).generate(),
-		userId: ALWAYS_USER_TEST.id,
-		locationInfo: {
-			destination: "Test Destination",
-			country: "Test Country",
-			climate: "Test Climate",
-			currency: "Test Currency",
-			language: "Test Language",
-			bestTimeToVisit: "Test Best Time to Visit",
-			timeZone: "Test Time Zone",
-			emergencyNumbers: {
-				police: "Test Police",
-				medical: "Test Medical",
-				embassy: "Test Embassy",
-			},
-		},
-		visaInfo: {
-			required: true,
-			stayDuration: "Test Stay Duration",
-			documents: ["Test Document"],
-			vaccinations: ["Test Vaccination"],
-			entryRequirements: ["Test Entry Requirement"],
-		},
-	};
-};
-
-const appEvent = zocker(schema.AppEventSchema);
 export const testStub = {
-	flight,
-	flightParticipant,
-	user,
-	travel,
-	appEvent,
+	accommodation: (accommodation?: Partial<schema.Accommodation>) => {
+		const zAccomodation = zocker(schema.AccommodationSchema);
+		return { ...zAccomodation.generate(), ...accommodation };
+	},
+	travel: (travel?: Partial<schema.Travel>) => {
+		const zTravel = (): schema.Travel => {
+			return {
+				...zocker(schema.TravelSchema).generate(),
+				userId: ALWAYS_USER_TEST.id,
+				locationInfo: {
+					destination: "Test Destination",
+					country: "Test Country",
+					climate: "Test Climate",
+					currency: "Test Currency",
+					language: "Test Language",
+					bestTimeToVisit: "Test Best Time to Visit",
+					timeZone: "Test Time Zone",
+					emergencyNumbers: {
+						police: "Test Police",
+						medical: "Test Medical",
+						embassy: "Test Embassy",
+					},
+				},
+				visaInfo: {
+					required: true,
+					stayDuration: "Test Stay Duration",
+					documents: ["Test Document"],
+					vaccinations: ["Test Vaccination"],
+					entryRequirements: ["Test Entry Requirement"],
+				},
+			};
+		};
+		return { ...zTravel(), ...travel };
+	},
+	flight: (flight?: Partial<schema.Flight>) => {
+		const zFlight = zocker(schema.FlightSchema);
+		return { ...zFlight.generate(), ...flight };
+	},
+	flightParticipant: (
+		flightParticipant?: Partial<schema.FlightParticipant>,
+	) => {
+		const zFlightParticipant = zocker(schema.FlightParticipantSchema);
+		return { ...zFlightParticipant.generate(), ...flightParticipant };
+	},
+	user: (user?: Partial<schema.User>) => {
+		const zUser = zocker(schema.UserSchema);
+		return { ...zUser.generate(), ...user };
+	},
+	appEvent: (appEvent?: Partial<schema.AppEvent>) => {
+		const zAppEvent = zocker(schema.AppEventSchema);
+		return { ...zAppEvent.generate(), ...appEvent };
+	},
 };

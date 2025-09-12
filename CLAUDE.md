@@ -524,6 +524,11 @@ export const createEventSchema = createInsertSchema(eventsTable) // Don't separa
 - **FK primeiro**: Sempre crie as entidades “mãe” (chaves estrangeiras) antes das entidades de ponta. Ex.: `User` → `Travel` → `Flight` → `FlightParticipant`.
 - **Isolamento**: Use um banco em memória por suíte com `getFakeDb()` (Vitest `beforeAll`). Não dependa da ordem de execução dos testes.
 - **Autenticação**: Para rotas protegidas, use `createAppCallAuthenticated` com `AUTH_TEST_HEADERS`/`ALWAYS_USER_TEST`.
+- **CRÍTICO - Tratamento de TODOs**: Quando encontrar comentários TODO no código durante escrita de testes, PARE de modificar os testes para acomodar implementações incompletas. Em vez disso:
+  - **SINALIZAR**: Identifique claramente que existe código incompleto (TODO) impedindo os testes
+  - **NÃO ADAPTAR**: Não altere expectativas de teste para passar com implementações parciais
+  - **IMPLEMENTAR PRIMEIRO**: Sugira implementar a funcionalidade faltante antes de continuar com os testes
+  - **TESTES CORRETOS**: Os testes devem refletir o comportamento PRETENDIDO, não o comportamento atual quebrado
 
 **Padrões recomendados (incentivados)**
 
@@ -598,6 +603,9 @@ describe("flight", () => {
 - Criar dados “no braço” repetidamente; prefira stubs e builders utilitários
 - Testes que apenas espelham implementação sem checar regras de negócio
 - Dependência implícita de outros testes para preparar estado
+- **CRÍTICO**: Modificar testes para acomodar código incompleto (TODOs) - sempre sinalizar e implementar funcionalidade faltante primeiro
+- Criar expectativas de teste baseadas em comportamento quebrado ao invés do comportamento pretendido
+- Ignorar ou contornar validações que estão marcadas como TODO na implementação
 
 **Observações de prompt‑engineering (para agentes)**
 
@@ -605,6 +613,56 @@ describe("flight", () => {
 - Prefira instruções imperativas e exemplos mínimos, como acima
 - Produza nomes de casos de teste que comuniquem comportamento e regra validada
 - Não gere testes redundantes; cada caso deve ter motivo claro
+- **FUNDAMENTAL**: Ao encontrar TODOs no código, INTERROMPER imediatamente a escrita de testes e sinalizar necessidade de implementação
+- Sempre priorizar completude da implementação sobre contornos nos testes
+- Testes devem ser escritos assumindo implementação correta e completa das funcionalidades
+
+## TODO Handling and Implementation Prioritization
+
+**CRITICAL DEVELOPMENT PRINCIPLE**: When encountering TODO comments during any development task, prioritize completing the implementation over working around incomplete functionality.
+
+### TODO Discovery Protocol
+
+**MANDATORY PROCESS** when TODO comments are encountered:
+
+1. **IMMEDIATE HALT**: Stop current development task (testing, feature implementation, refactoring)
+2. **CLEAR IDENTIFICATION**: Document exactly what TODO functionality is missing
+3. **IMPACT ASSESSMENT**: Identify how the incomplete implementation affects the current task
+4. **IMPLEMENTATION PRIORITY**: Recommend completing the TODO before proceeding with dependent work
+
+### TODO Context Examples
+
+**Testing Scenarios**:
+- **Incomplete Validation**: When validation logic uses hardcoded values instead of proper business logic
+- **Missing Service Integration**: When services use placeholder data instead of real integrations  
+- **Incomplete Error Handling**: When error paths are marked as TODO
+
+**Implementation Scenarios**:
+- **Partial Feature Logic**: When core functionality is marked with implementation TODOs
+- **Missing Business Rules**: When validation or business logic is incomplete
+- **Incomplete Data Flow**: When data transformations or persistence logic has TODOs
+
+### Professional Development Standards
+
+**User Feedback Integration**: "quando tiver um TODO no código você deve parar de alterar os testes e sinalizar que devemos implementar ao invés de modificar o teste pra passar de qualquer formar"
+
+**Translation**: When there's a TODO in the code, stop changing tests and signal that we should implement instead of modifying tests to pass in any way.
+
+**Application**:
+- Tests should reflect **intended behavior**, not accommodate broken implementations
+- Implementation completeness takes precedence over working around limitations
+- Quality assurance requires complete functionality, not workarounds
+
+### TODO Resolution Workflow
+
+1. **Identify**: Clearly document the TODO and its impact
+2. **Assess**: Determine if the TODO blocks current task completion
+3. **Prioritize**: Recommend implementing the TODO before proceeding
+4. **Implement**: Complete the missing functionality properly
+5. **Validate**: Ensure the implementation meets all requirements
+6. **Continue**: Proceed with original task using complete implementation
+
+**Exception**: Only proceed with incomplete implementations if explicitly instructed and with full acknowledgment of technical debt.
 
 ## Multi-Step Technical Task Management
 

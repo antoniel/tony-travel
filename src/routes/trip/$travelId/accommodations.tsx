@@ -1,3 +1,4 @@
+import { AccommodationModal } from "@/components/accommodation-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,6 +6,7 @@ import { orpc } from "@/orpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Calendar, Home, MapPin, Plus } from "lucide-react";
+import { useState } from "react";
 
 export const Route = createFileRoute("/trip/$travelId/accommodations")({
 	component: AccommodationsPage,
@@ -12,14 +14,20 @@ export const Route = createFileRoute("/trip/$travelId/accommodations")({
 
 function AccommodationsPage() {
 	const { travelId } = Route.useParams();
+	const [isModalOpen, setIsModalOpen] = useState(false);
 
 	const travelQuery = useQuery(
 		orpc.travelRoutes.getTravel.queryOptions({ input: { id: travelId } }),
 	);
-	const travel = travelQuery.data;
-	const isLoading = travelQuery.isLoading;
 
-	const accommodations = travel?.accommodations || [];
+	const accommodationsQuery = useQuery(
+		orpc.accommodationRoutes.getAccommodationsByTravel.queryOptions({
+			input: { travelId },
+		}),
+	);
+	const accommodations = accommodationsQuery.data || [];
+
+	const isLoading = travelQuery.isLoading || accommodationsQuery.isLoading;
 	const totalNights = accommodations.reduce((total, acc) => {
 		if (acc.startDate && acc.endDate) {
 			const nights = Math.ceil(
@@ -120,7 +128,7 @@ function AccommodationsPage() {
 						</div>
 					)}
 
-					<Button className="shadow-sm">
+					<Button className="shadow-sm" onClick={() => setIsModalOpen(true)}>
 						<Plus className="w-4 h-4 mr-2" />
 						<span className="hidden sm:inline">Adicionar Acomodação</span>
 						<span className="sm:hidden">Adicionar</span>
@@ -266,7 +274,11 @@ function AccommodationsPage() {
 							</p>
 						</div>
 						<div className="space-y-6">
-							<Button size="lg" className="shadow-sm px-8 py-3 text-base">
+							<Button
+								size="lg"
+								className="shadow-sm px-8 py-3 text-base"
+								onClick={() => setIsModalOpen(true)}
+							>
 								<Plus className="w-5 h-5 mr-2" />
 								Adicionar Primeira Acomodação
 							</Button>
@@ -336,6 +348,12 @@ function AccommodationsPage() {
 					</CardContent>
 				</Card>
 			)}
+
+			<AccommodationModal
+				open={isModalOpen}
+				onOpenChange={setIsModalOpen}
+				travelId={travelId}
+			/>
 		</div>
 	);
 }

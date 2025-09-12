@@ -7,6 +7,7 @@ import { logger } from "./middleware/logger";
 export interface AppOrpcContext extends RequestHeadersPluginContext {
 	db: DB;
 }
+
 export const baseProcedure = os.$context<AppOrpcContext>().use(logger);
 export const authProcedure = baseProcedure.use(requireAuth);
 export const optionalAuthProcedure = baseProcedure.use(optionalAuth);
