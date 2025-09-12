@@ -4,6 +4,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
 	Dialog,
 	DialogContent,
 	DialogHeader,
@@ -22,6 +27,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import {
 	AlertTriangle,
 	Calendar,
+	ChevronDown,
+	ChevronUp,
 	DollarSign,
 	Edit2,
 	Info,
@@ -30,7 +37,7 @@ import {
 	Trash2,
 	Users,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/trip/$travelId/flights")({
 	component: FlightsPage,
@@ -320,7 +327,15 @@ function EmptyFlightState({ onAddFlight }: { onAddFlight: () => void }) {
 	);
 }
 
-function FlightGroupHeader({ group }: { group: FlightGroup }) {
+function FlightGroupHeader({
+	group,
+	isOpen,
+	onToggle,
+}: {
+	group: FlightGroup;
+	isOpen: boolean;
+	onToggle: () => void;
+}) {
 	const totalPassengers = group.flights.reduce(
 		(total, flight) => total + flight.participants.length,
 		0,
@@ -328,31 +343,42 @@ function FlightGroupHeader({ group }: { group: FlightGroup }) {
 
 	return (
 		<div className="relative">
-			<div className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 border border-border/50">
-				<div className="relative">
-					<div className="p-3 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 shadow-sm">
-						<Plane className="w-6 h-6 text-primary" />
+			<CollapsibleTrigger asChild>
+				<button
+					type="button"
+					onClick={onToggle}
+					className="w-full flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 border border-border/50 hover:border-border transition-colors cursor-pointer"
+				>
+					<div className="relative">
+						<div className="p-3 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 shadow-sm">
+							<Plane className="w-6 h-6 text-primary" />
+						</div>
+						<div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-br from-green-400 to-green-600 rounded-full shadow-sm" />
 					</div>
-					<div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-br from-green-400 to-green-600 rounded-full shadow-sm" />
-				</div>
-				<div className="flex-1">
-					<h2 className="text-xl font-bold text-foreground tracking-tight">
-						Partindo de {group.originAirport}
-					</h2>
-					<p className="text-sm text-muted-foreground font-medium">
-						{group.flights.length} {group.flights.length === 1 ? "voo" : "voos"}{" "}
-						• {totalPassengers}{" "}
-						{totalPassengers === 1 ? "passageiro" : "passageiros"}
-					</p>
-				</div>
-				<div className="flex items-center gap-2">
-					<div className="px-3 py-1 rounded-full bg-background/80 border border-border/50">
-						<span className="text-xs font-semibold text-primary">
-							{group.flights.length} voos
-						</span>
+					<div className="flex-1 text-left">
+						<h2 className="text-xl font-bold text-foreground tracking-tight">
+							Partindo de {group.originAirport}
+						</h2>
+						<p className="text-sm text-muted-foreground font-medium">
+							{group.flights.length}{" "}
+							{group.flights.length === 1 ? "voo" : "voos"} • {totalPassengers}{" "}
+							{totalPassengers === 1 ? "passageiro" : "passageiros"}
+						</p>
 					</div>
-				</div>
-			</div>
+					<div className="flex items-center gap-2">
+						<div className="px-3 py-1 rounded-full bg-background/80 border border-border/50">
+							<span className="text-xs font-semibold text-primary">
+								{group.flights.length} voos
+							</span>
+						</div>
+						{isOpen ? (
+							<ChevronUp className="w-5 h-5 text-muted-foreground" />
+						) : (
+							<ChevronDown className="w-5 h-5 text-muted-foreground" />
+						)}
+					</div>
+				</button>
+			</CollapsibleTrigger>
 		</div>
 	);
 }
@@ -374,6 +400,33 @@ function FlightsList({
 	onEditFlight: (flight: FlightWithParticipants) => void;
 	onDeleteFlight: (flightId: string) => void;
 }) {
+	// State to track which groups are open (all open by default)
+	const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+
+	// Initialize openGroups when flightGroups change
+	useEffect(() => {
+		setOpenGroups((prevOpenGroups) => {
+			const initialState = flightGroups.reduce(
+				(acc, group) => {
+					// Keep existing state if it exists, otherwise default to open
+					acc[group.originAirport] =
+						prevOpenGroups[group.originAirport] ?? true;
+					return acc;
+				},
+				{} as Record<string, boolean>,
+			);
+
+			return initialState;
+		});
+	}, [flightGroups]);
+
+	const toggleGroup = (originAirport: string) => {
+		setOpenGroups((prev) => ({
+			...prev,
+			[originAirport]: !prev[originAirport],
+		}));
+	};
+
 	if (totalFlights === 0) {
 		return <EmptyFlightState onAddFlight={onAddFlight} />;
 	}
@@ -381,22 +434,34 @@ function FlightsList({
 	return (
 		<div className="space-y-8">
 			{flightGroups.map((group) => (
-				<div key={group.originAirport} className="space-y-6">
-					<FlightGroupHeader group={group} />
+				<Collapsible
+					key={group.originAirport}
+					open={openGroups[group.originAirport]}
+					onOpenChange={(open) =>
+						setOpenGroups((prev) => ({ ...prev, [group.originAirport]: open }))
+					}
+				>
+					<div className="space-y-6">
+						<FlightGroupHeader
+							group={group}
+							isOpen={openGroups[group.originAirport]}
+							onToggle={() => toggleGroup(group.originAirport)}
+						/>
 
-					<div className="space-y-4 pl-4">
-						{group.flights.map((flight) => (
-							<FlightCard
-								key={flight.id}
-								flight={flight}
-								formatDate={formatDate}
-								formatTime={formatTime}
-								onEdit={onEditFlight}
-								onDelete={onDeleteFlight}
-							/>
-						))}
+						<CollapsibleContent className="space-y-4 pl-4">
+							{group.flights.map((flight) => (
+								<FlightCard
+									key={flight.id}
+									flight={flight}
+									formatDate={formatDate}
+									formatTime={formatTime}
+									onEdit={onEditFlight}
+									onDelete={onDeleteFlight}
+								/>
+							))}
+						</CollapsibleContent>
 					</div>
-				</div>
+				</Collapsible>
 			))}
 		</div>
 	);
