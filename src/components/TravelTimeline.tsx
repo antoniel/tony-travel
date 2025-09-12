@@ -80,7 +80,7 @@ export function TravelTimeline({ travel }: TravelTimelineProps) {
 
 	return (
 		<>
-			<div className="max-w-4xl mx-auto space-y-8">
+			<div className=" space-y-8">
 				<div className="relative">
 					<div className="absolute left-8 top-16 bottom-0 w-0.5 bg-gradient-to-b from-primary via-accent to-chart-3 opacity-30" />
 
@@ -183,7 +183,7 @@ function TimelineItemComponent({
 	const iconColor = getEventColor(item.type);
 
 	return (
-		<div className="relative flex items-start gap-6 pb-8">
+		<div className="relative flex items-center gap-6 pb-8">
 			<div className="relative z-10 flex-shrink-0">
 				<div
 					className={`w-16 h-16 rounded-full border-2 shadow-sm flex items-center justify-center ${iconColor}`}

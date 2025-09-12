@@ -266,7 +266,7 @@ const RenderWeekViews = (props: {
 
 	return (
 		<div
-			className="relative h-[80vh] bg-card "
+			className="relative h-[70vh] bg-card "
 			onWheel={handleWheel}
 			onMouseMove={handleMouseMove}
 			onMouseUp={handleMouseUp}
