@@ -500,6 +500,70 @@ For multi-step technical integrations (database setup, API integration, etc.):
 - Prefer composition of existing components over creating new ones
 - Follow established patterns and design system variables (primary, muted-foreground, etc.)
 
+### Component Decomposition and Architecture
+
+**MANDATORY PATTERN**: Never use comment sections to organize large components. Instead, decompose into smaller, focused components.
+
+**Component Decomposition Rules**:
+
+- **Immediate Decomposition**: When you find yourself adding comment sections like `// Header Section`, `// Stats Section`, etc., STOP and create separate components instead
+- **Single Responsibility**: Each component should have one clear purpose and responsibility
+- **State Colocation**: Move state down to the lowest possible component level where it's actually needed
+- **File Organization**: Create multiple components in the same file when they're tightly coupled, rather than creating separate files for simple components
+
+**Anti-Patterns to Avoid**:
+```tsx
+// ❌ WRONG: Large component with comment sections
+function LargePage() {
+  const [state1, setState1] = useState()
+  const [state2, setState2] = useState()
+  
+  return (
+    <div>
+      {/* Header Section */}
+      <div>...</div>
+      
+      {/* Stats Section */}
+      <div>...</div>
+      
+      {/* Content Section */}
+      <div>...</div>
+    </div>
+  )
+}
+```
+
+**Correct Patterns**:
+```tsx
+// ✅ CORRECT: Decomposed into focused components
+function PageHeader() {
+  // Only state needed for header
+  return <div>...</div>
+}
+
+function StatsSection() {
+  // Only state needed for stats
+  return <div>...</div>
+}
+
+function MainPage() {
+  return (
+    <div>
+      <PageHeader />
+      <StatsSection />
+      <ContentSection />
+    </div>
+  )
+}
+```
+
+**State Management Principles**:
+
+- **State Colocation**: Keep state as close to where it's used as possible
+- **Lift State Up**: Only lift state when multiple components need to share it
+- **Avoid Prop Drilling**: If passing props through multiple levels, consider component composition or context
+- **Component Boundaries**: Each component should manage its own internal state when possible
+
 ### Component Abstraction Patterns
 
 **When to Abstract into Reusable Components**:
@@ -531,8 +595,35 @@ For multi-step technical integrations (database setup, API integration, etc.):
 4. **Implement with Composition**: Build on existing Shadcn/project components where possible
 5. **Update Existing Usage**: Replace duplicated implementations with new reusable component
 
+### UI Refactoring Best Practices
+
+**CRITICAL REFACTORING WORKFLOW**: When refactoring existing UI components, always follow this decomposition approach:
+
+1. **Identify Comment Sections**: Look for comment-based organization (e.g., `// Header`, `// Stats`)
+2. **Extract Components First**: Before styling changes, decompose large components into focused units
+3. **State Analysis**: Identify which state belongs at which component level
+4. **Move State Down**: Relocate state to the lowest component that needs it
+5. **Apply Design Changes**: Only after proper component architecture is in place
+
+**Component Naming Conventions**:
+
+- Use descriptive names that reflect the component's single responsibility
+- For page sections: `PageHeader`, `StatsCards`, `ContentList` (not `HeaderSection`, `StatsSection`)
+- For specialized components: `EmptyFlightState`, `FlightGroupHeader` (domain-specific naming)
+- Avoid generic names like `Section`, `Container`, `Wrapper` unless they're truly generic utilities
+
+**Refactoring Validation Checklist**:
+
+- [ ] No comment sections organizing JSX code
+- [ ] Each component has a single, clear responsibility
+- [ ] State is colocated with components that actually use it
+- [ ] No unnecessary prop drilling
+- [ ] Components are reusable and well-named
+- [ ] TypeScript interfaces are properly defined (no `any` types)
+
 ### Examples:
 
+**Component Usage**:
 - ✅ Use `<Tabs>` component instead of custom toggle buttons
 - ✅ Use `<Button>` variants instead of custom styled buttons
 - ✅ Use `<Card>` components instead of custom divs with styling
@@ -541,3 +632,12 @@ For multi-step technical integrations (database setup, API integration, etc.):
 - ❌ Don't create custom toggle logic when Tabs exist
 - ❌ Don't hardcode colors when design system variables exist
 - ❌ Don't create overly specific components that can't be reused
+
+**Component Architecture**:
+- ✅ Break down `FlightsPage` into `FlightStatsCards`, `FlightWarnings`, `FlightsList` components
+- ✅ Move flight filtering state to `FlightsList` where it's actually used
+- ✅ Keep dialog state in `PageHeader` component where the dialog exists
+- ✅ Create `EmptyFlightState` for specialized empty state handling
+- ❌ Don't use `// Stats Section`, `// Header Section` comments to organize code
+- ❌ Don't keep all state at the page level when components can manage their own
+- ❌ Don't create monolithic components that handle multiple responsibilities
