@@ -13,7 +13,7 @@ import type { InsertFullTravel } from "./travel.model";
 type TravelInput = z.infer<typeof InsertFullTravel>;
 
 export class TravelDAO {
-	async createTravel(travelData: TravelInput): Promise<string> {
+	async createTravel(travelData: TravelInput & { userId: string }): Promise<string> {
 		const [travel] = await db
 			.insert(Travel)
 			.values({
@@ -23,6 +23,7 @@ export class TravelDAO {
 				endDate: travelData.endDate,
 				locationInfo: travelData.locationInfo,
 				visaInfo: travelData.visaInfo,
+				userId: travelData.userId,
 			})
 			.returning({ id: Travel.id });
 

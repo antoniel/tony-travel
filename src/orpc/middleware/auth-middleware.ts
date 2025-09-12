@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { betterAuthApp } from "@/lib/auth";
 import { ORPCError, os } from "@orpc/server";
 import type { RequestHeadersPluginContext } from "@orpc/server/plugins";
 import type { Session, User } from "better-auth/types";
@@ -25,7 +25,7 @@ export const requireAuth = withHeaders.middleware(async ({ context, next }) => {
 		});
 	}
 
-	const authResult = await auth.api.getSession({
+	const authResult = await betterAuthApp.api.getSession({
 		headers: context.reqHeaders,
 	});
 
@@ -53,7 +53,7 @@ export const optionalAuth = withHeaders.middleware(
 				} as OptionalAuthContext,
 			});
 		}
-		const authResult = await auth.api.getSession({
+		const authResult = await betterAuthApp.api.getSession({
 			headers: context.reqHeaders,
 		});
 

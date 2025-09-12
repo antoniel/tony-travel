@@ -1,7 +1,7 @@
-import { optionalAuth, requireAuth } from "@/lib/auth-middleware";
 import { InsertAppEventSchema } from "@/lib/db/schema";
 import { startPlanTravel } from "@/lib/planTravel.prompt";
 import { pixabayService } from "@/lib/services/pixabay";
+import { optionalAuth, requireAuth } from "@/orpc/middleware/auth-middleware";
 import { os } from "@orpc/server";
 import * as z from "zod";
 import enhancedAirports from "./enhanced-airports.json";

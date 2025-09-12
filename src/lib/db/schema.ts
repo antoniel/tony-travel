@@ -1,4 +1,4 @@
-import { relations, sql } from "drizzle-orm";
+import { relations } from "drizzle-orm";
 import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { customAlphabet } from "nanoid";
@@ -16,6 +16,8 @@ const prefixes = {
 	travel: "trv",
 	accommodation: "acm",
 	event: "evt",
+	flight: "flt",
+	flightParticipant: "flp",
 } as const;
 const defaultColumn = (prefix: keyof typeof prefixes) => ({
 	id: text("id")
@@ -23,7 +25,6 @@ const defaultColumn = (prefix: keyof typeof prefixes) => ({
 		.$defaultFn(() => newId(prefix)),
 	createdAt: integer("created_at", { mode: "timestamp" })
 		.$defaultFn(() => new Date())
-		.default(sql`CURRENT_TIMESTAMP`)
 		.notNull(),
 	updatedAt: integer("updated_at", { mode: "timestamp" })
 		.$defaultFn(() => new Date())
@@ -120,6 +121,7 @@ export const TravelSchema = createSelectSchema(Travel);
 export const TravelRelations = relations(Travel, ({ many }) => ({
 	accommodations: many(Accommodation),
 	events: many(AppEvent),
+	flights: many(Flight),
 }));
 
 export type Accommodation = typeof Accommodation.$inferSelect;
@@ -187,3 +189,57 @@ export const appEventRelations = relations(AppEvent, ({ one, many }) => ({
 		relationName: "eventDependencies",
 	}),
 }));
+
+export type Flight = typeof Flight.$inferSelect;
+export type InsertFlight = typeof Flight.$inferInsert;
+export const Flight = sqliteTable("flight", {
+	...defaultColumn("flight"),
+	flightNumber: text("flight_number"),
+	originAirport: text("origin_airport").notNull(),
+	destinationAirport: text("destination_airport").notNull(),
+	departureDate: integer("departure_date", { mode: "timestamp" }).notNull(),
+	departureTime: text("departure_time").notNull(),
+	arrivalDate: integer("arrival_date", { mode: "timestamp" }).notNull(),
+	arrivalTime: text("arrival_time").notNull(),
+	cost: real("cost"),
+	travelId: text("travel_id")
+		.notNull()
+		.references(() => Travel.id, { onDelete: "cascade" }),
+});
+export const FlightSchema = createSelectSchema(Flight);
+export const InsertFlightSchema = createInsertSchema(Flight);
+export const flightRelations = relations(Flight, ({ one, many }) => ({
+	travel: one(Travel, {
+		fields: [Flight.travelId],
+		references: [Travel.id],
+	}),
+	participants: many(FlightParticipant),
+}));
+
+export type FlightParticipant = typeof FlightParticipant.$inferSelect;
+export type InsertFlightParticipant = typeof FlightParticipant.$inferInsert;
+export const FlightParticipant = sqliteTable("flight_participant", {
+	...defaultColumn("flightParticipant"),
+	flightId: text("flight_id")
+		.notNull()
+		.references(() => Flight.id, { onDelete: "cascade" }),
+	userId: text("user_id")
+		.notNull()
+		.references(() => User.id, { onDelete: "cascade" }),
+});
+export const FlightParticipantSchema = createSelectSchema(FlightParticipant);
+export const InsertFlightParticipantSchema =
+	createInsertSchema(FlightParticipant);
+export const flightParticipantRelations = relations(
+	FlightParticipant,
+	({ one }) => ({
+		flight: one(Flight, {
+			fields: [FlightParticipant.flightId],
+			references: [Flight.id],
+		}),
+		user: one(User, {
+			fields: [FlightParticipant.userId],
+			references: [User.id],
+		}),
+	}),
+);
