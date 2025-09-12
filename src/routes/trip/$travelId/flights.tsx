@@ -160,10 +160,18 @@ function FlightPageHeader({
 function FlightsPage() {
 	const { travelId } = Route.useParams();
 	const [isAddFlightOpen, setIsAddFlightOpen] = useState(false);
+	const [isEditFlightOpen, setIsEditFlightOpen] = useState(false);
+	const [editingFlight, setEditingFlight] = useState<FlightWithParticipants | null>(null);
+	const queryClient = useQueryClient();
 
 	// Fetch flights grouped by airport
 	const flightsQuery = useQuery(
 		orpc.flightRoutes.getFlightsByTravel.queryOptions({ input: { travelId } }),
+	);
+
+	// Delete flight mutation
+	const deleteFlightMutation = useMutation(
+		orpc.flightRoutes.deleteFlight.mutationOptions(),
 	);
 
 	// Mock members data - in real app this would come from travel members API
@@ -200,6 +208,29 @@ function FlightsPage() {
 		return time.slice(0, 5); // Remove seconds if present
 	};
 
+	// Handle edit flight
+	const handleEditFlight = (flight: FlightWithParticipants) => {
+		setEditingFlight(flight);
+		setIsEditFlightOpen(true);
+	};
+
+	// Handle delete flight
+	const handleDeleteFlight = async (flightId: string) => {
+		if (confirm("Tem certeza que deseja excluir este voo?")) {
+			try {
+				await deleteFlightMutation.mutateAsync({ id: flightId });
+				// Refresh flights data
+				queryClient.invalidateQueries(
+					orpc.flightRoutes.getFlightsByTravel.queryOptions({
+						input: { travelId },
+					}),
+				);
+			} catch (error) {
+				console.error("Error deleting flight:", error);
+			}
+		}
+	};
+
 	if (isLoading) {
 		return (
 			<div className="flex items-center justify-center py-12">
@@ -228,7 +259,29 @@ function FlightsPage() {
 				formatDate={formatDate}
 				formatTime={formatTime}
 				onAddFlight={() => setIsAddFlightOpen(true)}
+				onEditFlight={handleEditFlight}
+				onDeleteFlight={handleDeleteFlight}
 			/>
+
+			{/* Edit Flight Dialog */}
+			<Dialog open={isEditFlightOpen} onOpenChange={setIsEditFlightOpen}>
+				<DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+					<DialogHeader>
+						<DialogTitle>Editar Voo</DialogTitle>
+					</DialogHeader>
+					{editingFlight && (
+						<EditFlightForm
+							flight={editingFlight}
+							travelId={travelId}
+							members={mockMembers}
+							onClose={() => {
+								setIsEditFlightOpen(false);
+								setEditingFlight(null);
+							}}
+						/>
+					)}
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 }
@@ -317,12 +370,16 @@ function FlightsList({
 	formatDate,
 	formatTime,
 	onAddFlight,
+	onEditFlight,
+	onDeleteFlight,
 }: {
 	totalFlights: number;
 	flightGroups: FlightGroup[];
 	formatDate: (date: Date) => string;
 	formatTime: (time: string) => string;
 	onAddFlight: () => void;
+	onEditFlight: (flight: FlightWithParticipants) => void;
+	onDeleteFlight: (flightId: string) => void;
 }) {
 	if (totalFlights === 0) {
 		return <EmptyFlightState onAddFlight={onAddFlight} />;
@@ -341,6 +398,8 @@ function FlightsList({
 								flight={flight}
 								formatDate={formatDate}
 								formatTime={formatTime}
+								onEdit={onEditFlight}
+								onDelete={onDeleteFlight}
 							/>
 						))}
 					</div>
@@ -354,10 +413,14 @@ function FlightCard({
 	flight,
 	formatDate,
 	formatTime,
+	onEdit,
+	onDelete,
 }: {
 	flight: FlightWithParticipants;
 	formatDate: (date: Date) => string;
 	formatTime: (time: string) => string;
+	onEdit: (flight: FlightWithParticipants) => void;
+	onDelete: (flightId: string) => void;
 }) {
 	const hasParticipants = flight.participants.length > 0;
 	const hasCost = flight.cost !== null && flight.cost !== undefined;
@@ -449,6 +512,7 @@ function FlightCard({
 							variant="ghost"
 							size="sm"
 							className="h-8 w-8 rounded-full hover:bg-primary/10"
+							onClick={() => onEdit(flight)}
 						>
 							<Edit2 className="w-4 h-4" />
 						</Button>
@@ -456,6 +520,7 @@ function FlightCard({
 							variant="ghost"
 							size="sm"
 							className="h-8 w-8 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+							onClick={() => onDelete(flight.id)}
 						>
 							<Trash2 className="w-4 h-4" />
 						</Button>
@@ -559,6 +624,299 @@ function FlightCard({
 				</div>
 			</CardContent>
 		</Card>
+	);
+}
+
+function EditFlightForm({
+	flight,
+	travelId,
+	members,
+	onClose,
+}: {
+	flight: FlightWithParticipants;
+	travelId: string;
+	members: Member[];
+	onClose: () => void;
+}) {
+	const queryClient = useQueryClient();
+	const [formData, setFormData] = useState({
+		flightNumber: flight.flightNumber || "",
+		originAirport: flight.originAirport,
+		destinationAirport: flight.destinationAirport,
+		departureDate: new Date(flight.departureDate).toISOString().split("T")[0],
+		departureTime: flight.departureTime,
+		arrivalDate: new Date(flight.arrivalDate).toISOString().split("T")[0],
+		arrivalTime: flight.arrivalTime,
+		cost: flight.cost?.toString() || "",
+	});
+	const [selectedParticipants, setSelectedParticipants] = useState<string[]>(
+		flight.participants.map((p) => p.user.id),
+	);
+
+	const updateFlightMutation = useMutation(
+		orpc.flightRoutes.updateFlight.mutationOptions(),
+	);
+	const addParticipantMutation = useMutation(
+		orpc.flightRoutes.addFlightParticipant.mutationOptions(),
+	);
+	const removeParticipantMutation = useMutation(
+		orpc.flightRoutes.removeFlightParticipant.mutationOptions(),
+	);
+
+	const handleParticipantChange = (participantId: string, checked: boolean) => {
+		if (checked) {
+			setSelectedParticipants((prev) => [...prev, participantId]);
+		} else {
+			setSelectedParticipants((prev) =>
+				prev.filter((id) => id !== participantId),
+			);
+		}
+	};
+
+	const handleSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+
+		try {
+			const flightData = {
+				id: flight.id,
+				flight: {
+					flightNumber: formData.flightNumber || null,
+					originAirport: formData.originAirport,
+					destinationAirport: formData.destinationAirport,
+					departureDate: new Date(formData.departureDate),
+					departureTime: formData.departureTime,
+					arrivalDate: new Date(formData.arrivalDate),
+					arrivalTime: formData.arrivalTime,
+					cost: formData.cost ? Number.parseFloat(formData.cost) : null,
+				},
+			};
+
+			await updateFlightMutation.mutateAsync(flightData);
+
+			// Handle participant updates
+			const currentParticipantIds = flight.participants.map((p) => p.user.id);
+			const participantsToAdd = selectedParticipants.filter(
+				(id) => !currentParticipantIds.includes(id),
+			);
+			const participantsToRemove = currentParticipantIds.filter(
+				(id) => !selectedParticipants.includes(id),
+			);
+
+			// Add new participants
+			for (const userId of participantsToAdd) {
+				await addParticipantMutation.mutateAsync({
+					flightId: flight.id,
+					userId,
+				});
+			}
+
+			// Remove participants
+			for (const userId of participantsToRemove) {
+				await removeParticipantMutation.mutateAsync({
+					flightId: flight.id,
+					userId,
+				});
+			}
+
+			// Refresh flights data
+			queryClient.invalidateQueries(
+				orpc.flightRoutes.getFlightsByTravel.queryOptions({
+					input: { travelId },
+				}),
+			);
+
+			onClose();
+		} catch (error) {
+			console.error("Error updating flight:", error);
+		}
+	};
+
+	return (
+		<form onSubmit={handleSubmit} className="space-y-6">
+			{/* Participants Selection */}
+			<div className="space-y-3">
+				<Label>Participantes</Label>
+				<div className="space-y-2">
+					{members.map((member) => (
+						<div key={member.id} className="flex items-center space-x-3">
+							<Checkbox
+								id={member.id}
+								checked={selectedParticipants.includes(member.id)}
+								onCheckedChange={(checked) =>
+									handleParticipantChange(member.id, checked as boolean)
+								}
+							/>
+							<div className="flex items-center gap-2">
+								<Avatar className="h-6 w-6">
+									<AvatarImage src={member.image || undefined} />
+									<AvatarFallback className="text-xs">
+										{member.name
+											.split(" ")
+											.map((n) => n[0])
+											.join("")}
+									</AvatarFallback>
+								</Avatar>
+								<Label
+									htmlFor={member.id}
+									className="font-normal cursor-pointer"
+								>
+									{member.name}
+								</Label>
+							</div>
+						</div>
+					))}
+				</div>
+			</div>
+
+			{/* Flight Number */}
+			<div className="space-y-2">
+				<Label htmlFor="flightNumber">Número do Voo</Label>
+				<Input
+					id="flightNumber"
+					value={formData.flightNumber}
+					onChange={(e) =>
+						setFormData({
+							...formData,
+							flightNumber: e.target.value,
+						})
+					}
+					placeholder="Ex: JJ3052 (opcional)"
+				/>
+			</div>
+
+			{/* Departure */}
+			<div className="space-y-4">
+				<h4 className="font-medium text-sm">Partida</h4>
+				<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+					<div className="space-y-2">
+						<Label htmlFor="originAirport">Aeroporto *</Label>
+						<Input
+							id="originAirport"
+							value={formData.originAirport}
+							onChange={(e) =>
+								setFormData({
+									...formData,
+									originAirport: e.target.value,
+								})
+							}
+							placeholder="Ex: GRU"
+							required
+						/>
+					</div>
+					<div className="space-y-2">
+						<Label htmlFor="departureDate">Data *</Label>
+						<Input
+							id="departureDate"
+							type="date"
+							value={formData.departureDate}
+							onChange={(e) =>
+								setFormData({
+									...formData,
+									departureDate: e.target.value,
+								})
+							}
+							required
+						/>
+					</div>
+					<div className="space-y-2">
+						<Label htmlFor="departureTime">Horário *</Label>
+						<Input
+							id="departureTime"
+							type="time"
+							value={formData.departureTime}
+							onChange={(e) =>
+								setFormData({
+									...formData,
+									departureTime: e.target.value,
+								})
+							}
+							required
+						/>
+					</div>
+				</div>
+			</div>
+
+			{/* Arrival */}
+			<div className="space-y-4">
+				<h4 className="font-medium text-sm">Chegada</h4>
+				<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+					<div className="space-y-2">
+						<Label htmlFor="destinationAirport">Aeroporto *</Label>
+						<Input
+							id="destinationAirport"
+							value={formData.destinationAirport}
+							onChange={(e) =>
+								setFormData({
+									...formData,
+									destinationAirport: e.target.value,
+								})
+							}
+							placeholder="Ex: SDU"
+							required
+						/>
+					</div>
+					<div className="space-y-2">
+						<Label htmlFor="arrivalDate">Data *</Label>
+						<Input
+							id="arrivalDate"
+							type="date"
+							value={formData.arrivalDate}
+							onChange={(e) =>
+								setFormData({
+									...formData,
+									arrivalDate: e.target.value,
+								})
+							}
+							required
+						/>
+					</div>
+					<div className="space-y-2">
+						<Label htmlFor="arrivalTime">Horário *</Label>
+						<Input
+							id="arrivalTime"
+							type="time"
+							value={formData.arrivalTime}
+							onChange={(e) =>
+								setFormData({
+									...formData,
+									arrivalTime: e.target.value,
+								})
+							}
+							required
+						/>
+					</div>
+				</div>
+			</div>
+
+			{/* Cost */}
+			<div className="space-y-4">
+				<h4 className="font-medium text-sm">Valor da Passagem</h4>
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<div className="space-y-2">
+						<Label htmlFor="cost">Preço (R$)</Label>
+						<Input
+							id="cost"
+							type="number"
+							step="0.01"
+							value={formData.cost}
+							onChange={(e) =>
+								setFormData({ ...formData, cost: e.target.value })
+							}
+							placeholder="450.00"
+						/>
+					</div>
+				</div>
+			</div>
+
+			<div className="flex justify-end gap-4">
+				<Button type="button" variant="outline" onClick={onClose}>
+					Cancelar
+				</Button>
+				<Button type="submit" disabled={updateFlightMutation.isPending}>
+					{updateFlightMutation.isPending ? "Atualizando..." : "Atualizar Voo"}
+				</Button>
+			</div>
+		</form>
 	);
 }
 

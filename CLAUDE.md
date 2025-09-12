@@ -404,6 +404,30 @@ const handleSubmit = async (formData: FormData) => {
 - [ ] Follows component decomposition patterns (no comment sections)
 - [ ] Creates stunning visual impact appropriate for the platform
 
+## Code Style Guidelines
+
+**CRITICAL COMMENTING RULES**:
+
+- **IMPORTANT: DO NOT ADD ***ANY*** COMMENTS unless explicitly asked by the user**
+- **NEVER add redundant comments that simply restate function or variable names**
+  - ❌ WRONG: `// Handle delete flight` before `const handleDeleteFlight`
+  - ❌ WRONG: `// Update user profile` before `const updateUserProfile`
+  - ❌ WRONG: `// Fetch travel data` before `const fetchTravelData`
+- **Code should be self-documenting through clear naming conventions**
+- **Only add comments when**:
+  - Explaining complex business logic that isn't obvious from the code
+  - Documenting non-obvious algorithms or workarounds
+  - When explicitly requested by the user
+  - For JSDoc documentation on public APIs (when requested)
+
+**Self-Documenting Code Principles**:
+
+- Use descriptive function and variable names that explain intent
+- Prefer `const handleDeleteFlight = ...` over `const handler = ... // Delete flight`
+- Function names should clearly indicate what they do
+- Variable names should clearly indicate what they contain
+- Component names should reflect their single responsibility
+
 ## Important Notes
 
 - Demo files prefixed with `demo` can be safely deleted
@@ -488,6 +512,99 @@ export const createEventSchema = createInsertSchema(eventsTable) // Don't separa
 - Use proper type mapping between database models and API responses
 - Implement validation at the DAO level for data integrity
 - Ensure return types match API contract expectations
+
+## Diretrizes de Testes (Vitest + oRPC/Drizzle)
+
+**OBJETIVO**: Garantir testes significativos e legíveis, focados nas regras de negócio, seguindo o padrão de `src/orpc/modules/flight/flight.test.ts` e utilitários em `src/tests/utils.ts`.
+
+**REGRAS CRÍTICAS (obrigatórias)**
+
+- **Propósito claro**: Cada teste deve validar um aspecto essencial do domínio ou uma regra de negócio. Nunca escreva testes “só por escrever”.
+- **Chamar a aplicação pelo oRPC**: Exercite os casos de uso via procedimentos oRPC (com `createAppCall`/`createAppCallAuthenticated`) — evite operar o estado apenas via DB quando o objetivo é validar comportamento da aplicação.
+- **FK primeiro**: Sempre crie as entidades “mãe” (chaves estrangeiras) antes das entidades de ponta. Ex.: `User` → `Travel` → `Flight` → `FlightParticipant`.
+- **Isolamento**: Use um banco em memória por suíte com `getFakeDb()` (Vitest `beforeAll`). Não dependa da ordem de execução dos testes.
+- **Autenticação**: Para rotas protegidas, use `createAppCallAuthenticated` com `AUTH_TEST_HEADERS`/`ALWAYS_USER_TEST`.
+
+**Padrões recomendados (incentivados)**
+
+- **Stubs/fábricas**: Use os stubs do `zocker` já prontos em `testStub` (`testStub.flight`, `testStub.travel`, etc.) e sobrescreva apenas campos relevantes. Isso reduz boilerplate e melhora a legibilidade.
+- **Builders utilitários**: Crie funções utilitárias para compor entidades e cadeias com FK (ex.: `createTravel(db, overrides)`, `createFlightWithParticipants(db, { travelId, flight, participants })`). Essas funções podem executar várias operações no banco com stubs para facilitar a leitura dos testes.
+- **AAA (Arrange-Act-Assert)**: Estruture cada teste destacando preparação, ação e asserções. Nomes de `describe/it` devem comunicar claramente o comportamento esperado.
+- **Asserções robustas**: Prefira `toMatchObject`/`toEqual` para validar estado e `toThrowError` para regras de erro. Valide contagens/relacionamentos quando fizer sentido (ex.: “deve criar 1 voo para a viagem”).
+- **Determinismo**: Quando necessário, fixe dados/horários nos stubs e evite aleatoriedade não controlada.
+
+**Fluxo de teste sugerido (modelo)**
+
+1) Arrange
+- `const db = await getFakeDb()` em `beforeAll`
+- Gerar stubs com `testStub.*`
+- Inserir pais de FK diretamente (ex.: `db.insert(Travel).values(travelStub).returning({ id })`)
+
+2) Act
+- Invocar o procedimento oRPC sob teste com `createAppCall`/`createAppCallAuthenticated`
+
+3) Assert
+- Recuperar estado via oRPC (ou consultar o DB quando a verificação é puramente estrutural)
+- Validar regras de negócio principais e relações
+
+**Exemplo mínimo (baseado em flight.test.ts)**
+
+```ts
+import { Travel } from "@/lib/db/schema"
+import router from "@/orpc/router"
+import { ALWAYS_USER_TEST, createAppCallAuthenticated, getFakeDb, testStub } from "@/tests/utils"
+import { beforeAll, describe, expect, it } from "vitest"
+
+describe("flight", () => {
+  let db
+  beforeAll(async () => {
+    db = await getFakeDb()
+  })
+
+  it("createFlight: cria voo e lista por viagem", async () => {
+    const appCall = createAppCallAuthenticated(db)
+
+    // FK primeiro: User (seed em getFakeDb) -> Travel -> Flight
+    const travelStub = testStub.travel()
+    const [travel] = await db.insert(Travel).values(travelStub).returning({ id: Travel.id })
+
+    const flightStub = testStub.flight.generate()
+
+    await appCall(router.flightRoutes.createFlight, {
+      flight: flightStub,
+      travelId: travel.id,
+      participantIds: [ALWAYS_USER_TEST.id],
+    })
+
+    const flights = await appCall(router.flightRoutes.getFlightsByTravel, { travelId: travel.id })
+    expect(flights.length).toEqual(1)
+  })
+})
+```
+
+**Checklist rápida antes de enviar PR**
+
+- Foca em regra de negócio e invariantes do domínio
+- Cria pais de FK antes das entidades filhas
+- Usa `getFakeDb()` e utilitários (`createAppCall*`, `testStub`)
+- Invoca comportamentos via oRPC; usa DB direto apenas para seed/validação estrutural
+- Testes legíveis com AAA e nomes descritivos
+- Evita testes triviais/duplicados e dependência de ordem
+- Executa `bunx --bun run test` e `bunx --bun run check`
+
+**Anti‑padrões a evitar**
+
+- Chamar DAOs diretamente para validar comportamento de alto nível quando existe procedimento oRPC equivalente
+- Criar dados “no braço” repetidamente; prefira stubs e builders utilitários
+- Testes que apenas espelham implementação sem checar regras de negócio
+- Dependência implícita de outros testes para preparar estado
+
+**Observações de prompt‑engineering (para agentes)**
+
+- Seja explícito sobre FK‑first, uso de `getFakeDb`, `testStub` e `createAppCall*` ao gerar testes
+- Prefira instruções imperativas e exemplos mínimos, como acima
+- Produza nomes de casos de teste que comuniquem comportamento e regra validada
+- Não gere testes redundantes; cada caso deve ter motivo claro
 
 ## Multi-Step Technical Task Management
 
