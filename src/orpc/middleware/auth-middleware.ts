@@ -1,7 +1,7 @@
 import { betterAuthApp } from "@/lib/auth";
 import { ORPCError, os } from "@orpc/server";
-import type { RequestHeadersPluginContext } from "@orpc/server/plugins";
 import type { Session, User } from "better-auth/types";
+import type { ORPCContext } from "../procedure";
 
 // Context types
 interface AuthContext {
@@ -14,37 +14,36 @@ interface OptionalAuthContext {
 	session?: Session | null;
 }
 
-interface ORPCContext extends RequestHeadersPluginContext {}
-export const withHeaders = os.$context<ORPCContext>();
+export const requireAuth = os
+	.$context<ORPCContext>()
+	.middleware(async ({ context, next }) => {
+		if (!context.reqHeaders) {
+			throw new ORPCError("UNAUTHORIZED", {
+				message: "Authentication required",
+			});
+		}
 
-// Middleware de autenticação obrigatória
-export const requireAuth = withHeaders.middleware(async ({ context, next }) => {
-	if (!context.reqHeaders) {
-		throw new ORPCError("UNAUTHORIZED", {
-			message: "Authentication required",
+		const authResult = await betterAuthApp.api.getSession({
+			headers: context.reqHeaders,
 		});
-	}
 
-	const authResult = await betterAuthApp.api.getSession({
-		headers: context.reqHeaders,
+		if (!authResult?.user || !authResult?.session) {
+			throw new ORPCError("UNAUTHORIZED", {
+				message: "Authentication required",
+			});
+		}
+
+		return next({
+			context: {
+				user: authResult.user,
+				session: authResult.session,
+			} as AuthContext,
+		});
 	});
 
-	if (!authResult?.user || !authResult?.session) {
-		throw new ORPCError("UNAUTHORIZED", {
-			message: "Authentication required",
-		});
-	}
-
-	return next({
-		context: {
-			user: authResult.user,
-			session: authResult.session,
-		} as AuthContext,
-	});
-});
-
-export const optionalAuth = withHeaders.middleware(
-	async ({ context, next }) => {
+export const optionalAuth = os
+	.$context<ORPCContext>()
+	.middleware(async ({ context, next }) => {
 		if (!context.reqHeaders) {
 			return next({
 				context: {
@@ -63,5 +62,4 @@ export const optionalAuth = withHeaders.middleware(
 				session: authResult?.session || null,
 			} as OptionalAuthContext,
 		});
-	},
-);
+	});

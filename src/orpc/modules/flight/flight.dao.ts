@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import type { DB } from "@/lib/db/types";
 import {
 	Flight,
 	FlightParticipant,
@@ -9,8 +9,9 @@ import {
 import { and, eq } from "drizzle-orm";
 
 export class FlightDAO {
+	constructor(private readonly db: DB) {}
 	async createFlight(flightData: InsertFlight): Promise<string> {
-		const [flight] = await db
+		const [flight] = await this.db
 			.insert(Flight)
 			.values(flightData)
 			.returning({ id: Flight.id });
@@ -34,7 +35,7 @@ export class FlightDAO {
 			whereConditions.push(eq(Flight.cost, cost));
 		}
 
-		const flight = await db.query.Flight.findFirst({
+		const flight = await this.db.query.Flight.findFirst({
 			where: and(...whereConditions),
 		});
 
@@ -42,7 +43,7 @@ export class FlightDAO {
 	}
 
 	async getFlightsByTravel(travelId: string) {
-		const flights = await db.query.Flight.findMany({
+		const flights = await this.db.query.Flight.findMany({
 			where: eq(Flight.travelId, travelId),
 			with: {
 				participants: {
@@ -58,7 +59,7 @@ export class FlightDAO {
 	}
 
 	async getFlightById(flightId: string) {
-		const flight = await db.query.Flight.findFirst({
+		const flight = await this.db.query.Flight.findFirst({
 			where: eq(Flight.id, flightId),
 			with: {
 				participants: {
@@ -77,7 +78,7 @@ export class FlightDAO {
 		userId: string,
 	): Promise<string> {
 		// Check if participant already exists
-		const existing = await db.query.FlightParticipant.findFirst({
+		const existing = await this.db.query.FlightParticipant.findFirst({
 			where: and(
 				eq(FlightParticipant.flightId, flightId),
 				eq(FlightParticipant.userId, userId),
@@ -88,7 +89,7 @@ export class FlightDAO {
 			return existing.id;
 		}
 
-		const [participant] = await db
+		const [participant] = await this.db
 			.insert(FlightParticipant)
 			.values({ flightId, userId })
 			.returning({ id: FlightParticipant.id });
@@ -100,7 +101,7 @@ export class FlightDAO {
 		flightId: string,
 		userId: string,
 	): Promise<void> {
-		await db
+		await this.db
 			.delete(FlightParticipant)
 			.where(
 				and(
@@ -111,7 +112,7 @@ export class FlightDAO {
 	}
 
 	async updateFlight(flightId: string, flightData: Partial<InsertFlight>): Promise<void> {
-		await db
+		await this.db
 			.update(Flight)
 			.set(flightData)
 			.where(eq(Flight.id, flightId));
@@ -119,10 +120,12 @@ export class FlightDAO {
 
 	async deleteFlight(flightId: string): Promise<void> {
 		// Delete all participants first (cascade should handle this, but being explicit)
-		await db.delete(FlightParticipant).where(eq(FlightParticipant.flightId, flightId));
+		await this.db
+			.delete(FlightParticipant)
+			.where(eq(FlightParticipant.flightId, flightId));
 		
 		// Delete the flight
-		await db.delete(Flight).where(eq(Flight.id, flightId));
+		await this.db.delete(Flight).where(eq(Flight.id, flightId));
 	}
 
 	async getUsersByTravel(travelId: string) {
@@ -132,5 +135,4 @@ export class FlightDAO {
 	}
 }
 
-// Export singleton instance
-export const flightDAO = new FlightDAO();
+export const createFlightDAO = (db: DB) => new FlightDAO(db);

@@ -1,4 +1,5 @@
 import router from "@/orpc/router";
+import { db } from "@/lib/db";
 import "@/polyfill";
 
 import { RPCHandler } from "@orpc/server/fetch";
@@ -12,7 +13,7 @@ const handler = new RPCHandler(router, {
 async function handle({ request }: { request: Request }) {
 	const { response } = await handler.handle(request, {
 		prefix: "/api/rpc",
-		context: {},
+		context: { db },
 	});
 
 	return response ?? new Response("Not Found", { status: 404 });

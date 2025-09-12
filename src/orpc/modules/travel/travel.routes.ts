@@ -1,11 +1,11 @@
 import { InsertAppEventSchema } from "@/lib/db/schema";
 import { startPlanTravel } from "@/lib/planTravel.prompt";
 import { pixabayService } from "@/lib/services/pixabay";
-import { optionalAuth, requireAuth } from "@/orpc/middleware/auth-middleware";
+import { authProcedure, optionalAuthProcedure } from "@/orpc/procedure";
 import { os } from "@orpc/server";
 import * as z from "zod";
 import enhancedAirports from "./enhanced-airports.json";
-import { travelDAO } from "./travel.dao";
+import { createTravelDAO } from "./travel.dao";
 import { type Airport, AirportSchema, InsertFullTravel } from "./travel.model";
 
 export const generatePrompt = os
@@ -23,11 +23,11 @@ export const generatePrompt = os
 		return startPlanTravel(input);
 	});
 
-export const saveTravel = os
-	.use(requireAuth)
+export const saveTravel = authProcedure
 	.input(z.object({ travel: InsertFullTravel }))
 	.output(z.object({ id: z.string() }))
 	.handler(async ({ input, context }) => {
+		const travelDAO = createTravelDAO(context.db);
 		// Associar o travel ao usuário logado
 		const travelWithUser = {
 			...input.travel,
@@ -37,10 +37,10 @@ export const saveTravel = os
 		return { id };
 	});
 
-export const getTravel = os
-	.use(optionalAuth)
+export const getTravel = optionalAuthProcedure
 	.input(z.object({ id: z.string() }))
 	.handler(async ({ input, context }) => {
+		const travelDAO = createTravelDAO(context.db);
 		const travel = await travelDAO.getTravelById(input.id);
 
 		if (!travel) {
@@ -56,8 +56,7 @@ export const getTravel = os
 		return travel;
 	});
 
-export const listTravels = os
-	.use(optionalAuth)
+export const listTravels = optionalAuthProcedure
 	.input(
 		z
 			.object({
@@ -67,6 +66,7 @@ export const listTravels = os
 			.optional(),
 	)
 	.handler(async ({ input, context }) => {
+		const travelDAO = createTravelDAO(context.db);
 		// Se especificou userId e não é o próprio usuário, só mostra públicas
 		if (input?.userId && input.userId !== context.user?.id) {
 			// Implementar filtro para travels públicas
@@ -77,7 +77,7 @@ export const listTravels = os
 		return await travelDAO.getAllTravels();
 	});
 
-export const fetchActivityImage = os
+export const fetchActivityImage = optionalAuthProcedure
 	.input(
 		z.object({
 			eventId: z.string(),
@@ -120,7 +120,8 @@ export const fetchActivityImage = os
 			error: z.string().optional(),
 		}),
 	)
-	.handler(async ({ input }) => {
+	.handler(async ({ input, context }) => {
+		const travelDAO = createTravelDAO(context.db);
 		try {
 			const image = await pixabayService.searchActivityImage(
 				input.title,
@@ -162,7 +163,7 @@ export const fetchActivityImage = os
 		}
 	});
 
-export const updateEventImage = os
+export const updateEventImage = optionalAuthProcedure
 	.input(
 		z.object({
 			eventId: z.string(),
@@ -177,7 +178,8 @@ export const updateEventImage = os
 		}),
 	)
 	.output(z.object({ success: z.boolean() }))
-	.handler(async ({ input }) => {
+	.handler(async ({ input, context }) => {
+		const travelDAO = createTravelDAO(context.db);
 		try {
 			await travelDAO.updateEventImage(
 				input.eventId,
@@ -347,11 +349,11 @@ export const searchDestinations = os
 			.sort((a, b) => a.label.localeCompare(b.label));
 	});
 
-export const createEvent = os
-	.use(requireAuth)
+export const createEvent = authProcedure
 	.input(InsertAppEventSchema)
 	.output(z.object({ id: z.string() }))
 	.handler(async ({ input, context }) => {
+		const travelDAO = createTravelDAO(context.db);
 		// TODO: Verificar se o usuário tem permissão para criar evento no travel
 		const id = await travelDAO.createEvent(input);
 		return { id };

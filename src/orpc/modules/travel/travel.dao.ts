@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import type { DB } from "@/lib/db/types";
 import {
 	Accommodation,
 	AppEvent,
@@ -13,8 +13,9 @@ import type { InsertFullTravel } from "./travel.model";
 type TravelInput = z.infer<typeof InsertFullTravel>;
 
 export class TravelDAO {
+	constructor(private readonly db: DB) {}
 	async createTravel(travelData: TravelInput & { userId: string }): Promise<string> {
-		const [travel] = await db
+		const [travel] = await this.db
 			.insert(Travel)
 			.values({
 				name: travelData.name,
@@ -30,7 +31,7 @@ export class TravelDAO {
 		const travelId = travel.id;
 
 		if (travelData.accommodations.length > 0) {
-			await db
+			await this.db
 				.insert(Accommodation)
 				.values(travelData.accommodations.map((a) => ({ ...a, travelId })));
 		}
@@ -41,7 +42,7 @@ export class TravelDAO {
 	}
 
 	async getTravelById(id: string): Promise<TravelWithRelations | null> {
-		const travel = await db.query.Travel.findFirst({
+		const travel = await this.db.query.Travel.findFirst({
 			where: eq(Travel.id, id),
 			with: {
 				accommodations: true,
@@ -61,7 +62,7 @@ export class TravelDAO {
 	}
 
 	async getAllTravels(): Promise<TravelWithRelations[]> {
-		const travels = await db.query.Travel.findMany({
+		const travels = await this.db.query.Travel.findMany({
 			with: {
 				accommodations: true,
 				events: {
@@ -76,7 +77,7 @@ export class TravelDAO {
 	}
 
 	async createEvent(eventData: InsertAppEvent): Promise<string> {
-		const [event] = await db
+		const [event] = await this.db
 			.insert(AppEvent)
 			.values(eventData)
 			.returning({ id: AppEvent.id });
@@ -89,7 +90,7 @@ export class TravelDAO {
 		imageUrl: string,
 		imageMetadata: ImageMetadata,
 	): Promise<void> {
-		await db
+		await this.db
 			.update(AppEvent)
 			.set({
 				imageUrl,
@@ -104,7 +105,7 @@ export class TravelDAO {
 		parentEventId?: string,
 	): Promise<void> {
 		for (const event of events) {
-			await db
+			await this.db
 				.insert(AppEvent)
 				.values({
 					title: event.title,
@@ -121,5 +122,4 @@ export class TravelDAO {
 	}
 }
 
-// Export singleton instance
-export const travelDAO = new TravelDAO();
+export const createTravelDAO = (db: DB) => new TravelDAO(db);

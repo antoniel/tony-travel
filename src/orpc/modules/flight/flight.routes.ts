@@ -2,7 +2,7 @@ import { FlightSchema, InsertFlightSchema } from "@/lib/db/schema";
 import { requireAuth } from "@/orpc/middleware/auth-middleware";
 import { authProcedure, baseProcedure } from "@/orpc/procedure";
 import * as z from "zod";
-import { flightDAO } from "./flight.dao";
+import { createFlightDAO } from "./flight.dao";
 import {
 	CreateFlightWithParticipantsSchema,
 	DuplicateFlightResultSchema,
@@ -26,6 +26,7 @@ export const createFlight = authProcedure
 		}),
 	)
 	.handler(async ({ input, context }) => {
+		const flightDAO = createFlightDAO(context.db);
 		// Check for duplicate flight
 		const existingFlightId = await flightDAO.findDuplicateFlight(
 			input.travelId,
@@ -70,7 +71,8 @@ export const createFlight = authProcedure
 export const getFlightsByTravel = baseProcedure
 	.input(z.object({ travelId: z.string() }))
 	.output(z.array(FlightGroupSchema))
-	.handler(async ({ input }) => {
+	.handler(async ({ input, context }) => {
+		const flightDAO = createFlightDAO(context.db);
 		const flights = await flightDAO.getFlightsByTravel(input.travelId);
 
 		const grouped = flights.reduce(
@@ -113,7 +115,8 @@ export const getFlight = baseProcedure
 			),
 		}).nullable(),
 	)
-	.handler(async ({ input }) => {
+	.handler(async ({ input, context }) => {
+		const flightDAO = createFlightDAO(context.db);
 		const flight = await flightDAO.getFlightById(input.id);
 		return flight || null;
 	});
@@ -128,7 +131,8 @@ export const updateFlight = authProcedure
 		}),
 	)
 	.output(z.object({ success: z.boolean() }))
-	.handler(async ({ input }) => {
+	.handler(async ({ input, context }) => {
+		const flightDAO = createFlightDAO(context.db);
 		await flightDAO.updateFlight(input.id, input.flight);
 		return { success: true };
 	});
@@ -138,7 +142,8 @@ export const deleteFlight = authProcedure
 	.use(requireAuth)
 	.input(z.object({ id: z.string() }))
 	.output(z.object({ success: z.boolean() }))
-	.handler(async ({ input }) => {
+	.handler(async ({ input, context }) => {
+		const flightDAO = createFlightDAO(context.db);
 		await flightDAO.deleteFlight(input.id);
 		return { success: true };
 	});
@@ -153,7 +158,8 @@ export const addFlightParticipant = authProcedure
 		}),
 	)
 	.output(z.object({ id: z.string() }))
-	.handler(async ({ input }) => {
+	.handler(async ({ input, context }) => {
+		const flightDAO = createFlightDAO(context.db);
 		const id = await flightDAO.addFlightParticipant(
 			input.flightId,
 			input.userId,
@@ -171,7 +177,8 @@ export const removeFlightParticipant = authProcedure
 		}),
 	)
 	.output(z.object({ success: z.boolean() }))
-	.handler(async ({ input }) => {
+	.handler(async ({ input, context }) => {
+		const flightDAO = createFlightDAO(context.db);
 		await flightDAO.removeFlightParticipant(input.flightId, input.userId);
 		return { success: true };
 	});
@@ -188,7 +195,8 @@ export const checkDuplicateFlight = authProcedure
 		}),
 	)
 	.output(DuplicateFlightResultSchema)
-	.handler(async ({ input }) => {
+	.handler(async ({ input, context }) => {
+		const flightDAO = createFlightDAO(context.db);
 		const existingFlightId = await flightDAO.findDuplicateFlight(
 			input.travelId,
 			input.originAirport,

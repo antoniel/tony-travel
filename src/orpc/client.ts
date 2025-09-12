@@ -7,6 +7,7 @@ import { getHeaders } from "@tanstack/react-start/server";
 
 import type { RouterClient } from "@orpc/server";
 
+import { db } from "@/lib/db";
 import router from "@/orpc/router";
 
 const getORPCClient = createIsomorphicFn()
@@ -14,6 +15,7 @@ const getORPCClient = createIsomorphicFn()
 		createRouterClient(router, {
 			context: () => ({
 				headers: getHeaders(),
+				db: db,
 			}),
 		}),
 	)
