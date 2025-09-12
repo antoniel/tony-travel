@@ -3,7 +3,6 @@ import {
 	InsertAccommodationSchema,
 } from "@/lib/db/schema";
 import { AppResult } from "@/orpc/appResult";
-import { requireAuth } from "@/orpc/middleware/auth-middleware";
 import { authProcedure, baseProcedure } from "@/orpc/procedure";
 import { ORPCError } from "@orpc/client";
 import * as z from "zod";
@@ -12,8 +11,8 @@ import { createAccommodationDAO } from "./accommodation.dao";
 import { accommodationErrors } from "./accommodation.errors";
 import {
 	createAccommodationService,
-	updateAccommodationService,
 	suggestAccommodationDates,
+	updateAccommodationService,
 } from "./accommodation.service";
 
 export const createAccommodation = authProcedure
@@ -27,7 +26,6 @@ export const createAccommodation = authProcedure
 	.output(
 		z.object({
 			id: z.string(),
-			hasOverlap: z.boolean(),
 			conflictingAccommodation: AccommodationSchema.nullable(),
 			validationError: z.string().nullable(),
 		}),
@@ -71,7 +69,7 @@ export const getAccommodation = baseProcedure
 	});
 
 export const updateAccommodation = authProcedure
-	.use(requireAuth)
+	.errors(accommodationErrors)
 	.input(
 		z.object({
 			id: z.string(),
@@ -83,7 +81,6 @@ export const updateAccommodation = authProcedure
 	.output(
 		z.object({
 			success: z.boolean(),
-			hasOverlap: z.boolean(),
 			conflictingAccommodation: AccommodationSchema.nullable(),
 			validationError: z.string().nullable(),
 		}),
@@ -108,7 +105,6 @@ export const updateAccommodation = authProcedure
 	});
 
 export const deleteAccommodation = authProcedure
-	.use(requireAuth)
 	.input(z.object({ id: z.string() }))
 	.output(z.object({ success: z.boolean() }))
 	.handler(async ({ input, context }) => {
@@ -118,7 +114,6 @@ export const deleteAccommodation = authProcedure
 	});
 
 export const getSuggestedAccommodationDates = authProcedure
-	.use(requireAuth)
 	.input(z.object({ travelId: z.string() }))
 	.output(
 		z

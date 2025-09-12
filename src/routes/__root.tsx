@@ -6,11 +6,12 @@ import {
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 
-import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import { TopbarMenu } from "../components/ui/topbar-menu";
+import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 
 import appCss from "../styles.css?url";
 
+import { Toaster } from "@/components/ui/sonner";
 import type { QueryClient } from "@tanstack/react-query";
 
 interface MyRouterContext {
@@ -51,6 +52,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			<body>
 				<TopbarMenu />
 				{children}
+				<Toaster />
 				<TanstackDevtools
 					config={{
 						position: "bottom-left",

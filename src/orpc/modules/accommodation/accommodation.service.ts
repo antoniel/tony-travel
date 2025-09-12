@@ -16,6 +16,12 @@ export function validateAccommodationDates(
 			accommodationErrors,
 			"ACCOMMODATION_DATES_INVALID",
 			"Data de check-in deve ser anterior à data de check-out",
+			{
+				startDate: startDate.toISOString(),
+				endDate: endDate.toISOString(),
+				travelStartDate: travelStartDate.toISOString(),
+				travelEndDate: travelEndDate.toISOString(),
+			},
 		);
 	}
 
@@ -24,6 +30,12 @@ export function validateAccommodationDates(
 			accommodationErrors,
 			"ACCOMMODATION_DATES_INVALID",
 			"Check-in não pode ser anterior ao início da viagem",
+			{
+				startDate: startDate.toISOString(),
+				endDate: endDate.toISOString(),
+				travelStartDate: travelStartDate.toISOString(),
+				travelEndDate: travelEndDate.toISOString(),
+			},
 		);
 	}
 
@@ -32,6 +44,12 @@ export function validateAccommodationDates(
 			accommodationErrors,
 			"ACCOMMODATION_DATES_INVALID",
 			"Check-out não pode ser posterior ao fim da viagem",
+			{
+				startDate: startDate.toISOString(),
+				endDate: endDate.toISOString(),
+				travelStartDate: travelStartDate.toISOString(),
+				travelEndDate: travelEndDate.toISOString(),
+			},
 		);
 	}
 	return AppResult.success(true);
@@ -43,35 +61,6 @@ export function calculateAccommodationDuration(
 ): number {
 	const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
 	return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-}
-
-export async function checkAccommodationOverlap(
-	accommodationDAO: AccommodationDAO,
-	travelId: string,
-	newStartDate: Date,
-	newEndDate: Date,
-	excludeId?: string,
-): Promise<{ hasOverlap: boolean; conflictingAccommodation?: Accommodation }> {
-	const existingAccommodations =
-		await accommodationDAO.getAccommodationsByTravel(travelId);
-
-	const conflicting = existingAccommodations.find((acc) => {
-		if (excludeId && acc.id === excludeId) return false;
-
-		const accStart = new Date(acc.startDate);
-		const accEnd = new Date(acc.endDate);
-
-		return (
-			(newStartDate >= accStart && newStartDate < accEnd) ||
-			(newEndDate > accStart && newEndDate <= accEnd) ||
-			(newStartDate <= accStart && newEndDate >= accEnd)
-		);
-	});
-
-	return {
-		hasOverlap: !!conflicting,
-		conflictingAccommodation: conflicting,
-	};
 }
 
 export async function createAccommodationService(
@@ -107,22 +96,6 @@ export async function createAccommodationService(
 		return validation;
 	}
 
-	const overlapCheck = await checkAccommodationOverlap(
-		accommodationDAO,
-		travelId,
-		new Date(accommodation.startDate),
-		new Date(accommodation.endDate),
-	);
-
-	if (overlapCheck.hasOverlap) {
-		return AppResult.success({
-			id: "",
-			hasOverlap: true,
-			conflictingAccommodation: overlapCheck.conflictingAccommodation || null,
-			validationError: "Existe conflito com uma acomodação existente",
-		});
-	}
-
 	const accommodationData = {
 		...accommodation,
 		travelId,
@@ -144,7 +117,6 @@ export async function updateAccommodationService(
 ): Promise<
 	AppResult<{
 		success: boolean;
-		hasOverlap: boolean;
 		conflictingAccommodation: Accommodation | null;
 		validationError: string | null;
 	}>
@@ -153,43 +125,15 @@ export async function updateAccommodationService(
 	if (!currentAccommodation) {
 		return AppResult.success({
 			success: false,
-			hasOverlap: false,
 			conflictingAccommodation: null,
 			validationError: "Acomodação não encontrada",
 		});
-	}
-
-	if (accommodation.startDate || accommodation.endDate) {
-		const newStartDate = accommodation.startDate
-			? new Date(accommodation.startDate)
-			: new Date(currentAccommodation.startDate);
-		const newEndDate = accommodation.endDate
-			? new Date(accommodation.endDate)
-			: new Date(currentAccommodation.endDate);
-
-		const overlapCheck = await checkAccommodationOverlap(
-			accommodationDAO,
-			currentAccommodation.travelId,
-			newStartDate,
-			newEndDate,
-			id,
-		);
-
-		if (overlapCheck.hasOverlap) {
-			return AppResult.success({
-				success: false,
-				hasOverlap: true,
-				conflictingAccommodation: overlapCheck.conflictingAccommodation || null,
-				validationError: "Existe conflito com uma acomodação existente",
-			});
-		}
 	}
 
 	await accommodationDAO.updateAccommodation(id, accommodation);
 
 	return AppResult.success({
 		success: true,
-		hasOverlap: false,
 		conflictingAccommodation: null,
 		validationError: null,
 	});

@@ -69,7 +69,11 @@ export function AccommodationModal({
 	});
 
 	const createAccommodationMutation = useMutation(
-		orpc.accommodationRoutes.createAccommodation.mutationOptions(),
+		orpc.accommodationRoutes.createAccommodation.mutationOptions({
+			onError: (error) => {
+				toast.error(error.message);
+			},
+		}),
 	);
 
 	const onSubmit = async (data: FormData) => {
@@ -86,7 +90,7 @@ export function AccommodationModal({
 				return;
 			}
 
-			if (result.hasOverlap && result.conflictingAccommodation) {
+			if (result.conflictingAccommodation) {
 				toast.error(
 					`Existe conflito com a acomodação "${result.conflictingAccommodation.name}"`,
 				);
@@ -109,7 +113,6 @@ export function AccommodationModal({
 			}
 		} catch (error) {
 			console.error("Error creating accommodation:", error);
-			toast.error("Erro ao criar acomodação");
 		} finally {
 			setIsSubmitting(false);
 		}

@@ -1,5 +1,4 @@
 import * as z from "zod";
-export { OpenAPIV3_1 as OpenAPI } from "openapi-types";
 
 export type accommodationErrors = typeof accommodationErrors;
 export const accommodationErrors = {
@@ -11,7 +10,12 @@ export const accommodationErrors = {
 	},
 	ACCOMMODATION_DATES_INVALID: {
 		message: "Accommodation dates are invalid",
-		data: z.object({}),
+		data: z.object({
+			startDate: z.string(),
+			endDate: z.string(),
+			travelStartDate: z.string(),
+			travelEndDate: z.string(),
+		}),
 	},
 	ACCOMMODATION_DATES_OUTSIDE_TRAVEL: {
 		message: "Accommodation dates are outside travel period",

@@ -34,7 +34,9 @@ describe("accommodation routes", () => {
 					accommodation: invalidAccommodation,
 					travelId: travel.id,
 				}),
-			).rejects.toThrow("Data de check-in deve ser anterior à data de check-out");
+			).rejects.toThrow(
+				"Data de check-in deve ser anterior à data de check-out",
+			);
 		});
 
 		it("throws validation error when accommodation dates are outside travel dates", async () => {
@@ -87,7 +89,6 @@ describe("accommodation routes", () => {
 			);
 
 			expect(result.id).toBeTruthy();
-			expect(result.hasOverlap).toBe(false);
 			expect(result.conflictingAccommodation).toBeNull();
 			expect(result.validationError).toBeNull();
 		});
@@ -128,7 +129,6 @@ describe("accommodation routes", () => {
 			);
 
 			expect(result.id).toBe("");
-			expect(result.hasOverlap).toBe(true);
 			expect(result.conflictingAccommodation).toBeTruthy();
 			expect(result.validationError).toBe(
 				"Existe conflito com uma acomodação existente",
@@ -267,7 +267,6 @@ describe("accommodation routes", () => {
 			);
 
 			expect(result.success).toBe(true);
-			expect(result.hasOverlap).toBe(false);
 			expect(result.conflictingAccommodation).toBeNull();
 			expect(result.validationError).toBeNull();
 
@@ -296,7 +295,6 @@ describe("accommodation routes", () => {
 			);
 
 			expect(result.success).toBe(false);
-			expect(result.hasOverlap).toBe(false);
 			expect(result.conflictingAccommodation).toBeNull();
 			expect(result.validationError).toBe("Acomodação não encontrada");
 		});
@@ -345,7 +343,6 @@ describe("accommodation routes", () => {
 			);
 
 			expect(result.success).toBe(false);
-			expect(result.hasOverlap).toBe(true);
 			expect(result.conflictingAccommodation).toBeTruthy();
 			expect(result.validationError).toBe(
 				"Existe conflito com uma acomodação existente",
