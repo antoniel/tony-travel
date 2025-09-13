@@ -105,7 +105,7 @@ export async function createTravelService(
 			return AppResult.failure(
 				travelErrors,
 				"TRAVEL_MEMBER_CREATION_FAILED",
-				"Falha ao criar membro da viagem",
+				`Falha ao criar membro da viagem ${errorMessage}`,
 				{
 					travelId: "",
 					userId,

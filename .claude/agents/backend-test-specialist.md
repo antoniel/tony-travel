@@ -35,7 +35,7 @@ TESTING ARCHITECTURE PRINCIPLES
 - **Clear Purpose**: Each test must validate an essential domain aspect or business rule. Never write tests "just to write them"
 - **oRPC-First**: Exercise use cases via oRPC procedures (`createAppCall`/`createAppCallAuthenticated`) - avoid operating only via DB when oRPC equivalent exists
 - **FK-First Seeding**: Always create parent entities (foreign keys) before child entities. Example: `User` → `Travel` → `Flight` → `FlightParticipant`
-- **Test Isolation**: Use in-memory database per suite with `getFakeDb()` (Vitest `beforeAll`). No dependency on test execution order
+- **Test Isolation**: Use in-memory database per suite with `getFakeDb()` (Vitest `beforeEach`). No dependency on test execution order
 - **Authentication**: For protected routes, use `createAppCallAuthenticated` with `AUTH_TEST_HEADERS`/`ALWAYS_USER_TEST`
 - **TODO Implementation Priority**: When encountering TODO comments in code during testing:
   - **STOP**: Halt test modification immediately
@@ -56,11 +56,11 @@ TESTING ARCHITECTURE PRINCIPLES
 **Suggested Flow (model)**
 
 1. **Arrange**
-   - `const db = await getFakeDb()` in `beforeAll`
+   - `const db = await getFakeDb()` in `beforeEach`
    - Generate stubs with `testStub.*`
    - Insert FK parents directly (e.g., `db.insert(Travel).values(travelStub).returning({ id })`)
 
-2. **Act** 
+2. **Act**
    - Invoke oRPC procedure under test with `createAppCall`/`createAppCallAuthenticated`
 
 3. **Assert**
@@ -73,11 +73,11 @@ TESTING ARCHITECTURE PRINCIPLES
 import { Travel } from "@/lib/db/schema"
 import router from "@/orpc/router"
 import { ALWAYS_USER_TEST, createAppCallAuthenticated, getFakeDb, testStub } from "@/tests/utils"
-import { beforeAll, describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it } from "vitest"
 
 describe("invitation system", () => {
   let db
-  beforeAll(async () => {
+  beforeEach(async () => {
     db = await getFakeDb()
   })
 
@@ -103,24 +103,28 @@ describe("invitation system", () => {
 **TESTING DOMAIN FOCUS AREAS**
 
 **Business Logic Validation**
+
 - Test domain rules and invariants (e.g., date validation, conflict detection)
 - Verify entity relationships and constraints
 - Test calculation logic and data transformations
 - Validate business workflow states
 
 **API Contract Testing**
+
 - Input validation with valid/invalid data
 - Output schema compliance
 - Error response formats and codes
 - Authentication/authorization requirements
 
 **Data Layer Testing**
+
 - Entity creation with proper relationships
 - Update operations with conflict detection
 - Deletion with cascade behavior
 - Query operations with filtering/sorting
 
 **Error Handling Testing**
+
 - Service layer `AppResult<T>` error responses
 - Route layer error throwing and translation
 - Validation error scenarios
@@ -129,7 +133,7 @@ describe("invitation system", () => {
 **ANTI-PATTERNS TO AVOID**
 
 - Calling DAOs directly to validate high-level behavior when oRPC procedures exist
-- Creating test data manually when stubs and builders are available  
+- Creating test data manually when stubs and builders are available
 - Tests that only mirror implementation without checking business rules
 - Implicit dependency on other tests for state setup
 - **CRITICAL**: Modifying tests to accommodate incomplete code (TODOs) instead of implementing missing functionality
@@ -176,19 +180,22 @@ Before completing any test suite:
 **DOMAIN-SPECIFIC TESTING GUIDANCE**
 
 **Invitation System Tests**
+
 - Test invite link generation and uniqueness
 - Verify token expiration logic
 - Test membership creation and role assignment
 - Validate duplicate invitation handling
 - Test permission-based access control
 
-**Travel Management Tests**  
+**Travel Management Tests**
+
 - Test travel creation with owner membership
 - Verify member addition/removal logic
 - Test authorization for travel operations
 - Validate travel data relationships
 
 **Integration Tests**
+
 - Test end-to-end user invitation flow
 - Verify cross-domain business rules
 - Test transaction boundaries and rollback scenarios

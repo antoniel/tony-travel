@@ -97,7 +97,7 @@ export const createExample = os.input(CreateExampleSchema).handler(/* ... */)
 TESTING (Vitest + oRPC/Drizzle)
 
 - Purposeful tests that exercise business rules via oRPC (createAppCall/createAppCallAuthenticated)
-- Isolation: use `getFakeDb()` per suite (beforeAll); seed FK parents first
+- Isolation: use `getFakeDb()` per suite (beforeEach); seed FK parents first
 - Auth: for protected routes use `createAppCallAuthenticated` with provided test headers/users
 - Do not adapt tests to incomplete implementations (TODOs). Instead, signal gaps and implement missing behavior first
 - Prefer stubs/builders (`testStub.*`) and AAA structure; assert domain invariants and relationships
@@ -106,11 +106,11 @@ TESTING (Vitest + oRPC/Drizzle)
 ```ts
 import router from "@/orpc/router"
 import { getFakeDb, createAppCallAuthenticated, testStub, ALWAYS_USER_TEST } from "@/tests/utils"
-import { beforeAll, describe, it, expect } from "vitest"
+import { beforeEach, describe, it, expect } from "vitest"
 
 describe("example", () => {
   let db
-  beforeAll(async () => {
+  beforeEach(async () => {
     db = await getFakeDb()
   })
 

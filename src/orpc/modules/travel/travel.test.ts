@@ -3,24 +3,24 @@ import type { DB } from "@/lib/db/types";
 import router from "@/orpc/router";
 import {
 	ALWAYS_USER_TEST,
-	createAppCallAuthenticated,
 	createAppCall,
+	createAppCallAuthenticated,
 	getFakeDb,
 	testStub,
 } from "@/tests/utils";
-import { beforeAll, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 describe("travel service", () => {
 	let db: DB;
-	
-	beforeAll(async () => {
+
+	beforeEach(async () => {
 		db = await getFakeDb();
 	});
 
 	describe("createTravel", () => {
 		it("should create travel and automatically add creator as owner member", async () => {
 			const appCall = createAppCallAuthenticated(db);
-			
+
 			const travelStub = testStub.travel();
 			const travelInput = {
 				name: travelStub.name,
@@ -53,7 +53,7 @@ describe("travel service", () => {
 
 		it("should reject travel with start date in the past", async () => {
 			const appCall = createAppCallAuthenticated(db);
-			
+
 			const travelStub = testStub.travel();
 			const travelInput = {
 				name: travelStub.name,
@@ -69,13 +69,13 @@ describe("travel service", () => {
 			await expect(
 				appCall(router.travelRoutes.saveTravel, {
 					travel: travelInput,
-				})
+				}),
 			).rejects.toThrow();
 		});
 
 		it("should reject travel with start date after end date", async () => {
 			const appCall = createAppCallAuthenticated(db);
-			
+
 			const travelStub = testStub.travel();
 			const travelInput = {
 				name: travelStub.name,
@@ -91,19 +91,19 @@ describe("travel service", () => {
 			await expect(
 				appCall(router.travelRoutes.saveTravel, {
 					travel: travelInput,
-				})
+				}),
 			).rejects.toThrow();
 		});
 
 		it("should create travel with accommodations atomically", async () => {
 			const appCall = createAppCallAuthenticated(db);
-			
+
 			const travelStub = testStub.travel();
 			const accommodationStub = testStub.accommodation();
-			
+
 			const startDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
 			const endDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-			
+
 			const travelInput = {
 				name: travelStub.name,
 				destination: travelStub.destination,
@@ -111,11 +111,13 @@ describe("travel service", () => {
 				endDate,
 				locationInfo: travelStub.locationInfo,
 				visaInfo: travelStub.visaInfo,
-				accommodations: [{
-					...accommodationStub,
-					startDate,
-					endDate,
-				}],
+				accommodations: [
+					{
+						...accommodationStub,
+						startDate,
+						endDate,
+					},
+				],
 				events: [],
 			};
 
@@ -125,7 +127,7 @@ describe("travel service", () => {
 
 			expect(result.id).toBeDefined();
 
-			// Verify travel was created  
+			// Verify travel was created
 			const travel = await appCall(router.travelRoutes.getTravel, {
 				id: result.id,
 			});
@@ -138,7 +140,7 @@ describe("travel service", () => {
 	describe("getTravel", () => {
 		it("should return travel with user membership for authenticated user", async () => {
 			const appCall = createAppCallAuthenticated(db);
-			
+
 			// Create travel first
 			const travelStub = testStub.travel();
 			const [travel] = await db
@@ -165,7 +167,7 @@ describe("travel service", () => {
 
 		it("should return travel without membership for unauthenticated user", async () => {
 			const appCall = createAppCall(db);
-			
+
 			// Create travel first
 			const travelStub = testStub.travel();
 			const [travel] = await db
@@ -188,7 +190,7 @@ describe("travel service", () => {
 			await expect(
 				appCall(router.travelRoutes.getTravel, {
 					id: "non-existent-id",
-				})
+				}),
 			).rejects.toThrow();
 		});
 	});
@@ -196,7 +198,7 @@ describe("travel service", () => {
 	describe("getTravelMembers", () => {
 		it("should return members for travel owner", async () => {
 			const appCall = createAppCallAuthenticated(db);
-			
+
 			// Create travel first
 			const travelStub = testStub.travel();
 			const [travel] = await db
@@ -223,7 +225,7 @@ describe("travel service", () => {
 
 		it("should return members for travel member", async () => {
 			const appCall = createAppCallAuthenticated(db);
-			
+
 			// Create travel first
 			const travelStub = testStub.travel();
 			const [travel] = await db
@@ -250,7 +252,7 @@ describe("travel service", () => {
 
 		it("should throw error for unauthorized user", async () => {
 			const appCall = createAppCallAuthenticated(db);
-			
+
 			// Create travel without membership for test user
 			const travelStub = testStub.travel();
 			const [travel] = await db
@@ -261,7 +263,7 @@ describe("travel service", () => {
 			await expect(
 				appCall(router.travelRoutes.getTravelMembers, {
 					travelId: travel.id,
-				})
+				}),
 			).rejects.toThrow();
 		});
 
@@ -271,7 +273,7 @@ describe("travel service", () => {
 			await expect(
 				appCall(router.travelRoutes.getTravelMembers, {
 					travelId: "non-existent-id",
-				})
+				}),
 			).rejects.toThrow();
 		});
 	});
@@ -279,12 +281,13 @@ describe("travel service", () => {
 	describe("listTravels", () => {
 		it("should return list of travels", async () => {
 			const appCall = createAppCallAuthenticated(db);
-			
+
 			// Create multiple travels
 			const travelStub1 = testStub.travel();
 			const travelStub2 = testStub.travel();
-			
-			await db.insert(Travel).values([travelStub1, travelStub2]);
+
+			await db.insert(Travel).values(travelStub1);
+			await db.insert(Travel).values(travelStub2);
 
 			const result = await appCall(router.travelRoutes.listTravels, {});
 
@@ -297,12 +300,12 @@ describe("travel service", () => {
 	describe("integration with related entities", () => {
 		it("should create travel and allow accommodation creation", async () => {
 			const appCall = createAppCallAuthenticated(db);
-			
+
 			// Create travel with service
 			const travelStub = testStub.travel();
 			const startDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
 			const endDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-			
+
 			const travelInput = {
 				name: travelStub.name,
 				destination: travelStub.destination,

@@ -7,11 +7,11 @@ import {
 	getFakeDb,
 	testStub,
 } from "@/tests/utils";
-import { beforeAll, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 describe("flight", () => {
 	let db: DB;
-	beforeAll(async () => {
+	beforeEach(async () => {
 		db = await getFakeDb();
 	});
 	it("createFlight", async () => {

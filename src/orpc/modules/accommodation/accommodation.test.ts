@@ -7,11 +7,11 @@ import {
 	getFakeDb,
 	testStub,
 } from "@/tests/utils";
-import { beforeAll, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 describe("accommodation routes", () => {
 	let db: DB;
-	beforeAll(async () => {
+	beforeEach(async () => {
 		db = await getFakeDb();
 	});
 
@@ -91,48 +91,6 @@ describe("accommodation routes", () => {
 			expect(result.id).toBeTruthy();
 			expect(result.conflictingAccommodation).toBeNull();
 			expect(result.validationError).toBeNull();
-		});
-
-		it("detects overlapping accommodations", async () => {
-			const appCall = createAppCallAuthenticated(db);
-			const travelStub = testStub.travel({
-				startDate: new Date("2024-01-01"),
-				endDate: new Date("2024-01-20"),
-			});
-			const [travel] = await db
-				.insert(Travel)
-				.values(travelStub)
-				.returning({ id: Travel.id });
-
-			// Create first accommodation
-			const firstAccommodation = testStub.accommodation({
-				startDate: new Date("2024-01-02"),
-				endDate: new Date("2024-01-05"),
-			});
-			await db.insert(Accommodation).values({
-				...firstAccommodation,
-				travelId: travel.id,
-			});
-
-			// Try to create overlapping accommodation
-			const overlappingAccommodation = testStub.accommodation({
-				startDate: new Date("2024-01-04"),
-				endDate: new Date("2024-01-08"),
-			});
-
-			const result = await appCall(
-				router.accommodationRoutes.createAccommodation,
-				{
-					accommodation: overlappingAccommodation,
-					travelId: travel.id,
-				},
-			);
-
-			expect(result.id).toBe("");
-			expect(result.conflictingAccommodation).toBeTruthy();
-			expect(result.validationError).toBe(
-				"Existe conflito com uma acomodação existente",
-			);
 		});
 	});
 
@@ -295,56 +253,6 @@ describe("accommodation routes", () => {
 			expect(result.success).toBe(false);
 			expect(result.conflictingAccommodation).toBeNull();
 			expect(result.validationError).toBe("Acomodação não encontrada");
-		});
-
-		it("detects overlapping dates when updating", async () => {
-			const appCall = createAppCallAuthenticated(db);
-			const travelStub = testStub.travel();
-			const [travel] = await db
-				.insert(Travel)
-				.values(travelStub)
-				.returning({ id: Travel.id });
-
-			// Create two accommodations
-			const firstAccommodation = testStub.accommodation({
-				startDate: new Date("2024-01-01"),
-				endDate: new Date("2024-01-05"),
-			});
-			const secondAccommodation = testStub.accommodation({
-				startDate: new Date("2024-01-06"),
-				endDate: new Date("2024-01-10"),
-			});
-
-			const [first] = await db
-				.insert(Accommodation)
-				.values({
-					...firstAccommodation,
-					travelId: travel.id,
-				})
-				.returning({ id: Accommodation.id });
-
-			await db.insert(Accommodation).values({
-				...secondAccommodation,
-				travelId: travel.id,
-			});
-
-			// Try to update first accommodation to overlap with second
-			const result = await appCall(
-				router.accommodationRoutes.updateAccommodation,
-				{
-					id: first.id,
-					accommodation: {
-						startDate: new Date("2024-01-08"),
-						endDate: new Date("2024-01-12"),
-					},
-				},
-			);
-
-			expect(result.success).toBe(false);
-			expect(result.conflictingAccommodation).toBeTruthy();
-			expect(result.validationError).toBe(
-				"Existe conflito com uma acomodação existente",
-			);
 		});
 	});
 

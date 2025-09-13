@@ -169,25 +169,24 @@ function FlightsPage() {
 		orpc.flightRoutes.getFlightsByTravel.queryOptions({ input: { travelId } }),
 	);
 
+	// Fetch travel members
+	const membersQuery = useQuery(
+		orpc.invitationRoutes.getTravelMembers.queryOptions({ input: { travelId } }),
+	);
+
 	// Delete flight mutation
 	const deleteFlightMutation = useMutation(
 		orpc.flightRoutes.deleteFlight.mutationOptions(),
 	);
 
-	// Mock members data - in real app this would come from travel members API
-	const mockMembers = [
-		{ id: "user1", name: "João Silva", email: "joao@email.com", image: null },
-		{
-			id: "user2",
-			name: "Maria Santos",
-			email: "maria@email.com",
-			image: null,
-		},
-		{ id: "user3", name: "Pedro Costa", email: "pedro@email.com", image: null },
-	];
-
-	const isLoading = flightsQuery.isLoading;
+	const isLoading = flightsQuery.isLoading || membersQuery.isLoading;
 	const flightGroups = flightsQuery.data || [];
+	const members = membersQuery.data?.map(member => ({
+		id: member.user.id,
+		name: member.user.name,
+		email: member.user.email,
+		image: member.user.image,
+	})) || [];
 
 	// Calculate stats
 	const allFlights = flightGroups.flatMap((group) => group.flights);
@@ -245,7 +244,7 @@ function FlightsPage() {
 				isAddFlightOpen={isAddFlightOpen}
 				setIsAddFlightOpen={setIsAddFlightOpen}
 				travelId={travelId}
-				members={mockMembers}
+				members={members}
 			/>
 
 			<FlightWarnings
@@ -273,7 +272,7 @@ function FlightsPage() {
 						<AddOrEditFlightForm
 							flight={editingFlight}
 							travelId={travelId}
-							members={mockMembers}
+							members={members}
 							onClose={() => {
 								setIsEditFlightOpen(false);
 								setEditingFlight(null);

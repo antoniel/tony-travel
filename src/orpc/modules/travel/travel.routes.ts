@@ -5,7 +5,11 @@ import {
 } from "@/lib/db/schema";
 import { startPlanTravel } from "@/lib/planTravel.prompt";
 import { AppResult } from "@/orpc/appResult";
-import { authProcedure, optionalAuthProcedure } from "@/orpc/procedure";
+import {
+	authProcedure,
+	optionalAuthProcedure,
+	travelMemberProcedure,
+} from "@/orpc/procedure";
 import { ORPCError } from "@orpc/client";
 import { os } from "@orpc/server";
 import * as z from "zod";
@@ -14,7 +18,6 @@ import { createTravelDAO } from "./travel.dao";
 import { travelErrors } from "./travel.errors";
 import { type Airport, AirportSchema, InsertFullTravel } from "./travel.model";
 import {
-	checkUserTravelPermissionService,
 	createTravelService,
 	getTravelMembersService,
 	getTravelService,
@@ -116,26 +119,12 @@ export const listTravels = optionalAuthProcedure
 	});
 
 // New routes for travel member management
-export const getTravelMembers = authProcedure
+export const getTravelMembers = travelMemberProcedure
 	.errors(travelErrors)
 	.input(z.object({ travelId: z.string() }))
 	.output(z.array(z.any()))
 	.handler(async ({ input, context }) => {
 		const travelDAO = createTravelDAO(context.db);
-
-		// Check if user has permission to view members
-		const permissionResult = await checkUserTravelPermissionService(
-			travelDAO,
-			input.travelId,
-			context.user.id,
-		);
-
-		if (AppResult.isFailure(permissionResult)) {
-			throw new ORPCError(permissionResult.error.type, {
-				message: permissionResult.error.message,
-				data: permissionResult.error.data,
-			});
-		}
 
 		const result = await getTravelMembersService(travelDAO, input.travelId);
 
