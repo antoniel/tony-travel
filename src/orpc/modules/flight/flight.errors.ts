@@ -1,3 +1,4 @@
+import type { ErrorType } from "@/orpc/appResult";
 import * as z from "zod";
 
 export type flightErrors = typeof flightErrors;
@@ -171,7 +172,7 @@ export const flightErrors = {
 			travelId: z.string(),
 		}),
 	},
-} as const;
+} satisfies ErrorType;
 
 /**
  * Type helper to extract flight error types

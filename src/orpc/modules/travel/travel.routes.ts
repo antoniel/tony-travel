@@ -1,11 +1,6 @@
-import { InsertAppEventSchema, TravelMember } from "@/lib/db/schema";
+import { TravelMember } from "@/lib/db/schema";
 import { startPlanTravel } from "@/lib/planTravel.prompt";
-import { pixabayService } from "@/lib/services/pixabay";
-import {
-	authProcedure,
-	optionalAuthProcedure,
-	travelMemberProcedure,
-} from "@/orpc/procedure";
+import { authProcedure, optionalAuthProcedure } from "@/orpc/procedure";
 import { os } from "@orpc/server";
 import { and, eq } from "drizzle-orm";
 import * as z from "zod";
@@ -85,122 +80,6 @@ export const listTravels = optionalAuthProcedure
 
 		// Se é o próprio usuário ou não especificou, mostra todas
 		return await travelDAO.getAllTravels();
-	});
-
-export const fetchActivityImage = optionalAuthProcedure
-	.input(
-		z.object({
-			eventId: z.string(),
-			title: z.string().min(1),
-			location: z.string().optional(),
-		}),
-	)
-	.output(
-		z.object({
-			success: z.boolean(),
-			imageUrl: z.string().nullable(),
-			metadata: z
-				.object({
-					source: z.enum(["pixabay", "manual"]),
-					tags: z.array(z.string()),
-					photographer: z.string().optional(),
-					fetchedAt: z.date(),
-					pixabayId: z.number().optional(),
-				})
-				.nullable(),
-			imageSizes: z
-				.object({
-					thumbnail: z.object({
-						url: z.string(),
-						width: z.number(),
-						height: z.number(),
-					}),
-					medium: z.object({
-						url: z.string(),
-						width: z.number(),
-						height: z.number(),
-					}),
-					large: z.object({
-						url: z.string(),
-						width: z.number(),
-						height: z.number(),
-					}),
-				})
-				.optional(),
-			error: z.string().optional(),
-		}),
-	)
-	.handler(async ({ input, context }) => {
-		const travelDAO = createTravelDAO(context.db);
-		try {
-			const image = await pixabayService.searchActivityImage(
-				input.title,
-				input.location,
-			);
-
-			if (!image) {
-				return {
-					success: false,
-					error: "No suitable image found",
-					imageUrl: null,
-					metadata: null,
-				};
-			}
-
-			const metadata = pixabayService.createImageMetadata(image);
-			if (input.eventId) {
-				await travelDAO.updateEventImage(
-					input.eventId,
-					image.webformatURL,
-					metadata,
-				);
-			}
-
-			return {
-				success: true,
-				imageUrl: image.webformatURL,
-				metadata,
-				imageSizes: pixabayService.getImageSizes(image),
-			};
-		} catch (error) {
-			console.error("Error fetching activity image:", error);
-			return {
-				success: false,
-				error: "Failed to fetch image",
-				imageUrl: null,
-				metadata: null,
-			};
-		}
-	});
-
-export const updateEventImage = optionalAuthProcedure
-	.input(
-		z.object({
-			eventId: z.string(),
-			imageUrl: z.string(),
-			metadata: z.object({
-				source: z.enum(["pixabay", "manual"]),
-				tags: z.array(z.string()),
-				photographer: z.string().optional(),
-				fetchedAt: z.date(),
-				pixabayId: z.number().optional(),
-			}),
-		}),
-	)
-	.output(z.object({ success: z.boolean() }))
-	.handler(async ({ input, context }) => {
-		const travelDAO = createTravelDAO(context.db);
-		try {
-			await travelDAO.updateEventImage(
-				input.eventId,
-				input.imageUrl,
-				input.metadata,
-			);
-			return { success: true };
-		} catch (error) {
-			console.error("Error updating event image:", error);
-			return { success: false };
-		}
 	});
 
 export const searchAirports = os
@@ -357,13 +236,4 @@ export const searchDestinations = os
 		return filteredDestinations
 			.slice(0, limit)
 			.sort((a, b) => a.label.localeCompare(b.label));
-	});
-
-export const createEvent = travelMemberProcedure
-	.input(InsertAppEventSchema)
-	.output(z.object({ id: z.string() }))
-	.handler(async ({ input, context }) => {
-		const travelDAO = createTravelDAO(context.db);
-		const id = await travelDAO.createEvent(input);
-		return { id };
 	});

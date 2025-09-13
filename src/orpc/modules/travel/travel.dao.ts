@@ -1,11 +1,9 @@
 import type { DB } from "@/lib/db/types";
 import {
 	Accommodation,
-	AppEvent,
-	type InsertAppEvent,
 	Travel,
 } from "@/lib/db/schema";
-import type { ImageMetadata, TravelWithRelations } from "@/lib/types";
+import type { TravelWithRelations } from "@/lib/types";
 import { eq } from "drizzle-orm";
 import type * as z from "zod";
 import type { InsertFullTravel } from "./travel.model";
@@ -36,7 +34,7 @@ export class TravelDAO {
 				.values(travelData.accommodations.map((a) => ({ ...a, travelId })));
 		}
 
-		await this.insertEvents(travelData.events, travelId);
+		// Note: Events are now handled by the Event module
 
 		return travelId;
 	}
@@ -76,50 +74,8 @@ export class TravelDAO {
 		return travels;
 	}
 
-	async createEvent(eventData: InsertAppEvent): Promise<string> {
-		const [event] = await this.db
-			.insert(AppEvent)
-			.values(eventData)
-			.returning({ id: AppEvent.id });
 
-		return event.id;
-	}
 
-	async updateEventImage(
-		eventId: string,
-		imageUrl: string,
-		imageMetadata: ImageMetadata,
-	): Promise<void> {
-		await this.db
-			.update(AppEvent)
-			.set({
-				imageUrl,
-				imageMetadata,
-			})
-			.where(eq(AppEvent.id, eventId));
-	}
-
-	private async insertEvents(
-		events: TravelInput["events"],
-		travelId: string,
-		parentEventId?: string,
-	): Promise<void> {
-		for (const event of events) {
-			await this.db
-				.insert(AppEvent)
-				.values({
-					title: event.title,
-					startDate: event.startDate,
-					endDate: event.endDate,
-					estimatedCost: event.estimatedCost,
-					type: event.type,
-					location: event.location,
-					travelId,
-					parentEventId,
-				})
-				.returning({ id: AppEvent.id });
-		}
-	}
 }
 
 export const createTravelDAO = (db: DB) => new TravelDAO(db);

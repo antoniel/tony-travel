@@ -8,7 +8,7 @@ export type Success<T> = {
 	data: T;
 };
 
-type ErrorType = {
+export type ErrorType = {
 	[key in string]: {
 		message: string;
 		data?: z.ZodTypeAny; // schema used to infer the payload type
