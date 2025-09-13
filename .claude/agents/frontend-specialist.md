@@ -21,6 +21,7 @@ Protocolo obrigatório:
 - Stunning sem modinhas: estética moderna, equilibrada, sem abuso de gradientes.
 - Hierarquia e respiro: tipografia clara, espaçamento consistente, agrupamento semântico.
 - Design system primeiro: usar componentes do DS (shadcn/ui). Se faltar, criar componentes reutilizáveis.
+- **CORES SOMENTE DO DESIGN SYSTEM**: JAMAIS criar cores customizadas. SEMPRE usar tokens existentes (text-foreground, text-muted-foreground, primary, secondary, etc.). Se uma cor não existe no DS, questionar a necessidade ou solicitar adição ao DS.
 - Acessibilidade real: navegação por teclado, leitura por leitores de tela, contraste adequado.
 - Dados com segurança: TanStack Query + oRPC utils de `@/orpc/client` em todas as buscas/mutações.
 - SSR/Start: abraçar os padrões do TanStack Start (loaders, server functions, SSR controlado).
@@ -41,7 +42,7 @@ Protocolo obrigatório:
 3. Implementar com guard-rails:
 
 - Formular UX anti-burro (ver seção Guard-rails Anti-burro).
-- Usar DS e tokens. Se necessário, criar componentes reutilizáveis com variantes (CVA).
+- Usar DS e tokens EXCLUSIVAMENTE - verificar que NENHUMA cor customizada foi introduzida. Se necessário, criar componentes reutilizáveis com variantes (CVA) usando apenas cores do DS.
 
 4. Qualidade e acessibilidade:
 
@@ -71,7 +72,7 @@ Protocolo obrigatório:
 - Gradientes: evitar uso excessivo; se usar, sutil e com propósito.
 - Espaçamento: usar escala consistente (tokens); espaço para respiro entre seções.
 - Hierarquia: títulos, subtítulos, rótulos e metas claras; pesos e tamanhos bem proporcionados.
-- Cores: sem hardcode; usar tokens/variantes do DS; contraste AA mínimo.
+- **Cores: PROIBIDO hardcode ou cores customizadas**. OBRIGATÓRIO usar exclusivamente tokens do design system (text-*, bg-*, border-*, ring-*). Contraste AA mínimo. Se precisar de nova cor, PARAR e questionar necessidade.
 - Movimentos: transições curtas (`transition-all duration-200`) e microinterações discretas.
 - Vazio e erro: estados projetados, não improvisados; textos curtos com ação primária.
 
@@ -177,6 +178,7 @@ UI/UX
 - [ ] Fluxos destrutivos com confirmação e possibilidade de undo.
 - [ ] Microcópia clara e objetiva; placeholders e dicas úteis.
 - [ ] Hierarquia visual consistente; espaçamento respirável; sem gradiente exagerado.
+- [ ] **ZERO cores customizadas** - apenas tokens do design system verificados.
 
 Dados e Integração
 

@@ -3,7 +3,7 @@ import {
 	InsertAccommodationSchema,
 } from "@/lib/db/schema";
 import { AppResult } from "@/orpc/appResult";
-import { authProcedure, baseProcedure } from "@/orpc/procedure";
+import { authProcedure, baseProcedure, travelMemberProcedure } from "@/orpc/procedure";
 import { ORPCError } from "@orpc/client";
 import * as z from "zod";
 import { createTravelDAO } from "../travel/travel.dao";
@@ -15,7 +15,7 @@ import {
 	updateAccommodationService,
 } from "./accommodation.service";
 
-export const createAccommodation = authProcedure
+export const createAccommodation = travelMemberProcedure
 	.errors(accommodationErrors)
 	.input(
 		z.object({

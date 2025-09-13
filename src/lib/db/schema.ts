@@ -18,6 +18,8 @@ const prefixes = {
 	event: "evt",
 	flight: "flt",
 	flightParticipant: "flp",
+	travelMember: "trm",
+	invitation: "inv",
 } as const;
 const defaultColumn = (prefix: keyof typeof prefixes) => ({
 	id: text("id")
@@ -125,6 +127,8 @@ export const TravelRelations = relations(Travel, ({ many }) => ({
 	accommodations: many(Accommodation),
 	events: many(AppEvent),
 	flights: many(Flight),
+	members: many(TravelMember),
+	invitations: many(TravelInvitation),
 }));
 
 export type Accommodation = typeof Accommodation.$inferSelect;
@@ -245,3 +249,60 @@ export const flightParticipantRelations = relations(
 		}),
 	}),
 );
+
+export type TravelMember = typeof TravelMember.$inferSelect;
+export type InsertTravelMember = typeof TravelMember.$inferInsert;
+export const TravelMember = sqliteTable("travel_member", {
+	...defaultColumn("travelMember"),
+	travelId: text("travel_id")
+		.notNull()
+		.references(() => Travel.id, { onDelete: "cascade" }),
+	userId: text("user_id")
+		.notNull()
+		.references(() => User.id, { onDelete: "cascade" }),
+	role: text("role", { enum: ["owner", "member"] }).notNull(),
+	joinedAt: integer("joined_at", { mode: "timestamp" })
+		.$defaultFn(() => new Date())
+		.notNull(),
+});
+export const TravelMemberSchema = createSelectSchema(TravelMember);
+export const InsertTravelMemberSchema = createInsertSchema(TravelMember);
+export const travelMemberRelations = relations(TravelMember, ({ one }) => ({
+	travel: one(Travel, {
+		fields: [TravelMember.travelId],
+		references: [Travel.id],
+	}),
+	user: one(User, {
+		fields: [TravelMember.userId],
+		references: [User.id],
+	}),
+}));
+
+export type TravelInvitation = typeof TravelInvitation.$inferSelect;
+export type InsertTravelInvitation = typeof TravelInvitation.$inferInsert;
+export const TravelInvitation = sqliteTable("travel_invitation", {
+	...defaultColumn("invitation"),
+	travelId: text("travel_id")
+		.notNull()
+		.references(() => Travel.id, { onDelete: "cascade" }),
+	createdBy: text("created_by")
+		.notNull()
+		.references(() => User.id, { onDelete: "cascade" }),
+	token: text("token").notNull().unique(),
+	isActive: integer("is_active", { mode: "boolean" })
+		.$defaultFn(() => true)
+		.notNull(),
+	expiresAt: integer("expires_at", { mode: "timestamp" }),
+});
+export const TravelInvitationSchema = createSelectSchema(TravelInvitation);
+export const InsertTravelInvitationSchema = createInsertSchema(TravelInvitation);
+export const travelInvitationRelations = relations(TravelInvitation, ({ one }) => ({
+	travel: one(Travel, {
+		fields: [TravelInvitation.travelId],
+		references: [Travel.id],
+	}),
+	createdByUser: one(User, {
+		fields: [TravelInvitation.createdBy],
+		references: [User.id],
+	}),
+}));

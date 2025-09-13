@@ -1,8 +1,13 @@
-import { InsertAppEventSchema } from "@/lib/db/schema";
+import { InsertAppEventSchema, TravelMember } from "@/lib/db/schema";
 import { startPlanTravel } from "@/lib/planTravel.prompt";
 import { pixabayService } from "@/lib/services/pixabay";
-import { authProcedure, optionalAuthProcedure } from "@/orpc/procedure";
+import {
+	authProcedure,
+	optionalAuthProcedure,
+	travelMemberProcedure,
+} from "@/orpc/procedure";
 import { os } from "@orpc/server";
+import { and, eq } from "drizzle-orm";
 import * as z from "zod";
 import enhancedAirports from "./enhanced-airports.json";
 import { createTravelDAO } from "./travel.dao";
@@ -47,13 +52,18 @@ export const getTravel = optionalAuthProcedure
 			throw new Error("Travel not found");
 		}
 
-		// Se não estiver logado ou não for o owner, só pode ver travels públicas
-		if (!context.user || travel.userId !== context.user.id) {
-			// Aqui você pode implementar lógica para travels públicas/privadas
-			// Por agora, vamos permitir visualizar todos
+		// Add membership info if user is logged in
+		if (context.user) {
+			const membership = await context.db.query.TravelMember.findFirst({
+				where: and(
+					eq(TravelMember.travelId, input.id),
+					eq(TravelMember.userId, context.user.id),
+				),
+			});
+			return { ...travel, userMembership: membership };
 		}
 
-		return travel;
+		return { ...travel, userMembership: null };
 	});
 
 export const listTravels = optionalAuthProcedure
@@ -349,12 +359,11 @@ export const searchDestinations = os
 			.sort((a, b) => a.label.localeCompare(b.label));
 	});
 
-export const createEvent = authProcedure
+export const createEvent = travelMemberProcedure
 	.input(InsertAppEventSchema)
 	.output(z.object({ id: z.string() }))
 	.handler(async ({ input, context }) => {
 		const travelDAO = createTravelDAO(context.db);
-		// TODO: Verificar se o usuário tem permissão para criar evento no travel
 		const id = await travelDAO.createEvent(input);
 		return { id };
 	});

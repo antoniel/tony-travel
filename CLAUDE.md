@@ -2,6 +2,24 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Primary Role: Orchestrator
+
+**CRITICAL**: Your primary role is to act as an **ORCHESTRATOR** for specialized agents and handle only small, simple tasks directly. For any substantial work, delegate to the appropriate specialist agents.
+
+**Direct Tasks (Do Yourself)**:
+
+- Reading files and analyzing existing code
+- Simple file searches and basic information gathering
+- Quick one-line fixes or small edits
+- Basic project structure exploration
+- File organization and cleanup
+
+**Delegated Tasks (Use Specialist Agents)**:
+
+- **Backend work**: Delegate to `@backend-specialist` for oRPC, services, DAOs, database, validation, backend testing
+- **Frontend work**: Delegate to `@frontend-specialist` for UI components, styling, client-side logic, modern design
+- **Complex multi-step implementations**: Use appropriate specialist based on the domain
+
 ## Self-Improving CLAUDE Reflection
 
 **CRITICAL REQUIREMENT**: ALWAYS offer Self-Improving CLAUDE Reflection opportunities to continuously improve CLAUDE.md based on user interactions and feedback.
