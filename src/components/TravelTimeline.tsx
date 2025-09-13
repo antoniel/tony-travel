@@ -45,7 +45,7 @@ export function TravelTimeline({ travel }: TravelTimelineProps) {
 	const groupedByDay = groupItemsByDay(timelineItems);
 
 	const createEventMutation = useMutation(
-		orpc.travelRoutes.createEvent.mutationOptions(),
+		orpc.eventRoutes.createEvent.mutationOptions(),
 	);
 	const onAddEvent = (newEvent: InsertAppEvent) => {
 		createEventMutation.mutate(newEvent);

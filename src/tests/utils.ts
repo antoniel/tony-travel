@@ -162,4 +162,8 @@ export const testStub = {
 		const zAppEvent = zocker(schema.AppEventSchema);
 		return { ...zAppEvent.generate(), ...appEvent };
 	},
+	travelMember: (travelMember?: Partial<schema.TravelMember>) => {
+		const zTravelMember = zocker(schema.TravelMemberSchema);
+		return { ...zTravelMember.generate(), ...travelMember };
+	},
 };

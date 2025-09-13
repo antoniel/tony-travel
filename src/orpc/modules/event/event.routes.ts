@@ -1,10 +1,9 @@
 import { AppResult } from "@/orpc/appResult";
 import { optionalAuthProcedure, travelMemberProcedure } from "@/orpc/procedure";
-import { AppError } from "@orpc/server";
+import { ORPCError } from "@orpc/client";
 import * as z from "zod";
 import { createTravelDAO } from "../travel/travel.dao";
 import { createEventDAO } from "./event.dao";
-import { eventErrors } from "./event.errors";
 import {
 	CreateEventInputSchema,
 	CreateEventOutputSchema,
@@ -34,7 +33,10 @@ export const createEvent = travelMemberProcedure
 		const result = await createEventService(eventDAO, travelDAO, input);
 
 		if (AppResult.isFailure(result)) {
-			throw new AppError(result.error.code, result.error.message, result.error.data);
+			throw new ORPCError(result.error.type, {
+				message: result.error.message,
+				data: result.error.data,
+			});
 		}
 
 		return result.data;
@@ -52,7 +54,10 @@ export const fetchActivityImage = optionalAuthProcedure
 		const result = await fetchActivityImageService(eventDAO, input);
 
 		if (AppResult.isFailure(result)) {
-			throw new AppError(result.error.code, result.error.message, result.error.data);
+			throw new ORPCError(result.error.type, {
+				message: result.error.message,
+				data: result.error.data,
+			});
 		}
 
 		return result.data;
@@ -70,7 +75,10 @@ export const updateEventImage = optionalAuthProcedure
 		const result = await updateEventImageService(eventDAO, input);
 
 		if (AppResult.isFailure(result)) {
-			throw new AppError(result.error.code, result.error.message, result.error.data);
+			throw new ORPCError(result.error.type, {
+				message: result.error.message,
+				data: result.error.data,
+			});
 		}
 
 		return result.data;
@@ -87,7 +95,10 @@ export const getEvent = optionalAuthProcedure
 		const result = await getEventService(eventDAO, input.id);
 
 		if (AppResult.isFailure(result)) {
-			throw new AppError(result.error.code, result.error.message, result.error.data);
+			throw new ORPCError(result.error.type, {
+				message: result.error.message,
+				data: result.error.data,
+			});
 		}
 
 		return result.data;
@@ -102,10 +113,17 @@ export const getEventsByTravel = optionalAuthProcedure
 		const eventDAO = createEventDAO(context.db);
 		const travelDAO = createTravelDAO(context.db);
 
-		const result = await getEventsByTravelService(eventDAO, travelDAO, input.travelId);
+		const result = await getEventsByTravelService(
+			eventDAO,
+			travelDAO,
+			input.travelId,
+		);
 
 		if (AppResult.isFailure(result)) {
-			throw new AppError(result.error.code, result.error.message, result.error.data);
+			throw new ORPCError(result.error.type, {
+				message: result.error.message,
+				data: result.error.data,
+			});
 		}
 
 		return result.data;

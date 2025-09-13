@@ -12,7 +12,7 @@ import type {
 export class InvitationService {
 	private invitationDAO: ReturnType<typeof createInvitationDAO>;
 
-	constructor(private readonly db: DB) {
+	constructor(db: DB) {
 		this.invitationDAO = createInvitationDAO(db);
 	}
 
@@ -49,7 +49,10 @@ export class InvitationService {
 		};
 	}
 
-	async acceptInvite(token: string, userId: string): Promise<AcceptInviteResponse> {
+	async acceptInvite(
+		token: string,
+		userId: string,
+	): Promise<AcceptInviteResponse> {
 		const invitation = await this.invitationDAO.getInvitationByToken(token);
 
 		if (!invitation) {
@@ -113,7 +116,10 @@ export class InvitationService {
 		userId: string,
 		requestorRole: string,
 	): Promise<{ success: boolean; message?: string }> {
-		const targetMember = await this.invitationDAO.getTravelMember(travelId, userId);
+		const targetMember = await this.invitationDAO.getTravelMember(
+			travelId,
+			userId,
+		);
 
 		if (!targetMember) {
 			return { success: false, message: "Member not found" };
@@ -127,10 +133,15 @@ export class InvitationService {
 			return { success: false, message: "Only owners can remove members" };
 		}
 
-		const removed = await this.invitationDAO.removeTravelMember(travelId, userId);
+		const removed = await this.invitationDAO.removeTravelMember(
+			travelId,
+			userId,
+		);
 		return {
 			success: removed,
-			message: removed ? "Member removed successfully" : "Failed to remove member",
+			message: removed
+				? "Member removed successfully"
+				: "Failed to remove member",
 		};
 	}
 
@@ -153,13 +164,15 @@ export class InvitationService {
 		if (isExpired) {
 			return {
 				isValid: false,
-				travel: invitation.travel ? {
-					id: invitation.travel.id,
-					name: invitation.travel.name,
-					destination: invitation.travel.destination,
-					startDate: invitation.travel.startDate,
-					endDate: invitation.travel.endDate,
-				} : null,
+				travel: invitation.travel
+					? {
+							id: invitation.travel.id,
+							name: invitation.travel.name,
+							destination: invitation.travel.destination,
+							startDate: invitation.travel.startDate,
+							endDate: invitation.travel.endDate,
+						}
+					: null,
 				isExpired: true,
 				message: "Invite link has expired",
 			};
@@ -167,20 +180,24 @@ export class InvitationService {
 
 		return {
 			isValid: true,
-			travel: invitation.travel ? {
-				id: invitation.travel.id,
-				name: invitation.travel.name,
-				destination: invitation.travel.destination,
-				startDate: invitation.travel.startDate,
-				endDate: invitation.travel.endDate,
-			} : null,
+			travel: invitation.travel
+				? {
+						id: invitation.travel.id,
+						name: invitation.travel.name,
+						destination: invitation.travel.destination,
+						startDate: invitation.travel.startDate,
+						endDate: invitation.travel.endDate,
+					}
+				: null,
 			isExpired: false,
 		};
 	}
 
-	async getCurrentInviteLink(travelId: string): Promise<InviteLinkResponse | null> {
+	async getCurrentInviteLink(
+		travelId: string,
+	): Promise<InviteLinkResponse | null> {
 		const invitation = await this.invitationDAO.getActiveInvitation(travelId);
-		
+
 		if (!invitation) {
 			return null;
 		}

@@ -112,6 +112,57 @@ Environment variables are managed through T3 Env in `src/env.ts`:
 - **Client State**: TanStack Store for local application state
 - Query client is configured in TanStack integrations
 
+#### TanStack Query Mutation Patterns
+
+**CRITICAL RULE**: NEVER use `mutateAsync` with try/catch blocks. ALWAYS use `mutate` with side effects in mutation hooks.
+
+**MANDATORY Pattern**:
+```typescript
+// ✅ CORRECT: Use mutate with hooks
+const createItemMutation = useMutation({
+  ...orpc.routes.createItem.mutationOptions(),
+  onSuccess: (result) => {
+    toast.success("Item created successfully!");
+    queryClient.invalidateQueries({ queryKey: [...] });
+    // Handle success side effects
+  },
+  onError: (error) => {
+    toast.error("Failed to create item");
+    console.error("Creation error:", error);
+    // Handle error side effects
+  },
+  onSettled: () => {
+    // Optional: cleanup or final actions
+  },
+});
+
+const handleCreate = () => {
+  createItemMutation.mutate(formData);
+};
+```
+
+**FORBIDDEN Pattern**:
+```typescript
+// ❌ WRONG: Don't use mutateAsync with try/catch
+const handleCreate = async () => {
+  try {
+    const result = await createItemMutation.mutateAsync(formData);
+    toast.success("Success!");
+    queryClient.invalidateQueries({...});
+  } catch (error) {
+    toast.error("Error!");
+  }
+};
+```
+
+**Benefits of Hook-Based Pattern**:
+- Cleaner separation of concerns
+- Better error handling at the mutation level
+- Consistent pattern across all mutations
+- Easier testing and debugging
+- Automatic loading state management
+- No async/await complexity in event handlers
+
 ### Styling
 
 - Tailwind CSS v4 with Vite plugin

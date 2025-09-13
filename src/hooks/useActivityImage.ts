@@ -10,7 +10,7 @@ interface UseActivityImageProps {
 export function useActivityImage({ event, enabled }: UseActivityImageProps) {
 	const shouldFetch = event.type === "activity" && !event.imageUrl;
 	return useQuery({
-		...orpc.travelRoutes.fetchActivityImage.queryOptions({
+		...orpc.eventRoutes.fetchActivityImage.queryOptions({
 			input: {
 				eventId: event.id ?? "",
 				title: event.title,
@@ -22,7 +22,7 @@ export function useActivityImage({ event, enabled }: UseActivityImageProps) {
 }
 useActivityImage.refetch = (queryClient: QueryClient, event: AppEvent) => {
 	queryClient.refetchQueries({
-		queryKey: orpc.travelRoutes.fetchActivityImage.queryKey({
+		queryKey: orpc.eventRoutes.fetchActivityImage.queryKey({
 			input: {
 				eventId: event.id,
 				title: event.title,

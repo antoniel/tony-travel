@@ -1,9 +1,16 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { orpc } from "@/orpc/client";
+import type { InviteLinkResponse } from "@/orpc/modules/invitation/invitation.model";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
 	Copy,
@@ -23,8 +30,8 @@ export function InviteLinkManager({ travelId }: InviteLinkManagerProps) {
 	const queryClient = useQueryClient();
 
 	const currentLinkQuery = useQuery(
-		orpc.invitationRoutes.getCurrentInviteLink.queryOptions({ 
-			input: { travelId } 
+		orpc.invitationRoutes.getCurrentInviteLink.queryOptions({
+			input: { travelId },
 		}),
 	);
 
@@ -36,27 +43,32 @@ export function InviteLinkManager({ travelId }: InviteLinkManagerProps) {
 	const isLoading = currentLinkQuery.isLoading;
 
 	const handleCreateLink = async () => {
-		try {
-			const result = await createLinkMutation.mutateAsync({
+		createLinkMutation.mutate(
+			{
 				travelId,
 				expiresInDays: 7, // Default to 7 days
-			});
-
-			toast.success("Link de convite gerado!", {
-				description: "O link de convite foi criado e está pronto para ser compartilhado.",
-			});
-
-			// Invalidate current link query to refetch
-			queryClient.invalidateQueries(
-				orpc.invitationRoutes.getCurrentInviteLink.queryKey({ 
-					input: { travelId } 
-				}),
-			);
-		} catch (error) {
-			toast.error("Erro ao gerar link", {
-				description: "Não foi possível criar o link de convite. Tente novamente.",
-			});
-		}
+			},
+			{
+				onSuccess: () => {
+					queryClient.invalidateQueries({
+						queryKey: orpc.invitationRoutes.getCurrentInviteLink.queryKey({
+							input: { travelId },
+						}),
+					});
+					toast.success("Link de convite gerado!", {
+						description:
+							"O link de convite foi criado e está pronto para ser compartilhado.",
+					});
+				},
+				onError: (e) => {
+					toast.error("Erro ao gerar link", {
+						description:
+							e.message ||
+							"Não foi possível criar o link de convite. Tente novamente.",
+					});
+				},
+			},
+		);
 	};
 
 	const handleCopyLink = async () => {
@@ -65,16 +77,19 @@ export function InviteLinkManager({ travelId }: InviteLinkManagerProps) {
 		try {
 			await navigator.clipboard.writeText(currentLink.inviteUrl);
 			toast.success("Link copiado!", {
-				description: "O link de convite foi copiado para a área de transferência.",
+				description:
+					"O link de convite foi copiado para a área de transferência.",
 			});
 		} catch (error) {
 			toast.error("Erro ao copiar", {
-				description: "Não foi possível copiar o link. Tente selecionar e copiar manualmente.",
+				description:
+					"Não foi possível copiar o link. Tente selecionar e copiar manualmente.",
 			});
 		}
 	};
 
-	const isExpired = currentLink?.expiresAt && new Date(currentLink.expiresAt) < new Date();
+	const isExpired =
+		currentLink?.expiresAt && new Date(currentLink.expiresAt) < new Date();
 	const isCreating = createLinkMutation.isPending;
 
 	return (
@@ -92,18 +107,15 @@ export function InviteLinkManager({ travelId }: InviteLinkManagerProps) {
 				{isLoading ? (
 					<InviteLinkSkeleton />
 				) : currentLink ? (
-					<ExistingInviteLink 
+					<ExistingInviteLink
 						link={currentLink}
-						isExpired={isExpired}
+						isExpired={isExpired ?? false}
 						onCopy={handleCopyLink}
 						onRegenerate={handleCreateLink}
 						isRegenerating={isCreating}
 					/>
 				) : (
-					<NoInviteLink 
-						onCreate={handleCreateLink}
-						isCreating={isCreating}
-					/>
+					<NoInviteLink onCreate={handleCreateLink} isCreating={isCreating} />
 				)}
 			</CardContent>
 		</Card>
@@ -125,14 +137,14 @@ function InviteLinkSkeleton() {
 	);
 }
 
-function ExistingInviteLink({ 
-	link, 
-	isExpired, 
-	onCopy, 
-	onRegenerate, 
-	isRegenerating 
+function ExistingInviteLink({
+	link,
+	isExpired,
+	onCopy,
+	onRegenerate,
+	isRegenerating,
 }: {
-	link: any;
+	link: InviteLinkResponse;
 	isExpired: boolean;
 	onCopy: () => void;
 	onRegenerate: () => void;
@@ -157,7 +169,11 @@ function ExistingInviteLink({
 						id="invite-link"
 						value={link.inviteUrl}
 						readOnly
-						className={isExpired ? "bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800" : ""}
+						className={
+							isExpired
+								? "bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800"
+								: ""
+						}
 					/>
 					<Button
 						onClick={onCopy}
@@ -170,7 +186,7 @@ function ExistingInviteLink({
 					<Button
 						variant="outline"
 						size="icon"
-						onClick={() => window.open(link.inviteUrl, '_blank')}
+						onClick={() => window.open(link.inviteUrl, "_blank")}
 						disabled={isExpired}
 					>
 						<ExternalLink className="w-4 h-4" />
@@ -179,9 +195,13 @@ function ExistingInviteLink({
 			</div>
 
 			{link.expiresAt && (
-				<div className={`text-sm ${isExpired ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'}`}>
+				<div
+					className={`text-sm ${isExpired ? "text-red-600 dark:text-red-400" : "text-muted-foreground"}`}
+				>
 					{isExpired ? (
-						<span className="font-medium">⚠️ Expirou em {formatExpiryDate(link.expiresAt)}</span>
+						<span className="font-medium">
+							⚠️ Expirou em {formatExpiryDate(link.expiresAt)}
+						</span>
 					) : (
 						<span>Expira em {formatExpiryDate(link.expiresAt)}</span>
 					)}
@@ -198,7 +218,7 @@ function ExistingInviteLink({
 					<Copy className="w-4 h-4 mr-2" />
 					Copiar Link
 				</Button>
-				
+
 				<Button
 					onClick={onRegenerate}
 					variant="outline"
@@ -222,7 +242,8 @@ function ExistingInviteLink({
 			{isExpired && (
 				<div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
 					<p className="text-sm text-red-700 dark:text-red-300">
-						Este link expirou e não pode mais ser usado. Gere um novo link para continuar convidando membros.
+						Este link expirou e não pode mais ser usado. Gere um novo link para
+						continuar convidando membros.
 					</p>
 				</div>
 			)}
@@ -230,7 +251,10 @@ function ExistingInviteLink({
 	);
 }
 
-function NoInviteLink({ onCreate, isCreating }: { onCreate: () => void; isCreating: boolean }) {
+function NoInviteLink({
+	onCreate,
+	isCreating,
+}: { onCreate: () => void; isCreating: boolean }) {
 	return (
 		<div className="text-center py-6">
 			<div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-4">

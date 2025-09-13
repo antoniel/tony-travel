@@ -35,7 +35,11 @@ interface MemberCardProps {
 	currentUserId?: string;
 }
 
-export function MemberCard({ member, currentUserRole, currentUserId }: MemberCardProps) {
+export function MemberCard({
+	member,
+	currentUserRole,
+	currentUserId,
+}: MemberCardProps) {
 	const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
 	const queryClient = useQueryClient();
 
@@ -44,7 +48,8 @@ export function MemberCard({ member, currentUserRole, currentUserId }: MemberCar
 	);
 
 	const isCurrentUser = member.userId === currentUserId;
-	const canRemoveMember = currentUserRole === "owner" && !isCurrentUser && member.role !== "owner";
+	const canRemoveMember =
+		currentUserRole === "owner" && !isCurrentUser && member.role !== "owner";
 
 	const handleRemoveMember = async () => {
 		try {
@@ -55,15 +60,18 @@ export function MemberCard({ member, currentUserRole, currentUserId }: MemberCar
 
 			if (result.success) {
 				toast.success("Membro removido", {
-					description: result.message || "O membro foi removido da viagem com sucesso.",
+					description:
+						result.message || "O membro foi removido da viagem com sucesso.",
 				});
 
 				// Invalidate members query to refetch the list
-				queryClient.invalidateQueries(
-					orpc.invitationRoutes.getTravelMembers.queryKey({
-						input: { travelId: member.travelId }
+				queryClient.invalidateQueries({
+					queryKey: orpc.invitationRoutes.getTravelMembers.queryKey({
+						input: {
+							travelId: member.travelId,
+						},
 					}),
-				);
+				});
 
 				setIsRemoveDialogOpen(false);
 			} else {
@@ -135,13 +143,15 @@ export function MemberCard({ member, currentUserRole, currentUserId }: MemberCar
 									.toUpperCase()}
 							</AvatarFallback>
 						</Avatar>
-						
+
 						<div className="min-w-0 flex-1">
 							<div className="flex items-center gap-2">
 								<h3 className="font-medium text-foreground">
 									{member.user.name}
 									{isCurrentUser && (
-										<span className="ml-2 text-xs text-muted-foreground">(você)</span>
+										<span className="ml-2 text-xs text-muted-foreground">
+											(você)
+										</span>
 									)}
 								</h3>
 							</div>
@@ -155,16 +165,16 @@ export function MemberCard({ member, currentUserRole, currentUserId }: MemberCar
 					</div>
 
 					<div className="flex items-center gap-3 flex-shrink-0">
-						<Badge
-							variant={getRoleVariant(member.role)}
-							className="gap-1"
-						>
+						<Badge variant={getRoleVariant(member.role)} className="gap-1">
 							{getRoleIcon(member.role)}
 							{getRoleLabel(member.role)}
 						</Badge>
 
 						{canRemoveMember && (
-							<Dialog open={isRemoveDialogOpen} onOpenChange={setIsRemoveDialogOpen}>
+							<Dialog
+								open={isRemoveDialogOpen}
+								onOpenChange={setIsRemoveDialogOpen}
+							>
 								<DialogTrigger asChild>
 									<Button
 										variant="ghost"
@@ -182,13 +192,16 @@ export function MemberCard({ member, currentUserRole, currentUserId }: MemberCar
 											Remover Membro
 										</DialogTitle>
 										<DialogDescription>
-											Tem certeza de que deseja remover <strong>{member.user.name}</strong> desta viagem?
-											Esta ação não pode ser desfeita.
+											Tem certeza de que deseja remover{" "}
+											<strong>{member.user.name}</strong> desta viagem? Esta
+											ação não pode ser desfeita.
 										</DialogDescription>
 									</DialogHeader>
 									<div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
 										<p className="text-sm text-red-700 dark:text-red-300">
-											⚠️ O membro perderá acesso imediatamente a todos os dados da viagem e não poderá mais visualizar ou editar informações.
+											⚠️ O membro perderá acesso imediatamente a todos os dados
+											da viagem e não poderá mais visualizar ou editar
+											informações.
 										</p>
 									</div>
 									<DialogFooter className="gap-2">

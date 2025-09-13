@@ -1,10 +1,12 @@
-import type { DB } from "@/lib/db/types";
 import {
 	Accommodation,
+	type InsertTravelMemberSchema,
 	Travel,
+	TravelMember,
 } from "@/lib/db/schema";
+import type { DB } from "@/lib/db/types";
 import type { TravelWithRelations } from "@/lib/types";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type * as z from "zod";
 import type { InsertFullTravel } from "./travel.model";
 
@@ -12,7 +14,9 @@ type TravelInput = z.infer<typeof InsertFullTravel>;
 
 export class TravelDAO {
 	constructor(private readonly db: DB) {}
-	async createTravel(travelData: TravelInput & { userId: string }): Promise<string> {
+	async createTravel(
+		travelData: TravelInput & { userId: string },
+	): Promise<string> {
 		const [travel] = await this.db
 			.insert(Travel)
 			.values({
@@ -39,6 +43,35 @@ export class TravelDAO {
 		return travelId;
 	}
 
+	// Transaction-based method for creating travel
+	async createTravelWithTransaction(
+		tx: Parameters<Parameters<DB["transaction"]>[0]>[0],
+		travelData: TravelInput & { userId: string },
+	): Promise<string> {
+		const [travel] = await tx
+			.insert(Travel)
+			.values({
+				name: travelData.name,
+				destination: travelData.destination,
+				startDate: travelData.startDate,
+				endDate: travelData.endDate,
+				locationInfo: travelData.locationInfo,
+				visaInfo: travelData.visaInfo,
+				userId: travelData.userId,
+			})
+			.returning({ id: Travel.id });
+
+		const travelId = travel.id;
+
+		if (travelData.accommodations.length > 0) {
+			await tx
+				.insert(Accommodation)
+				.values(travelData.accommodations.map((a) => ({ ...a, travelId })));
+		}
+
+		return travelId;
+	}
+
 	async getTravelById(id: string): Promise<TravelWithRelations | null> {
 		const travel = await this.db.query.Travel.findFirst({
 			where: eq(Travel.id, id),
@@ -47,6 +80,11 @@ export class TravelDAO {
 				events: {
 					with: {
 						dependencies: true,
+					},
+				},
+				members: {
+					with: {
+						user: true,
 					},
 				},
 			},
@@ -59,6 +97,31 @@ export class TravelDAO {
 		return travel;
 	}
 
+	// Transaction-based method for getting travel
+	async getTravelByIdWithTransaction(
+		tx: Parameters<Parameters<DB["transaction"]>[0]>[0],
+		id: string,
+	): Promise<TravelWithRelations | null> {
+		const travel = await tx.query.Travel.findFirst({
+			where: eq(Travel.id, id),
+			with: {
+				accommodations: true,
+				events: {
+					with: {
+						dependencies: true,
+					},
+				},
+				members: {
+					with: {
+						user: true,
+					},
+				},
+			},
+		});
+
+		return travel || null;
+	}
+
 	async getAllTravels(): Promise<TravelWithRelations[]> {
 		const travels = await this.db.query.Travel.findMany({
 			with: {
@@ -68,14 +131,94 @@ export class TravelDAO {
 						dependencies: true,
 					},
 				},
+				members: {
+					with: {
+						user: true,
+					},
+				},
 			},
 		});
 
 		return travels;
 	}
 
+	// TravelMember operations
+	async createTravelMember(
+		memberData: z.infer<typeof InsertTravelMemberSchema>,
+	): Promise<string> {
+		const [member] = await this.db
+			.insert(TravelMember)
+			.values(memberData)
+			.returning({ id: TravelMember.id });
+		return member.id;
+	}
 
+	// Transaction-based method for creating travel member
+	async createTravelMemberWithTransaction(
+		tx: Parameters<Parameters<DB["transaction"]>[0]>[0],
+		memberData: z.infer<typeof InsertTravelMemberSchema>,
+	): Promise<string> {
+		const [member] = await tx
+			.insert(TravelMember)
+			.values(memberData)
+			.returning({ id: TravelMember.id });
+		return member.id;
+	}
 
+	async getTravelMember(
+		travelId: string,
+		userId: string,
+	): Promise<typeof TravelMember.$inferSelect | null> {
+		const member = await this.db.query.TravelMember.findFirst({
+			where: and(
+				eq(TravelMember.travelId, travelId),
+				eq(TravelMember.userId, userId),
+			),
+			with: {
+				user: true,
+			},
+		});
+		return member || null;
+	}
+
+	async getTravelMembers(
+		travelId: string,
+	): Promise<(typeof TravelMember.$inferSelect)[]> {
+		const members = await this.db.query.TravelMember.findMany({
+			where: eq(TravelMember.travelId, travelId),
+			with: {
+				user: true,
+			},
+		});
+		return members;
+	}
+
+	async deleteTravelMember(travelId: string, userId: string): Promise<void> {
+		await this.db
+			.delete(TravelMember)
+			.where(
+				and(
+					eq(TravelMember.travelId, travelId),
+					eq(TravelMember.userId, userId),
+				),
+			);
+	}
+
+	async updateTravelMemberRole(
+		travelId: string,
+		userId: string,
+		newRole: "owner" | "member",
+	): Promise<void> {
+		await this.db
+			.update(TravelMember)
+			.set({ role: newRole })
+			.where(
+				and(
+					eq(TravelMember.travelId, travelId),
+					eq(TravelMember.userId, userId),
+				),
+			);
+	}
 }
 
 export const createTravelDAO = (db: DB) => new TravelDAO(db);

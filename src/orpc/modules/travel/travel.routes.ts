@@ -1,12 +1,24 @@
-import { TravelMember } from "@/lib/db/schema";
+import {
+	AccommodationSchema,
+	AppEventSchema,
+	TravelSchema,
+} from "@/lib/db/schema";
 import { startPlanTravel } from "@/lib/planTravel.prompt";
+import { AppResult } from "@/orpc/appResult";
 import { authProcedure, optionalAuthProcedure } from "@/orpc/procedure";
+import { ORPCError } from "@orpc/client";
 import { os } from "@orpc/server";
-import { and, eq } from "drizzle-orm";
 import * as z from "zod";
 import enhancedAirports from "./enhanced-airports.json";
 import { createTravelDAO } from "./travel.dao";
+import { travelErrors } from "./travel.errors";
 import { type Airport, AirportSchema, InsertFullTravel } from "./travel.model";
+import {
+	checkUserTravelPermissionService,
+	createTravelService,
+	getTravelMembersService,
+	getTravelService,
+} from "./travel.service";
 
 export const generatePrompt = os
 	.input(
@@ -24,44 +36,64 @@ export const generatePrompt = os
 	});
 
 export const saveTravel = authProcedure
+	.errors(travelErrors)
 	.input(z.object({ travel: InsertFullTravel }))
-	.output(z.object({ id: z.string() }))
+	.output(z.object({ id: z.string(), travel: TravelSchema }))
 	.handler(async ({ input, context }) => {
 		const travelDAO = createTravelDAO(context.db);
-		// Associar o travel ao usuário logado
-		const travelWithUser = {
-			...input.travel,
-			userId: context.user.id,
-		};
-		const id = await travelDAO.createTravel(travelWithUser);
-		return { id };
+
+		const result = await createTravelService(
+			context.db,
+			travelDAO,
+			context.user.id,
+			input.travel,
+		);
+
+		if (AppResult.isFailure(result)) {
+			throw new ORPCError(result.error.type, {
+				message: result.error.message,
+				data: result.error.data,
+			});
+		}
+
+		return result.data;
 	});
 
 export const getTravel = optionalAuthProcedure
+	.errors(travelErrors)
 	.input(z.object({ id: z.string() }))
+	.output(
+		TravelSchema.extend({
+			userMembership: z.any().nullable().optional(),
+			accommodations: z.array(AccommodationSchema),
+			events: z.array(
+				AppEventSchema.extend({
+					dependencies: z.array(AppEventSchema),
+				}),
+			),
+		}),
+	)
 	.handler(async ({ input, context }) => {
 		const travelDAO = createTravelDAO(context.db);
-		const travel = await travelDAO.getTravelById(input.id);
 
-		if (!travel) {
-			throw new Error("Travel not found");
-		}
+		const result = await getTravelService(
+			travelDAO,
+			input.id,
+			context.user?.id,
+		);
 
-		// Add membership info if user is logged in
-		if (context.user) {
-			const membership = await context.db.query.TravelMember.findFirst({
-				where: and(
-					eq(TravelMember.travelId, input.id),
-					eq(TravelMember.userId, context.user.id),
-				),
+		if (AppResult.isFailure(result)) {
+			throw new ORPCError(result.error.type, {
+				message: result.error.message,
+				data: result.error.data,
 			});
-			return { ...travel, userMembership: membership };
 		}
 
-		return { ...travel, userMembership: null };
+		return result.data;
 	});
 
 export const listTravels = optionalAuthProcedure
+	.errors(travelErrors)
 	.input(
 		z
 			.object({
@@ -70,6 +102,7 @@ export const listTravels = optionalAuthProcedure
 			})
 			.optional(),
 	)
+	.output(z.array(TravelSchema))
 	.handler(async ({ input, context }) => {
 		const travelDAO = createTravelDAO(context.db);
 		// Se especificou userId e não é o próprio usuário, só mostra públicas
@@ -80,6 +113,40 @@ export const listTravels = optionalAuthProcedure
 
 		// Se é o próprio usuário ou não especificou, mostra todas
 		return await travelDAO.getAllTravels();
+	});
+
+// New routes for travel member management
+export const getTravelMembers = authProcedure
+	.errors(travelErrors)
+	.input(z.object({ travelId: z.string() }))
+	.output(z.array(z.any()))
+	.handler(async ({ input, context }) => {
+		const travelDAO = createTravelDAO(context.db);
+
+		// Check if user has permission to view members
+		const permissionResult = await checkUserTravelPermissionService(
+			travelDAO,
+			input.travelId,
+			context.user.id,
+		);
+
+		if (AppResult.isFailure(permissionResult)) {
+			throw new ORPCError(permissionResult.error.type, {
+				message: permissionResult.error.message,
+				data: permissionResult.error.data,
+			});
+		}
+
+		const result = await getTravelMembersService(travelDAO, input.travelId);
+
+		if (AppResult.isFailure(result)) {
+			throw new ORPCError(result.error.type, {
+				message: result.error.message,
+				data: result.error.data,
+			});
+		}
+
+		return result.data;
 	});
 
 export const searchAirports = os

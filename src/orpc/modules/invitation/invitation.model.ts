@@ -1,4 +1,3 @@
-import { InsertTravelInvitationSchema, InsertTravelMemberSchema } from "@/lib/db/schema";
 import * as z from "zod";
 
 export const CreateInviteLinkSchema = z.object({
@@ -52,13 +51,15 @@ export const TravelMemberWithUserSchema = z.object({
 
 export const InviteInfoResponseSchema = z.object({
 	isValid: z.boolean(),
-	travel: z.object({
-		id: z.string(),
-		name: z.string(),
-		destination: z.string(),
-		startDate: z.date(),
-		endDate: z.date(),
-	}).nullable(),
+	travel: z
+		.object({
+			id: z.string(),
+			name: z.string(),
+			destination: z.string(),
+			startDate: z.date(),
+			endDate: z.date(),
+		})
+		.nullable(),
 	isExpired: z.boolean(),
 	message: z.string().optional(),
 });

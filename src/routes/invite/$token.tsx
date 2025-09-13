@@ -1,18 +1,24 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
 import { useUser } from "@/hooks/useUser";
 import { orpc } from "@/orpc/client";
 import type { InviteInfoResponse } from "@/orpc/modules/invitation/invitation.model";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import {
-	CheckCircle,
-	Calendar,
-	MapPin,
-	Users,
 	AlertCircle,
+	Calendar,
+	CheckCircle,
 	Loader2,
+	MapPin,
 	UserCheck,
+	Users,
 } from "lucide-react";
 import { useEffect } from "react";
 import { toast } from "sonner";
@@ -23,7 +29,7 @@ export const Route = createFileRoute("/invite/$token")({
 
 function InviteAcceptancePage() {
 	const { token } = Route.useParams();
-	const { user, isAuthenticated, isLoading: userLoading } = useUser();
+	const userQuery = useUser();
 	const router = useRouter();
 
 	const inviteInfoQuery = useQuery(
@@ -34,25 +40,25 @@ function InviteAcceptancePage() {
 		orpc.invitationRoutes.acceptInvite.mutationOptions(),
 	);
 
-	const isLoading = userLoading || inviteInfoQuery.isLoading;
+	const isLoading = userQuery.isLoading || inviteInfoQuery.isLoading;
 	const inviteInfo = inviteInfoQuery.data;
 
 	useEffect(() => {
-		if (!isAuthenticated && !userLoading) {
+		if (!userQuery.isAuthenticated && !userQuery.isLoading) {
 			const currentUrl = window.location.pathname;
 			router.navigate({
-				to: "/auth/login",
+				to: "/",
 				search: { redirect: currentUrl },
 			});
 		}
-	}, [isAuthenticated, userLoading, router]);
+	}, [userQuery.isAuthenticated, userQuery.isLoading, router]);
 
 	const handleAcceptInvite = async () => {
-		if (!isAuthenticated) return;
+		if (!userQuery.isAuthenticated) return;
 
 		try {
 			const result = await acceptInviteMutation.mutateAsync({ token });
-			
+
 			if (result.success) {
 				toast.success("Convite aceito com sucesso!", {
 					description: result.message || "Você agora é membro desta viagem.",
@@ -78,15 +84,17 @@ function InviteAcceptancePage() {
 		return <InvalidInviteState inviteInfo={inviteInfo} />;
 	}
 
-	if (!isAuthenticated) {
+	if (!userQuery.isAuthenticated) {
 		return <LoginRequiredState />;
 	}
 
-	return <ValidInviteState 
-		inviteInfo={inviteInfo} 
-		onAccept={handleAcceptInvite}
-		isAccepting={acceptInviteMutation.isPending}
-	/>;
+	return (
+		<ValidInviteState
+			inviteInfo={inviteInfo}
+			onAccept={handleAcceptInvite}
+			isAccepting={acceptInviteMutation.isPending}
+		/>
+	);
 }
 
 function LoadingState() {
@@ -102,7 +110,9 @@ function LoadingState() {
 	);
 }
 
-function InvalidInviteState({ inviteInfo }: { inviteInfo: InviteInfoResponse | undefined }) {
+function InvalidInviteState({
+	inviteInfo,
+}: { inviteInfo: InviteInfoResponse | undefined }) {
 	return (
 		<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-orange-100 dark:from-gray-900 dark:to-gray-800">
 			<Card className="w-full max-w-md mx-4 border-red-200 dark:border-red-800">
@@ -114,17 +124,15 @@ function InvalidInviteState({ inviteInfo }: { inviteInfo: InviteInfoResponse | u
 						{inviteInfo?.isExpired ? "Convite Expirado" : "Convite Inválido"}
 					</CardTitle>
 					<CardDescription className="text-red-600 dark:text-red-400">
-						{inviteInfo?.message || 
-							(inviteInfo?.isExpired 
+						{inviteInfo?.message ||
+							(inviteInfo?.isExpired
 								? "Este link de convite expirou. Solicite um novo convite ao organizador da viagem."
-								: "Este link de convite não é válido ou foi removido."
-							)
-						}
+								: "Este link de convite não é válido ou foi removido.")}
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="text-center">
-					<Button 
-						variant="outline" 
+					<Button
+						variant="outline"
 						onClick={() => window.history.back()}
 						className="border-red-200 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900/20"
 					>
@@ -154,13 +162,13 @@ function LoginRequiredState() {
 	);
 }
 
-function ValidInviteState({ 
-	inviteInfo, 
-	onAccept, 
-	isAccepting 
-}: { 
-	inviteInfo: InviteInfoResponse; 
-	onAccept: () => void; 
+function ValidInviteState({
+	inviteInfo,
+	onAccept,
+	isAccepting,
+}: {
+	inviteInfo: InviteInfoResponse;
+	onAccept: () => void;
 	isAccepting: boolean;
 }) {
 	const travel = inviteInfo.travel;
@@ -180,9 +188,9 @@ function ValidInviteState({
 
 				<CardContent className="space-y-6">
 					<TravelDetails travel={travel} />
-					
+
 					<div className="pt-4 border-t">
-						<Button 
+						<Button
 							onClick={onAccept}
 							disabled={isAccepting}
 							className="w-full bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600"
@@ -200,9 +208,10 @@ function ValidInviteState({
 								</>
 							)}
 						</Button>
-						
+
 						<p className="text-xs text-center text-muted-foreground mt-3">
-							Ao aceitar, você se tornará membro desta viagem e poderá visualizar todos os detalhes do planejamento.
+							Ao aceitar, você se tornará membro desta viagem e poderá
+							visualizar todos os detalhes do planejamento.
 						</p>
 					</div>
 				</CardContent>
@@ -211,7 +220,9 @@ function ValidInviteState({
 	);
 }
 
-function TravelDetails({ travel }: { travel: NonNullable<InviteInfoResponse['travel']> | null }) {
+function TravelDetails({
+	travel,
+}: { travel: NonNullable<InviteInfoResponse["travel"]> | null }) {
 	if (!travel) return null;
 
 	const formatDate = (date: Date) => {
@@ -251,7 +262,7 @@ function TravelDetails({ travel }: { travel: NonNullable<InviteInfoResponse['tra
 							{formatDate(travel.startDate)} - {formatDate(travel.endDate)}
 						</p>
 						<p className="text-xs text-muted-foreground">
-							{getDuration()} dia{getDuration() !== 1 ? 's' : ''}
+							{getDuration()} dia{getDuration() !== 1 ? "s" : ""}
 						</p>
 					</div>
 				</div>
