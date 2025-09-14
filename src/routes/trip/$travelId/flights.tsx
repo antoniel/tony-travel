@@ -22,6 +22,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { orpc } from "@/orpc/client";
+import { useTravelMembership } from "@/hooks/useTravelMembership";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
@@ -120,11 +121,13 @@ function FlightPageHeader({
 	setIsAddFlightOpen,
 	travelId,
 	members,
+	canWrite,
 }: {
 	isAddFlightOpen: boolean;
 	setIsAddFlightOpen: (open: boolean) => void;
 	travelId: string;
 	members: Member[];
+	canWrite: boolean;
 }) {
 	return (
 		<div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-6">
@@ -134,24 +137,26 @@ function FlightPageHeader({
 					Gerencie os voos de todos os membros da viagem
 				</p>
 			</div>
-			<Dialog open={isAddFlightOpen} onOpenChange={setIsAddFlightOpen}>
-				<DialogTrigger asChild>
-					<Button className="flex items-center gap-2">
-						<Plus className="w-4 h-4" />
-						Adicionar Voo
-					</Button>
-				</DialogTrigger>
-				<DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-					<DialogHeader>
-						<DialogTitle>Adicionar Novo Voo</DialogTitle>
-					</DialogHeader>
-					<AddOrEditFlightForm
-						travelId={travelId}
-						members={members}
-						onClose={() => setIsAddFlightOpen(false)}
-					/>
-				</DialogContent>
-			</Dialog>
+			{canWrite ? (
+				<Dialog open={isAddFlightOpen} onOpenChange={setIsAddFlightOpen}>
+					<DialogTrigger asChild>
+						<Button className="flex items-center gap-2">
+							<Plus className="w-4 h-4" />
+							Adicionar Voo
+						</Button>
+					</DialogTrigger>
+					<DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+						<DialogHeader>
+							<DialogTitle>Adicionar Novo Voo</DialogTitle>
+						</DialogHeader>
+						<AddOrEditFlightForm
+							travelId={travelId}
+							members={members}
+							onClose={() => setIsAddFlightOpen(false)}
+						/>
+					</DialogContent>
+				</Dialog>
+			) : null}
 		</div>
 	);
 }
@@ -164,15 +169,20 @@ function FlightsPage() {
 		useState<FlightWithParticipants | null>(null);
 	const queryClient = useQueryClient();
 
+	// Check membership for write permissions
+	const travelMembershipQuery = useTravelMembership(travelId);
+	const canWrite = !!travelMembershipQuery.data?.userMembership;
+
 	// Fetch flights grouped by airport
 	const flightsQuery = useQuery(
 		orpc.flightRoutes.getFlightsByTravel.queryOptions({ input: { travelId } }),
 	);
 
-	// Fetch travel members
-	const membersQuery = useQuery(
-		orpc.invitationRoutes.getTravelMembers.queryOptions({ input: { travelId } }),
-	);
+	// Fetch travel members (only if member)
+	const membersQuery = useQuery({
+		...orpc.invitationRoutes.getTravelMembers.queryOptions({ input: { travelId } }),
+		enabled: canWrite,
+	});
 
 	// Delete flight mutation
 	const deleteFlightMutation = useMutation(
@@ -245,6 +255,7 @@ function FlightsPage() {
 				setIsAddFlightOpen={setIsAddFlightOpen}
 				travelId={travelId}
 				members={members}
+				canWrite={canWrite}
 			/>
 
 			<FlightWarnings
@@ -260,32 +271,35 @@ function FlightsPage() {
 				onAddFlight={() => setIsAddFlightOpen(true)}
 				onEditFlight={handleEditFlight}
 				onDeleteFlight={handleDeleteFlight}
+				canWrite={canWrite}
 			/>
 
-			{/* Edit Flight Dialog */}
-			<Dialog open={isEditFlightOpen} onOpenChange={setIsEditFlightOpen}>
-				<DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-					<DialogHeader>
-						<DialogTitle>Editar Voo</DialogTitle>
-					</DialogHeader>
-					{editingFlight && (
-						<AddOrEditFlightForm
-							flight={editingFlight}
-							travelId={travelId}
-							members={members}
-							onClose={() => {
-								setIsEditFlightOpen(false);
-								setEditingFlight(null);
-							}}
-						/>
-					)}
-				</DialogContent>
-			</Dialog>
+			{/* Edit Flight Dialog (members only) */}
+			{canWrite ? (
+				<Dialog open={isEditFlightOpen} onOpenChange={setIsEditFlightOpen}>
+					<DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+						<DialogHeader>
+							<DialogTitle>Editar Voo</DialogTitle>
+						</DialogHeader>
+						{editingFlight && (
+							<AddOrEditFlightForm
+								flight={editingFlight}
+								travelId={travelId}
+								members={members}
+								onClose={() => {
+									setIsEditFlightOpen(false);
+									setEditingFlight(null);
+								}}
+							/>
+						)}
+					</DialogContent>
+				</Dialog>
+			) : null}
 		</div>
 	);
 }
 
-function EmptyFlightState({ onAddFlight }: { onAddFlight: () => void }) {
+function EmptyFlightState({ onAddFlight, canWrite }: { onAddFlight: () => void; canWrite: boolean }) {
 	return (
 		<Card className="relative overflow-hidden border-dashed border-2 border-border/50 bg-gradient-to-br from-background via-muted/20 to-background">
 			<div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-accent/5" />
@@ -311,15 +325,17 @@ function EmptyFlightState({ onAddFlight }: { onAddFlight: () => void }) {
 						</p>
 					</div>
 
-					<div className="pt-4">
-						<Button
-							onClick={onAddFlight}
-							className="px-8 py-3 text-base font-semibold bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg hover:shadow-xl transition-all duration-200"
-						>
-							<Plus className="w-5 h-5 mr-2" />
-							Adicionar Primeiro Voo
-						</Button>
-					</div>
+					{canWrite ? (
+						<div className="pt-4">
+							<Button
+								onClick={onAddFlight}
+								className="px-8 py-3 text-base font-semibold bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg hover:shadow-xl transition-all duration-200"
+							>
+								<Plus className="w-5 h-5 mr-2" />
+								Adicionar Primeiro Voo
+							</Button>
+						</div>
+					) : null}
 				</div>
 			</CardContent>
 		</Card>
@@ -390,6 +406,7 @@ function FlightsList({
 	onAddFlight,
 	onEditFlight,
 	onDeleteFlight,
+	canWrite,
 }: {
 	totalFlights: number;
 	flightGroups: FlightGroup[];
@@ -398,6 +415,7 @@ function FlightsList({
 	onAddFlight: () => void;
 	onEditFlight: (flight: FlightWithParticipants) => void;
 	onDeleteFlight: (flightId: string) => void;
+	canWrite: boolean;
 }) {
 	// State to track which groups are open (all open by default)
 	const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
@@ -427,7 +445,7 @@ function FlightsList({
 	};
 
 	if (totalFlights === 0) {
-		return <EmptyFlightState onAddFlight={onAddFlight} />;
+		return <EmptyFlightState onAddFlight={onAddFlight} canWrite={canWrite} />;
 	}
 
 	return (
@@ -449,14 +467,15 @@ function FlightsList({
 
 						<CollapsibleContent className="space-y-4 pl-4">
 							{group.flights.map((flight) => (
-								<FlightCard
-									key={flight.id}
-									flight={flight}
-									formatDate={formatDate}
-									formatTime={formatTime}
-									onEdit={onEditFlight}
-									onDelete={onDeleteFlight}
-								/>
+									<FlightCard
+										key={flight.id}
+										flight={flight}
+										formatDate={formatDate}
+										formatTime={formatTime}
+										onEdit={onEditFlight}
+										onDelete={onDeleteFlight}
+										canWrite={canWrite}
+									/>
 							))}
 						</CollapsibleContent>
 					</div>
@@ -472,12 +491,14 @@ function FlightCard({
 	formatTime,
 	onEdit,
 	onDelete,
+	canWrite,
 }: {
 	flight: FlightWithParticipants;
 	formatDate: (date: Date) => string;
 	formatTime: (time: string) => string;
 	onEdit: (flight: FlightWithParticipants) => void;
 	onDelete: (flightId: string) => void;
+	canWrite: boolean;
 }) {
 	const hasParticipants = flight.participants.length > 0;
 	const hasCost = flight.cost !== null && flight.cost !== undefined;
@@ -563,25 +584,27 @@ function FlightCard({
 						)}
 					</div>
 
-					{/* Actions */}
-					<div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-						<Button
-							variant="ghost"
-							size="sm"
-							className="h-8 w-8 rounded-full hover:bg-primary/10"
-							onClick={() => onEdit(flight)}
-						>
-							<Edit2 className="w-4 h-4" />
-						</Button>
-						<Button
-							variant="ghost"
-							size="sm"
-							className="h-8 w-8 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
-							onClick={() => onDelete(flight.id)}
-						>
-							<Trash2 className="w-4 h-4" />
-						</Button>
-					</div>
+					{/* Actions (members only) */}
+					{canWrite ? (
+						<div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+							<Button
+								variant="ghost"
+								size="sm"
+								className="h-8 w-8 rounded-full hover:bg-primary/10"
+								onClick={() => onEdit(flight)}
+							>
+								<Edit2 className="w-4 h-4" />
+							</Button>
+							<Button
+								variant="ghost"
+								size="sm"
+								className="h-8 w-8 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+								onClick={() => onDelete(flight.id)}
+							>
+								<Trash2 className="w-4 h-4" />
+							</Button>
+						</div>
+					) : null}
 				</div>
 
 				{/* Main flight route */}

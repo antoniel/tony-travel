@@ -15,17 +15,19 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { EventCreateModal } from "./EventCreateModal";
+import { Button } from "@/components/ui/button";
 
 interface TravelTimelineProps {
-	travel: TravelWithRelations;
-	onAddEvent?: (event: {
-		title: string;
-		startDate: Date;
-		endDate: Date;
-		type: AppEvent["type"];
-		location: string;
-		travelId: string;
-	}) => void;
+    travel: TravelWithRelations;
+    canWrite?: boolean;
+    onAddEvent?: (event: {
+        title: string;
+        startDate: Date;
+        endDate: Date;
+        type: AppEvent["type"];
+        location: string;
+        travelId: string;
+    }) => void;
 }
 
 type TimelineItem = {
@@ -40,7 +42,7 @@ type TimelineItem = {
 	icon: React.ComponentType<{ className?: string }>;
 };
 
-export function TravelTimeline({ travel }: TravelTimelineProps) {
+export function TravelTimeline({ travel, canWrite }: TravelTimelineProps) {
 	const timelineItems = createTimelineItems(travel);
 	const groupedByDay = groupItemsByDay(timelineItems);
 
@@ -61,8 +63,24 @@ export function TravelTimeline({ travel }: TravelTimelineProps) {
 		location: "",
 	});
 
-	const handleCreateEvent = () => {
-		if (!onAddEvent || !newEvent.title.trim()) return;
+	const openGeneralAdd = () => {
+		if (!canWrite) return;
+		const now = new Date();
+		let start = now;
+		if (now < travel.startDate || now > travel.endDate) {
+			start = new Date(travel.startDate);
+		}
+		if (start.getHours() === 0 && start.getMinutes() === 0) {
+			start.setHours(9, 0);
+		}
+		const end = new Date(start);
+		end.setHours(start.getHours() + 1);
+		setNewEvent({ title: "", startDate: start, endDate: end, type: "activity", location: "" });
+		setIsModalOpen(true);
+	};
+
+    const handleCreateEvent = () => {
+        if (!canWrite || !onAddEvent || !newEvent.title.trim()) return;
 
 		onAddEvent({
 			...newEvent,
@@ -83,6 +101,14 @@ export function TravelTimeline({ travel }: TravelTimelineProps) {
 	return (
 		<>
 			<div className=" space-y-8">
+				{canWrite ? (
+					<div className="flex items-center justify-end">
+						<Button onClick={openGeneralAdd} className="flex items-center gap-2">
+							<Plus className="w-4 h-4" />
+							Adicionar Evento
+						</Button>
+					</div>
+				) : null}
 				<div className="relative">
 					<div className="absolute left-8 top-16 bottom-0 w-0.5 bg-gradient-to-b from-primary via-accent to-chart-3 opacity-30" />
 
@@ -109,38 +135,43 @@ export function TravelTimeline({ travel }: TravelTimelineProps) {
 								});
 								setIsModalOpen(true);
 							}}
+							canWrite={canWrite}
 						/>
 					))}
 				</div>
 			</div>
 
-			<EventCreateModal
-				isOpen={isModalOpen}
-				newEvent={newEvent}
-				onClose={() => setIsModalOpen(false)}
-				onCreate={handleCreateEvent}
-				onEventChange={setNewEvent}
-				travelStartDate={travel.startDate}
-				travelEndDate={travel.endDate}
-			/>
+            {canWrite ? (
+                <EventCreateModal
+                    isOpen={isModalOpen}
+                    newEvent={newEvent}
+                    onClose={() => setIsModalOpen(false)}
+                    onCreate={handleCreateEvent}
+                    onEventChange={setNewEvent}
+                    travelStartDate={travel.startDate}
+                    travelEndDate={travel.endDate}
+                />
+            ) : null}
 		</>
 	);
 }
 
 function DaySection({
-	date,
-	items,
-	onAddEvent,
+    date,
+    items,
+    onAddEvent,
+    canWrite,
 }: {
-	date: string;
-	items: TimelineItem[];
-	onAddEvent?: (date: string) => void;
+    date: string;
+    items: TimelineItem[];
+    onAddEvent?: (date: string) => void;
+    canWrite?: boolean;
 }) {
-	const handleAddEvent = () => {
-		if (onAddEvent) {
-			onAddEvent(date);
-		}
-	};
+    const handleAddEvent = () => {
+        if (canWrite && onAddEvent) {
+            onAddEvent(date);
+        }
+    };
 
 	return (
 		<div className="mb-12">
@@ -152,14 +183,16 @@ function DaySection({
 						</h2>
 						<div className="w-12 h-0.5 bg-primary rounded-full" />
 					</div>
-					<button
-						type="button"
-						onClick={handleAddEvent}
-						className="flex items-center justify-center w-4 h-7 pb-1 rounded-full cursor-pointer text-black"
-						title="Adicionar evento"
-					>
-						<Plus className="w-4 h-4" />
-					</button>
+					{canWrite ? (
+						<button
+							type="button"
+							onClick={handleAddEvent}
+							className="flex items-center justify-center w-4 h-7 pb-1 rounded-full cursor-pointer text-black"
+							title="Adicionar evento"
+						>
+							<Plus className="w-4 h-4" />
+						</button>
+					) : null}
 				</div>
 			</div>
 			{items.map((item, index) => (

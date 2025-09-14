@@ -28,7 +28,6 @@ import { useAirportsSearch } from "@/hooks/useAirportsSearch";
 import { useUser } from "@/hooks/useUser";
 import { signIn } from "@/lib/auth-client";
 import type { InsertAppEvent, Travel } from "@/lib/db/schema";
-import { startPlanTravel } from "@/lib/planTravel.prompt";
 import type { TravelWithRelations } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { orpc } from "@/orpc/client";
@@ -82,6 +81,20 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 		departureAirports: [],
 	});
 
+	// Helpers for currency mask (pt-BR)
+	const formatNumberPtBR = (n: number) =>
+		new Intl.NumberFormat("pt-BR", {
+			minimumFractionDigits: 2,
+			maximumFractionDigits: 2,
+		}).format(n);
+
+	const formatDecimalStringPtBR = (value: string) => {
+		if (!value) return "";
+		const n = Number(value);
+		if (!Number.isFinite(n)) return "";
+		return formatNumberPtBR(n);
+	};
+
 	// Airport selector state
 	const [airportSearch, setAirportSearch] = useState("");
 	const [isAirportPopoverOpen, setIsAirportPopoverOpen] = useState(false);
@@ -96,106 +109,8 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 
 	// Prompt dialog state
 	const [promptOpen, setPromptOpen] = useState(false);
-	const [generatedPrompt, setGeneratedPrompt] = useState("");
+	const [generatedPrompt] = useState("");
 	const [chatgptResponse, setChatgptResponse] = useState("");
-
-	const generatePromptMutation = useMutation(
-		orpc.travelRoutes.generatePrompt.mutationOptions({
-			onSuccess: (data) => {
-				setGeneratedPrompt(data);
-				setPromptOpen(true);
-			},
-			onError: (error) => {
-				console.error(error);
-			},
-		}),
-	);
-
-	const buildPrompt = async () => {
-		// Dates
-		const start = form.dateRange?.from
-			? formatISODate(form.dateRange.from)
-			: formatISODate(new Date());
-		const end = form.dateRange?.to
-			? formatISODate(form.dateRange.to)
-			: formatISODate(addDaysSafe(new Date(), 12));
-
-		// Budget per person
-		const perPerson = (() => {
-			if (form.budget === "custom" && form.customBudget)
-				return Number(form.customBudget);
-			if (!form.budget) return 1500; // default
-			const n = Number(form.budget);
-			return Number.isFinite(n) ? n : 1500;
-		})();
-
-		// Group size
-		const groupSize = (() => {
-			if (form.people === "custom" && form.customPeople)
-				return Number(form.customPeople);
-			if (!form.people) return 2; // default
-			const n = Number(form.people);
-			return Number.isFinite(n) && n > 0 ? n : 2;
-		})();
-
-		// Departure airports with full information
-		const departureAirports = form.departureAirports.length
-			? form.departureAirports
-			: [
-					{
-						code: "GRU",
-						name: "Guarulhos",
-						city: "São Paulo",
-						state: "São Paulo",
-						stateCode: "SP",
-						country: "Brazil",
-						countryCode: "BR",
-						type: "airport" as const,
-					},
-				]; // default
-
-		generatePromptMutation.mutate(
-			{
-				tripDates: { start, end },
-				budget: { perPerson, currency: "BRL" },
-				destination:
-					form.destinations.length > 0
-						? form.destinations.map((d) => d.label).join(", ")
-						: "",
-				groupSize,
-				departureAirports,
-			},
-			{
-				onError: (error) => {
-					console.log(error);
-					return startPlanTravel({
-						tripDates: { start, end },
-						budget: { perPerson, currency: "BRL" },
-						destination:
-							form.destinations.length > 0
-								? form.destinations.map((d) => d.label).join(", ")
-								: "",
-						groupSize,
-						departureAirports,
-					});
-				},
-			},
-		);
-		return generatePromptMutation.data;
-	};
-
-	const handleSearch = async () => {
-		// Check if user is authenticated
-		if (!isAuthenticated) {
-			setLoginModalOpen(true);
-			return;
-		}
-
-		// Generate and open prompt dialog
-		const prompt = await buildPrompt();
-		setGeneratedPrompt(prompt || "");
-		setPromptOpen(true);
-	};
 
 	const handleSelectPredefinedTrip = (trip: Travel) => {
 		navigate({ to: `/trip/${trip.id}` });
@@ -212,19 +127,6 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 			console.error("Login error:", error);
 		}
 	};
-
-	function formatISODate(d: Date) {
-		const year = d.getFullYear();
-		const month = String(d.getMonth() + 1).padStart(2, "0");
-		const day = String(d.getDate()).padStart(2, "0");
-		return `${year}-${month}-${day}`;
-	}
-
-	function addDaysSafe(d: Date, days: number) {
-		const copy = new Date(d);
-		copy.setDate(copy.getDate() + days);
-		return copy;
-	}
 
 	function copyToClipboard(text: string) {
 		navigator.clipboard?.writeText(text).catch(() => {
@@ -390,69 +292,36 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 												>
 													Qual seu orçamento? (BRL)
 												</Label>
-												{form.budget === "custom" ? (
-													<div className="flex gap-2">
-														<div className="relative flex-1">
-															<span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-																$
-															</span>
-															<Input
-																type="number"
-																placeholder="Ex: 1500"
-																value={form.customBudget}
-																onChange={(e) =>
-																	setForm((prev) => ({
-																		...prev,
-																		customBudget: e.target.value,
-																	}))
-																}
-																className="h-12 text-base pl-8"
-																min="0"
-																step="50"
-															/>
-														</div>
-														<Button
-															variant="outline"
-															onClick={() =>
+												<div className="relative">
+													<span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+														R$
+													</span>
+													<Input
+														id="budget"
+														type="text"
+														inputMode="numeric"
+														placeholder="0,00"
+														value={formatDecimalStringPtBR(form.customBudget)}
+														onChange={(e) => {
+															const raw = e.target.value;
+															const digits = raw.replace(/\D/g, "");
+															if (!digits) {
 																setForm((prev) => ({
 																	...prev,
-																	budget: "",
 																	customBudget: "",
-																}))
+																}));
+																return;
 															}
-															className="h-12 px-3"
-														>
-															<X className="h-4 w-4" />
-														</Button>
-													</div>
-												) : (
-													<Select
-														value={form.budget}
-														onValueChange={(value) =>
-															setForm((prev) => ({ ...prev, budget: value }))
-														}
-													>
-														<SelectTrigger className="h-12 text-base w-full bg-background border border-border shadow-xs">
-															<SelectValue placeholder="Faixa de orçamento" />
-														</SelectTrigger>
-														<SelectContent>
-															<SelectItem value="500">Até $500</SelectItem>
-															<SelectItem value="1000">
-																$500 - $1.000
-															</SelectItem>
-															<SelectItem value="2000">
-																$1.000 - $2.000
-															</SelectItem>
-															<SelectItem value="3000">
-																$2.000 - $3.000
-															</SelectItem>
-															<SelectItem value="5000">$3.000+</SelectItem>
-															<SelectItem value="custom">
-																💡 Valor personalizado
-															</SelectItem>
-														</SelectContent>
-													</Select>
-												)}
+															const cents = Number.parseInt(digits, 10);
+															const decimal = (cents / 100).toFixed(2); // normalized with dot
+															setForm((prev) => ({
+																...prev,
+																customBudget: decimal,
+															}));
+														}}
+														className="h-12 text-base pl-8"
+													/>
+												</div>
 											</div>
 										</div>
 									</div>
@@ -504,6 +373,9 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 													locale={ptBR}
 													className="bg-transparent p-3"
 													buttonVariant="outline"
+													disabled={{
+														before: new Date(new Date().setHours(0, 0, 0, 0)),
+													}}
 												/>
 											</PopoverContent>
 										</Popover>
@@ -515,7 +387,27 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 								{/* Search Button */}
 								<div className="pt-4">
 									<Button
-										onClick={handleSearch}
+										onClick={() => {
+											if (!isAuthenticated) {
+												setLoginModalOpen(true);
+												return;
+											}
+											
+											// Prepare data for TripWizard
+											const searchParams = {
+												destinations: form.destinations.length > 0 ? JSON.stringify(form.destinations) : undefined,
+												dateFrom: form.dateRange?.from?.toISOString(),
+												dateTo: form.dateRange?.to?.toISOString(),
+												people: (form.people === "custom" ? form.customPeople : form.people) || "2",
+												budget: form.customBudget || "1500",
+												departureAirports: form.departureAirports.length > 0 ? JSON.stringify(form.departureAirports) : undefined,
+											};
+
+											navigate({ 
+												to: "/create-trip",
+												search: searchParams
+											});
+										}}
 										className="w-full h-14 travel-button-primary rounded-xl relative overflow-hidden text-base font-semibold"
 									>
 										<span className="relative z-10">

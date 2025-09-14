@@ -25,6 +25,7 @@ interface CalendarProps {
 	onUpdateEvent?: (eventId: string, updatedEvent: Partial<AppEvent>) => void;
 	travelStartDate?: Date;
 	travelEndDate?: Date;
+	canWrite?: boolean;
 }
 
 const PX_PER_HOUR = 48;
@@ -80,8 +81,9 @@ export default function Calendar(props: CalendarProps) {
 							travelStartDate={props.travelStartDate}
 							travelEndDate={props.travelEndDate}
 							accommodations={props.accommodations}
-							onUpdateEvent={props.onUpdateEvent}
+							onUpdateEvent={props.canWrite ? props.onUpdateEvent : undefined}
 							onEventClick={handleEventClick}
+							canWrite={props.canWrite}
 						/>
 					</div>
 				</div>
@@ -106,6 +108,7 @@ const RenderWeekViews = (props: {
 	onEventClick?: (event: AppEvent) => void;
 	travelStartDate?: Date;
 	travelEndDate?: Date;
+	canWrite?: boolean;
 }) => {
 	const totalDays = getHowManyDaysTravel(props.events);
 	const weekDays = getWeekDays(props.events);
@@ -224,6 +227,7 @@ const RenderWeekViews = (props: {
 		orpc.eventRoutes.createEvent.mutationOptions(),
 	);
 	const handleCellClick = (dayIndex: number, event: React.MouseEvent) => {
+		if (!props.canWrite) return;
 		// Don't create event if we just finished dragging
 		if (draggingEvent?.hasMoved) {
 			return;
@@ -400,9 +404,9 @@ const RenderWeekViews = (props: {
 													}
 												: undefined
 										}
-										onEventMouseDown={handleEventMouseDown}
+										onEventMouseDown={props.canWrite ? handleEventMouseDown : () => {}}
 										onEventClick={props.onEventClick}
-										onUpdateEvent={props.onUpdateEvent}
+										onUpdateEvent={props.canWrite ? props.onUpdateEvent : undefined}
 									/>
 								);
 							})}
@@ -411,15 +415,17 @@ const RenderWeekViews = (props: {
 				</ScrollArea>
 			</div>
 
-			<EventCreateModal
-				isOpen={isModalOpen}
-				newEvent={newEvent}
-				onClose={() => setIsModalOpen(false)}
-				onCreate={handleCreateEvent}
-				onEventChange={setNewEvent}
-				travelStartDate={props.travelStartDate}
-				travelEndDate={props.travelEndDate}
-			/>
+			{props.canWrite ? (
+				<EventCreateModal
+					isOpen={isModalOpen}
+					newEvent={newEvent}
+					onClose={() => setIsModalOpen(false)}
+					onCreate={handleCreateEvent}
+					onEventChange={setNewEvent}
+					travelStartDate={props.travelStartDate}
+					travelEndDate={props.travelEndDate}
+				/>
+			) : null}
 		</div>
 	);
 };

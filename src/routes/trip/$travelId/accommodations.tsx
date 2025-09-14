@@ -20,11 +20,12 @@ export const Route = createFileRoute("/trip/$travelId/accommodations")({
 });
 
 interface AccommodationCardProps {
-	accommodation: Accommodation;
-	onEdit: (accommodation: Accommodation) => void;
+    accommodation: Accommodation;
+    onEdit: (accommodation: Accommodation) => void;
+    canWrite: boolean;
 }
 
-function AccommodationCard({ accommodation, onEdit }: AccommodationCardProps) {
+function AccommodationCard({ accommodation, onEdit, canWrite }: AccommodationCardProps) {
 	const getAccommodationTypeIcon = (type: string) => {
 		switch (type?.toLowerCase()) {
 			case "hotel":
@@ -175,15 +176,17 @@ function AccommodationCard({ accommodation, onEdit }: AccommodationCardProps) {
 			</CardContent>
 			<CardFooter>
 				<div className="flex gap-2 pt-2">
-					<Button
-						variant="outline"
-						size="sm"
-						className="flex-1 hover:bg-primary hover:text-primary-foreground transition-colors duration-200"
-						onClick={() => onEdit(accommodation)}
-					>
-						<Edit className="w-4 h-4 mr-2" />
-						Editar
-					</Button>
+					{canWrite ? (
+						<Button
+							variant="outline"
+							size="sm"
+							className="flex-1 hover:bg-primary hover:text-primary-foreground transition-colors duration-200"
+							onClick={() => onEdit(accommodation)}
+						>
+							<Edit className="w-4 h-4 mr-2" />
+							Editar
+						</Button>
+					) : null}
 					<Button
 						variant="outline"
 						size="sm"
@@ -230,13 +233,15 @@ function AccommodationStats({
 }
 
 function PageHeader({
-	onAddAccommodation,
-	accommodations,
-	totalNights,
+    onAddAccommodation,
+    accommodations,
+    totalNights,
+    canWrite,
 }: {
-	onAddAccommodation: () => void;
-	accommodations: Accommodation[];
-	totalNights: number;
+    onAddAccommodation: () => void;
+    accommodations: Accommodation[];
+    totalNights: number;
+    canWrite: boolean;
 }) {
 	return (
 		<div className="flex flex-col sm:flex-row sm:justify-between sm:items-start">
@@ -252,22 +257,25 @@ function PageHeader({
 					accommodations={accommodations}
 					totalNights={totalNights}
 				/>
-				<Button
-					className="shadow-lg hover:shadow-xl transition-all duration-200"
-					onClick={onAddAccommodation}
-				>
-					<Plus className="w-4 h-4 mr-2" />
-					<span className="hidden sm:inline">Adicionar Acomodação</span>
-					<span className="sm:hidden">Adicionar</span>
-				</Button>
+				{canWrite ? (
+					<Button
+						className="shadow-lg hover:shadow-xl transition-all duration-200"
+						onClick={onAddAccommodation}
+					>
+						<Plus className="w-4 h-4 mr-2" />
+						<span className="hidden sm:inline">Adicionar Acomodação</span>
+						<span className="sm:hidden">Adicionar</span>
+					</Button>
+				) : null}
 			</div>
 		</div>
 	);
 }
 
 function EmptyAccommodationsState({
-	onAddAccommodation,
-}: { onAddAccommodation: () => void }) {
+    onAddAccommodation,
+    canWrite,
+}: { onAddAccommodation: () => void; canWrite: boolean }) {
 	return (
 		<>
 			<div className="text-center py-24">
@@ -283,14 +291,16 @@ function EmptyAccommodationsState({
 						</p>
 					</div>
 					<div className="space-y-6">
-						<Button
-							size="lg"
-							className="shadow-sm px-8 py-3 text-base"
-							onClick={onAddAccommodation}
-						>
-							<Plus className="w-5 h-5 mr-2" />
-							Adicionar Primeira Acomodação
-						</Button>
+						{canWrite ? (
+							<Button
+								size="lg"
+								className="shadow-sm px-8 py-3 text-base"
+								onClick={onAddAccommodation}
+							>
+								<Plus className="w-5 h-5 mr-2" />
+								Adicionar Primeira Acomodação
+							</Button>
+						) : null}
 						<div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-sm mx-auto">
 							<div className="flex flex-col items-center gap-2 p-4 bg-muted/30 rounded-lg">
 								<span className="text-2xl">🏨</span>
@@ -409,12 +419,15 @@ function AccommodationsPage() {
 		);
 	}
 
+	const canWrite = !!travelQuery.data?.userMembership;
+
 	return (
 		<div className="space-y-10">
 			<PageHeader
 				onAddAccommodation={handleAddAccommodation}
 				accommodations={accommodations}
 				totalNights={totalNights}
+				canWrite={canWrite}
 			/>
 
 			{accommodations.length > 0 ? (
@@ -424,20 +437,23 @@ function AccommodationsPage() {
 							key={accommodation.id}
 							accommodation={accommodation}
 							onEdit={handleEdit}
+							canWrite={canWrite}
 						/>
 					))}
 				</div>
 			) : (
-				<EmptyAccommodationsState onAddAccommodation={handleAddAccommodation} />
+				<EmptyAccommodationsState onAddAccommodation={handleAddAccommodation} canWrite={canWrite} />
 			)}
 
-			<AccommodationModal
-				open={isModalOpen}
-				onOpenChange={handleModalClose}
-				travelId={travelId}
-				travelData={travelQuery.data}
-				editingAccommodation={editingAccommodation}
-			/>
+			{canWrite ? (
+				<AccommodationModal
+					open={isModalOpen}
+					onOpenChange={handleModalClose}
+					travelId={travelId}
+					travelData={travelQuery.data}
+					editingAccommodation={editingAccommodation}
+				/>
+			) : null}
 		</div>
 	);
 }

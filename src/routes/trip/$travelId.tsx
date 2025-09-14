@@ -7,6 +7,7 @@ import {
 	useLocation,
 } from "@tanstack/react-router";
 import { Calendar, Clock, Home, MapPin, Plane, Users } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 export const Route = createFileRoute("/trip/$travelId")({
 	component: TripLayout,
@@ -14,7 +15,7 @@ export const Route = createFileRoute("/trip/$travelId")({
 
 function TripLayout() {
 	const { travelId } = Route.useParams();
-	const location = useLocation();
+	const { pathname } = useLocation();
 
 	const travelQuery = useQuery(
 		orpc.travelRoutes.getTravel.queryOptions({ input: { id: travelId } }),
@@ -70,6 +71,53 @@ function TripLayout() {
 		return `${start} - ${end}`;
 	};
 
+	const navRef = useRef<HTMLElement | null>(null);
+	const [showRightFade, setShowRightFade] = useState(false);
+
+	useEffect(() => {
+		const el = navRef.current;
+		if (!el) return;
+
+		const updateFade = () => {
+			const { scrollWidth, clientWidth, scrollLeft } = el;
+			const hasOverflow = scrollWidth > clientWidth + 1;
+			const atEnd = scrollLeft + clientWidth >= scrollWidth - 1;
+			setShowRightFade(hasOverflow && !atEnd);
+		};
+
+		updateFade();
+		const handleScroll: EventListener = () => updateFade();
+		el.addEventListener("scroll", handleScroll, {
+			passive: true,
+		} as AddEventListenerOptions);
+		window.addEventListener("resize", updateFade);
+		return () => {
+			el.removeEventListener("scroll", handleScroll);
+			window.removeEventListener("resize", updateFade);
+		};
+	}, []);
+
+	useEffect(() => {
+		const el = navRef.current;
+		if (!el) return;
+		const active = el.querySelector<HTMLAnchorElement>("a[data-active='true']");
+		if (!active) return;
+		const desiredLeft =
+			active.offsetLeft - (el.clientWidth - active.clientWidth) / 2;
+		const maxLeft = Math.max(0, el.scrollWidth - el.clientWidth);
+		const nextLeft = Math.max(0, Math.min(desiredLeft, maxLeft));
+		el.scrollTo({ left: nextLeft, behavior: "auto" });
+		// Recompute fade state
+		const { scrollWidth, clientWidth, scrollLeft } = el;
+		const hasOverflow = scrollWidth > clientWidth + 1;
+		const atEnd = scrollLeft + clientWidth >= scrollWidth - 1;
+		setShowRightFade(hasOverflow && !atEnd);
+	}, []);
+
+	const visibleTabs = tabRoutes.filter((tab) =>
+		tab.value === "members" ? !!travel?.userMembership : true,
+	);
+
 	return (
 		<div className="min-h-screen bg-background">
 			{/* Travel Header */}
@@ -113,15 +161,19 @@ function TripLayout() {
 						</div>
 
 						{/* Navigation Tabs */}
-						<div className="border-b">
-							<nav className="flex overflow-x-auto scrollbar-hide -mb-px">
-								{tabRoutes.map((tab) => {
+						<div className="border-b relative">
+							<nav
+								ref={navRef}
+								className="flex overflow-x-auto scrollbar-hide -mb-px"
+							>
+								{visibleTabs.map((tab) => {
 									const Icon = tab.icon;
-									const isActive = location.pathname === tab.path;
+									const isActive = pathname === tab.path;
 									return (
 										<Link
 											key={tab.value}
 											to={tab.path}
+											data-active={isActive ? "true" : undefined}
 											className={`flex items-center gap-3 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap min-w-fit ${
 												isActive
 													? "border-primary text-primary"
@@ -134,6 +186,10 @@ function TripLayout() {
 									);
 								})}
 							</nav>
+							{/* Right fade indicator on mobile when scrollable */}
+							{showRightFade ? (
+								<div className="pointer-events-none absolute inset-y-0 right-0 w-10 sm:hidden bg-gradient-to-l from-background to-transparent" />
+							) : null}
 						</div>
 					</div>
 				</div>

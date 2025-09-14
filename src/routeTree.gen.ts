@@ -11,6 +11,7 @@
 import { createServerRootRoute } from '@tanstack/react-start/server'
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as CreateTripRouteImport } from './routes/create-trip'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TripTravelIdRouteImport } from './routes/trip/$travelId'
 import { Route as InviteTokenRouteImport } from './routes/invite/$token'
@@ -25,6 +26,11 @@ import { ServerRoute as ApiAuthSplatServerRouteImport } from './routes/api.auth.
 
 const rootServerRouteImport = createServerRootRoute()
 
+const CreateTripRoute = CreateTripRouteImport.update({
+  id: '/create-trip',
+  path: '/create-trip',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -84,6 +90,7 @@ const ApiAuthSplatServerRoute = ApiAuthSplatServerRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/create-trip': typeof CreateTripRoute
   '/invite/$token': typeof InviteTokenRoute
   '/trip/$travelId': typeof TripTravelIdRouteWithChildren
   '/trip/$travelId/accommodations': typeof TripTravelIdAccommodationsRoute
@@ -94,6 +101,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/create-trip': typeof CreateTripRoute
   '/invite/$token': typeof InviteTokenRoute
   '/trip/$travelId/accommodations': typeof TripTravelIdAccommodationsRoute
   '/trip/$travelId/flights': typeof TripTravelIdFlightsRoute
@@ -104,6 +112,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/create-trip': typeof CreateTripRoute
   '/invite/$token': typeof InviteTokenRoute
   '/trip/$travelId': typeof TripTravelIdRouteWithChildren
   '/trip/$travelId/accommodations': typeof TripTravelIdAccommodationsRoute
@@ -116,6 +125,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/create-trip'
     | '/invite/$token'
     | '/trip/$travelId'
     | '/trip/$travelId/accommodations'
@@ -126,6 +136,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/create-trip'
     | '/invite/$token'
     | '/trip/$travelId/accommodations'
     | '/trip/$travelId/flights'
@@ -135,6 +146,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/create-trip'
     | '/invite/$token'
     | '/trip/$travelId'
     | '/trip/$travelId/accommodations'
@@ -146,6 +158,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CreateTripRoute: typeof CreateTripRoute
   InviteTokenRoute: typeof InviteTokenRoute
   TripTravelIdRoute: typeof TripTravelIdRouteWithChildren
 }
@@ -181,6 +194,13 @@ export interface RootServerRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/create-trip': {
+      id: '/create-trip'
+      path: '/create-trip'
+      fullPath: '/create-trip'
+      preLoaderRoute: typeof CreateTripRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -287,6 +307,7 @@ const TripTravelIdRouteWithChildren = TripTravelIdRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CreateTripRoute: CreateTripRoute,
   InviteTokenRoute: InviteTokenRoute,
   TripTravelIdRoute: TripTravelIdRouteWithChildren,
 }

@@ -35,7 +35,8 @@ export function TravelMemberOnly({
 		return fallback || (showLoginPrompt ? <LoginPrompt /> : null);
 	}
 
-	if (travelMembershipQuery.data?.userMembership?.role !== "member") {
+	const role = travelMembershipQuery.data?.userMembership?.role;
+	if (!role || (role !== "member" && role !== "owner")) {
 		return fallback || <AccessDeniedState />;
 	}
 

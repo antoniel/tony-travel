@@ -60,6 +60,8 @@ function ItineraryPage() {
 		);
 	}
 
+	const canWrite = !!travel?.userMembership;
+
 	return (
 		<div className="space-y-8">
 			<Tabs defaultValue="timeline" className="w-full">
@@ -100,7 +102,7 @@ function ItineraryPage() {
 
 				<TabsContent value="timeline" className="mt-0">
 					<div className="">
-						<TravelTimeline travel={travel} />
+						<TravelTimeline travel={travel} canWrite={canWrite} />
 					</div>
 				</TabsContent>
 
@@ -111,6 +113,7 @@ function ItineraryPage() {
 							events={events}
 							accommodations={travel.accommodations || []}
 							onUpdateEvent={handleUpdateEvent}
+							canWrite={canWrite}
 						/>
 					</div>
 				</TabsContent>

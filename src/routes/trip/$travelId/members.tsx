@@ -1,3 +1,4 @@
+import { TravelMemberOnly } from "@/components/guards/TravelMemberOnly";
 import { TravelOwnerOnly } from "@/components/guards/TravelOwnerOnly";
 import { InviteLinkManager } from "@/components/members/InviteLinkManager";
 import { MemberCard } from "@/components/members/MemberCard";
@@ -20,11 +21,12 @@ function MembersPage() {
 	const { user } = useUser();
 	const travelMembershipQuery = useTravelMembership(travelId);
 
-	const membersQuery = useQuery(
-		orpc.invitationRoutes.getTravelMembers.queryOptions({
+	const membersQuery = useQuery({
+		...orpc.invitationRoutes.getTravelMembers.queryOptions({
 			input: { travelId },
 		}),
-	);
+		enabled: !!travelMembershipQuery.data?.userMembership,
+	});
 
 	const members = membersQuery.data || [];
 	const isLoading = membersQuery.isLoading;
@@ -38,7 +40,8 @@ function MembersPage() {
 	}
 
 	return (
-		<div className="space-y-10">
+		<TravelMemberOnly travelId={travelId}>
+			<div className="space-y-10">
 			<MembersHeader
 				activeMembersCount={activeMembersCount}
 				ownerCount={ownerCount}
@@ -57,6 +60,7 @@ function MembersPage() {
 
 			<PermissionsGuide />
 		</div>
+		</TravelMemberOnly>
 	);
 }
 

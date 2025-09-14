@@ -7,8 +7,8 @@ export const serverEnv = createEnv({
 		GOOGLE_CLIENT_ID: z.string().optional(),
 		GOOGLE_CLIENT_SECRET: z.string().optional(),
 		BETTER_AUTH_SECRET: z.string().optional(),
-		DATABASE_URL: z.string().optional(),
-		DATABASE_AUTH_TOKEN: z.string().optional(),
+		DATABASE_URL: z.string(),
+		DATABASE_AUTH_TOKEN: z.string(),
 		PIXABAY_API_KEY: z.string().optional(),
 	},
 

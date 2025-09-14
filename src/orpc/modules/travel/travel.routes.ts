@@ -1,6 +1,7 @@
 import {
 	AccommodationSchema,
 	AppEventSchema,
+	TravelMemberSchema,
 	TravelSchema,
 } from "@/lib/db/schema";
 import { startPlanTravel } from "@/lib/planTravel.prompt";
@@ -67,7 +68,7 @@ export const getTravel = optionalAuthProcedure
 	.input(z.object({ id: z.string() }))
 	.output(
 		TravelSchema.extend({
-			userMembership: z.any().nullable().optional(),
+			userMembership: TravelMemberSchema.nullable().optional(),
 			accommodations: z.array(AccommodationSchema),
 			events: z.array(
 				AppEventSchema.extend({
