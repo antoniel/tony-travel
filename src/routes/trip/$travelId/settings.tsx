@@ -122,16 +122,8 @@ function TravelSettingsForm({
     },
   })
 
-  // TODO: Replace with actual mutation when backend is available
   const updateTravelMutation = useMutation({
-    mutationFn: async (data: TravelSettingsFormData) => {
-      // Placeholder for the actual backend call
-      // return await orpc.travelRoutes.updateTravel.mutate({ id: travel.id, ...data })
-
-      // Simulated API call for now
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      return { success: true, data }
-    },
+    ...orpc.travelRoutes.updateTravel.mutationOptions(),
     onSuccess: () => {
       toast.success("Configurações da viagem atualizadas com sucesso!")
       queryClient.invalidateQueries({
@@ -151,7 +143,17 @@ function TravelSettingsForm({
 
   const onSubmit = (data: TravelSettingsFormData) => {
     setIsSubmitting(true)
-    updateTravelMutation.mutate(data)
+    // Convert form data to match backend UpdateTravelSchema expectations
+    const updateData = {
+      name: data.name,
+      description: data.description || null,
+      startDate: data.startDate,
+      endDate: data.endDate,
+    }
+    updateTravelMutation.mutate({
+      travelId: travel.id,
+      updateData,
+    })
   }
 
   return (
@@ -269,16 +271,8 @@ function DangerZone({ travel }: { travel: Pick<Travel, "id" | "name"> }) {
     },
   })
 
-  // TODO: Replace with actual mutation when backend is available
   const deleteTravelMutation = useMutation({
-    mutationFn: async () => {
-      // Placeholder for the actual backend call
-      // return await orpc.travelRoutes.deleteTravel.mutate({ id: travel.id, confirmationName: travel.name })
-
-      // Simulated API call for now
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-      return { success: true }
-    },
+    ...orpc.travelRoutes.deleteTravel.mutationOptions(),
     onSuccess: () => {
       toast.success("Viagem excluída com sucesso")
       navigate({ to: "/" })
@@ -296,7 +290,10 @@ function DangerZone({ travel }: { travel: Pick<Travel, "id" | "name"> }) {
   const onDelete = () => {
     if (deleteForm.getValues().confirmationName === travel.name) {
       setIsDeleting(true)
-      deleteTravelMutation.mutate()
+      deleteTravelMutation.mutate({
+        travelId: travel.id,
+        confirmationName: travel.name,
+      })
     }
   }
 

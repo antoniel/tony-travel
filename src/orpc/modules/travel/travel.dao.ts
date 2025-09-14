@@ -3,10 +3,11 @@ import {
 	type InsertTravelMemberSchema,
 	Travel,
 	TravelMember,
+	type UpdateTravelSchema,
 } from "@/lib/db/schema";
 import type { DB } from "@/lib/db/types";
 import type { TravelWithRelations } from "@/lib/types";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import type * as z from "zod";
 import type { InsertFullTravel } from "./travel.model";
 
@@ -21,6 +22,7 @@ export class TravelDAO {
 			.insert(Travel)
 			.values({
 				name: travelData.name,
+				description: travelData.description,
 				destination: travelData.destination,
 				startDate: travelData.startDate,
 				endDate: travelData.endDate,
@@ -52,6 +54,7 @@ export class TravelDAO {
 			.insert(Travel)
 			.values({
 				name: travelData.name,
+				description: travelData.description,
 				destination: travelData.destination,
 				startDate: travelData.startDate,
 				endDate: travelData.endDate,
@@ -74,7 +77,7 @@ export class TravelDAO {
 
 	async getTravelById(id: string): Promise<TravelWithRelations | null> {
 		const travel = await this.db.query.Travel.findFirst({
-			where: eq(Travel.id, id),
+			where: and(eq(Travel.id, id), isNull(Travel.deletedAt)),
 			with: {
 				accommodations: true,
 				events: {
@@ -103,7 +106,7 @@ export class TravelDAO {
 		id: string,
 	): Promise<TravelWithRelations | null> {
 		const travel = await tx.query.Travel.findFirst({
-			where: eq(Travel.id, id),
+			where: and(eq(Travel.id, id), isNull(Travel.deletedAt)),
 			with: {
 				accommodations: true,
 				events: {
@@ -124,6 +127,7 @@ export class TravelDAO {
 
 	async getAllTravels(): Promise<TravelWithRelations[]> {
 		const travels = await this.db.query.Travel.findMany({
+			where: isNull(Travel.deletedAt),
 			with: {
 				accommodations: true,
 				events: {
@@ -218,6 +222,47 @@ export class TravelDAO {
 					eq(TravelMember.userId, userId),
 				),
 			);
+	}
+
+	// New methods for travel settings functionality
+	async updateTravel(
+		id: string,
+		updateData: z.infer<typeof UpdateTravelSchema>,
+	): Promise<typeof Travel.$inferSelect | null> {
+		const [updatedTravel] = await this.db
+			.update(Travel)
+			.set(updateData)
+			.where(and(eq(Travel.id, id), isNull(Travel.deletedAt)))
+			.returning();
+
+		return updatedTravel || null;
+	}
+
+	async softDeleteTravel(
+		id: string,
+		deletedBy: string,
+	): Promise<typeof Travel.$inferSelect | null> {
+		const [deletedTravel] = await this.db
+			.update(Travel)
+			.set({
+				deletedAt: new Date(),
+				deletedBy,
+			})
+			.where(and(eq(Travel.id, id), isNull(Travel.deletedAt)))
+			.returning();
+
+		return deletedTravel || null;
+	}
+
+	// Helper method to get travel without soft delete filter (for internal use)
+	async getTravelByIdIncludingDeleted(
+		id: string,
+	): Promise<typeof Travel.$inferSelect | null> {
+		const travel = await this.db.query.Travel.findFirst({
+			where: eq(Travel.id, id),
+		});
+
+		return travel || null;
 	}
 }
 

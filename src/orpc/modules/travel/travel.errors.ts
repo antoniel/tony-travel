@@ -73,6 +73,34 @@ export const travelErrors = {
 			reason: z.string(),
 		}),
 	},
+	TRAVEL_UPDATE_FAILED: {
+		message: "Failed to update travel",
+		data: z.object({
+			travelId: z.string(),
+			reason: z.string(),
+		}),
+	},
+	TRAVEL_ALREADY_DELETED: {
+		message: "Travel has already been deleted",
+		data: z.object({
+			travelId: z.string(),
+		}),
+	},
+	TRAVEL_DELETE_FAILED: {
+		message: "Failed to delete travel",
+		data: z.object({
+			travelId: z.string(),
+			reason: z.string(),
+		}),
+	},
+	TRAVEL_NAME_CONFIRMATION_REQUIRED: {
+		message: "Travel name confirmation required for deletion",
+		data: z.object({
+			travelId: z.string(),
+			provided: z.string(),
+			expected: z.string(),
+		}),
+	},
 } as const;
 
 /**

@@ -13,13 +13,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LocationSelector } from "@/components/ui/location-selector";
+import type { LocationOption } from "@/components/ui/location-selector";
 import { useAirportsSearch } from "@/hooks/useAirportsSearch";
 import { orpc } from "@/orpc/client";
 import type { FlightWithParticipants } from "@/orpc/modules/flight/flight.model";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Calendar, DollarSign, Info, Plane } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { type UseFormReturn, useForm } from "react-hook-form";
 import { match } from "ts-pattern";
 import { z } from "zod";
@@ -382,21 +383,64 @@ function FlightDetailsSection({
 	const [isOriginOpen, setIsOriginOpen] = useState(false);
 	const [isDestinationOpen, setIsDestinationOpen] = useState(false);
 
+	// Recommended options based on last home selections
+	const [recommendedOriginOptions, setRecommendedOriginOptions] = useState<
+		LocationOption[]
+	>([]);
+	const [recommendedDestinationOptions, setRecommendedDestinationOptions] =
+		useState<LocationOption[]>([]);
+
+	useEffect(() => {
+		try {
+			const rawDep = localStorage.getItem("tt_last_departure_airports");
+			if (rawDep) {
+				const airports: Airport[] = JSON.parse(rawDep);
+				const opts: LocationOption[] = airports.map((a) => ({
+					value: a.code,
+					label: renderAirportName(a),
+				}));
+				setRecommendedOriginOptions(opts);
+			}
+		} catch {}
+		try {
+			const rawDest = localStorage.getItem("tt_last_destinations");
+			if (rawDest) {
+				const opts: LocationOption[] = JSON.parse(rawDest);
+				setRecommendedDestinationOptions(opts);
+			}
+		} catch {}
+	}, []);
+
 	const { data: originResults = [] } = useAirportsSearch(originSearch, 10);
 	const { data: destinationResults = [] } = useAirportsSearch(
 		destinationSearch,
 		10,
 	);
 
-	const originOptions = originResults.map((airport) => ({
-		value: airport.code,
-		label: renderAirportName(airport),
-	}));
 
-	const destinationOptions = destinationResults.map((airport) => ({
-		value: airport.code,
-		label: renderAirportName(airport),
-	}));
+	const originOptions = useMemo(() => {
+		const results = originResults.map((airport) => ({
+			value: airport.code,
+			label: renderAirportName(airport),
+		}));
+		const map = new Map<string, LocationOption>();
+		for (const o of [...recommendedOriginOptions, ...results]) {
+			if (!map.has(o.value)) map.set(o.value, o);
+		}
+		return Array.from(map.values());
+	}, [originResults, recommendedOriginOptions]);
+
+	const destinationOptions = useMemo(() => {
+		const results = destinationResults.map((airport) => ({
+			value: airport.code,
+			label: renderAirportName(airport),
+		}));
+		const map = new Map<string, LocationOption>();
+		for (const o of [...recommendedDestinationOptions, ...results]) {
+			if (!map.has(o.value)) map.set(o.value, o);
+		}
+		return Array.from(map.values());
+	}, [destinationResults, recommendedDestinationOptions]);
 
 	return (
 		<div className="space-y-6">
@@ -619,6 +663,20 @@ function FlightCostSection({
 	form: UseFormReturn<FlightFormData>;
 	setDuplicateInfo: (info: DuplicateInfo | null) => void;
 }) {
+	// Helpers to mirror the home budget mask (pt-BR)
+	const formatNumberPtBR = (n: number) =>
+		new Intl.NumberFormat("pt-BR", {
+			minimumFractionDigits: 2,
+			maximumFractionDigits: 2,
+		}).format(n);
+
+	const formatDecimalStringPtBR = (value: string) => {
+		if (!value) return "";
+		const n = Number(value);
+		if (!Number.isFinite(n)) return "";
+		return formatNumberPtBR(n);
+	};
+
 	return (
 		<div className="space-y-4">
 			<h4 className="font-semibold text-base text-foreground flex items-center gap-2">
@@ -633,17 +691,29 @@ function FlightCostSection({
 						<FormItem>
 							<FormLabel>Preço (R$)</FormLabel>
 							<FormControl>
-								<Input
-									{...field}
-									type="number"
-									step="0.01"
-									placeholder="450.00"
-									className="h-11"
-									onChange={(e) => {
-										field.onChange(e.target.value);
-										setDuplicateInfo(null);
-									}}
-								/>
+								<div className="relative">
+									<span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">R$</span>
+									<Input
+										value={formatDecimalStringPtBR(field.value || "")}
+										type="text"
+										inputMode="numeric"
+										placeholder="0,00"
+										className="h-11 pl-8"
+										onChange={(e) => {
+											const raw = e.target.value;
+											const digits = raw.replace(/\D/g, "");
+											if (!digits) {
+												field.onChange("");
+												setDuplicateInfo(null);
+												return;
+											}
+											const cents = Number.parseInt(digits, 10);
+											const decimal = (cents / 100).toFixed(2); // normalized with dot
+											field.onChange(decimal);
+											setDuplicateInfo(null);
+										}}
+									/>
+								</div>
 							</FormControl>
 							<FormMessage />
 						</FormItem>

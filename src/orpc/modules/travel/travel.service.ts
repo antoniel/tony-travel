@@ -2,6 +2,7 @@ import type {
 	InsertTravelMemberSchema,
 	Travel,
 	TravelMember,
+	UpdateTravelSchema,
 } from "@/lib/db/schema";
 import type { DB } from "@/lib/db/types";
 import { AppResult } from "@/orpc/appResult";
@@ -230,6 +231,155 @@ export async function checkUserTravelPermissionService(
 			"USER_NOT_AUTHORIZED",
 			"Erro ao verificar permissões do usuário",
 			{ travelId, userId },
+		);
+	}
+}
+
+export async function updateTravelService(
+	travelDAO: TravelDAO,
+	travelId: string,
+	userId: string,
+	updateData: z.infer<typeof UpdateTravelSchema>,
+): Promise<AppResult<Travel, typeof travelErrors>> {
+	try {
+		// First check if user has permission and travel exists
+		const permissionResult = await checkUserTravelPermissionService(
+			travelDAO,
+			travelId,
+			userId,
+			"owner", // Only owners can update travel settings
+		);
+
+		if (AppResult.isFailure(permissionResult)) {
+			return permissionResult;
+		}
+
+		// Validate dates if they are being updated
+		if (updateData.startDate && updateData.endDate) {
+			const dateValidation = validateTravelDates(
+				updateData.startDate,
+				updateData.endDate,
+			);
+
+			if (AppResult.isFailure(dateValidation)) {
+				return dateValidation;
+			}
+		}
+
+		// Update the travel
+		const updatedTravel = await travelDAO.updateTravel(travelId, updateData);
+
+		if (!updatedTravel) {
+			return AppResult.failure(
+				travelErrors,
+				"TRAVEL_UPDATE_FAILED",
+				"Falha ao atualizar viagem",
+				{
+					travelId,
+					reason: "Travel not found or already deleted",
+				},
+			);
+		}
+
+		return AppResult.success(updatedTravel);
+	} catch (error) {
+		const errorMessage =
+			error instanceof Error ? error.message : "Unknown error";
+
+		return AppResult.failure(
+			travelErrors,
+			"TRAVEL_UPDATE_FAILED",
+			"Falha ao atualizar viagem",
+			{
+				travelId,
+				reason: errorMessage,
+			},
+		);
+	}
+}
+
+export async function softDeleteTravelService(
+	travelDAO: TravelDAO,
+	travelId: string,
+	userId: string,
+	confirmationName: string,
+): Promise<AppResult<Travel, typeof travelErrors>> {
+	try {
+		// First check if user has permission and travel exists
+		const permissionResult = await checkUserTravelPermissionService(
+			travelDAO,
+			travelId,
+			userId,
+			"owner", // Only owners can delete travel
+		);
+
+		if (AppResult.isFailure(permissionResult)) {
+			return permissionResult;
+		}
+
+		// Get the travel to check its name for confirmation
+		const travel = await travelDAO.getTravelById(travelId);
+		if (!travel) {
+			return AppResult.failure(
+				travelErrors,
+				"TRAVEL_NOT_FOUND",
+				"Viagem não encontrada",
+				{ travelId },
+			);
+		}
+
+		// Check if travel is already deleted
+		if (travel.deletedAt) {
+			return AppResult.failure(
+				travelErrors,
+				"TRAVEL_ALREADY_DELETED",
+				"Viagem já foi excluída",
+				{ travelId },
+			);
+		}
+
+		// Validate name confirmation
+		if (confirmationName.trim() !== travel.name.trim()) {
+			return AppResult.failure(
+				travelErrors,
+				"TRAVEL_NAME_CONFIRMATION_REQUIRED",
+				"Nome da viagem deve ser confirmado para exclusão",
+				{
+					travelId,
+					provided: confirmationName,
+					expected: travel.name,
+				},
+			);
+		}
+
+		// Perform soft delete
+		const deletedTravel = await travelDAO.softDeleteTravel(travelId, userId);
+
+		if (!deletedTravel) {
+			return AppResult.failure(
+				travelErrors,
+				"TRAVEL_DELETE_FAILED",
+				"Falha ao excluir viagem",
+				{
+					travelId,
+					reason: "Travel not found or already deleted",
+				},
+			);
+		}
+
+		return AppResult.success(deletedTravel);
+	} catch (error) {
+		const errorMessage =
+			error instanceof Error ? error.message : "Unknown error";
+
+		return AppResult.failure(
+			travelErrors,
+			"TRAVEL_DELETE_FAILED",
+			"Falha ao excluir viagem",
+			{
+				travelId,
+				reason: errorMessage,
+			},
 		);
 	}
 }

@@ -458,6 +458,19 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 											}
 
 											// Prepare data for TripWizard
+											// Persist last selections for use as suggestions in other flows (e.g., Flights)
+											try {
+												localStorage.setItem(
+													"tt_last_departure_airports",
+													JSON.stringify(form.departureAirports),
+												);
+												localStorage.setItem(
+													"tt_last_destinations",
+													JSON.stringify(form.destinations),
+												);
+											} catch {}
+
+											// Prepare data for TripWizard
 											const searchParams = {
 												destinations:
 													form.destinations.length > 0

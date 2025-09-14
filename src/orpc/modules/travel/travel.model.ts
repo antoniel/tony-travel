@@ -12,24 +12,42 @@ const VisaInfoSchema = z.object({
 	entryRequirements: z.array(z.string()).optional(),
 });
 const LocationInfoSchema = z.object({
-	destination: z.string(),
-	country: z.string(),
-	climate: z.string(),
-	currency: z.string(),
-	language: z.string(),
-	timeZone: z.string(),
-	bestTimeToVisit: z.string(),
-	emergencyNumbers: z
-		.object({
-			police: z.string().optional(),
-			medical: z.string().optional(),
-			embassy: z.string().optional(),
-		})
-		.optional(),
+    destination: z.string(),
+    country: z.string(),
+    climate: z.string(),
+    currency: z.string(),
+    language: z.string(),
+    timeZone: z.string(),
+    bestTimeToVisit: z.string(),
+    emergencyNumbers: z
+        .object({
+            police: z.string().optional(),
+            medical: z.string().optional(),
+            embassy: z.string().optional(),
+        })
+        .optional(),
+    // Optional persisted selections to help prefill UI (e.g., flights form)
+    departureAirports: z
+        .array(
+            z.object({
+                code: z.string(),
+                label: z.string(),
+            }),
+        )
+        .optional(),
+    selectedDestinations: z
+        .array(
+            z.object({
+                value: z.string(),
+                label: z.string(),
+            }),
+        )
+        .optional(),
 });
 
 export const InsertFullTravel = z.object({
 	name: z.string(),
+	description: z.string().optional(),
 	destination: z.string(),
 	startDate: z.date(),
 	endDate: z.date(),

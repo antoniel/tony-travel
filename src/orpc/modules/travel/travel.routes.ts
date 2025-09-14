@@ -3,6 +3,7 @@ import {
 	AppEventSchema,
 	TravelMemberSchema,
 	TravelSchema,
+	UpdateTravelSchema,
 } from "@/lib/db/schema";
 import { startPlanTravel } from "@/lib/planTravel.prompt";
 import { AppResult } from "@/orpc/appResult";
@@ -22,6 +23,8 @@ import {
 	createTravelService,
 	getTravelMembersService,
 	getTravelService,
+	softDeleteTravelService,
+	updateTravelService,
 } from "./travel.service";
 
 export const generatePrompt = os
@@ -293,4 +296,63 @@ export const searchDestinations = os
 		return filteredDestinations
 			.slice(0, limit)
 			.sort((a, b) => a.label.localeCompare(b.label));
+	});
+
+// New routes for travel settings
+export const updateTravel = authProcedure
+	.errors(travelErrors)
+	.input(
+		z.object({
+			travelId: z.string(),
+			updateData: UpdateTravelSchema,
+		}),
+	)
+	.output(TravelSchema)
+	.handler(async ({ input, context }) => {
+		const travelDAO = createTravelDAO(context.db);
+
+		const result = await updateTravelService(
+			travelDAO,
+			input.travelId,
+			context.user.id,
+			input.updateData,
+		);
+
+		if (AppResult.isFailure(result)) {
+			throw new ORPCError(result.error.type, {
+				message: result.error.message,
+				data: result.error.data,
+			});
+		}
+
+		return result.data;
+	});
+
+export const deleteTravel = authProcedure
+	.errors(travelErrors)
+	.input(
+		z.object({
+			travelId: z.string(),
+			confirmationName: z.string(),
+		}),
+	)
+	.output(TravelSchema)
+	.handler(async ({ input, context }) => {
+		const travelDAO = createTravelDAO(context.db);
+
+		const result = await softDeleteTravelService(
+			travelDAO,
+			input.travelId,
+			context.user.id,
+			input.confirmationName,
+		);
+
+		if (AppResult.isFailure(result)) {
+			throw new ORPCError(result.error.type, {
+				message: result.error.message,
+				data: result.error.data,
+			});
+		}
+
+		return result.data;
 	});

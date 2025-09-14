@@ -330,4 +330,349 @@ describe("travel service", () => {
 			expect(members[0].role).toBe("owner");
 		});
 	});
+
+	describe("updateTravel", () => {
+		it("should allow travel owner to update travel settings", async () => {
+			const appCall = createAppCallAuthenticated(db);
+
+			// Create travel first
+			const travelStub = testStub.travel();
+			const [travel] = await db
+				.insert(Travel)
+				.values(travelStub)
+				.returning({ id: Travel.id });
+
+			// Create ownership
+			await db.insert(TravelMember).values({
+				travelId: travel.id,
+				userId: ALWAYS_USER_TEST.id,
+				role: "owner",
+			});
+
+			const updateData = {
+				name: "Updated Travel Name",
+				description: "Updated travel description",
+			};
+
+			const result = await appCall(router.travelRoutes.updateTravel, {
+				travelId: travel.id,
+				updateData,
+			});
+
+			expect(result.name).toBe(updateData.name);
+			expect(result.description).toBe(updateData.description);
+		});
+
+		it("should reject travel update for non-owner", async () => {
+			const appCall = createAppCallAuthenticated(db);
+
+			// Create travel first
+			const travelStub = testStub.travel();
+			const [travel] = await db
+				.insert(Travel)
+				.values(travelStub)
+				.returning({ id: Travel.id });
+
+			// Create membership as member (not owner)
+			await db.insert(TravelMember).values({
+				travelId: travel.id,
+				userId: ALWAYS_USER_TEST.id,
+				role: "member",
+			});
+
+			const updateData = {
+				name: "Updated Travel Name",
+			};
+
+			await expect(
+				appCall(router.travelRoutes.updateTravel, {
+					travelId: travel.id,
+					updateData,
+				}),
+			).rejects.toThrow();
+		});
+
+		it("should validate travel dates on update", async () => {
+			const appCall = createAppCallAuthenticated(db);
+
+			// Create travel first
+			const travelStub = testStub.travel();
+			const [travel] = await db
+				.insert(Travel)
+				.values(travelStub)
+				.returning({ id: Travel.id });
+
+			// Create ownership
+			await db.insert(TravelMember).values({
+				travelId: travel.id,
+				userId: ALWAYS_USER_TEST.id,
+				role: "owner",
+			});
+
+			const updateData = {
+				startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Next week
+				endDate: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
+			};
+
+			await expect(
+				appCall(router.travelRoutes.updateTravel, {
+					travelId: travel.id,
+					updateData,
+				}),
+			).rejects.toThrow();
+		});
+
+		it("should reject update for non-existent travel", async () => {
+			const appCall = createAppCallAuthenticated(db);
+
+			const updateData = {
+				name: "Updated Travel Name",
+			};
+
+			await expect(
+				appCall(router.travelRoutes.updateTravel, {
+					travelId: "non-existent-id",
+					updateData,
+				}),
+			).rejects.toThrow();
+		});
+	});
+
+	describe("deleteTravel (soft delete)", () => {
+		it("should allow travel owner to soft delete travel with correct name confirmation", async () => {
+			const appCall = createAppCallAuthenticated(db);
+
+			// Create travel first
+			const travelStub = testStub.travel();
+			const [travel] = await db
+				.insert(Travel)
+				.values(travelStub)
+				.returning({ id: Travel.id });
+
+			// Create ownership
+			await db.insert(TravelMember).values({
+				travelId: travel.id,
+				userId: ALWAYS_USER_TEST.id,
+				role: "owner",
+			});
+
+			const result = await appCall(router.travelRoutes.deleteTravel, {
+				travelId: travel.id,
+				confirmationName: travelStub.name,
+			});
+
+			expect(result.deletedAt).toBeDefined();
+			expect(result.deletedBy).toBe(ALWAYS_USER_TEST.id);
+
+			// Verify travel is no longer accessible via normal queries
+			await expect(
+				appCall(router.travelRoutes.getTravel, {
+					id: travel.id,
+				}),
+			).rejects.toThrow();
+		});
+
+		it("should reject delete with incorrect name confirmation", async () => {
+			const appCall = createAppCallAuthenticated(db);
+
+			// Create travel first
+			const travelStub = testStub.travel();
+			const [travel] = await db
+				.insert(Travel)
+				.values(travelStub)
+				.returning({ id: Travel.id });
+
+			// Create ownership
+			await db.insert(TravelMember).values({
+				travelId: travel.id,
+				userId: ALWAYS_USER_TEST.id,
+				role: "owner",
+			});
+
+			await expect(
+				appCall(router.travelRoutes.deleteTravel, {
+					travelId: travel.id,
+					confirmationName: "wrong name",
+				}),
+			).rejects.toThrow();
+		});
+
+		it("should reject delete for non-owner", async () => {
+			const appCall = createAppCallAuthenticated(db);
+
+			// Create travel first
+			const travelStub = testStub.travel();
+			const [travel] = await db
+				.insert(Travel)
+				.values(travelStub)
+				.returning({ id: Travel.id });
+
+			// Create membership as member (not owner)
+			await db.insert(TravelMember).values({
+				travelId: travel.id,
+				userId: ALWAYS_USER_TEST.id,
+				role: "member",
+			});
+
+			await expect(
+				appCall(router.travelRoutes.deleteTravel, {
+					travelId: travel.id,
+					confirmationName: travelStub.name,
+				}),
+			).rejects.toThrow();
+		});
+
+		it("should reject delete for already deleted travel", async () => {
+			const appCall = createAppCallAuthenticated(db);
+
+			// Create travel first
+			const travelStub = testStub.travel();
+			const [travel] = await db
+				.insert(Travel)
+				.values({
+					...travelStub,
+					deletedAt: new Date(),
+					deletedBy: ALWAYS_USER_TEST.id,
+				})
+				.returning({ id: Travel.id });
+
+			// Create ownership
+			await db.insert(TravelMember).values({
+				travelId: travel.id,
+				userId: ALWAYS_USER_TEST.id,
+				role: "owner",
+			});
+
+			await expect(
+				appCall(router.travelRoutes.deleteTravel, {
+					travelId: travel.id,
+					confirmationName: travelStub.name,
+				}),
+			).rejects.toThrow();
+		});
+	});
+
+	describe("soft delete behavior", () => {
+		it("should exclude soft deleted travels from getAllTravels", async () => {
+			const appCall = createAppCallAuthenticated(db);
+
+			// Create regular travel
+			const travelStub1 = testStub.travel();
+			const [travel1] = await db
+				.insert(Travel)
+				.values(travelStub1)
+				.returning({ id: Travel.id });
+
+			// Create soft deleted travel
+			const travelStub2 = testStub.travel();
+			await db.insert(Travel).values({
+				...travelStub2,
+				deletedAt: new Date(),
+				deletedBy: ALWAYS_USER_TEST.id,
+			});
+
+			const result = await appCall(router.travelRoutes.listTravels, {});
+
+			// Should only include non-deleted travel
+			const travelIds = result.map((t) => t.id);
+			expect(travelIds).toContain(travel1.id);
+			expect(travelIds).not.toContain(travelStub2.id);
+		});
+
+		it("should exclude soft deleted travels from getTravel", async () => {
+			const appCall = createAppCallAuthenticated(db);
+
+			// Create soft deleted travel
+			const travelStub = testStub.travel();
+			const [travel] = await db
+				.insert(Travel)
+				.values({
+					...travelStub,
+					deletedAt: new Date(),
+					deletedBy: ALWAYS_USER_TEST.id,
+				})
+				.returning({ id: Travel.id });
+
+			await expect(
+				appCall(router.travelRoutes.getTravel, {
+					id: travel.id,
+				}),
+			).rejects.toThrow();
+		});
+
+		it("should exclude soft deleted travels from getTravelMembers", async () => {
+			const appCall = createAppCallAuthenticated(db);
+
+			// Create soft deleted travel
+			const travelStub = testStub.travel();
+			const [travel] = await db
+				.insert(Travel)
+				.values({
+					...travelStub,
+					deletedAt: new Date(),
+					deletedBy: ALWAYS_USER_TEST.id,
+				})
+				.returning({ id: Travel.id });
+
+			// Create membership
+			await db.insert(TravelMember).values({
+				travelId: travel.id,
+				userId: ALWAYS_USER_TEST.id,
+				role: "owner",
+			});
+
+			await expect(
+				appCall(router.travelRoutes.getTravelMembers, {
+					travelId: travel.id,
+				}),
+			).rejects.toThrow();
+		});
+	});
+
+	describe("travel creation with description", () => {
+		it("should create travel with description field", async () => {
+			const appCall = createAppCallAuthenticated(db);
+
+			const travelStub = testStub.travel();
+			const travelInput = {
+				name: travelStub.name,
+				description: "This is a test travel description",
+				destination: travelStub.destination,
+				startDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
+				endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+				locationInfo: travelStub.locationInfo,
+				visaInfo: travelStub.visaInfo,
+				accommodations: [],
+				events: [],
+			};
+
+			const result = await appCall(router.travelRoutes.saveTravel, {
+				travel: travelInput,
+			});
+
+			expect(result.travel.description).toBe(travelInput.description);
+		});
+
+		it("should create travel without description field", async () => {
+			const appCall = createAppCallAuthenticated(db);
+
+			const travelStub = testStub.travel();
+			const travelInput = {
+				name: travelStub.name,
+				destination: travelStub.destination,
+				startDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
+				endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+				locationInfo: travelStub.locationInfo,
+				visaInfo: travelStub.visaInfo,
+				accommodations: [],
+				events: [],
+			};
+
+			const result = await appCall(router.travelRoutes.saveTravel, {
+				travel: travelInput,
+			});
+
+			expect(result.travel.description).toBeNull();
+		});
+	});
 });

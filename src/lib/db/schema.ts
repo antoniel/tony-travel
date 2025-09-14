@@ -94,26 +94,30 @@ export type InsertTravel = typeof Travel.$inferInsert;
 export const Travel = sqliteTable("travel", {
 	...defaultColumn("travel"),
 	name: text("name").notNull(),
+	description: text("description"),
 	destination: text("destination").notNull(),
 	startDate: integer("start_date", { mode: "timestamp" }).notNull(),
 	endDate: integer("end_date", { mode: "timestamp" }).notNull(),
 	userId: text("user_id")
 		.notNull()
 		.references(() => User.id, { onDelete: "cascade" }),
-	locationInfo: text("location_info", { mode: "json" }).notNull().$type<{
-		destination: string;
-		country: string;
-		climate: string;
-		currency: string;
-		language: string;
-		timeZone: string;
-		bestTimeToVisit: string;
-		emergencyNumbers?: {
-			police?: string;
-			medical?: string;
-			embassy?: string;
-		};
-	}>(),
+    locationInfo: text("location_info", { mode: "json" }).notNull().$type<{
+        destination: string;
+        country: string;
+        climate: string;
+        currency: string;
+        language: string;
+        timeZone: string;
+        bestTimeToVisit: string;
+        emergencyNumbers?: {
+            police?: string;
+            medical?: string;
+            embassy?: string;
+        };
+        // Optional persisted selections to help prefill forms
+        departureAirports?: { code: string; label: string }[];
+        selectedDestinations?: { value: string; label: string }[];
+    }>(),
 	visaInfo: text("visa_info", { mode: "json" }).notNull().$type<{
 		required: boolean;
 		stayDuration: string;
@@ -121,8 +125,19 @@ export const Travel = sqliteTable("travel", {
 		vaccinations: string[];
 		entryRequirements?: string[];
 	}>(),
+	deletedAt: integer("deleted_at", { mode: "timestamp" }),
+	deletedBy: text("deleted_by").references(() => User.id),
 });
 export const TravelSchema = createSelectSchema(Travel);
+export const InsertTravelSchema = createInsertSchema(Travel);
+export const UpdateTravelSchema = createInsertSchema(Travel).partial().omit({
+	id: true,
+	createdAt: true,
+	updatedAt: true,
+	userId: true,
+	deletedAt: true,
+	deletedBy: true,
+});
 export const TravelRelations = relations(Travel, ({ many }) => ({
 	accommodations: many(Accommodation),
 	events: many(AppEvent),
