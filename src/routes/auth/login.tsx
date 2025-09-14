@@ -55,15 +55,6 @@ function LoginPage() {
 
 	return (
 		<div className="flex h-screen w-full">
-			{/* Left side image - hidden on mobile */}
-			<div className="w-full hidden md:inline-block">
-				<img
-					className="h-full w-full object-cover"
-					src="https://raw.githubusercontent.com/prebuiltui/prebuiltui/main/assets/login/leftSideImage.png"
-					alt="Travel inspiration"
-				/>
-			</div>
-
 			{/* Right side login form */}
 			<div className="w-full flex flex-col items-center justify-center bg-background px-4">
 				<div className="md:w-96 w-80 flex flex-col items-center justify-center">

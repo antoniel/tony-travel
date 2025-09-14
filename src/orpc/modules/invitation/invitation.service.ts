@@ -1,4 +1,5 @@
 import type { DB } from "@/lib/db/types";
+import { serverEnv } from "@/serverEnv";
 import { nanoid } from "nanoid";
 import { createInvitationDAO } from "./invitation.dao";
 import type {
@@ -39,7 +40,7 @@ export class InvitationService {
 			expiresAt,
 		});
 
-		const baseUrl = process.env.VITE_APP_URL || "http://localhost:3000";
+		const baseUrl = serverEnv.VITE_APP_URL || "http://localhost:3000";
 		const inviteUrl = `${baseUrl}/invite/${token}`;
 
 		return {
@@ -202,7 +203,7 @@ export class InvitationService {
 			return null;
 		}
 
-		const baseUrl = process.env.VITE_APP_URL || "http://localhost:3000";
+		const baseUrl = serverEnv.VITE_APP_URL || "http://localhost:3000";
 		const inviteUrl = `${baseUrl}/invite/${invitation.token}`;
 
 		return {

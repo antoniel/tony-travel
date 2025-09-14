@@ -1,5 +1,5 @@
 import { defineConfig } from "drizzle-kit";
-import { serverEnv } from "./src/env";
+import { serverEnv } from "./src/serverEnv";
 
 export default defineConfig({
   dialect: "turso",

@@ -3,6 +3,8 @@ import {
 	HeadContent,
 	Scripts,
 	createRootRouteWithContext,
+	Outlet,
+	useRouterState,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 
@@ -40,9 +42,23 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 			},
 		],
 	}),
-
+	component: RootComponent,
 	shellComponent: RootDocument,
 });
+
+function RootComponent() {
+	const routerState = useRouterState();
+	const isAuthRoute = routerState.location.pathname.startsWith('/auth');
+	
+	return (
+		<>
+			{!isAuthRoute && <TopbarMenu />}
+			<main className={isAuthRoute ? "" : "min-h-[calc(100vh-4rem)]"}>
+				<Outlet />
+			</main>
+		</>
+	);
+}
 
 function RootDocument({ children }: { children: React.ReactNode }) {
 	return (
@@ -57,10 +73,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				/>
 			</head>
 			<body>
-				<TopbarMenu />
-				<main className="min-h-[calc(100vh-4rem)]">
-					{children}
-				</main>
+				{children}
 				<Toaster />
 				<TanstackDevtools
 					config={{

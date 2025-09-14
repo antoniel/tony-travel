@@ -1,5 +1,5 @@
-import { serverEnv } from "@/env";
 import { db } from "@/lib/db";
+import { serverEnv } from "@/serverEnv";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { Account, Session, User, Verification } from "./db/schema";

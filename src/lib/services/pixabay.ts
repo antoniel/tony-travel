@@ -1,4 +1,4 @@
-import { serverEnv } from "@/env";
+import { serverEnv } from "@/serverEnv";
 
 export interface PixabayImage {
 	id: number;
