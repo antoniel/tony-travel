@@ -185,13 +185,23 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 													label: renderAiportName(airport),
 												}))}
 												onSelectionChange={(selected) => {
-													const selectedCodes = selected.map((s) => s.value);
-													setForm((prev) => ({
-														...prev,
-														departureAirports: searchResults.filter((airport) =>
-															selectedCodes.includes(airport.code),
-														),
-													}));
+													// Preserve already selected airports across different searches
+													setForm((prev) => {
+														const selectedCodes = selected.map((s) => s.value);
+														// Build a lookup from previous selections and current results
+														const byCode = new Map<string, Airport>();
+														for (const a of prev.departureAirports) byCode.set(a.code, a);
+														for (const a of searchResults) if (!byCode.has(a.code)) byCode.set(a.code, a);
+
+														const departureAirports = selectedCodes
+															.map((code) => byCode.get(code))
+															.filter(Boolean) as Airport[];
+
+														return {
+															...prev,
+															departureAirports,
+														};
+													});
 												}}
 												searchValue={airportSearch}
 												onSearchChange={setAirportSearch}

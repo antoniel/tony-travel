@@ -1,9 +1,9 @@
 import { TanstackDevtools } from "@tanstack/react-devtools";
 import {
 	HeadContent,
+	Outlet,
 	Scripts,
 	createRootRouteWithContext,
-	Outlet,
 	useRouterState,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
@@ -48,8 +48,8 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
 function RootComponent() {
 	const routerState = useRouterState();
-	const isAuthRoute = routerState.location.pathname.startsWith('/auth');
-	
+	const isAuthRoute = routerState.location.pathname.startsWith("/auth");
+
 	return (
 		<>
 			{!isAuthRoute && <TopbarMenu />}
@@ -67,26 +67,30 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<HeadContent />
 				<link rel="icon" href="data:image/x-icon;base64,AA" />
 				<Meta />
-				<script
-					crossOrigin="anonymous"
-					src="//unpkg.com/react-scan/dist/auto.global.js"
-				/>
+				{import.meta.env.PROD && (
+					<script
+						crossOrigin="anonymous"
+						src="//unpkg.com/react-scan/dist/auto.global.js"
+					/>
+				)}
 			</head>
 			<body>
 				{children}
 				<Toaster />
-				<TanstackDevtools
-					config={{
-						position: "bottom-left",
-					}}
-					plugins={[
-						{
-							name: "Tanstack Router",
-							render: <TanStackRouterDevtoolsPanel />,
-						},
-						TanStackQueryDevtools,
-					]}
-				/>
+				{import.meta.env.PROD && (
+					<TanstackDevtools
+						config={{
+							position: "bottom-left",
+						}}
+						plugins={[
+							{
+								name: "Tanstack Router",
+								render: <TanStackRouterDevtoolsPanel />,
+							},
+							TanStackQueryDevtools,
+						]}
+					/>
+				)}
 				<Scripts />
 			</body>
 		</html>
