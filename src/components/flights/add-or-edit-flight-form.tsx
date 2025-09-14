@@ -25,19 +25,35 @@ import { match } from "ts-pattern";
 import { z } from "zod";
 
 // Form validation schema
-const flightFormSchema = z.object({
-	flightNumber: z.string().optional(),
-	originAirport: z.string().min(1, "Aeroporto de origem é obrigatório"),
-	destinationAirport: z.string().min(1, "Aeroporto de destino é obrigatório"),
-	departureDate: z.string().min(1, "Data de partida é obrigatória"),
-	departureTime: z.string().min(1, "Horário de partida é obrigatório"),
-	arrivalDate: z.string().min(1, "Data de chegada é obrigatória"),
-	arrivalTime: z.string().min(1, "Horário de chegada é obrigatório"),
-	cost: z.string().optional(),
-	participantIds: z
-		.array(z.string())
-		.min(0, "Selecione pelo menos um participante"),
-});
+const flightFormSchema = z
+	.object({
+		flightNumber: z.string().optional(),
+		originAirport: z.string().min(1, "Aeroporto de origem é obrigatório"),
+		destinationAirport: z.string().min(1, "Aeroporto de destino é obrigatório"),
+		departureDate: z.string().min(1, "Data de partida é obrigatória"),
+		departureTime: z.string().min(1, "Horário de partida é obrigatório"),
+		arrivalDate: z.string().min(1, "Data de chegada é obrigatória"),
+		arrivalTime: z.string().min(1, "Horário de chegada é obrigatório"),
+		cost: z.string().optional(),
+		participantIds: z
+			.array(z.string())
+			.min(0, "Selecione pelo menos um participante"),
+	})
+	.superRefine((data, ctx) => {
+		try {
+			const dep = new Date(`${data.departureDate}T${data.departureTime}:00`);
+			const arr = new Date(`${data.arrivalDate}T${data.arrivalTime}:00`);
+			if (Number.isNaN(dep.getTime()) || Number.isNaN(arr.getTime())) return;
+			if (arr.getTime() <= dep.getTime()) {
+				const issue = {
+					code: z.ZodIssueCode.custom,
+					message: "Chegada deve ser após a partida",
+				};
+				ctx.addIssue({ ...issue, path: ["arrivalDate"] });
+				ctx.addIssue({ ...issue, path: ["arrivalTime"] });
+			}
+		} catch {}
+	});
 
 type FlightFormData = z.infer<typeof flightFormSchema>;
 
@@ -494,6 +510,16 @@ function FlightTimesSection({
 	minDate: string;
 	maxDate: string;
 }) {
+	const departureDate = form.watch("departureDate");
+	const departureTime = form.watch("departureTime");
+	const arrivalDate = form.watch("arrivalDate");
+
+	const arrivalMinDate = departureDate || minDate;
+	const arrivalTimeMin =
+		arrivalDate && departureDate && arrivalDate === departureDate
+			? departureTime || undefined
+			: undefined;
+
 	return (
 		<div className="space-y-6">
 			<div className="space-y-4">
@@ -553,7 +579,7 @@ function FlightTimesSection({
 									<Input
 										{...field}
 										type="date"
-										min={minDate}
+										min={arrivalMinDate}
 										max={maxDate}
 										className="h-11"
 									/>
@@ -569,7 +595,12 @@ function FlightTimesSection({
 							<FormItem>
 								<FormLabel>Horário *</FormLabel>
 								<FormControl>
-									<Input {...field} type="time" className="h-11" />
+									<Input
+										{...field}
+										type="time"
+										min={arrivalTimeMin}
+										className="h-11"
+									/>
 								</FormControl>
 								<FormMessage />
 							</FormItem>
