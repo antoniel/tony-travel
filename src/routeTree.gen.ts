@@ -17,6 +17,7 @@ import { Route as TripTravelIdRouteImport } from './routes/trip/$travelId'
 import { Route as InviteTokenRouteImport } from './routes/invite/$token'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as TripTravelIdIndexRouteImport } from './routes/trip/$travelId/index'
+import { Route as TripTravelIdSettingsRouteImport } from './routes/trip/$travelId/settings'
 import { Route as TripTravelIdMembersRouteImport } from './routes/trip/$travelId/members'
 import { Route as TripTravelIdLocationsRouteImport } from './routes/trip/$travelId/locations'
 import { Route as TripTravelIdFlightsRouteImport } from './routes/trip/$travelId/flights'
@@ -55,6 +56,11 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
 const TripTravelIdIndexRoute = TripTravelIdIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => TripTravelIdRoute,
+} as any)
+const TripTravelIdSettingsRoute = TripTravelIdSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => TripTravelIdRoute,
 } as any)
 const TripTravelIdMembersRoute = TripTravelIdMembersRouteImport.update({
@@ -104,6 +110,7 @@ export interface FileRoutesByFullPath {
   '/trip/$travelId/flights': typeof TripTravelIdFlightsRoute
   '/trip/$travelId/locations': typeof TripTravelIdLocationsRoute
   '/trip/$travelId/members': typeof TripTravelIdMembersRoute
+  '/trip/$travelId/settings': typeof TripTravelIdSettingsRoute
   '/trip/$travelId/': typeof TripTravelIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -115,6 +122,7 @@ export interface FileRoutesByTo {
   '/trip/$travelId/flights': typeof TripTravelIdFlightsRoute
   '/trip/$travelId/locations': typeof TripTravelIdLocationsRoute
   '/trip/$travelId/members': typeof TripTravelIdMembersRoute
+  '/trip/$travelId/settings': typeof TripTravelIdSettingsRoute
   '/trip/$travelId': typeof TripTravelIdIndexRoute
 }
 export interface FileRoutesById {
@@ -128,6 +136,7 @@ export interface FileRoutesById {
   '/trip/$travelId/flights': typeof TripTravelIdFlightsRoute
   '/trip/$travelId/locations': typeof TripTravelIdLocationsRoute
   '/trip/$travelId/members': typeof TripTravelIdMembersRoute
+  '/trip/$travelId/settings': typeof TripTravelIdSettingsRoute
   '/trip/$travelId/': typeof TripTravelIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -142,6 +151,7 @@ export interface FileRouteTypes {
     | '/trip/$travelId/flights'
     | '/trip/$travelId/locations'
     | '/trip/$travelId/members'
+    | '/trip/$travelId/settings'
     | '/trip/$travelId/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -153,6 +163,7 @@ export interface FileRouteTypes {
     | '/trip/$travelId/flights'
     | '/trip/$travelId/locations'
     | '/trip/$travelId/members'
+    | '/trip/$travelId/settings'
     | '/trip/$travelId'
   id:
     | '__root__'
@@ -165,6 +176,7 @@ export interface FileRouteTypes {
     | '/trip/$travelId/flights'
     | '/trip/$travelId/locations'
     | '/trip/$travelId/members'
+    | '/trip/$travelId/settings'
     | '/trip/$travelId/'
   fileRoutesById: FileRoutesById
 }
@@ -249,6 +261,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TripTravelIdIndexRouteImport
       parentRoute: typeof TripTravelIdRoute
     }
+    '/trip/$travelId/settings': {
+      id: '/trip/$travelId/settings'
+      path: '/settings'
+      fullPath: '/trip/$travelId/settings'
+      preLoaderRoute: typeof TripTravelIdSettingsRouteImport
+      parentRoute: typeof TripTravelIdRoute
+    }
     '/trip/$travelId/members': {
       id: '/trip/$travelId/members'
       path: '/members'
@@ -310,6 +329,7 @@ interface TripTravelIdRouteChildren {
   TripTravelIdFlightsRoute: typeof TripTravelIdFlightsRoute
   TripTravelIdLocationsRoute: typeof TripTravelIdLocationsRoute
   TripTravelIdMembersRoute: typeof TripTravelIdMembersRoute
+  TripTravelIdSettingsRoute: typeof TripTravelIdSettingsRoute
   TripTravelIdIndexRoute: typeof TripTravelIdIndexRoute
 }
 
@@ -318,6 +338,7 @@ const TripTravelIdRouteChildren: TripTravelIdRouteChildren = {
   TripTravelIdFlightsRoute: TripTravelIdFlightsRoute,
   TripTravelIdLocationsRoute: TripTravelIdLocationsRoute,
   TripTravelIdMembersRoute: TripTravelIdMembersRoute,
+  TripTravelIdSettingsRoute: TripTravelIdSettingsRoute,
   TripTravelIdIndexRoute: TripTravelIdIndexRoute,
 }
 

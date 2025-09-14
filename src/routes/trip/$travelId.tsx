@@ -1,7 +1,7 @@
 import { orpc } from "@/orpc/client"
 import { useQuery } from "@tanstack/react-query"
 import { Link, Outlet, createFileRoute, useLocation } from "@tanstack/react-router"
-import { Calendar, Clock, Home, MapPin, Plane, Users } from "lucide-react"
+import { Calendar, Clock, Home, MapPin, Plane, Settings, Users } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 
 export const Route = createFileRoute("/trip/$travelId")({
@@ -45,6 +45,12 @@ function TripLayout() {
       path: `/trip/${travelId}/members`,
       label: "Membros",
       icon: Users,
+    },
+    {
+      value: "settings",
+      path: `/trip/${travelId}/settings`,
+      label: "Configurações",
+      icon: Settings,
     },
   ]
 
@@ -106,7 +112,18 @@ function TripLayout() {
     setShowRightFade(hasOverflow && !atEnd)
   }, [])
 
-  const visibleTabs = tabRoutes.filter((tab) => (tab.value === "members" ? !!travel?.userMembership : true))
+  const visibleTabs = tabRoutes.filter((tab) => {
+    // Members tab - only show if user is a member
+    if (tab.value === "members") {
+      return !!travel?.userMembership
+    }
+    // Settings tab - only show if user is the owner
+    if (tab.value === "settings") {
+      return travel?.userMembership?.role === "owner"
+    }
+    // All other tabs are visible to all users
+    return true
+  })
 
   return (
     <div className="bg-background">
