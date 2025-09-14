@@ -15,6 +15,7 @@ import { Route as CreateTripRouteImport } from './routes/create-trip'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TripTravelIdRouteImport } from './routes/trip/$travelId'
 import { Route as InviteTokenRouteImport } from './routes/invite/$token'
+import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as TripTravelIdIndexRouteImport } from './routes/trip/$travelId/index'
 import { Route as TripTravelIdMembersRouteImport } from './routes/trip/$travelId/members'
 import { Route as TripTravelIdLocationsRouteImport } from './routes/trip/$travelId/locations'
@@ -44,6 +45,11 @@ const TripTravelIdRoute = TripTravelIdRouteImport.update({
 const InviteTokenRoute = InviteTokenRouteImport.update({
   id: '/invite/$token',
   path: '/invite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthLoginRoute = AuthLoginRouteImport.update({
+  id: '/auth/login',
+  path: '/auth/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TripTravelIdIndexRoute = TripTravelIdIndexRouteImport.update({
@@ -91,6 +97,7 @@ const ApiAuthSplatServerRoute = ApiAuthSplatServerRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/create-trip': typeof CreateTripRoute
+  '/auth/login': typeof AuthLoginRoute
   '/invite/$token': typeof InviteTokenRoute
   '/trip/$travelId': typeof TripTravelIdRouteWithChildren
   '/trip/$travelId/accommodations': typeof TripTravelIdAccommodationsRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/create-trip': typeof CreateTripRoute
+  '/auth/login': typeof AuthLoginRoute
   '/invite/$token': typeof InviteTokenRoute
   '/trip/$travelId/accommodations': typeof TripTravelIdAccommodationsRoute
   '/trip/$travelId/flights': typeof TripTravelIdFlightsRoute
@@ -113,6 +121,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/create-trip': typeof CreateTripRoute
+  '/auth/login': typeof AuthLoginRoute
   '/invite/$token': typeof InviteTokenRoute
   '/trip/$travelId': typeof TripTravelIdRouteWithChildren
   '/trip/$travelId/accommodations': typeof TripTravelIdAccommodationsRoute
@@ -126,6 +135,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/create-trip'
+    | '/auth/login'
     | '/invite/$token'
     | '/trip/$travelId'
     | '/trip/$travelId/accommodations'
@@ -137,6 +147,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/create-trip'
+    | '/auth/login'
     | '/invite/$token'
     | '/trip/$travelId/accommodations'
     | '/trip/$travelId/flights'
@@ -147,6 +158,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/create-trip'
+    | '/auth/login'
     | '/invite/$token'
     | '/trip/$travelId'
     | '/trip/$travelId/accommodations'
@@ -159,6 +171,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CreateTripRoute: typeof CreateTripRoute
+  AuthLoginRoute: typeof AuthLoginRoute
   InviteTokenRoute: typeof InviteTokenRoute
   TripTravelIdRoute: typeof TripTravelIdRouteWithChildren
 }
@@ -220,6 +233,13 @@ declare module '@tanstack/react-router' {
       path: '/invite/$token'
       fullPath: '/invite/$token'
       preLoaderRoute: typeof InviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/login': {
+      id: '/auth/login'
+      path: '/auth/login'
+      fullPath: '/auth/login'
+      preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/trip/$travelId/': {
@@ -308,6 +328,7 @@ const TripTravelIdRouteWithChildren = TripTravelIdRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CreateTripRoute: CreateTripRoute,
+  AuthLoginRoute: AuthLoginRoute,
   InviteTokenRoute: InviteTokenRoute,
   TripTravelIdRoute: TripTravelIdRouteWithChildren,
 }

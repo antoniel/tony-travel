@@ -47,7 +47,7 @@ function InviteAcceptancePage() {
 		if (!userQuery.isAuthenticated && !userQuery.isLoading) {
 			const currentUrl = window.location.pathname;
 			router.navigate({
-				to: "/",
+				to: "/auth/login",
 				search: { redirect: currentUrl },
 			});
 		}
