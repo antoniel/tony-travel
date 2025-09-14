@@ -12,8 +12,6 @@ export function TravelOwnerOnly({
 	fallback,
 }: TravelOwnerOnlyProps) {
 	const travelMembershipQuery = useTravelMembership(travelId);
-	console.log(travelMembershipQuery.data);
-
 	if (travelMembershipQuery.isLoading) {
 		return fallback || null;
 	}

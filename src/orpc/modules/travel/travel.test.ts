@@ -162,7 +162,7 @@ describe("travel service", () => {
 			expect(result).toBeDefined();
 			expect(result.id).toBe(travel.id);
 			expect(result.userMembership).toBeDefined();
-			expect(result.userMembership.role).toBe("owner");
+			expect(result?.userMembership?.role).toBe("owner");
 		});
 
 		it("should return travel without membership for unauthenticated user", async () => {

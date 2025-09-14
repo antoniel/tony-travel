@@ -392,20 +392,29 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 												setLoginModalOpen(true);
 												return;
 											}
-											
+
 											// Prepare data for TripWizard
 											const searchParams = {
-												destinations: form.destinations.length > 0 ? JSON.stringify(form.destinations) : undefined,
+												destinations:
+													form.destinations.length > 0
+														? JSON.stringify(form.destinations)
+														: undefined,
 												dateFrom: form.dateRange?.from?.toISOString(),
 												dateTo: form.dateRange?.to?.toISOString(),
-												people: (form.people === "custom" ? form.customPeople : form.people) || "2",
+												people:
+													(form.people === "custom"
+														? form.customPeople
+														: form.people) || "2",
 												budget: form.customBudget || "1500",
-												departureAirports: form.departureAirports.length > 0 ? JSON.stringify(form.departureAirports) : undefined,
+												departureAirports:
+													form.departureAirports.length > 0
+														? JSON.stringify(form.departureAirports)
+														: undefined,
 											};
 
-											navigate({ 
+											navigate({
 												to: "/create-trip",
-												search: searchParams
+												search: searchParams,
 											});
 										}}
 										className="w-full h-14 travel-button-primary rounded-xl relative overflow-hidden text-base font-semibold"

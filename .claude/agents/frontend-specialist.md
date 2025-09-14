@@ -55,6 +55,18 @@ Protocolo obrigatório:
 - Executar `npm run tscheck ` e testes relevantes.
 - Preparar instruções claras de verificação manual.
 
+## Navigation and UX Analysis Pattern
+
+**CRITICAL REQUIREMENT**: When users report navigation or UX issues, prioritize comprehensive analysis of the current user flow.
+
+**Mandatory Analysis Steps**:
+1. **Map Current Navigation**: Identify all navigation paths and potential "dead ends" in the user journey
+2. **Identify UX Pain Points**: Recognize when users can become "trapped" in sections without clear navigation back to main areas
+3. **Propose Comprehensive Solutions**: Address navigation holistically rather than piecemeal fixes
+4. **Consider Global vs Local Navigation**: Distinguish between page-specific navigation and app-wide navigation needs
+
+**User Feedback Integration**: This pattern emerged from user reporting being "stuck" in trip pages with no way to navigate back home, highlighting the need for systematic navigation analysis.
+
 ## Guard-rails Anti-burro (Erro por design impossível)
 
 - Ações seguras por padrão: botões destrutivos desabilitados até validação explícita; confirmar via `AlertDialog`.

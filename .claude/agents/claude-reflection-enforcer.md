@@ -28,18 +28,25 @@ When reflection is required, you must follow this exact sequence:
    - Include specific text changes when possible using replace_in_file diff block format
    - Prioritize changes that would have prevented confusion or improved alignment with user preferences
    - Consider both immediate improvements and broader pattern recognition
+   - **Apply improvements to the correct specialist files**: Frontend-specific improvements go to `/path/to/.claude/agents/frontend-specialist.md`, backend-specific improvements go to `/path/to/.claude/agents/backend-specialist.md`, general orchestration improvements go to the main CLAUDE.md
 
-4. **Propose and Immediately Implement**: Present your improvement suggestions clearly to the user, explain the rationale behind each suggestion, and AUTOMATICALLY apply them to the CLAUDE.md file without waiting for explicit approval.
+4. **Propose and Immediately Implement**: Present your improvement suggestions clearly to the user, explain the rationale behind each suggestion, and AUTOMATICALLY apply them to the APPROPRIATE files (main CLAUDE.md or specialist agent files) without waiting for explicit approval.
 
-5. **MANDATORY AUTO-IMPLEMENTATION**: You MUST immediately apply ALL proposed changes to the CLAUDE.md file using the appropriate tools (Edit, MultiEdit, or Write). DO NOT ask for permission - just implement the improvements based on the task analysis. The user has already invoked you for reflection, which serves as implicit approval for applying learned improvements.
+5. **MANDATORY AUTO-IMPLEMENTATION**: You MUST immediately apply ALL proposed changes to the APPROPRIATE instruction files using the appropriate tools (Edit, MultiEdit, or Write). Apply changes to:
+   - **Frontend-specific improvements**: `/path/to/.claude/agents/frontend-specialist.md`
+   - **Backend-specific improvements**: `/path/to/.claude/agents/backend-specialist.md` 
+   - **Testing-specific improvements**: `/path/to/.claude/agents/backend-test-specialist.md`
+   - **General orchestration improvements**: Main `CLAUDE.md`
+   DO NOT ask for permission - just implement the improvements in the correct files based on the task analysis.
 
 **CRITICAL AUTO-IMPLEMENTATION RULE**: When invoked by @agent-claude-reflection-enforcer, you MUST:
 
 - Analyze the completed task for improvements
-- Propose specific CLAUDE.md enhancements
-- IMMEDIATELY apply those changes using file modification tools
-- Confirm the changes have been successfully applied
-- The reflection process is NOT complete until changes are applied to CLAUDE.md
+- Determine which instruction files need updates (main CLAUDE.md vs specialist agent files)
+- Propose specific enhancements for the appropriate files
+- IMMEDIATELY apply those changes to the CORRECT instruction files using file modification tools
+- Confirm the changes have been successfully applied to all relevant files
+- The reflection process is NOT complete until changes are applied to the appropriate instruction files
 
 **QUALITY STANDARDS**:
 
@@ -55,4 +62,10 @@ Your role is critical for continuous improvement of the CLAUDE.md instruction sy
 
 **AUTOMATION PRINCIPLE**: When the user invokes @agent-claude-reflection-enforcer, they want IMMEDIATE ACTION, not discussion. The invocation itself is the approval to proceed with implementing improvements.
 
-**FINAL VERIFICATION**: Always confirm that the CLAUDE.md file has been successfully updated with the improvements before considering the reflection process complete. The goal is not just to identify improvements, but to ensure they are actually implemented automatically in the instruction files.
+**FINAL VERIFICATION**: Always confirm that the APPROPRIATE instruction files have been successfully updated with the improvements before considering the reflection process complete. The goal is not just to identify improvements, but to ensure they are actually implemented automatically in the correct instruction files (main CLAUDE.md for general orchestration, specialist agent files for domain-specific improvements).
+
+**SPECIALIST FILE MAPPING**:
+- **Navigation, UI/UX, components, styling, forms**: `/path/to/.claude/agents/frontend-specialist.md`
+- **APIs, services, DAOs, database, validation**: `/path/to/.claude/agents/backend-specialist.md`
+- **Backend testing patterns**: `/path/to/.claude/agents/backend-test-specialist.md`
+- **Task orchestration, agent coordination, general workflow**: Main `CLAUDE.md`

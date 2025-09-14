@@ -586,7 +586,7 @@ function FlightCard({
 
 					{/* Actions (members only) */}
 					{canWrite ? (
-						<div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+						<div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
 							<Button
 								variant="ghost"
 								size="sm"

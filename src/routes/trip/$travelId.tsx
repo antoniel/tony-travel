@@ -119,11 +119,11 @@ function TripLayout() {
 	);
 
 	return (
-		<div className="min-h-screen bg-background">
+		<div className="bg-background">
 			{/* Travel Header */}
-			<header className="bg-background border-b sticky top-0 z-40">
+			<header className="bg-background border-b sticky top-16 z-30">
 				<div className="container mx-auto px-4 sm:px-6 lg:px-8">
-					<div className="pt-6 space-y-4">
+					<div className="py-4 space-y-4">
 						{/* Travel Title and Info */}
 						<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 							<div className="space-y-2">

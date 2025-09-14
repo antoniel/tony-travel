@@ -13,6 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Quick one-line fixes or small edits
 - Basic project structure exploration
 - File organization and cleanup
+- **Architectural analysis and guidance** - Provide thorough problem analysis and solution architecture even when implementation will be delegated or handled by the user
 
 **Delegated Tasks (Use Specialist Agents)**:
 
