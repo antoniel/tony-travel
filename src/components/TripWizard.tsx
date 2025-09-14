@@ -386,11 +386,11 @@ function SummaryStep({
 					</div>
 				)}
 
-				{/* Destinations */}
+				{/* Arrivals (Destinations) */}
 				{data.destinations && data.destinations.length > 0 && (
 					<div className="flex items-start justify-between py-3 border-b border-border/50">
-						<span className="text-muted-foreground">Destino(s):</span>
-						<div className="text-right">
+						<span className="text-muted-foreground">Chegada(s):</span>
+						<div className="text-right flex flex-wrap justify-end">
 							{data.destinations.map((dest) => (
 								<Badge key={dest.value} variant="secondary" className="ml-1 mb-1">
 									{dest.label}
@@ -445,11 +445,11 @@ function SummaryStep({
 					</div>
 				)}
 
-				{/* Departure */}
+				{/* Departures */}
 				{data.departureAirports && data.departureAirports.length > 0 && (
 					<div className="flex items-start justify-between py-3">
-						<span className="text-muted-foreground">Partida:</span>
-						<div className="text-right">
+						<span className="text-muted-foreground">Saída(s):</span>
+						<div className="text-right flex flex-wrap justify-end">
 							{data.departureAirports.map((airport: Airport) => (
 								<Badge
 									key={airport.code}

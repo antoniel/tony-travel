@@ -48,7 +48,8 @@ import {
 	Users,
 	X,
 } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
 import type { DateRange } from "react-day-picker";
 import { match } from "ts-pattern";
 
@@ -102,6 +103,12 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 	const [isDestinationPopoverOpen, setIsDestinationPopoverOpen] =
 		useState(false);
 
+	// Date range popover state
+	const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
+
+	// Ref to date trigger for optional focus
+	const dateTriggerRef = useRef<HTMLButtonElement | null>(null);
+
 	const { data: searchResults = [] } = useAirportsSearch(airportSearch, 10);
 
 	// Login modal state
@@ -111,6 +118,27 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 	const [promptOpen, setPromptOpen] = useState(false);
 	const [generatedPrompt] = useState("");
 	const [chatgptResponse, setChatgptResponse] = useState("");
+
+	// Derived helpers for people/budget display on featured cards
+	const getSelectedPeopleCount = () => {
+		if (form.people === "custom") {
+			const n = Number(form.customPeople);
+			return Number.isFinite(n) && n > 0 ? n : 2;
+		}
+		const n = Number(form.people);
+		return Number.isFinite(n) && n > 0 ? n : 2;
+	};
+
+	const getPeopleLabel = () => {
+		if (form.people === "5") return "5+ pessoas";
+		const count = getSelectedPeopleCount();
+		return `${count} ${count === 1 ? "pessoa" : "pessoas"}`;
+	};
+
+	const getSelectedBudget = () => {
+		const n = Number(form.customBudget);
+		return Number.isFinite(n) && n > 0 ? n : 1500;
+	};
 
 	const handleSelectPredefinedTrip = (trip: Travel) => {
 		navigate({ to: `/trip/${trip.id}` });
@@ -341,9 +369,10 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 										<Label className="text-base font-medium">
 											Quando você quer viajar?
 										</Label>
-										<Popover>
+										<Popover open={isDatePopoverOpen} onOpenChange={setIsDatePopoverOpen}>
 											<PopoverTrigger asChild>
 												<Button
+													ref={dateTriggerRef}
 													variant="outline"
 													className={cn(
 														"h-12 w-full justify-start text-left font-normal text-base",
@@ -400,6 +429,31 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 										onClick={() => {
 											if (!isAuthenticated) {
 												setLoginModalOpen(true);
+												return;
+											}
+
+
+											// Require at least one departure, one destination and a date range
+											const missingDeparture = form.departureAirports.length === 0;
+											const missingDestination = form.destinations.length === 0;
+											const missingDates = !form.dateRange?.from || !form.dateRange?.to;
+
+											if (missingDeparture || missingDestination || missingDates) {
+												let msg = "Preencha os campos obrigatórios: ";
+												const parts: string[] = [];
+												if (missingDeparture) parts.push("partida");
+												if (missingDestination) parts.push("destino");
+												if (missingDates) parts.push("datas");
+												msg += parts.join(", ");
+												toast.error(msg);
+												if (missingDeparture) {
+													setIsAirportPopoverOpen(true);
+												} else if (missingDestination) {
+													setIsDestinationPopoverOpen(true);
+												} else if (missingDates) {
+													setIsDatePopoverOpen(true);
+													queueMicrotask(() => dateTriggerRef.current?.focus());
+												}
 												return;
 											}
 
@@ -533,12 +587,14 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 
 											<div className="flex items-center text-sm text-muted-foreground">
 												<Users className="h-4 w-4 mr-2" />
-												<span>1-2 pessoas</span>
+												<span>{getPeopleLabel()}</span>
 											</div>
 
 											<div className="flex items-center text-sm text-muted-foreground">
 												<DollarSign className="h-4 w-4 mr-2" />
-												<span>A partir de $800</span>
+												<span>
+													A partir de R$ {formatNumberPtBR(getSelectedBudget())}
+												</span>
 											</div>
 
 											<div className="pt-2">
