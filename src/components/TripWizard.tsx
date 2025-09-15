@@ -119,24 +119,24 @@ export default function TripWizard({ initialData }: TripWizardProps) {
 	// Watch form values for validation and display
 	const watchedData = useWatch({ control: form.control });
 
-	// Save travel mutation
-	const saveTravelMutation = useMutation({
-		...orpc.travelRoutes.saveTravel.mutationOptions(),
-		onSuccess: (data) => {
-			toast.success("Viagem criada com sucesso!", {
-				description: "Redirecionando para sua nova viagem...",
-			});
-			// Invalidate travels query to refresh list
-			queryClient.invalidateQueries({ queryKey: ["travels"] });
-			navigate({ to: "/trip/$travelId", params: { travelId: data.id } });
-		},
-		onError: (error) => {
-			console.error("Failed to create travel:", error);
-			toast.error("Erro ao criar viagem", {
-				description: "Tente novamente em alguns instantes.",
-			});
-		},
-	});
+	const saveTravelMutation = useMutation(
+		orpc.travelRoutes.saveTravel.mutationOptions({
+			onSuccess: (data) => {
+				toast.success("Viagem criada com sucesso!", {
+					description: "Redirecionando para sua nova viagem...",
+				});
+				// Invalidate travels query to refresh list
+				queryClient.invalidateQueries({ queryKey: ["travels"] });
+				navigate({ to: "/trip/$travelId", params: { travelId: data.id } });
+			},
+			onError: (error) => {
+				console.error("Failed to create travel:", error);
+				toast.error("Erro ao criar viagem", {
+					description: "Tente novamente em alguns instantes.",
+				});
+			},
+		}),
+	);
 
 	const canGoNext = () => {
 		const step = STEPS[currentStep];
@@ -174,6 +174,8 @@ export default function TripWizard({ initialData }: TripWizardProps) {
 				"Destino não especificado",
 			startDate: data.dateRange?.from || new Date(),
 			endDate: data.dateRange?.to || new Date(),
+			budget: data.budget,
+			peopleEstimate: data.people,
 			accommodations: [], // Will be added later by user
 			events: [], // Will be added later by user
 		};

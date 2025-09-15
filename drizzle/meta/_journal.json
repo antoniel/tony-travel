@@ -57,6 +57,13 @@
       "when": 1757898330303,
       "tag": "0007_bouncy_magus",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1757951111870,
+      "tag": "0008_clever_spitfire",
+      "breakpoints": true
     }
   ]
 }

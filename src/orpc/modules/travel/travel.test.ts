@@ -129,6 +129,39 @@ describe("travel service", () => {
 			expect(travel).toBeDefined();
 			// Note: accommodations are handled separately by accommodation service
 		});
+
+		it("should persist budget and peopleEstimate via saveTravel", async () => {
+			const appCall = createAppCallAuthenticated(db);
+
+			const travelStub = testStub.travel();
+			const startDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
+			const endDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+			const travelInput = {
+				name: travelStub.name,
+				destination: travelStub.destination,
+				startDate,
+				endDate,
+				budget: 4321.99,
+				peopleEstimate: 5,
+				accommodations: [],
+				events: [],
+			};
+
+			const result = await appCall(router.travelRoutes.saveTravel, {
+				travel: travelInput,
+			});
+
+			expect(result.travel.budget).toBeCloseTo(4321.99, 2);
+			expect(result.travel.peopleEstimate).toBe(5);
+
+			// Verify persisted in DB
+			const saved = await db.query.Travel.findFirst({
+				where: eq(Travel.id, result.id),
+			});
+			expect(saved?.budget).toBeCloseTo(4321.99, 2);
+			expect(saved?.peopleEstimate).toBe(5);
+		});
 	});
 
 	describe("getTravel", () => {

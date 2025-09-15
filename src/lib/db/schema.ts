@@ -99,6 +99,7 @@ export const Travel = sqliteTable("travel", {
 	startDate: integer("start_date", { mode: "timestamp" }).notNull(),
 	endDate: integer("end_date", { mode: "timestamp" }).notNull(),
 	budget: real("budget"),
+	peopleEstimate: integer("people_estimate"),
 	userId: text("user_id")
 		.notNull()
 		.references(() => User.id, { onDelete: "cascade" }),

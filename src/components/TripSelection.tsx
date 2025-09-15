@@ -38,6 +38,7 @@ import type {
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { format } from "date-fns";
+import { formatCurrencyBRL } from "@/lib/currency";
 import { ptBR } from "date-fns/locale";
 import {
 	CalendarIcon,
@@ -129,7 +130,11 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 		return Number.isFinite(n) && n > 0 ? n : 2;
 	};
 
-	const getPeopleLabel = () => {
+	const getPeopleLabel = (tripPeopleEstimate?: number | null) => {
+		if (typeof tripPeopleEstimate === "number" && Number.isFinite(tripPeopleEstimate)) {
+			const count = Math.max(1, Math.floor(tripPeopleEstimate));
+			return `${count} ${count === 1 ? "pessoa" : "pessoas"}`;
+		}
 		if (form.people === "5") return "5+ pessoas";
 		const count = getSelectedPeopleCount();
 		return `${count} ${count === 1 ? "pessoa" : "pessoas"}`;
@@ -610,13 +615,15 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 
 											<div className="flex items-center text-sm text-muted-foreground">
 												<Users className="h-4 w-4 mr-2" />
-												<span>{getPeopleLabel()}</span>
+												<span>{getPeopleLabel(trip.peopleEstimate)}</span>
 											</div>
 
 											<div className="flex items-center text-sm text-muted-foreground">
 												<DollarSign className="h-4 w-4 mr-2" />
 												<span>
-													A partir de R$ {formatNumberPtBR(getSelectedBudget())}
+													{typeof trip.budget === "number" && Number.isFinite(trip.budget)
+														? `A partir de ${formatCurrencyBRL(trip.budget)}`
+														: `A partir de R$ ${formatNumberPtBR(getSelectedBudget())}`}
 												</span>
 											</div>
 										</div>

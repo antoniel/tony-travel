@@ -1,0 +1,1 @@
+ALTER TABLE `travel` ADD `people_estimate` integer;

@@ -10,6 +10,8 @@ export const InsertFullTravel = z.object({
 	destination: z.string(),
 	startDate: z.date(),
 	endDate: z.date(),
+	budget: z.number().optional(),
+	peopleEstimate: z.number().int().positive().optional(),
 	accommodations: z.array(InsertAccommodationSchema),
 	events: z.array(InsertAppEventSchema),
 });

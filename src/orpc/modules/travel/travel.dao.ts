@@ -26,6 +26,8 @@ export class TravelDAO {
 				destination: travelData.destination,
 				startDate: travelData.startDate,
 				endDate: travelData.endDate,
+				budget: travelData.budget,
+				peopleEstimate: travelData.peopleEstimate,
 				userId: travelData.userId,
 			})
 			.returning({ id: Travel.id });
@@ -56,6 +58,8 @@ export class TravelDAO {
 				destination: travelData.destination,
 				startDate: travelData.startDate,
 				endDate: travelData.endDate,
+				budget: travelData.budget,
+				peopleEstimate: travelData.peopleEstimate,
 				userId: travelData.userId,
 			})
 			.returning({ id: Travel.id });
