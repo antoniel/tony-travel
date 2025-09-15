@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "pretest": "node scripts/clean-test-dbs.mjs",
     "dev": "vite dev --port 3000",
     "start": "node .output/server/index.mjs",
     "build": "vite build",
@@ -15,7 +16,8 @@
     "migration:gen": "drizzle-kit generate",
     "migration:run": "drizzle-kit migrate",
     "migration:drop": "drizzle-kit drop",
-    "db:seed": "bun run scripts/seed.ts"
+    "db:seed": "bun run scripts/seed.ts",
+    "clean:testdbs": "node scripts/clean-test-dbs.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",

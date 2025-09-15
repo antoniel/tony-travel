@@ -34,14 +34,16 @@ export const requireAuth = os
 		) {
 			return next({
 				context: {
+					...context,
 					user: ALWAYS_USER_TEST,
-					session: {
-						id: "test-session",
-						userId: ALWAYS_USER_TEST.id,
-						expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
-						createdAt: new Date(),
-						updatedAt: new Date(),
-					},
+						session: {
+							id: "test-session",
+							userId: ALWAYS_USER_TEST.id,
+							expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
+							createdAt: new Date(),
+							updatedAt: new Date(),
+							token: "test-token",
+						},
 				} as AuthContext,
 			});
 		}
@@ -54,6 +56,7 @@ export const requireAuth = os
 
 		return next({
 			context: {
+				...context,
 				user: authResult.user,
 				session: authResult.session,
 			} as AuthContext,
@@ -66,8 +69,30 @@ export const optionalAuth = os
 		if (!context.reqHeaders) {
 			return next({
 				context: {
+					...context,
 					user: null,
 					session: null,
+				} as OptionalAuthContext,
+			});
+		}
+
+		// Test short-circuit: when running tests with a fixed token, avoid hitting auth
+		if (
+			process.env.NODE_ENV === "test" &&
+			context.reqHeaders.get("Authorization") === "Bearer test-token"
+		) {
+			return next({
+				context: {
+					...context,
+					user: ALWAYS_USER_TEST,
+					session: {
+						id: "test-session",
+						userId: ALWAYS_USER_TEST.id,
+						expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
+						createdAt: new Date(),
+						updatedAt: new Date(),
+						token: "test-token",
+					},
 				} as OptionalAuthContext,
 			});
 		}
@@ -77,6 +102,7 @@ export const optionalAuth = os
 
 		return next({
 			context: {
+				...context,
 				user: authResult?.user || null,
 				session: authResult?.session || null,
 			} as OptionalAuthContext,

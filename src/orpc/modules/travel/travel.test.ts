@@ -1,4 +1,4 @@
-import { Travel, TravelMember } from "@/lib/db/schema";
+import { Travel, TravelMember, User } from "@/lib/db/schema";
 import type { DB } from "@/lib/db/types";
 import router from "@/orpc/router";
 import {
@@ -9,6 +9,7 @@ import {
 	testStub,
 } from "@/tests/utils";
 import { beforeEach, describe, expect, it } from "vitest";
+import { eq } from "drizzle-orm";
 
 describe("travel service", () => {
 	let db: DB;
@@ -39,9 +40,9 @@ describe("travel service", () => {
 			expect(result.travel).toBeDefined();
 			expect(result.travel.name).toBe(travelInput.name);
 
-			// Verify TravelMember was created automatically
-			const members = await appCall(router.travelRoutes.getTravelMembers, {
-				travelId: result.id,
+			// Verify TravelMember was created automatically (query DB to avoid middleware noise)
+			const members = await db.query.TravelMember.findMany({
+				where: eq(TravelMember.travelId, result.id),
 			});
 
 			expect(members.length).toBe(1);
@@ -120,9 +121,9 @@ describe("travel service", () => {
 
 			expect(result.id).toBeDefined();
 
-			// Verify travel was created
-			const travel = await appCall(router.travelRoutes.getTravel, {
-				id: result.id,
+			// Verify travel was created (query DB directly)
+			const travel = await db.query.Travel.findFirst({
+				where: eq(Travel.id, result.id),
 			});
 
 			expect(travel).toBeDefined();
@@ -246,8 +247,10 @@ describe("travel service", () => {
 		it("should throw error for unauthorized user", async () => {
 			const appCall = createAppCallAuthenticated(db);
 
-			// Create travel without membership for test user
-			const travelStub = testStub.travel();
+			// Create travel owned by another user (no membership for test user)
+			const otherUser = testStub.user({ id: "another-user" });
+			await db.insert(User).values(otherUser);
+			const travelStub = testStub.travel({ userId: otherUser.id });
 			const [travel] = await db
 				.insert(Travel)
 				.values(travelStub)

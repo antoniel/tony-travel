@@ -14,6 +14,7 @@ import type { AppOrpcContext } from "@/orpc/procedure";
 import { drizzle } from "drizzle-orm/libsql";
 import { migrate } from "drizzle-orm/libsql/migrator";
 import path from "node:path";
+import fs from "node:fs";
 import * as schema from "../lib/db/schema";
 
 export const ALWAYS_USER_TEST: schema.User = {
@@ -26,8 +27,15 @@ export const ALWAYS_USER_TEST: schema.User = {
 	createdAt: new Date(),
 };
 export const getFakeDb = async () => {
+	// Use a file-backed SQLite DB to avoid libsql multi-connection issues with :memory:
+	const tmpDir = path.join(process.cwd(), ".test-dbs");
+	fs.mkdirSync(tmpDir, { recursive: true });
+	const dbFile = path.join(
+		tmpDir,
+		`test-db-${Math.random().toString(36).slice(2)}.sqlite`,
+	);
 	const client = createClient({
-		url: ":memory:",
+		url: `file:${dbFile}`,
 	});
 	const db = drizzle(client, {
 		schema: schema,
@@ -109,16 +117,21 @@ export const createAppCallAuthenticated =
 export const AUTH_TEST_HEADERS = new Headers();
 AUTH_TEST_HEADERS.set("Authorization", "Bearer test-token");
 
-export const testStub = {
+	export const testStub = {
 	accommodation: (accommodation?: Partial<schema.Accommodation>) => {
 		const zAccomodation = zocker(schema.AccommodationSchema);
 		return { ...zAccomodation.generate(), ...accommodation };
 	},
 	travel: (travel?: Partial<schema.Travel>) => {
+		// Generate a base travel and ensure optional FK fields are safe
 		const zTravel = (): schema.Travel => {
+			const generated = zocker(schema.TravelSchema).generate();
 			return {
-				...zocker(schema.TravelSchema).generate(),
+				...generated,
 				userId: ALWAYS_USER_TEST.id,
+				// Ensure optional FKs don't violate constraints in inserts
+				deletedAt: null,
+				deletedBy: null,
 			};
 		};
 		return { ...zTravel(), ...travel };
