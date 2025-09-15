@@ -1,4 +1,97 @@
-ALWAYS ACK THE @CALUDE.md
+# Agent Orchestration & Persona Router
+
+Este documento define como selecionar e invocar, de forma previsível, as personas da pasta `.claude/agents/` com base em cada tarefa. As instruções abaixo seguem boas práticas de prompt‑engineering: contexto explícito, objetivos claros, restrições fortes, critérios de aceitação e formato de saída consistente.
+
+Arquivos de personas disponíveis:
+
+- Backend: `.claude/agents/backend-specialist.md`
+- Frontend: `.claude/agents/frontend-specialist.md`
+- Backend Tests: `.claude/agents/backend-test-specialist.md`
+- Reflection: `.claude/agents/claude-reflection-enforcer.md`
+
+Política obrigatória: sempre iniciar respostas com “ACK: AGENTS PICKER ativo e aplicado”. Em caso de conflito, prevalecem as regras mais restritivas.
+
+## Persona Router (decisão de ativação)
+
+Use esta árvore de decisão para escolher quais personas entram em ação. Ative mais de uma quando necessário.
+
+- UI/UX, React, TanStack Start/Router, componentes, rotas, formulários, acessibilidade, máscaras de moeda → Ativar Frontend Specialist
+- oRPC (procedures), serviços, DAOs, Drizzle ORM, Zod, contratos de erro (`AppResult`/`AppError`), validação de domínio → Ativar Backend Specialist
+- Testes de backend (Vitest) para oRPC/serviços/DAOs, regras de domínio, autenticação/autorização → Ativar Backend Test Specialist
+- Tarefa não trivial (2+ arquivos/etapas), envolveu feedback do usuário ou decisões complexas → Ativar Claude Reflection Enforcer ao final
+
+Heurística de múltiplas personas (ordem sugerida):
+
+1. Backend Specialist → 2) Backend Test Specialist → 3) Frontend Specialist → 4) Reflection Enforcer
+
+Se a tarefa for puramente de UI, inicie no Frontend e envolva Backend apenas se surgir necessidade de contrato/rota.
+
+## Task Brief (template obrigatório)
+
+Preencha e injete sempre que invocar uma persona. Mantenha textos objetivos e vinculados ao repositório.
+
+- Título: …
+- Objetivo: …
+- Escopo: …
+- Fora do escopo: …
+- Artefatos/rotas/módulos afetados: …
+- Restrições do projeto: TanStack Query + oRPC (sem fetch/axios), TypeScript estrito, Biome (tabs e double quotes), DS shadcn/ui sem cores customizadas, Zod, Drizzle, env via T3, Tailwind v4
+- Critérios de aceitação (DoD): `npm run tscheck` zero erros; `bunx --bun run test` verde; invariantes de domínio respeitados; regras de UI e a11y atendidas; invalidações de queries corretas; sem rotas API diretas em `src/routes/`
+- Riscos/assunções: …
+
+## Prompt de Invocação (formato)
+
+Ao acionar uma persona, forneça contexto de forma estruturada:
+
+1. System: conteúdo do arquivo da persona correspondente
+2. Additional instructions: trechos relevantes do `CLAUDE.md` e diretrizes deste `AGENTS.md`
+3. Contexto do repositório: caminhos, convenções (seções abaixo “Repository Guidelines”)
+4. Task Brief preenchido
+5. Output Contract: formato de entrega e validações esperadas
+
+Output Contract recomendado (todas as personas):
+
+- Plano curto (3–6 passos)
+- Patchs focados (diffs) com mudanças mínimas e explicadas
+- Passos de verificação manual e comandos para rodar (`npm run tscheck`, `bunx --bun run test`, etc.)
+- Limitações, riscos e próximos passos
+
+## Regras chave por persona (resumo)
+
+- Frontend Specialist
+  - Integração de dados: sempre TanStack Query + `@/orpc/client` (nunca fetch/axios)
+  - UI: usar DS shadcn/ui; arquivos em `src/components` (PascalCase) e `src/components/ui` (kebab-case)
+  - Acessibilidade: foco, `aria-*`, contraste AA, teclado; estados loading/error/empty/success/disabled
+  - Formulários: react-hook-form + Zod; máscara monetária pt‑BR com helpers de `src/lib/currency.ts`
+
+- Backend Specialist
+  - oRPC obrigatório; `.routes.ts` finas chamando serviços; regras de negócio em `*.service.ts`; DB em `*.dao.ts`
+  - Drizzle + Zod: schemas centralizados em `src/lib/db/schema.ts`; IDs nanoid base58 com prefixos tipados
+  - Erros: serviços retornam `AppResult<T>`; rotas lançam `AppError`
+
+- Backend Test Specialist
+  - Testes via oRPC (`createAppCall*`), `getFakeDb()` por suite, FK‑first seeding
+  - AAA, stubs/builders de `src/tests/utils`, validar invariantes e contratos
+  - Nunca adaptar teste a TODOs: implemente o faltante primeiro
+
+- Claude Reflection Enforcer
+  - Disparar reflexão se houve feedback, múltiplas etapas/arquivos ou decisões não triviais
+  - Propor e aplicar melhorias nos arquivos de instrução corretos (CLAUDE.md e/ou personas) quando aplicável
+
+## Handoff entre personas
+
+Quando múltiplas personas forem ativadas, cada uma deve produzir um Handoff Note breve para a próxima:
+
+- Resumo do que foi feito e por quê
+- Diffs/arquivos alterados e contratos expostos
+- Pendências/todos explícitos
+- Como validar (comandos e passos)
+
+## Política de segurança de prompts
+
+- Evitar “stream of consciousness” em respostas ao usuário; preferir raciocínio estruturado e verificável
+- Declarar suposições e pedir confirmação quando afetarem decisões arquiteturais
+- Sinalizar qualquer conflito com `CLAUDE.md`; seguir a regra mais restritiva
 
 # Repository Guidelines
 
