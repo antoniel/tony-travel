@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useEventDragDrop } from "@/hooks/useEventDragDrop";
 import { useScrollSync } from "@/hooks/useScrollSync";
@@ -6,7 +7,8 @@ import type { InsertAppEvent } from "@/lib/db/schema";
 import type { Accommodation, AppEvent } from "@/lib/types";
 import { orpc } from "@/orpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useLayoutEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { EventCreateModal } from "./EventCreateModal";
 import EventDetailsPanel from "./EventDetailsPanel";
 
@@ -31,34 +33,17 @@ interface CalendarProps {
 const PX_PER_HOUR = 48;
 
 export default function Calendar(props: CalendarProps) {
+	const [index, setIndex] = useState(0);
 	const [selectedEvent, setSelectedEvent] = useState<AppEvent | null>(null);
 	const [isPanelOpen, setIsPanelOpen] = useState(false);
-	const [currentDate, setCurrentDate] = useState(() => {
-		// Prefer the travel start when trip is shorter than 7 days
-		if (props.travelStartDate && props.travelEndDate) {
-			const start = new Date(props.travelStartDate);
-			start.setHours(0, 0, 0, 0);
-			const end = new Date(props.travelEndDate);
-			end.setHours(23, 59, 59, 999);
-			const travelDays = Math.max(
-				1,
-				Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) +
-					1,
-			);
-			if (travelDays < 7) {
-				return start;
-			}
-		}
-		const [firstEvent] = props.events.sort((a, b) => {
-			const aTime = a.startDate.getTime();
-			const bTime = b.startDate.getTime();
-			return aTime - bTime;
-		});
-		if (!firstEvent) {
-			return new Date();
-		}
-		return firstEvent.startDate;
-	});
+	const controlsRef = useRef<{ scrollByDays: (delta: number) => void } | null>(
+		null,
+	);
+	const currentDate = (() => {
+		const start = new Date(props.travelStartDate ?? new Date());
+		start.setHours(0, 0, 0, 0);
+		return new Date(start.getTime() + index * 24 * 60 * 60 * 1000);
+	})();
 
 	const year = currentDate.getFullYear();
 	const month = currentDate.getMonth();
@@ -82,14 +67,33 @@ export default function Calendar(props: CalendarProps) {
 					{/* Header */}
 					<div className="flex items-center justify-between p-4">
 						<h2 className="text-xl font-semibold text-foreground">{`${MONTHS[month]} ${year}`}</h2>
+						<div className="flex gap-2">
+							<Button
+								variant="outline"
+								size="icon"
+								className="h-8 w-8"
+								onClick={() => controlsRef.current?.scrollByDays(-1)}
+								aria-label="Dia anterior"
+							>
+								<ChevronLeft className="h-4 w-4" />
+							</Button>
+							<Button
+								variant="outline"
+								size="icon"
+								className="h-8 w-8"
+								onClick={() => controlsRef.current?.scrollByDays(1)}
+								aria-label="Próximo dia"
+							>
+								<ChevronRight className="h-4 w-4" />
+							</Button>
+						</div>
 					</div>
 				</div>
 				<div className="bg-card rounded-xl overflow-hidden border">
 					<div className="p-0">
 						<RenderWeekViews
 							travelId={props.travelId}
-							currentDate={currentDate}
-							setCurrentDate={setCurrentDate}
+							// currentDate={currentDate}
 							events={props.events}
 							travelStartDate={props.travelStartDate}
 							travelEndDate={props.travelEndDate}
@@ -97,6 +101,8 @@ export default function Calendar(props: CalendarProps) {
 							onUpdateEvent={props.canWrite ? props.onUpdateEvent : undefined}
 							onEventClick={handleEventClick}
 							canWrite={props.canWrite}
+							controlsRef={controlsRef}
+							setIndex={setIndex}
 						/>
 					</div>
 				</div>
@@ -115,13 +121,16 @@ const RenderWeekViews = (props: {
 	travelId: string;
 	events: AppEvent[];
 	accommodations?: Accommodation[];
-	currentDate: Date;
-	setCurrentDate: (date: Date) => void;
+	// currentDate: Date;
 	onUpdateEvent?: (eventId: string, updatedEvent: Partial<AppEvent>) => void;
 	onEventClick?: (event: AppEvent) => void;
 	travelStartDate?: Date;
 	travelEndDate?: Date;
 	canWrite?: boolean;
+	setIndex: (index: number) => void;
+	controlsRef?: React.RefObject<{
+		scrollByDays: (delta: number) => void;
+	} | null>;
 }) => {
 	// Mutations and cache handling
 	const queryClient = useQueryClient();
@@ -182,14 +191,16 @@ const RenderWeekViews = (props: {
 		);
 	};
 
-	const totalDays = Math.max(getHowManyDaysTravel(props.events), 7);
-	let weekDays = getWeekDays(props.events);
-	if (restrictNonTravelDays && travelStart) {
-		weekDays = Array.from({ length: 7 }, (_, i) => {
+	let weekDays: Date[] = [];
+	if (travelStart && travelEnd) {
+		const days = Math.max(1, travelTotalDays ?? 1);
+		weekDays = Array.from({ length: days }, (_, i) => {
 			const d = new Date(travelStart);
 			d.setDate(travelStart.getDate() + i);
 			return d;
 		});
+	} else {
+		weekDays = getWeekDays(props.events);
 	}
 	const [dayWidth, setDayWidth] = useState(0);
 	const LEFT_GUTTER_PX = 80;
@@ -212,6 +223,19 @@ const RenderWeekViews = (props: {
 			: 0;
 	const headerHeight = 64; // h-16 = 4rem = 64px
 	const totalHeaderHeight = headerHeight + allDaySectionHeight;
+
+	// Responsive: days visible per page (mobile: 3, desktop: 7)
+	const [isMobile, setIsMobile] = useState(false);
+	useEffect(() => {
+		if (typeof window === "undefined") return;
+		const mq = window.matchMedia("(max-width: 640px)");
+		const update = () => setIsMobile(mq.matches);
+		update();
+		mq.addEventListener?.("change", update);
+		return () => mq.removeEventListener?.("change", update);
+	}, []);
+
+	const visibleDays = isMobile ? 3 : 7;
 
 	// Event creation modal state
 	const [isModalOpen, setIsModalOpen] = useState(false);
@@ -263,7 +287,10 @@ const RenderWeekViews = (props: {
 		timeRulerRef,
 		allDayScrollAreaRef,
 		dayWidth,
-		currentDate: props.currentDate,
+		// currentDate: props.currentDate,
+		onFinishWheel: () => {
+			props.setIndex(getFirstVisibleIndex());
+		},
 	});
 
 	const contentScrollAreaRef = useRef<HTMLDivElement>(null);
@@ -297,7 +324,7 @@ const RenderWeekViews = (props: {
 		const measure = () => {
 			const available = el.clientWidth - LEFT_GUTTER_PX;
 			if (available > 0) {
-				setDayWidth(available / 7);
+				setDayWidth(available / visibleDays);
 			}
 		};
 
@@ -307,7 +334,79 @@ const RenderWeekViews = (props: {
 		ro.observe(el);
 
 		return () => ro.disconnect();
-	}, []);
+	}, [visibleDays]);
+
+	// Horizontal navigation helpers (arrows/swipe)
+	const getViewports = () => {
+		const headerVp = headerScrollAreaRef.current?.querySelector(
+			"[data-radix-scroll-area-viewport]",
+		) as HTMLElement | null;
+		const contentVp = contentScrollAreaRef.current?.querySelector(
+			"[data-radix-scroll-area-viewport]",
+		) as HTMLElement | null;
+		const allDayVp = allDayScrollAreaRef.current?.querySelector(
+			"[data-radix-scroll-area-viewport]",
+		) as HTMLElement | null;
+		return { headerVp, contentVp, allDayVp };
+	};
+
+	const getBounds = () => {
+		// Default bounds across rendered weekDays
+		const minIdx = 0;
+		let maxIdx = Math.max(0, weekDays.length - visibleDays);
+		if (restrictNonTravelDays && travelTotalDays) {
+			const lastTravelIdx = Math.max(
+				0,
+				Math.min(weekDays.length - 1, travelTotalDays - 1),
+			);
+			maxIdx = Math.max(0, lastTravelIdx - visibleDays + 1);
+		}
+		return { minIdx, maxIdx };
+	};
+
+	const getFirstVisibleIndex = () => {
+		const { headerVp } = getViewports();
+		const sl = headerVp?.scrollLeft ?? 0;
+		return Math.round(sl / dayWidth);
+	};
+
+	const scrollToIndex = (targetIdx: number) => {
+		const { minIdx, maxIdx } = getBounds();
+		const clampedIdx = Math.max(minIdx, Math.min(maxIdx, targetIdx));
+		const left = clampedIdx * dayWidth;
+		const { headerVp, contentVp, allDayVp } = getViewports();
+		if (headerVp) headerVp.scrollLeft = left;
+		if (contentVp) contentVp.scrollLeft = left;
+		if (allDayVp) allDayVp.scrollLeft = left;
+	};
+
+	const scrollByDays = (delta: number) => {
+		const idx = getFirstVisibleIndex();
+		props.setIndex(idx + delta);
+		scrollToIndex(idx + delta);
+	};
+
+	// Expose controls to parent header
+	if (props.controlsRef) {
+		props.controlsRef.current = { scrollByDays };
+	}
+
+	// Swipe gestures on header bar (mobile)
+	const swipeStart = useRef<{ x: number; y: number } | null>(null);
+	const onHeaderPointerDown = (e: React.PointerEvent) => {
+		if (!isMobile) return;
+		swipeStart.current = { x: e.clientX, y: e.clientY };
+	};
+	const onHeaderPointerUp = (e: React.PointerEvent) => {
+		if (!isMobile || !swipeStart.current) return;
+		const dx = e.clientX - swipeStart.current.x;
+		const dy = e.clientY - swipeStart.current.y;
+		swipeStart.current = null;
+		if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 30) {
+			// Horizontal swipe
+			scrollByDays(dx < 0 ? 1 : -1);
+		}
+	};
 
 	const getDateTimeFromClick = (dayIndex: number, yPosition: number) => {
 		const clickedDate = weekDays[dayIndex];
@@ -540,12 +639,14 @@ const RenderWeekViews = (props: {
 					ref={headerScrollAreaRef}
 					className="h-full"
 					enableThumb={false}
+					onPointerDown={onHeaderPointerDown}
+					onPointerUp={onHeaderPointerUp}
 				>
-					<div style={{ width: `${totalDays * dayWidth}px` }}>
+					<div style={{ width: `${weekDays.length * dayWidth}px` }}>
 						<div
 							className="grid h-16"
 							style={{
-								gridTemplateColumns: `repeat(${totalDays}, ${dayWidth}px)`,
+								gridTemplateColumns: `repeat(${weekDays.length}, ${dayWidth}px)`,
 							}}
 						>
 							{weekDays.map((date) => {
@@ -614,11 +715,11 @@ const RenderWeekViews = (props: {
 					ref={contentScrollAreaRef}
 					className="h-full w-full content-scroll-area"
 				>
-					<div style={{ width: `${totalDays * dayWidth}px` }}>
+					<div style={{ width: `${weekDays.length * dayWidth}px` }}>
 						<div
 							className="grid"
 							style={{
-								gridTemplateColumns: `repeat(${totalDays}, ${dayWidth}px)`,
+								gridTemplateColumns: `repeat(${weekDays.length}, ${dayWidth}px)`,
 							}}
 						>
 							{weekDays.map((date, dayIndex) => {
@@ -1182,30 +1283,6 @@ const getEventColor = (event: AppEvent) => {
 	return typeColors[event.type];
 };
 
-const getHowManyDaysTravel = (events: AppEvent[]) => {
-	const [firstEvent] = events.sort((a, b) => {
-		const aTime = a.startDate.getTime();
-		const bTime = b.startDate.getTime();
-		return aTime - bTime;
-	});
-	const [lastEvent] = events.sort((a, b) => {
-		const aTime = a.endDate.getTime();
-		const bTime = b.endDate.getTime();
-		return bTime - aTime;
-	});
-	if (!lastEvent) {
-		return 0;
-	}
-	const firstDay = firstEvent.startDate;
-	const lastDay = lastEvent.endDate;
-	return (
-		Math.ceil(
-			(lastDay.getTime() - firstDay.getTime()) / (1000 * 60 * 60 * 24),
-		) + 1
-	);
-};
-
-// All Day Events Section Component
 const AllDayEventsSection = (props: {
 	accommodations: Accommodation[];
 	weekDays: Date[];

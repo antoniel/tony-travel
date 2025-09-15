@@ -5,15 +5,18 @@ interface UseScrollSyncProps {
 	timeRulerRef: RefObject<HTMLDivElement | null>;
 	allDayScrollAreaRef?: RefObject<HTMLDivElement | null>;
 	dayWidth: number;
-	currentDate: Date;
+	// currentDate: Date;
+	onFinishWheel?: () => void;
 }
 
+let wheelTimeout: NodeJS.Timeout | null = null;
 export function useScrollSync({
 	headerScrollAreaRef,
 	timeRulerRef,
 	allDayScrollAreaRef,
 	dayWidth,
-	currentDate,
+	// currentDate,
+	onFinishWheel,
 }: UseScrollSyncProps) {
 	const centerWeekStart = 14;
 
@@ -109,9 +112,12 @@ export function useScrollSync({
 			cleanupAllDayToContent?.();
 			cleanupVerticalSync?.();
 		};
-	}, [currentDate]);
+	}, []);
 
 	const handleWheel = (e: React.WheelEvent) => {
+		if (wheelTimeout) {
+			clearTimeout(wheelTimeout);
+		}
 		const headerScrollArea = headerScrollAreaRef.current?.querySelector(
 			"[data-radix-scroll-area-viewport]",
 		) as HTMLElement;
@@ -144,6 +150,9 @@ export function useScrollSync({
 			if (allDayScrollArea) {
 				allDayScrollArea.scrollLeft += scrollAmount;
 			}
+			wheelTimeout = setTimeout(() => {
+				onFinishWheel?.();
+			}, 100);
 		}
 	};
 

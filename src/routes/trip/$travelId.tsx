@@ -151,7 +151,7 @@ function TripLayout() {
 	return (
 		<div className="bg-background">
 			{/* Travel Header */}
-			<header className="bg-background border-b sticky top-16 z-30">
+			<header className="bg-background border-b sm:sticky sm:top-16 z-30">
 				<div className="container mx-auto px-4 sm:px-6 lg:px-8">
 					<div className="pt-4 space-y-4">
 						{/* Travel Title and Info */}
@@ -191,7 +191,7 @@ function TripLayout() {
 						</div>
 
 						{/* Navigation Tabs */}
-						<div className="border-b relative">
+						<div className="border-b relative sticky top-16 z-30 bg-background sm:static">
 							<nav
 								ref={navRef}
 								className="flex overflow-x-auto scrollbar-hide -mb-px"
