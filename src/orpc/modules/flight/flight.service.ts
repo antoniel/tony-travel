@@ -6,6 +6,7 @@ import type { FlightDAO } from "./flight.dao";
 import { flightErrors } from "./flight.errors";
 import type {
 	CreateFlightWithParticipantsSchema,
+	FlightGroup,
 	FlightWithParticipants,
 } from "./flight.model";
 
@@ -85,30 +86,23 @@ export async function createFlightService(
 export async function getFlightsByTravelService(
 	flightDAO: FlightDAO,
 	travelId: string,
-): Promise<
-	AppResult<Array<{ originAirport: string; flights: FlightWithParticipants[] }>>
-> {
+): Promise<AppResult<FlightGroup[]>> {
 	const flights = await flightDAO.getFlightsByTravel(travelId);
 
-	const grouped = flights.reduce(
-		(acc, flight) => {
-			const existing = acc.find(
-				(g) => g.originAirport === flight.originAirport,
-			);
+	const grouped = flights.reduce((acc, flight) => {
+		const existing = acc.find((g) => g.originAirport === flight.originAirport);
 
-			if (existing) {
-				existing.flights.push(flight);
-			} else {
-				acc.push({
-					originAirport: flight.originAirport,
-					flights: [flight],
-				});
-			}
+		if (existing) {
+			existing.flights.push(flight);
+		} else {
+			acc.push({
+				originAirport: flight.originAirport,
+				flights: [flight],
+			});
+		}
 
-			return acc;
-		},
-		[] as Array<{ originAirport: string; flights: FlightWithParticipants[] }>,
-	);
+		return acc;
+	}, [] as FlightGroup[]);
 
 	return AppResult.success(grouped);
 }

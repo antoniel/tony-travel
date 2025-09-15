@@ -5,7 +5,7 @@ import { DAYS_OF_WEEK, MONTHS, TIME_SLOTS } from "@/lib/constants";
 import type { InsertAppEvent } from "@/lib/db/schema";
 import type { Accommodation, AppEvent } from "@/lib/types";
 import { orpc } from "@/orpc/client";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLayoutEffect, useRef, useState } from "react";
 import { EventCreateModal } from "./EventCreateModal";
 import EventDetailsPanel from "./EventDetailsPanel";
@@ -123,6 +123,26 @@ const RenderWeekViews = (props: {
 	travelEndDate?: Date;
 	canWrite?: boolean;
 }) => {
+	// Mutations and cache handling
+	const queryClient = useQueryClient();
+	const updateEventMutation = useMutation(
+		orpc.eventRoutes.updateEvent.mutationOptions({
+			onSuccess: async () => {
+				await queryClient.invalidateQueries({
+					queryKey: orpc.travelRoutes.getTravel.queryKey({
+						input: { id: props.travelId },
+					}),
+				});
+			},
+		}),
+	);
+
+	// Track last updated event (drag/resize) to commit server-side on mouse up
+	const lastUpdateRef = useRef<{
+		id: string;
+		startDate: Date;
+		endDate: Date;
+	} | null>(null);
 	// Travel range helpers
 	const normalizeStartOfDay = (d: Date) => {
 		const x = new Date(d);
@@ -206,7 +226,9 @@ const RenderWeekViews = (props: {
 
 	// Selection state for click+drag creation (15-min granularity)
 	const [isSelecting, setIsSelecting] = useState(false);
-	const [selectionDayIndex, setSelectionDayIndex] = useState<number | null>(null);
+	const [selectionDayIndex, setSelectionDayIndex] = useState<number | null>(
+		null,
+	);
 	const [selectionStart, setSelectionStart] = useState<Date | null>(null);
 	const [selectionCurrent, setSelectionCurrent] = useState<Date | null>(null);
 
@@ -219,7 +241,18 @@ const RenderWeekViews = (props: {
 	} = useEventDragDrop({
 		dayWidth,
 		weekDays,
-		onUpdateEvent: props.onUpdateEvent,
+		onUpdateEvent: (eventId, updated) => {
+			// optimistic local update
+			props.onUpdateEvent?.(eventId, updated);
+			// Track last full update to commit on mouse up
+			if (updated.startDate && updated.endDate) {
+				lastUpdateRef.current = {
+					id: eventId,
+					startDate: updated.startDate,
+					endDate: updated.endDate,
+				};
+			}
+		},
 		restrictNonTravelDays: restrictNonTravelDays,
 		isDayWithin: isWithinTravel,
 	});
@@ -444,8 +477,36 @@ const RenderWeekViews = (props: {
 			className="relative h-[70vh] bg-card "
 			onWheel={handleWheel}
 			onMouseMove={handleMouseMove}
-			onMouseUp={handleMouseUp}
-			onMouseLeave={handleMouseUp}
+			onMouseUp={() => {
+				handleMouseUp();
+				if (lastUpdateRef.current) {
+					const payload = lastUpdateRef.current;
+					updateEventMutation.mutate({
+						travelId: props.travelId,
+						id: payload.id,
+						event: {
+							startDate: payload.startDate,
+							endDate: payload.endDate,
+						},
+					});
+					lastUpdateRef.current = null;
+				}
+			}}
+			onMouseLeave={() => {
+				handleMouseUp();
+				if (lastUpdateRef.current) {
+					const payload = lastUpdateRef.current;
+					updateEventMutation.mutate({
+						travelId: props.travelId,
+						id: payload.id,
+						event: {
+							startDate: payload.startDate,
+							endDate: payload.endDate,
+						},
+					});
+					lastUpdateRef.current = null;
+				}
+			}}
 			ref={containerRef}
 		>
 			{/* Fixed Time Column */}
@@ -565,7 +626,10 @@ const RenderWeekViews = (props: {
 								const isWeekend = date.getDay() === 0 || date.getDay() === 6;
 								const disabled = restrictNonTravelDays && !isWithinTravel(date);
 								const selectionForThisDay =
-									isSelecting && selectionDayIndex === dayIndex && selectionStart && selectionCurrent
+									isSelecting &&
+									selectionDayIndex === dayIndex &&
+									selectionStart &&
+									selectionCurrent
 										? { start: selectionStart, current: selectionCurrent }
 										: undefined;
 								return (
@@ -916,9 +980,21 @@ interface DayCellProps {
 	isSelecting?: boolean;
 	selection?: { start: Date; current: Date };
 	onClick: (dayIndex: number, event: React.MouseEvent) => void;
-	onDayMouseDown: (dayIndex: number, e: React.MouseEvent, isDisabled?: boolean) => void;
-	onDayMouseMove: (dayIndex: number, e: React.MouseEvent, isDisabled?: boolean) => void;
-	onDayMouseUp: (dayIndex: number, e: React.MouseEvent, isDisabled?: boolean) => void;
+	onDayMouseDown: (
+		dayIndex: number,
+		e: React.MouseEvent,
+		isDisabled?: boolean,
+	) => void;
+	onDayMouseMove: (
+		dayIndex: number,
+		e: React.MouseEvent,
+		isDisabled?: boolean,
+	) => void;
+	onDayMouseUp: (
+		dayIndex: number,
+		e: React.MouseEvent,
+		isDisabled?: boolean,
+	) => void;
 	draggingEvent?: {
 		event: AppEvent;
 		hasMoved?: boolean;
@@ -939,7 +1015,7 @@ const DayCollumn = ({
 	events: dayEvents,
 	isWeekend,
 	isDisabled,
-	isSelecting,
+	isSelecting: _isSelecting,
 	selection,
 	onClick,
 	onDayMouseDown,
@@ -991,19 +1067,33 @@ const DayCollumn = ({
 						aria-hidden="true"
 					/>
 				) : null}
-				{selection ? (() => {
-					const start = selection.start.getTime() <= selection.current.getTime() ? selection.start : selection.current;
-					const end = selection.start.getTime() <= selection.current.getTime() ? selection.current : selection.start;
-					const top = getTimePositionFromDate(start);
-					const bottom = getTimePositionFromDate(end);
-					const height = Math.max(8, bottom - top);
-					return (
-						<div
-							className="absolute left-1 right-1 rounded bg-primary/20 ring-1 ring-primary/40"
-							style={{ top: `${top}px`, height: `${height}px` }}
-						/>
-					);
-				})() : null}
+				{selection
+					? (() => {
+							const start =
+								selection.start.getTime() <= selection.current.getTime()
+									? selection.start
+									: selection.current;
+							const end =
+								selection.start.getTime() <= selection.current.getTime()
+									? selection.current
+									: selection.start;
+							const top = getTimePositionFromDate(start);
+							const bottom = getTimePositionFromDate(end);
+							const height = Math.max(8, bottom - top);
+							const startStr = getTimeFromDate(start);
+							const endStr = getTimeFromDate(end);
+							return (
+								<div
+									className="absolute left-1 right-1 rounded bg-primary/20 ring-1 ring-primary/40"
+									style={{ top: `${top}px`, height: `${height}px` }}
+								>
+									<div className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-primary/20 ring-1 ring-primary/40 text-primary text-[10px] font-medium tracking-wide">
+										{startStr} – {endStr}
+									</div>
+								</div>
+							);
+						})()
+					: null}
 				{(() => {
 					const eventLayouts = getEventLayout(dayEvents);
 					return dayEvents.map((event) => {

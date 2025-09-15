@@ -4,11 +4,17 @@ import { ORPCError } from "@orpc/client";
 import * as z from "zod";
 import { createTravelDAO } from "../travel/travel.dao";
 import { createEventDAO } from "./event.dao";
-import { CreateEventInputSchema, CreateEventOutputSchema } from "./event.model";
 import {
-	createEventService,
-	getEventService,
-	getEventsByTravelService,
+  CreateEventInputSchema,
+  CreateEventOutputSchema,
+  UpdateEventInputSchema,
+  UpdateEventOutputSchema,
+} from "./event.model";
+import {
+  createEventService,
+  getEventService,
+  getEventsByTravelService,
+  updateEventService,
 } from "./event.service";
 
 /**
@@ -59,10 +65,10 @@ export const getEvent = optionalAuthProcedure
  * Get all events for a travel
  */
 export const getEventsByTravel = optionalAuthProcedure
-	.input(z.object({ travelId: z.string() }))
-	.handler(async ({ input, context }) => {
-		const eventDAO = createEventDAO(context.db);
-		const travelDAO = createTravelDAO(context.db);
+    .input(z.object({ travelId: z.string() }))
+    .handler(async ({ input, context }) => {
+        const eventDAO = createEventDAO(context.db);
+        const travelDAO = createTravelDAO(context.db);
 
 		const result = await getEventsByTravelService(
 			eventDAO,
@@ -77,5 +83,26 @@ export const getEventsByTravel = optionalAuthProcedure
 			});
 		}
 
-		return result.data;
-	});
+        return result.data;
+    });
+
+/**
+ * Update an event (partial)
+ */
+export const updateEvent = travelMemberProcedure
+  .input(UpdateEventInputSchema)
+  .output(UpdateEventOutputSchema)
+  .handler(async ({ input, context }) => {
+    const eventDAO = createEventDAO(context.db);
+
+    const result = await updateEventService(eventDAO, input);
+
+    if (AppResult.isFailure(result)) {
+      throw new ORPCError(result.error.type, {
+        message: result.error.message,
+        data: result.error.data,
+      });
+    }
+
+    return result.data;
+  });

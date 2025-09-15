@@ -2,7 +2,12 @@ import { AppResult } from "@/orpc/appResult";
 import type { TravelDAO } from "../travel/travel.dao";
 import type { EventDAO } from "./event.dao";
 import { eventErrors } from "./event.errors";
-import type { CreateEventInput, CreateEventOutput } from "./event.model";
+import type {
+	CreateEventInput,
+	CreateEventOutput,
+	UpdateEventInput,
+	UpdateEventOutput,
+} from "./event.model";
 
 export async function createEventService(
 	eventDAO: EventDAO,
@@ -85,4 +90,32 @@ export async function getEventsByTravelService(
 
 	const events = await eventDAO.getEventsByTravelId(travelId);
 	return AppResult.success(events);
+}
+
+export async function updateEventService(
+	eventDAO: EventDAO,
+	input: UpdateEventInput,
+): Promise<AppResult<UpdateEventOutput>> {
+	const existing = await eventDAO.getEventById(input.id);
+	if (!existing) {
+		return AppResult.failure(
+			eventErrors,
+			"EVENT_NOT_FOUND",
+			"Evento não encontrado",
+			{ eventId: input.id },
+		);
+	}
+
+	try {
+		await eventDAO.updateEvent(input.id, input.event);
+		return AppResult.success({ success: true });
+	} catch (error) {
+		console.error("Error updating event:", error);
+		return AppResult.failure(
+			eventErrors,
+			"INVALID_EVENT_DATA",
+			"Erro ao atualizar evento",
+			{},
+		);
+	}
 }

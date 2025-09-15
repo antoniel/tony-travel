@@ -17,7 +17,7 @@ export interface FlightWithParticipants extends Flight {
 			id: string;
 			name: string;
 			email: string;
-			image?: string | null;
+			image: string | null;
 		};
 	}[];
 }

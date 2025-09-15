@@ -113,7 +113,7 @@ export function TravelTimeline({ travel, canWrite }: TravelTimelineProps) {
 		<>
 			<div className=" space-y-8">
 				{canWrite ? (
-					<div className="flex items-center justify-end">
+					<div className="hidden sm:flex items-center justify-end">
 						<Button
 							onClick={openGeneralAdd}
 							className="flex items-center gap-2"
@@ -190,7 +190,7 @@ function DaySection({
 
 	return (
 		<div className="mb-12">
-			<div className="sticky top-0 z-20 bg-background/35 backdrop-blur-sm border-b border-border/40 mb-6 pl-20 py-4 -mx-4 px-4">
+			<div className="sticky top-0 z-20 bg-background/35 backdrop-blur-sm border-b border-border/40 mb-6 pl-20 py-4 -mx-2 px-2 sm:-mx-4 sm:px-4">
 				<div className="flex items-center gap-4">
 					<div>
 						<h2 className="text-xl font-semibold text-foreground mb-1">
