@@ -21,6 +21,7 @@ import { Route as TripTravelIdSettingsRouteImport } from './routes/trip/$travelI
 import { Route as TripTravelIdMembersRouteImport } from './routes/trip/$travelId/members'
 import { Route as TripTravelIdLocationsRouteImport } from './routes/trip/$travelId/locations'
 import { Route as TripTravelIdFlightsRouteImport } from './routes/trip/$travelId/flights'
+import { Route as TripTravelIdFinancialRouteImport } from './routes/trip/$travelId/financial'
 import { Route as TripTravelIdAccommodationsRouteImport } from './routes/trip/$travelId/accommodations'
 import { ServerRoute as ApiSplatServerRouteImport } from './routes/api.$'
 import { ServerRoute as ApiRpcSplatServerRouteImport } from './routes/api.rpc.$'
@@ -78,6 +79,11 @@ const TripTravelIdFlightsRoute = TripTravelIdFlightsRouteImport.update({
   path: '/flights',
   getParentRoute: () => TripTravelIdRoute,
 } as any)
+const TripTravelIdFinancialRoute = TripTravelIdFinancialRouteImport.update({
+  id: '/financial',
+  path: '/financial',
+  getParentRoute: () => TripTravelIdRoute,
+} as any)
 const TripTravelIdAccommodationsRoute =
   TripTravelIdAccommodationsRouteImport.update({
     id: '/accommodations',
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/invite/$token': typeof InviteTokenRoute
   '/trip/$travelId': typeof TripTravelIdRouteWithChildren
   '/trip/$travelId/accommodations': typeof TripTravelIdAccommodationsRoute
+  '/trip/$travelId/financial': typeof TripTravelIdFinancialRoute
   '/trip/$travelId/flights': typeof TripTravelIdFlightsRoute
   '/trip/$travelId/locations': typeof TripTravelIdLocationsRoute
   '/trip/$travelId/members': typeof TripTravelIdMembersRoute
@@ -119,6 +126,7 @@ export interface FileRoutesByTo {
   '/auth/login': typeof AuthLoginRoute
   '/invite/$token': typeof InviteTokenRoute
   '/trip/$travelId/accommodations': typeof TripTravelIdAccommodationsRoute
+  '/trip/$travelId/financial': typeof TripTravelIdFinancialRoute
   '/trip/$travelId/flights': typeof TripTravelIdFlightsRoute
   '/trip/$travelId/locations': typeof TripTravelIdLocationsRoute
   '/trip/$travelId/members': typeof TripTravelIdMembersRoute
@@ -133,6 +141,7 @@ export interface FileRoutesById {
   '/invite/$token': typeof InviteTokenRoute
   '/trip/$travelId': typeof TripTravelIdRouteWithChildren
   '/trip/$travelId/accommodations': typeof TripTravelIdAccommodationsRoute
+  '/trip/$travelId/financial': typeof TripTravelIdFinancialRoute
   '/trip/$travelId/flights': typeof TripTravelIdFlightsRoute
   '/trip/$travelId/locations': typeof TripTravelIdLocationsRoute
   '/trip/$travelId/members': typeof TripTravelIdMembersRoute
@@ -148,6 +157,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/trip/$travelId'
     | '/trip/$travelId/accommodations'
+    | '/trip/$travelId/financial'
     | '/trip/$travelId/flights'
     | '/trip/$travelId/locations'
     | '/trip/$travelId/members'
@@ -160,6 +170,7 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/invite/$token'
     | '/trip/$travelId/accommodations'
+    | '/trip/$travelId/financial'
     | '/trip/$travelId/flights'
     | '/trip/$travelId/locations'
     | '/trip/$travelId/members'
@@ -173,6 +184,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/trip/$travelId'
     | '/trip/$travelId/accommodations'
+    | '/trip/$travelId/financial'
     | '/trip/$travelId/flights'
     | '/trip/$travelId/locations'
     | '/trip/$travelId/members'
@@ -289,6 +301,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TripTravelIdFlightsRouteImport
       parentRoute: typeof TripTravelIdRoute
     }
+    '/trip/$travelId/financial': {
+      id: '/trip/$travelId/financial'
+      path: '/financial'
+      fullPath: '/trip/$travelId/financial'
+      preLoaderRoute: typeof TripTravelIdFinancialRouteImport
+      parentRoute: typeof TripTravelIdRoute
+    }
     '/trip/$travelId/accommodations': {
       id: '/trip/$travelId/accommodations'
       path: '/accommodations'
@@ -326,6 +345,7 @@ declare module '@tanstack/react-start/server' {
 
 interface TripTravelIdRouteChildren {
   TripTravelIdAccommodationsRoute: typeof TripTravelIdAccommodationsRoute
+  TripTravelIdFinancialRoute: typeof TripTravelIdFinancialRoute
   TripTravelIdFlightsRoute: typeof TripTravelIdFlightsRoute
   TripTravelIdLocationsRoute: typeof TripTravelIdLocationsRoute
   TripTravelIdMembersRoute: typeof TripTravelIdMembersRoute
@@ -335,6 +355,7 @@ interface TripTravelIdRouteChildren {
 
 const TripTravelIdRouteChildren: TripTravelIdRouteChildren = {
   TripTravelIdAccommodationsRoute: TripTravelIdAccommodationsRoute,
+  TripTravelIdFinancialRoute: TripTravelIdFinancialRoute,
   TripTravelIdFlightsRoute: TripTravelIdFlightsRoute,
   TripTravelIdLocationsRoute: TripTravelIdLocationsRoute,
   TripTravelIdMembersRoute: TripTravelIdMembersRoute,

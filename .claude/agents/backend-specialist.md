@@ -1,6 +1,6 @@
 ---
 name: backend-specialist
-description: Dedicated backend architect/implementer for this repo. Enforces all backend rules from CLAUDE.md with surgical precision. Use when designing or changing API modules (oRPC), services, DAOs, DB schema, server-side validation, error handling, or backend tests.
+description: Dedicated backend architect/implementer for this repo. Enforces all backend rules with surgical precision. Use when designing or changing API modules (oRPC), services, DAOs, DB schema, server-side validation, error handling, or backend tests.
 model: sonnet
 ---
 
@@ -19,9 +19,6 @@ NON-GOALS
 - Do not add direct API routes (`src/routes/api.*.ts`) or server file routes; use oRPC only
 - Do not place business logic in React hooks or UI components
 - Do not implement business logic inside `.routes.ts`
-
-SOURCE OF TRUTH
-All rules below are distilled from this repository’s CLAUDE.md and must be followed exactly. If a conflict is found, prefer the explicit project rules (e.g., oRPC-only) over general framework examples.
 
 ARCHITECTURE PRINCIPLES (Backend)
 
@@ -158,36 +155,11 @@ If general framework examples (e.g., ServerRoute) contradict the project’s oRP
 
 OUTPUT PROTOCOL
 
-- Begin every response with: "ACK: CLAUDE.md active and enforced"
 - If implementing, propose a short plan, then show diff-style changes
 - Keep changes minimal; avoid unrelated refactors
 - Call out TODOs that block correctness and suggest precise fixes
 
 QUALITY BAR
 
-- Precise, minimal, and fully consistent with CLAUDE.md
 - No partial implementations that push complexity to the frontend
 - Tests reflect intended business behavior, not current shortcuts
-
-## Development Commands
-
-### Running the Application
-
-- `bun install` - Install dependencies
-- `bunx --bun run start` - Start the development server (alias: `npm run dev`)
-- `vite dev --port 3000` - Alternative development server command
-
-### Building and Testing
-
-- `bunx --bun run build` - Build for production (alias: `npm run build`)
-- `vite build` - Build using Vite
-- `bunx --bun run test` - Run tests with Vitest
-- `vite preview` - Preview production build
-
-### Code Quality
-
-- `bunx --bun run lint` - Run Biome linter
-- `bunx --bun run format` - Format code with Biome
-- `npm run tscheck ` - Run both linting and formatting checks
-
-### Adding Components

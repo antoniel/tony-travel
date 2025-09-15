@@ -1,7 +1,7 @@
 import { orpc } from "@/orpc/client"
 import { useQuery } from "@tanstack/react-query"
 import { Link, Outlet, createFileRoute, useLocation } from "@tanstack/react-router"
-import { Calendar, Clock, Home, MapPin, Plane, Settings, Users } from "lucide-react"
+import { Calendar, Clock, DollarSign, Home, MapPin, Plane, Settings, Users } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 
 export const Route = createFileRoute("/trip/$travelId")({
@@ -45,6 +45,12 @@ function TripLayout() {
       path: `/trip/${travelId}/members`,
       label: "Membros",
       icon: Users,
+    },
+    {
+      value: "financial",
+      path: `/trip/${travelId}/financial`,
+      label: "Financeiro",
+      icon: DollarSign,
     },
     {
       value: "settings",

@@ -70,7 +70,7 @@ What counts as backend activities (non-exhaustive):
 Execution protocol when backend is requested:
 
 1. Announce invocation: "Invoking @backend-specialist for backend tasks".
-2. Hand off backend design/implementation to `@backend-specialist`, which MUST follow all rules in this CLAUDE.md.
+2. Hand off backend design/implementation to `@backend-specialist`
 3. After completion, resume with the base assistant only for non-backend follow-ups (e.g., UI wiring), preserving the backend contracts.
 4. If the task qualifies, offer Self-Improving CLAUDE Reflection as usual.
 
@@ -98,7 +98,7 @@ What counts as frontend activities (non-exhaustive):
 Execution protocol when frontend is requested:
 
 1. Announce invocation: "Invoking @frontend-specialist for frontend tasks".
-2. Hand off frontend design/implementation to `@frontend-specialist`, which MUST follow all rules in this CLAUDE.md.
+2. Hand off frontend design/implementation to `@frontend-specialist`
 3. After completion, resume with the base assistant only for non-frontend follow-ups (e.g., backend integration), preserving the frontend contracts.
 4. If the task qualifies, offer Self-Improving CLAUDE Reflection as usual.
 
@@ -116,6 +116,7 @@ Nota (PT-BR): Sempre que o pedido envolver frontend (UI/UX, componentes React, T
 **CRITICAL REQUIREMENT**: Before proposing new data collection or forms, ALWAYS analyze existing data sources first.
 
 **Mandatory Analysis Steps**:
+
 1. **Inventory Existing Data**: Identify what user data is already collected in current components/forms
 2. **Avoid Redundancy**: Never recreate data collection that already exists elsewhere in the user flow
 3. **Leverage Existing Sources**: Design solutions that reuse and build upon existing data rather than starting fresh

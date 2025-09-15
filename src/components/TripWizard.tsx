@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { orpc } from "@/orpc/client"
 import type { Airport, InsertFullTravel } from "@/orpc/modules/travel/travel.model"
@@ -20,6 +21,7 @@ import * as z from "zod"
 // Types and schemas for the wizard
 const TripWizardSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+  description: z.string().max(1000, "Descrição muito longa").optional(),
   tripType: z.string().optional(),
   destinations: z.array(z.object({ value: z.string(), label: z.string() })).optional(),
   dateRange: z
@@ -82,6 +84,7 @@ export default function TripWizard({ initialData }: TripWizardProps) {
     resolver: zodResolver(TripWizardSchema),
     defaultValues: {
       name: "",
+      description: "",
       tripType: "",
       destinations: initialData?.destinations || [],
       dateRange: initialData?.dateRange || null,
@@ -142,6 +145,7 @@ export default function TripWizard({ initialData }: TripWizardProps) {
     // Transform form data into InsertFullTravel format
     const travelData: InsertFullTravel = {
       name: data.name,
+      description: data.description?.trim() ? data.description.trim() : undefined,
       destination: data.destinations?.map((d) => d.label).join(", ") || "Destino não especificado",
       startDate: data.dateRange?.from || new Date(),
       endDate: data.dateRange?.to || new Date(),
@@ -266,7 +270,7 @@ export default function TripWizard({ initialData }: TripWizardProps) {
 // Individual Step Components using react-hook-form
 function NameStep({ form }: StepProps) {
   return (
-    <div className="space-y-6 max-w-md mx-auto">
+    <div className="space-y-6 mx-auto">
       <FormField
         control={form.control}
         name="name"
@@ -288,19 +292,47 @@ function NameStep({ form }: StepProps) {
           </FormItem>
         )}
       />
+
+      <FormField
+        control={form.control}
+        name="description"
+        render={({ field, fieldState }) => (
+          <FormItem>
+            <FormLabel className="text-base font-medium">Descrição da viagem</FormLabel>
+            <FormControl>
+              <Textarea
+                {...field}
+                placeholder="Descreva objetivos, atividades planejadas, anotações para o grupo..."
+                className="text-base"
+                aria-invalid={!!fieldState.error}
+              />
+            </FormControl>
+            <FormDescription>Opcional, até 1000 caracteres</FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
     </div>
   )
 }
 
 function SummaryStep({ data, getDurationInDays }: { data: TripWizardData; getDurationInDays: () => number }) {
   return (
-    <div className="space-y-6 max-w-lg mx-auto">
+    <div className="space-y-6 mx-auto">
       <div className="grid gap-6">
         {/* Trip Name */}
         <div className="flex items-center justify-between py-3 border-b border-border/50">
           <span className="text-muted-foreground">Nome da viagem:</span>
           <span className="font-medium">{data.name}</span>
         </div>
+
+        {/* Description */}
+        {data.description && data.description.trim().length > 0 && (
+          <div className="py-3 border-b border-border/50">
+            <span className="text-muted-foreground block mb-1">Descrição:</span>
+            <span className="whitespace-pre-wrap">{data.description}</span>
+          </div>
+        )}
 
         {/* Trip Type */}
         {data.tripType && (
