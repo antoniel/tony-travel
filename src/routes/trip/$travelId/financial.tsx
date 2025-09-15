@@ -585,7 +585,8 @@ function FinancialPage() {
 		return null;
 	}
 
-	const canWrite = !!travel?.userMembership;
+	// Only owners can edit the budget
+	const canWrite = travel?.userMembership?.role === "owner";
 
 	const handleBudgetUpdate = async (budget: number) => {
 		try {
@@ -603,8 +604,9 @@ function FinancialPage() {
 
 			toast.success("Orçamento atualizado com sucesso!");
 		} catch (error) {
-			toast.error("Erro ao atualizar orçamento");
-			console.error("Budget update error:", error);
+			toast.error("Erro ao atualizar orçamento", {
+				description: error instanceof Error ? error.message : undefined,
+			});
 		}
 	};
 

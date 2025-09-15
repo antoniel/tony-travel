@@ -1,3 +1,4 @@
+import type { ErrorType } from "@/orpc/appResult";
 import * as z from "zod";
 
 export type financialErrors = typeof financialErrors;
@@ -36,7 +37,7 @@ export const financialErrors = {
 			userId: z.string(),
 		}),
 	},
-} as const;
+} satisfies ErrorType;
 
 /**
  * Type helper to extract financial error types
