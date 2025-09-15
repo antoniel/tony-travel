@@ -34,6 +34,10 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
+import {
+	formatNumberPtBR,
+	maskCurrencyInputPtBR,
+} from "@/lib/currency";
 
 const formSchema = InsertAccommodationSchema.omit({
 	id: true,
@@ -61,6 +65,7 @@ export function AccommodationModal({
 }: AccommodationModalProps) {
 	const queryClient = useQueryClient();
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [priceDisplay, setPriceDisplay] = useState("");
 
 	const form = useForm<FormData>({
 		resolver: zodResolver(formSchema),
@@ -89,6 +94,11 @@ export function AccommodationModal({
 				address: editingAccommodation.address || "",
 				price: editingAccommodation.price || undefined,
 			});
+			setPriceDisplay(
+				Number.isFinite(editingAccommodation.price as number)
+					? formatNumberPtBR(editingAccommodation.price as number)
+					: "",
+			);
 		} else {
 			form.reset({
 				name: "",
@@ -102,6 +112,7 @@ export function AccommodationModal({
 				address: "",
 				price: undefined,
 			});
+			setPriceDisplay("");
 		}
 	}, [editingAccommodation, travelData, form]);
 
@@ -359,21 +370,18 @@ export function AccommodationModal({
 								name="price"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>Preço</FormLabel>
+										<FormLabel>Preço (R$)</FormLabel>
 										<FormControl>
 											<Input
-												type="number"
-												step="0.01"
-												placeholder="0.00"
-												{...field}
-												value={field.value || ""}
-												onChange={(e) =>
-													field.onChange(
-														e.target.value
-															? Number.parseFloat(e.target.value)
-															: undefined,
-													)
-												}
+												type="text"
+												inputMode="numeric"
+												placeholder="0,00"
+												value={priceDisplay}
+												onChange={(e) => {
+													const { display, numeric } = maskCurrencyInputPtBR(e.target.value);
+													setPriceDisplay(display);
+													field.onChange(numeric ?? undefined);
+												}}
 											/>
 										</FormControl>
 										<FormMessage />
