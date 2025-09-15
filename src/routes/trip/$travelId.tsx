@@ -79,17 +79,36 @@ function TripLayout() {
 	const formatTravelDates = (startDate?: Date, endDate?: Date) => {
 		if (!startDate || !endDate) return null;
 
+		// startDate/endDate são "date-only"; formatar em UTC evita off-by-one
+		// quando o horário interno estiver em 00:00:00Z.
 		const start = startDate.toLocaleDateString("pt-BR", {
 			day: "2-digit",
 			month: "short",
+			timeZone: "UTC",
 		});
 		const end = endDate.toLocaleDateString("pt-BR", {
 			day: "2-digit",
 			month: "short",
 			year: "numeric",
+			timeZone: "UTC",
 		});
 
 		return `${start} - ${end}`;
+	};
+
+	const calculateTripDaysUTC = (startDate: Date, endDate: Date) => {
+		// Calcula diferença em dias de calendário usando componentes UTC.
+		const startUTC = Date.UTC(
+			startDate.getUTCFullYear(),
+			startDate.getUTCMonth(),
+			startDate.getUTCDate(),
+		);
+		const endUTC = Date.UTC(
+			endDate.getUTCFullYear(),
+			endDate.getUTCMonth(),
+			endDate.getUTCDate(),
+		);
+		return Math.ceil((endUTC - startUTC) / (1000 * 60 * 60 * 24));
 	};
 
 	const navRef = useRef<HTMLElement | null>(null);
@@ -182,10 +201,9 @@ function TripLayout() {
 										<div className="flex items-center gap-2">
 											<Plane className="w-4 h-4" />
 											<span>
-												{Math.ceil(
-													(new Date(travel.endDate).getTime() -
-														new Date(travel.startDate).getTime()) /
-														(1000 * 60 * 60 * 24),
+												{calculateTripDaysUTC(
+													new Date(travel.startDate),
+													new Date(travel.endDate),
 												)}{" "}
 												dias
 											</span>

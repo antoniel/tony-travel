@@ -32,6 +32,16 @@ interface CalendarProps {
 
 const PX_PER_HOUR = 48;
 
+// Helpers to treat date-only values in UTC to avoid off-by-one issues
+const toUtcMidnight = (d: Date) =>
+	new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0, 0));
+const toUtcEndOfDay = (d: Date) =>
+	new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 23, 59, 59, 999));
+const isSameUTCDate = (a: Date, b: Date) =>
+	a.getUTCFullYear() === b.getUTCFullYear() &&
+	a.getUTCMonth() === b.getUTCMonth() &&
+	a.getUTCDate() === b.getUTCDate();
+
 export default function Calendar(props: CalendarProps) {
 	const [index, setIndex] = useState(0);
 	const [selectedEvent, setSelectedEvent] = useState<AppEvent | null>(null);
@@ -40,13 +50,14 @@ export default function Calendar(props: CalendarProps) {
 		null,
 	);
 	const currentDate = (() => {
-		const start = new Date(props.travelStartDate ?? new Date());
-		start.setHours(0, 0, 0, 0);
-		return new Date(start.getTime() + index * 24 * 60 * 60 * 1000);
+		const base = props.travelStartDate
+			? toUtcMidnight(new Date(props.travelStartDate))
+			: toUtcMidnight(new Date());
+		return new Date(base.getTime() + index * 24 * 60 * 60 * 1000);
 	})();
 
-	const year = currentDate.getFullYear();
-	const month = currentDate.getMonth();
+	const year = currentDate.getUTCFullYear();
+	const month = currentDate.getUTCMonth();
 
 	const handleEventClick = (event: AppEvent) => {
 		setSelectedEvent(event);
@@ -153,16 +164,8 @@ const RenderWeekViews = (props: {
 		endDate: Date;
 	} | null>(null);
 	// Travel range helpers
-	const normalizeStartOfDay = (d: Date) => {
-		const x = new Date(d);
-		x.setHours(0, 0, 0, 0);
-		return x;
-	};
-	const normalizeEndOfDay = (d: Date) => {
-		const x = new Date(d);
-		x.setHours(23, 59, 59, 999);
-		return x;
-	};
+	const normalizeStartOfDay = (d: Date) => toUtcMidnight(d);
+	const normalizeEndOfDay = (d: Date) => toUtcEndOfDay(d);
 	const travelStart = props.travelStartDate
 		? normalizeStartOfDay(props.travelStartDate)
 		: undefined;
@@ -173,7 +176,7 @@ const RenderWeekViews = (props: {
 		travelStart && travelEnd
 			? Math.max(
 					1,
-					Math.ceil(
+					Math.floor(
 						(travelEnd.getTime() - travelStart.getTime()) /
 							(1000 * 60 * 60 * 24),
 					) + 1,
@@ -196,7 +199,7 @@ const RenderWeekViews = (props: {
 		const days = Math.max(1, travelTotalDays ?? 1);
 		weekDays = Array.from({ length: days }, (_, i) => {
 			const d = new Date(travelStart);
-			d.setDate(travelStart.getDate() + i);
+			d.setUTCDate(travelStart.getUTCDate() + i);
 			return d;
 		});
 	} else {
@@ -659,11 +662,10 @@ const RenderWeekViews = (props: {
 								gridTemplateColumns: `repeat(${weekDays.length}, ${dayWidth}px)`,
 							}}
 						>
-							{weekDays.map((date) => {
-								const isWeekend = date.getDay() === 0 || date.getDay() === 6; // Sunday or Saturday
-								const isToday =
-									new Date().toDateString() === date.toDateString();
-								const disabled = restrictNonTravelDays && !isWithinTravel(date);
+						{weekDays.map((date) => {
+							const isWeekend = date.getUTCDay() === 0 || date.getUTCDay() === 6; // Sunday or Saturday
+							const isToday = isSameUTCDate(new Date(), date);
+							const disabled = restrictNonTravelDays && !isWithinTravel(date);
 
 								return (
 									<div
@@ -685,7 +687,7 @@ const RenderWeekViews = (props: {
 										<div
 											className={`text-xs uppercase ${isWeekend ? "text-muted-foreground" : "text-muted-foreground"}`}
 										>
-											{DAYS_OF_WEEK[date.getDay()]}
+											{DAYS_OF_WEEK[date.getUTCDay()]}
 										</div>
 										<div
 											className={`text-lg font-medium ${
@@ -696,7 +698,7 @@ const RenderWeekViews = (props: {
 														: "text-foreground"
 											}`}
 										>
-											{date.getDate()}
+											{date.getUTCDate()}
 										</div>
 									</div>
 								);
@@ -1378,16 +1380,16 @@ const AccommodationBar = (props: {
 	const startDay = weekDays.findIndex((day) => {
 		const accStart = new Date(accommodation.startDate);
 		const dayStart = new Date(day);
-		accStart.setHours(0, 0, 0, 0);
-		dayStart.setHours(0, 0, 0, 0);
+		accStart.setUTCHours(0, 0, 0, 0);
+		dayStart.setUTCHours(0, 0, 0, 0);
 		return accStart <= dayStart;
 	});
 
 	const endDay = weekDays.findIndex((day) => {
 		const accEnd = new Date(accommodation.endDate);
 		const dayEnd = new Date(day);
-		accEnd.setHours(23, 59, 59, 999);
-		dayEnd.setHours(23, 59, 59, 999);
+		accEnd.setUTCHours(23, 59, 59, 999);
+		dayEnd.setUTCHours(23, 59, 59, 999);
 		return accEnd <= dayEnd;
 	});
 
@@ -1422,7 +1424,7 @@ const AccommodationBar = (props: {
 				minWidth: "80px",
 				lineHeight: "1.2",
 			}}
-			title={`${accommodation.name} (${accommodation.type}) - ${accommodation.startDate.toLocaleDateString("pt-BR")} até ${accommodation.endDate.toLocaleDateString("pt-BR")}`}
+			title={`${accommodation.name} (${accommodation.type}) - ${new Date(accommodation.startDate).toLocaleDateString("pt-BR", { timeZone: "UTC" })} até ${new Date(accommodation.endDate).toLocaleDateString("pt-BR", { timeZone: "UTC" })}`}
 		>
 			<div className="truncate text-xs">{accommodation.name}</div>
 		</div>
@@ -1443,8 +1445,8 @@ const getAccommodationsLayoutWithRows = (
 		const firstDay = weekDays[0];
 		const lastDay = weekDays[weekDays.length - 1];
 
-		accStart.setHours(0, 0, 0, 0);
-		accEnd.setHours(23, 59, 59, 999);
+		accStart.setUTCHours(0, 0, 0, 0);
+		accEnd.setUTCHours(23, 59, 59, 999);
 
 		return accStart <= lastDay && accEnd >= firstDay;
 	});
@@ -1458,7 +1460,7 @@ const getAccommodationsLayoutWithRows = (
 	const rows: { endDate: Date }[] = [];
 	const accommodationsWithRows = validAccommodations.map((acc) => {
 		const accStart = new Date(acc.startDate);
-		accStart.setHours(0, 0, 0, 0);
+		accStart.setUTCHours(0, 0, 0, 0);
 
 		// Find the first row that doesn't have a conflict
 		let assignedRow = 0;
@@ -1476,7 +1478,7 @@ const getAccommodationsLayoutWithRows = (
 
 		// Update or add the row
 		const accEnd = new Date(acc.endDate);
-		accEnd.setHours(23, 59, 59, 999);
+		accEnd.setUTCHours(23, 59, 59, 999);
 
 		if (assignedRow >= rows.length) {
 			rows.push({ endDate: accEnd });

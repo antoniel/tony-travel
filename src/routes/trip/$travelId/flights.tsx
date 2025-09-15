@@ -208,9 +208,12 @@ function FlightsPage() {
 	const flightsWithoutCost = allFlights.filter((f) => !f.cost);
 
 	const formatDate = (date: Date) => {
+		// Datas de voo são "date-only" (sem horário); formatamos em UTC para
+		// evitar recuo de um dia por conta do fuso local.
 		return new Date(date).toLocaleDateString("pt-BR", {
 			day: "2-digit",
 			month: "short",
+			timeZone: "UTC",
 		});
 	};
 

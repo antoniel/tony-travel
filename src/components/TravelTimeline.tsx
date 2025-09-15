@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import type { InsertAppEvent } from "@/lib/db/schema";
 import type { Accommodation, AppEvent, TravelWithRelations } from "@/lib/types";
 import { orpc } from "@/orpc/client";
@@ -15,7 +16,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { EventCreateModal } from "./EventCreateModal";
-import { Button } from "@/components/ui/button";
 
 interface TravelTimelineProps {
 	travel: TravelWithRelations;
@@ -44,6 +44,7 @@ type TimelineItem = {
 };
 
 export function TravelTimeline({ travel, canWrite }: TravelTimelineProps) {
+	console.log("travel", travel);
 	const timelineItems = createTimelineItems(travel);
 	const groupedByDay = groupItemsByDay(timelineItems);
 
@@ -182,6 +183,13 @@ function DaySection({
 	onAddEvent?: (date: string) => void;
 	canWrite?: boolean;
 }) {
+	const formatDayUTC = (d: Date) =>
+		new Date(d).toLocaleDateString("pt-BR", {
+			weekday: "long",
+			day: "numeric",
+			month: "long",
+			timeZone: "UTC",
+		});
 	const handleAddEvent = () => {
 		if (canWrite && onAddEvent) {
 			onAddEvent(date);
@@ -194,7 +202,7 @@ function DaySection({
 				<div className="flex items-center gap-4">
 					<div>
 						<h2 className="text-xl font-semibold text-foreground mb-1">
-							{format(new Date(date), "EEEE, d 'de' MMMM", { locale: ptBR })}
+							{formatDayUTC(new Date(date))}
 						</h2>
 						<div className="w-12 h-0.5 bg-primary rounded-full" />
 					</div>
@@ -282,7 +290,10 @@ function groupItemsByDay(
 	const groups = new Map<string, TimelineItem[]>();
 
 	for (const item of items) {
-		const dayKey = format(item.date, "yyyy-MM-dd");
+		const y = item.date.getUTCFullYear();
+		const m = String(item.date.getUTCMonth() + 1).padStart(2, "0");
+		const d = String(item.date.getUTCDate()).padStart(2, "0");
+		const dayKey = `${y}-${m}-${d}`;
 		if (!groups.has(dayKey)) {
 			groups.set(dayKey, []);
 		}
@@ -314,13 +325,27 @@ function getEventColor(type: TimelineItem["type"]): string {
 function createTimelineItems(travel: TravelWithRelations): TimelineItem[] {
 	const items: TimelineItem[] = [];
 
+	const utcDaysInclusive = (start: Date, end: Date) => {
+		const s = Date.UTC(
+			start.getUTCFullYear(),
+			start.getUTCMonth(),
+			start.getUTCDate(),
+		);
+		const e = Date.UTC(
+			end.getUTCFullYear(),
+			end.getUTCMonth(),
+			end.getUTCDate(),
+		);
+		return Math.floor((e - s) / (1000 * 60 * 60 * 24)) + 1;
+	};
+
 	items.push({
 		id: "travel-start",
 		type: "travel-start",
 		date: travel.startDate,
 		data: null,
 		title: "Início da Viagem",
-		description: `Sua aventura para ${travel.destination} começa! Prepare-se para uma experiência incrível de ${differenceInDays(travel.endDate, travel.startDate) + 1} dias.`,
+		description: `Sua aventura para ${travel.destination} começa! Prepare-se para uma experiência incrível de ${utcDaysInclusive(travel.startDate, travel.endDate)} dias.`,
 		icon: Plane,
 	});
 
@@ -331,7 +356,7 @@ function createTimelineItems(travel: TravelWithRelations): TimelineItem[] {
 			date: acc.startDate,
 			data: acc,
 			title: `Check-in: ${acc.name}`,
-			description: `Hospedagem em ${acc.type}. ${acc.address ? `Localizado em ${acc.address}.` : ""} Sua estadia vai até ${format(acc.endDate, "d 'de' MMMM", { locale: ptBR })}.`,
+			description: `Hospedagem em ${acc.type}. ${acc.address ? `Localizado em ${acc.address}.` : ""} Sua estadia vai até ${new Date(acc.endDate).toLocaleDateString("pt-BR", { day: "numeric", month: "long", timeZone: "UTC" })}.`,
 			location: acc.address ?? undefined,
 			cost: acc.price ?? undefined,
 			icon: Hotel,
