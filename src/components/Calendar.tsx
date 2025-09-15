@@ -248,6 +248,9 @@ const RenderWeekViews = (props: {
 		cost: null as number | null,
 	});
 
+	// Prevent click handler from overriding a just-committed drag selection
+	const suppressNextClickRef = useRef(false);
+
 	// Selection state for click+drag creation (15-min granularity)
 	const [isSelecting, setIsSelecting] = useState(false);
 	const [selectionDayIndex, setSelectionDayIndex] = useState<number | null>(
@@ -457,6 +460,11 @@ const RenderWeekViews = (props: {
 		if (draggingEvent?.hasMoved || isSelecting) {
 			return;
 		}
+		// Skip the immediate click right after a drag selection
+		if (suppressNextClickRef.current) {
+			suppressNextClickRef.current = false;
+			return;
+		}
 
 		const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
 		const yPosition = event.clientY - rect.top;
@@ -544,6 +552,8 @@ const RenderWeekViews = (props: {
 			cost: null,
 		});
 		setIsModalOpen(true);
+		// Ensure subsequent click from this mouse interaction doesn't override the selection
+		suppressNextClickRef.current = true;
 		// reset selection state
 		setSelectionDayIndex(null);
 		setSelectionStart(null);
