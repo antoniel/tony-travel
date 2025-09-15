@@ -140,10 +140,6 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 		return `${count} ${count === 1 ? "pessoa" : "pessoas"}`;
 	};
 
-	const getSelectedBudget = () => {
-		const n = Number(form.customBudget);
-		return Number.isFinite(n) && n > 0 ? n : 1500;
-	};
 
 	const handleSelectPredefinedTrip = (trip: Travel) => {
 		navigate({ to: `/trip/${trip.id}` });
@@ -613,19 +609,19 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 												</span>
 											</div>
 
-											<div className="flex items-center text-sm text-muted-foreground">
-												<Users className="h-4 w-4 mr-2" />
-												<span>{getPeopleLabel(trip.peopleEstimate)}</span>
-											</div>
+											{typeof trip.peopleEstimate === "number" && Number.isFinite(trip.peopleEstimate) ? (
+												<div className="flex items-center text-sm text-muted-foreground">
+													<Users className="h-4 w-4 mr-2" />
+													<span>{getPeopleLabel(trip.peopleEstimate)}</span>
+												</div>
+											) : null}
 
-											<div className="flex items-center text-sm text-muted-foreground">
-												<DollarSign className="h-4 w-4 mr-2" />
-												<span>
-													{typeof trip.budget === "number" && Number.isFinite(trip.budget)
-														? `A partir de ${formatCurrencyBRL(trip.budget)}`
-														: `A partir de R$ ${formatNumberPtBR(getSelectedBudget())}`}
-												</span>
-											</div>
+											{typeof trip.budget === "number" && Number.isFinite(trip.budget) ? (
+												<div className="flex items-center text-sm text-muted-foreground">
+													<DollarSign className="h-4 w-4 mr-2" />
+													<span>{`A partir de ${formatCurrencyBRL(trip.budget)}`}</span>
+												</div>
+											) : null}
 										</div>
 									</CardContent>
 								</Card>
