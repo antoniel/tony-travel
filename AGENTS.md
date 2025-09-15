@@ -42,6 +42,10 @@ ALWAYS ACK THE @CALUDE.md
 - Routes follow TanStack patterns: `__root.tsx`, `index.tsx`, dynamic `$param` (e.g., `trip.$tripId.tsx`).
 - oRPC modules: files named `<module>.model.ts` (Zod) and `<module>.routes.ts` (procedures) under `src/orpc/modules/<module>/`.
 
+## UI Forms
+
+- Currency inputs: always use a pt-BR money mask in text inputs with numeric inputMode. Prefer the shared helpers from `src/lib/currency.ts` (`maskCurrencyInputPtBR`, `formatCurrencyBRL`). Store numeric values in form state; render display with `R$` prefix outside the input value.
+
 ## Testing Guidelines
 
 - Framework: Vitest + Testing Library.

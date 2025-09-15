@@ -4,8 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Progress } from "@/components/ui/progress"
+import { formatCurrencyBRL, formatNumberPtBR, maskCurrencyInputPtBR } from "@/lib/currency"
 import { Separator } from "@/components/ui/separator"
-import type { Accommodation, AppEvent, Flight } from "@/lib/db/schema"
+// removed unused types
 import { orpc } from "@/orpc/client"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQuery } from "@tanstack/react-query"
@@ -15,14 +16,13 @@ import {
 	Calculator,
 	ChevronDown,
 	ChevronRight,
-	DollarSign,
+    DollarSign,
 	Home,
 	MapPin,
 	Plane,
 	TrendingUp,
-	Users,
-	Wallet,
-} from "lucide-react"
+    Wallet,
+  } from "lucide-react"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
@@ -84,12 +84,7 @@ function BudgetSection({
 		toast.success("Orçamento atualizado com sucesso!")
 	}
 
-	const formatCurrency = (amount: number) => {
-		return new Intl.NumberFormat("pt-BR", {
-			style: "currency",
-			currency: "BRL",
-		}).format(amount)
-	}
+    // currency formatting handled by shared util when needed
 
 	const getUtilizationColor = (percentage: number) => {
 		if (percentage <= 50) return "bg-green-500"
@@ -137,28 +132,35 @@ function BudgetSection({
 				{isEditing ? (
 					<Form {...form}>
 						<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-							<FormField
-								control={form.control}
-								name="budget"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Orçamento Total</FormLabel>
-										<FormControl>
-											<Input
-												type="number"
-												step="0.01"
-												placeholder="5000.00"
-												{...field}
-												onChange={(e) => field.onChange(Number.parseFloat(e.target.value) || 0)}
-											/>
-										</FormControl>
-										<FormDescription>
-											Defina o orçamento total disponível para esta viagem
-										</FormDescription>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
+    <FormField
+        control={form.control}
+        name="budget"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Orçamento Total</FormLabel>
+            <FormControl>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">R$</span>
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="0,00"
+                  className="pl-8"
+                  value={typeof field.value === "number" ? formatNumberPtBR(field.value) : ""}
+                  onChange={(e) => {
+                    const { numeric } = maskCurrencyInputPtBR(e.target.value)
+                    field.onChange(numeric ?? 0)
+                  }}
+                />
+              </div>
+            </FormControl>
+            <FormDescription>
+              Defina o orçamento total disponível para esta viagem
+            </FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 							<div className="flex gap-2 justify-end">
 								<Button
 									type="button"
@@ -177,24 +179,24 @@ function BudgetSection({
 				) : (
 					<div className="space-y-4">
 						<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-							<div className="text-center p-4 bg-card rounded-lg border">
-								<div className="text-2xl font-bold text-primary">
-									{formatCurrency(financialData.totalBudget)}
-								</div>
-								<div className="text-sm text-muted-foreground">Orçamento Total</div>
-							</div>
-							<div className="text-center p-4 bg-card rounded-lg border">
-								<div className="text-2xl font-bold">
-									{formatCurrency(financialData.actualSpending)}
-								</div>
-								<div className="text-sm text-muted-foreground">Gasto Atual</div>
-							</div>
-							<div className="text-center p-4 bg-card rounded-lg border">
-								<div className="text-2xl font-bold">
-									{formatCurrency(financialData.totalBudget - financialData.actualSpending)}
-								</div>
-								<div className="text-sm text-muted-foreground">Restante</div>
-							</div>
+            <div className="text-center p-4 bg-card rounded-lg border">
+              <div className="text-2xl font-bold text-primary">
+                {formatCurrencyBRL(financialData.totalBudget)}
+              </div>
+              <div className="text-sm text-muted-foreground">Orçamento Total</div>
+            </div>
+            <div className="text-center p-4 bg-card rounded-lg border">
+              <div className="text-2xl font-bold">
+                {formatCurrencyBRL(financialData.actualSpending)}
+              </div>
+              <div className="text-sm text-muted-foreground">Gasto Atual</div>
+            </div>
+            <div className="text-center p-4 bg-card rounded-lg border">
+              <div className="text-2xl font-bold">
+                {formatCurrencyBRL(financialData.totalBudget - financialData.actualSpending)}
+              </div>
+              <div className="text-sm text-muted-foreground">Restante</div>
+            </div>
 						</div>
 
 						{financialData.totalBudget > 0 && (

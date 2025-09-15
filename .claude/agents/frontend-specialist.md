@@ -153,6 +153,46 @@ return (
 )
 ```
 
+### Máscaras de valores (Obrigatório)
+
+- Inputs monetários: sempre aplicar máscara pt-BR (R$) durante a digitação.
+- Utilitário padrão: use `maskCurrencyInputPtBR` e `formatCurrencyBRL` de `src/lib/currency.ts`.
+- Padrão de implementação:
+
+```tsx
+import { maskCurrencyInputPtBR, formatNumberPtBR } from "@/lib/currency"
+
+<FormField
+  control={form.control}
+  name="amount"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>Valor</FormLabel>
+      <FormControl>
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">R$</span>
+          <Input
+            type="text"
+            inputMode="numeric"
+            className="pl-8"
+            value={typeof field.value === "number" ? formatNumberPtBR(field.value) : ""}
+            onChange={(e) => {
+              const { numeric } = maskCurrencyInputPtBR(e.target.value)
+              field.onChange(numeric ?? 0)
+            }}
+          />
+        </div>
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+```
+
+Notas:
+- Armazenar como número (ex.: `1234.56`) no form state e backend.
+- Exibir no input como `1.234,56` e prefixo visual `R$` fora do valor.
+
 ## React + TanStack Start: Padrões
 
 - Rotas em `src/routes/` seguindo convenções (`__root.tsx`, `index.tsx`, `post.$postId.tsx`).
