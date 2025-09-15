@@ -1,6 +1,4 @@
-import { useActivityImage } from "@/hooks/useActivityImage";
 import type { AppEvent } from "@/lib/types";
-import { useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import ActivityImage from "./ActivityImage";
 import { Button } from "./ui/button";
@@ -13,17 +11,12 @@ interface EventDetailsPanelProps {
 }
 
 export default function EventDetailsPanel({
-	event,
-	onClose,
-	isOpen,
+    event,
+    onClose,
+    isOpen,
 }: EventDetailsPanelProps) {
-	const queryClient = useQueryClient();
-	const activityImageQuery = useActivityImage({
-		event: event || ({} as AppEvent),
-		enabled: isOpen && !!event && !event.imageUrl,
-	});
 
-	if (!isOpen || !event) return null;
+    if (!isOpen || !event) return null;
 
 	const getEventColor = (event: AppEvent) => {
 		const typeColors = {
@@ -118,28 +111,14 @@ export default function EventDetailsPanel({
 						{/* Activity Image - only show for activities */}
 						{event.type === "activity" && (
 							<div>
-								<ActivityImage
-									imageUrl={
-										event.imageUrl ??
-										activityImageQuery.data?.imageUrl ??
-										undefined
-									}
-									imageMetadata={
-										event.imageMetadata ??
-										activityImageQuery.data?.metadata ??
-										undefined
-									}
-									title={event.title}
-									location={event.location}
-									className="mb-4"
-									isLoading={activityImageQuery.isLoading}
-									showRefreshButton={true}
-									onRefreshImage={() =>
-										useActivityImage.refetch(queryClient, event)
-									}
-								/>
-							</div>
-						)}
+                        <ActivityImage
+                            imageUrl={event.imageUrl ?? undefined}
+                            title={event.title}
+                            location={event.location}
+                            className="mb-4"
+                        />
+                    </div>
+                )}
 
 						<div>
 							<h3 className="font-medium text-sm text-muted-foreground mb-2">

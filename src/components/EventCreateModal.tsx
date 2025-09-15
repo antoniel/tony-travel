@@ -1,4 +1,5 @@
 import type { AppEvent } from "@/lib/types";
+import { maskCurrencyInputPtBR, formatNumberPtBR } from "@/lib/currency";
 import { Clock2Icon } from "lucide-react";
 import { Button } from "./ui/button";
 import { Calendar } from "./ui/calendar";
@@ -20,25 +21,27 @@ import {
 } from "./ui/select";
 
 interface EventCreateModalProps {
-	isOpen: boolean;
-	newEvent: {
-		title: string;
-		startDate: Date;
-		endDate: Date;
-		type: AppEvent["type"];
-		location: string;
-	};
+    isOpen: boolean;
+    newEvent: {
+        title: string;
+        startDate: Date;
+        endDate: Date;
+        type: AppEvent["type"];
+        location: string;
+        cost: number | null;
+    };
 	onClose: () => void;
 	onCreate: () => void;
 	onEventChange: React.Dispatch<
-		React.SetStateAction<{
-			title: string;
-			startDate: Date;
-			endDate: Date;
-			type: AppEvent["type"];
-			location: string;
-		}>
-	>;
+        React.SetStateAction<{
+            title: string;
+            startDate: Date;
+            endDate: Date;
+            type: AppEvent["type"];
+            location: string;
+            cost: number | null;
+        }>
+    >;
 	children?: React.ReactNode;
 	travelStartDate?: Date;
 	travelEndDate?: Date;
@@ -96,18 +99,40 @@ export function EventCreateModal({
 							</div>
 						</div>
 						
-						<div className="space-y-2">
-							<Label htmlFor="location">Location</Label>
-							<Input
-								id="location"
-								value={newEvent.location}
-								onChange={(e) =>
-									onEventChange((prev) => ({ ...prev, location: e.target.value }))
-								}
-								placeholder="Event location (optional)"
-							/>
-						</div>
-					</div>
+                <div className="space-y-2">
+                    <Label htmlFor="location">Location</Label>
+                    <Input
+                        id="location"
+                        value={newEvent.location}
+                        onChange={(e) =>
+                            onEventChange((prev) => ({ ...prev, location: e.target.value }))
+                        }
+                        placeholder="Event location (optional)"
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="cost">Preço (R$) — opcional</Label>
+                    <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">R$</span>
+                        <Input
+                            id="cost"
+                            type="text"
+                            inputMode="numeric"
+                            className="pl-8"
+                            value={
+                                typeof newEvent.cost === "number"
+                                    ? formatNumberPtBR(newEvent.cost)
+                                    : ""
+                            }
+                            placeholder="0,00"
+                            onChange={(e) => {
+                                const { numeric } = maskCurrencyInputPtBR(e.target.value);
+                                onEventChange((prev) => ({ ...prev, cost: numeric }));
+                            }}
+                        />
+                    </div>
+                </div>
+            </div>
 
 					{/* Date & Time */}
 					<div className="space-y-4">

@@ -4,20 +4,11 @@ import { ORPCError } from "@orpc/client";
 import * as z from "zod";
 import { createTravelDAO } from "../travel/travel.dao";
 import { createEventDAO } from "./event.dao";
+import { CreateEventInputSchema, CreateEventOutputSchema } from "./event.model";
 import {
-	CreateEventInputSchema,
-	CreateEventOutputSchema,
-	FetchActivityImageInputSchema,
-	FetchActivityImageOutputSchema,
-	UpdateEventImageInputSchema,
-	UpdateEventImageOutputSchema,
-} from "./event.model";
-import {
-	createEventService,
-	fetchActivityImageService,
-	getEventService,
-	getEventsByTravelService,
-	updateEventImageService,
+    createEventService,
+    getEventService,
+    getEventsByTravelService,
 } from "./event.service";
 
 /**
@@ -42,47 +33,7 @@ export const createEvent = travelMemberProcedure
 		return result.data;
 	});
 
-/**
- * Fetch activity image for an event
- */
-export const fetchActivityImage = optionalAuthProcedure
-	.input(FetchActivityImageInputSchema)
-	.output(FetchActivityImageOutputSchema)
-	.handler(async ({ input, context }) => {
-		const eventDAO = createEventDAO(context.db);
-
-		const result = await fetchActivityImageService(eventDAO, input);
-
-		if (AppResult.isFailure(result)) {
-			throw new ORPCError(result.error.type, {
-				message: result.error.message,
-				data: result.error.data,
-			});
-		}
-
-		return result.data;
-	});
-
-/**
- * Update event image
- */
-export const updateEventImage = optionalAuthProcedure
-	.input(UpdateEventImageInputSchema)
-	.output(UpdateEventImageOutputSchema)
-	.handler(async ({ input, context }) => {
-		const eventDAO = createEventDAO(context.db);
-
-		const result = await updateEventImageService(eventDAO, input);
-
-		if (AppResult.isFailure(result)) {
-			throw new ORPCError(result.error.type, {
-				message: result.error.message,
-				data: result.error.data,
-			});
-		}
-
-		return result.data;
-	});
+// Removed dynamic image endpoints (Pixabay integration)
 
 /**
  * Get event by ID

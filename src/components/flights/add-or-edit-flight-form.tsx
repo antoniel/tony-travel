@@ -9,7 +9,18 @@ import type { LocationOption } from "@/components/ui/location-selector"
 import { LocationSelector } from "@/components/ui/location-selector"
 import { useAirportsSearch } from "@/hooks/useAirportsSearch"
 import { orpc } from "@/orpc/client"
-import type { FlightWithParticipants } from "@/orpc/modules/flight/flight.model"
+// Minimal flight type needed by this form
+type FlightForForm = {
+  id: string
+  originAirport: string
+  destinationAirport: string
+  departureDate: Date
+  departureTime: string
+  arrivalDate: Date
+  arrivalTime: string
+  cost: number | null
+  participants: { id: string; user: { id: string } }[]
+}
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Calendar, DollarSign, Info, Plane } from "lucide-react"
@@ -80,7 +91,7 @@ export function AddOrEditFlightForm({
   members,
   onClose,
 }: {
-  flight?: FlightWithParticipants
+  flight?: FlightForForm
   travelId: string
   members: Member[]
   onClose: () => void

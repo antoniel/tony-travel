@@ -136,7 +136,7 @@ function BudgetSection({
                 <Button type="button" variant="outline" size="sm" onClick={() => setIsEditing(false)}>
                   Cancelar
                 </Button>
-                <Button type="submit" size="sm">
+                <Button type="submit" size="sm" disabled={isUpdating}>
                   Salvar
                 </Button>
               </div>

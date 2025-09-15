@@ -50,6 +50,7 @@ export class FinancialDao {
 			.select({
 				id: AppEvent.id,
 				title: AppEvent.title,
+				cost: AppEvent.cost,
 				estimatedCost: AppEvent.estimatedCost,
 				parentEventId: AppEvent.parentEventId,
 			})
@@ -72,6 +73,7 @@ export class FinancialDao {
 			events: events.map((event) => ({
 				id: event.id,
 				name: event.title,
+				cost: event.cost ?? 0,
 				estimatedCost: event.estimatedCost ?? 0,
 				parentEventId: event.parentEventId,
 			})),

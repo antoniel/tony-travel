@@ -65,7 +65,8 @@ export interface TravelFinancialData {
 	events: Array<{
 		id: string;
 		name: string;
-		estimatedCost: number;
+		cost: number; // explicit cost when provided
+		estimatedCost: number; // fallback when cost is not provided
 		parentEventId: string | null;
 	}>;
 }

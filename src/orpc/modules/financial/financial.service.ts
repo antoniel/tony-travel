@@ -67,12 +67,16 @@ export function transformToExpenseItems(financialData: TravelFinancialData): Exp
     })
   }
 
-  // Add event expenses (atracoes) - includes hierarchical calculations
+  // Add event expenses (atracoes) - prefer explicit cost over estimate
   for (const event of financialData.events) {
+    const effectiveCost =
+      typeof event.cost === "number" && Number.isFinite(event.cost)
+        ? event.cost
+        : event.estimatedCost
     expenseItems.push({
       id: event.id,
       name: event.name,
-      cost: event.estimatedCost,
+      cost: effectiveCost,
       category: "atracoes",
       parentId: event.parentEventId,
     })

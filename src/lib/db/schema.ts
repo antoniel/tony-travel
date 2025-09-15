@@ -153,6 +153,7 @@ export const AppEvent = sqliteTable("app_event", {
   startDate: integer("start_date", { mode: "timestamp" }).notNull(),
   endDate: integer("end_date", { mode: "timestamp" }).notNull(),
   estimatedCost: real("estimated_cost"),
+  cost: real("cost"),
   type: text("type", { enum: ["travel", "food", "activity"] }).notNull(),
   location: text("location"),
   imageUrl: text("image_url"),

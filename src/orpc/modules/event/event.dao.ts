@@ -1,7 +1,7 @@
 import type { DB } from "@/lib/db/types";
 import { AppEvent, type InsertAppEvent } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import type { ImageMetadata } from "./event.model";
+import type { ImageMetadata } from "@/lib/types";
 
 export class EventDAO {
 	constructor(private readonly db: DB) {}

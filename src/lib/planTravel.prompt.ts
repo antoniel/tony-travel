@@ -184,14 +184,13 @@ type Travel = {
 		estimatedCost: number | null | undefined;
 		location: string | null | undefined;
 		imageUrl?: string | null | undefined;
-		imageMetadata?:
-			| {
-					source: "pixabay" | "manual";
-					tags: string[];
-					photographer?: string;
-					fetchedAt: Date;
-					pixabayId?: number;
-			  }
+        imageMetadata?:
+            | {
+                    source: "manual";
+                    tags: string[];
+                    photographer?: string;
+                    fetchedAt: Date;
+              }
 			| null
 			| undefined;
 		parentEventId: string | null | undefined;

@@ -1,4 +1,3 @@
-import { pixabayService } from "@/lib/services/pixabay";
 import { AppResult } from "@/orpc/appResult";
 import type { TravelDAO } from "../travel/travel.dao";
 import type { EventDAO } from "./event.dao";
@@ -6,10 +5,6 @@ import { eventErrors } from "./event.errors";
 import type {
 	CreateEventInput,
 	CreateEventOutput,
-	FetchActivityImageInput,
-	FetchActivityImageOutput,
-	UpdateEventImageInput,
-	UpdateEventImageOutput,
 } from "./event.model";
 
 export async function createEventService(
@@ -33,6 +28,7 @@ export async function createEventService(
 			startDate: input.startDate,
 			endDate: input.endDate,
 			estimatedCost: input.estimatedCost,
+			cost: input.cost,
 			type: input.type,
 			location: input.location,
 			travelId: input.travelId,
@@ -52,99 +48,6 @@ export async function createEventService(
 	}
 }
 
-export async function fetchActivityImageService(
-	eventDAO: EventDAO,
-	input: FetchActivityImageInput,
-): Promise<AppResult<FetchActivityImageOutput>> {
-	// Verify event exists if eventId is provided
-	if (input.eventId) {
-		const event = await eventDAO.getEventById(input.eventId);
-		if (!event) {
-			return AppResult.failure(
-				eventErrors,
-				"EVENT_NOT_FOUND",
-				"Evento não encontrado",
-				{ eventId: input.eventId },
-			);
-		}
-	}
-
-	try {
-		const image = await pixabayService.searchActivityImage(
-			input.title,
-			input.location,
-		);
-
-		if (!image) {
-			return AppResult.success({
-				success: false,
-				error: "No suitable image found",
-				imageUrl: null,
-				metadata: null,
-			});
-		}
-
-		const metadata = pixabayService.createImageMetadata(image);
-
-		// Update event image if eventId is provided
-		if (input.eventId) {
-			await eventDAO.updateEventImage(
-				input.eventId,
-				image.webformatURL,
-				metadata,
-			);
-		}
-
-		return AppResult.success({
-			success: true,
-			imageUrl: image.webformatURL,
-			metadata,
-			imageSizes: pixabayService.getImageSizes(image),
-		});
-	} catch (error) {
-		console.error("Error fetching activity image:", error);
-		return AppResult.failure(
-			eventErrors,
-			"IMAGE_FETCH_FAILED",
-			"Falha ao buscar imagem da atividade",
-			{ title: input.title, location: input.location },
-		);
-	}
-}
-
-export async function updateEventImageService(
-	eventDAO: EventDAO,
-	input: UpdateEventImageInput,
-): Promise<AppResult<UpdateEventImageOutput>> {
-	// Verify event exists
-	const event = await eventDAO.getEventById(input.eventId);
-	if (!event) {
-		return AppResult.failure(
-			eventErrors,
-			"EVENT_NOT_FOUND",
-			"Evento não encontrado",
-			{ eventId: input.eventId },
-		);
-	}
-
-	try {
-		await eventDAO.updateEventImage(
-			input.eventId,
-			input.imageUrl,
-			input.metadata,
-		);
-
-		return AppResult.success({ success: true });
-	} catch (error) {
-		console.error("Error updating event image:", error);
-		return AppResult.failure(
-			eventErrors,
-			"IMAGE_UPDATE_FAILED",
-			"Erro ao atualizar imagem do evento",
-			{ eventId: input.eventId },
-		);
-	}
-}
 export async function getEventService(
 	eventDAO: EventDAO,
 	eventId: string,

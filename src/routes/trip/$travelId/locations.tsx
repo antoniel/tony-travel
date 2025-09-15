@@ -78,7 +78,7 @@ function LocationsPage() {
       description: undefined,
       rating: undefined,
       estimatedTime: undefined,
-      price: event.estimatedCost || undefined,
+      price: event.cost || event.estimatedCost || undefined,
       imageUrl: event.imageUrl,
     })),
   ]

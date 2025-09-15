@@ -26,6 +26,7 @@ interface TravelTimelineProps {
         endDate: Date;
         type: AppEvent["type"];
         location: string;
+        cost?: number | null;
         travelId: string;
     }) => void;
 }
@@ -54,14 +55,15 @@ export function TravelTimeline({ travel, canWrite }: TravelTimelineProps) {
 	};
 
 	// Modal state
-	const [isModalOpen, setIsModalOpen] = useState(false);
-	const [newEvent, setNewEvent] = useState({
-		title: "",
-		startDate: new Date(),
-		endDate: new Date(),
-		type: "activity" as AppEvent["type"],
-		location: "",
-	});
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [newEvent, setNewEvent] = useState({
+        title: "",
+        startDate: new Date(),
+        endDate: new Date(),
+        type: "activity" as AppEvent["type"],
+        location: "",
+        cost: null as number | null,
+    });
 
 	const openGeneralAdd = () => {
 		if (!canWrite) return;
@@ -75,25 +77,27 @@ export function TravelTimeline({ travel, canWrite }: TravelTimelineProps) {
 		}
 		const end = new Date(start);
 		end.setHours(start.getHours() + 1);
-		setNewEvent({ title: "", startDate: start, endDate: end, type: "activity", location: "" });
+        setNewEvent({ title: "", startDate: start, endDate: end, type: "activity", location: "", cost: null });
 		setIsModalOpen(true);
 	};
 
     const handleCreateEvent = () => {
         if (!canWrite || !onAddEvent || !newEvent.title.trim()) return;
 
-		onAddEvent({
-			...newEvent,
-			travelId: travel.id,
-		});
+        onAddEvent({
+            ...newEvent,
+            cost: newEvent.cost ?? undefined,
+            travelId: travel.id,
+        });
 
-		setNewEvent({
-			title: "",
-			startDate: new Date(),
-			endDate: new Date(),
-			type: "activity",
-			location: "",
-		});
+        setNewEvent({
+            title: "",
+            startDate: new Date(),
+            endDate: new Date(),
+            type: "activity",
+            location: "",
+            cost: null,
+        });
 
 		setIsModalOpen(false);
 	};
@@ -126,13 +130,14 @@ export function TravelTimeline({ travel, canWrite }: TravelTimelineProps) {
 								const endDate = new Date(dateObj);
 								endDate.setHours(dateObj.getHours() + 1);
 
-								setNewEvent({
-									title: "",
-									startDate: dateObj,
-									endDate,
-									type: "activity",
-									location: "",
-								});
+                        setNewEvent({
+                            title: "",
+                            startDate: dateObj,
+                            endDate,
+                            type: "activity",
+                            location: "",
+                            cost: null,
+                        });
 								setIsModalOpen(true);
 							}}
 							canWrite={canWrite}
@@ -323,22 +328,22 @@ function createTimelineItems(travel: TravelWithRelations): TimelineItem[] {
 		});
 	}
 
-	for (const event of travel.events) {
-		const icon = getEventIcon(event.type);
-		const description = getEventDescription(event);
+    for (const event of travel.events) {
+        const icon = getEventIcon(event.type);
+        const description = getEventDescription(event);
 
-		items.push({
-			id: event.id,
-			type: "event",
-			date: event.startDate,
-			data: event,
-			title: event.title,
-			description,
-			location: event.location ?? undefined,
-			cost: event.estimatedCost ?? undefined,
-			icon,
-		});
-	}
+        items.push({
+            id: event.id,
+            type: "event",
+            date: event.startDate,
+            data: event,
+            title: event.title,
+            description,
+            location: event.location ?? undefined,
+            cost: event.cost ?? event.estimatedCost ?? undefined,
+            icon,
+        });
+    }
 
 	items.push({
 		id: "travel-end",
