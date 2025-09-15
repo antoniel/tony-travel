@@ -132,7 +132,7 @@ export default function TripWizard({ initialData }: TripWizardProps) {
 			onError: (error) => {
 				console.error("Failed to create travel:", error);
 				toast.error("Erro ao criar viagem", {
-					description: "Tente novamente em alguns instantes.",
+					description: error.message || "Tente novamente em alguns instantes.",
 				});
 			},
 		}),
