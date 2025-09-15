@@ -7,7 +7,7 @@ import {
 } from "@/lib/db/schema";
 import type { DB } from "@/lib/db/types";
 import type { TravelWithRelations } from "@/lib/types";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import type * as z from "zod";
 import type { InsertFullTravel } from "./travel.model";
 
@@ -121,26 +121,28 @@ export class TravelDAO {
 		return travel || null;
 	}
 
-	async getAllTravels(): Promise<TravelWithRelations[]> {
-		const travels = await this.db.query.Travel.findMany({
-			where: isNull(Travel.deletedAt),
-			with: {
-				accommodations: true,
-				events: {
-					with: {
-						dependencies: true,
-					},
-				},
-				members: {
-					with: {
-						user: true,
-					},
-				},
-			},
-		});
+    async getAllTravels(limit?: number): Promise<TravelWithRelations[]> {
+        const travels = await this.db.query.Travel.findMany({
+            where: isNull(Travel.deletedAt),
+            with: {
+                accommodations: true,
+                events: {
+                    with: {
+                        dependencies: true,
+                    },
+                },
+                members: {
+                    with: {
+                        user: true,
+                    },
+                },
+            },
+            orderBy: desc(Travel.createdAt),
+            limit,
+        });
 
-		return travels;
-	}
+        return travels;
+    }
 
 	// TravelMember operations
 	async createTravelMember(

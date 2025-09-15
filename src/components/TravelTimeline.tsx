@@ -4,7 +4,6 @@ import type { Accommodation, AppEvent, TravelWithRelations } from "@/lib/types";
 import { orpc } from "@/orpc/client";
 import { useMutation } from "@tanstack/react-query";
 import { differenceInDays, format, isSameDay } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import {
 	Calendar,
 	Camera,
