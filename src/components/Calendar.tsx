@@ -204,6 +204,12 @@ const RenderWeekViews = (props: {
 		cost: null as number | null,
 	});
 
+	// Selection state for click+drag creation (15-min granularity)
+	const [isSelecting, setIsSelecting] = useState(false);
+	const [selectionDayIndex, setSelectionDayIndex] = useState<number | null>(null);
+	const [selectionStart, setSelectionStart] = useState<Date | null>(null);
+	const [selectionCurrent, setSelectionCurrent] = useState<Date | null>(null);
+
 	// Drag and drop functionality
 	const {
 		draggingEvent,
@@ -285,13 +291,38 @@ const RenderWeekViews = (props: {
 		return resultDate;
 	};
 
+	const roundDateTo15 = (date: Date, mode: "floor" | "ceil") => {
+		const d = new Date(date);
+		const minutes = d.getMinutes();
+		const remainder = minutes % 15;
+		if (remainder === 0) return d;
+		if (mode === "floor") {
+			d.setMinutes(minutes - remainder, 0, 0);
+		} else {
+			d.setMinutes(minutes + (15 - remainder), 0, 0);
+		}
+		return d;
+	};
+
+	const clampToDay = (baseDay: Date, date: Date) => {
+		const start = new Date(baseDay);
+		start.setHours(0, 0, 0, 0);
+		const end = new Date(baseDay);
+		end.setHours(23, 59, 59, 999);
+		return new Date(
+			Math.min(Math.max(date.getTime(), start.getTime()), end.getTime()),
+		);
+	};
+
 	const createEventMutation = useMutation(
 		orpc.eventRoutes.createEvent.mutationOptions(),
 	);
+	const MINUTES_15_MS = 15 * 60 * 1000;
+
 	const handleCellClick = (dayIndex: number, event: React.MouseEvent) => {
 		if (!props.canWrite) return;
 		// Don't create event if we just finished dragging
-		if (draggingEvent?.hasMoved) {
+		if (draggingEvent?.hasMoved || isSelecting) {
 			return;
 		}
 
@@ -312,6 +343,79 @@ const RenderWeekViews = (props: {
 		});
 
 		setIsModalOpen(true);
+	};
+
+	const handleDayMouseDown = (
+		dayIndex: number,
+		event: React.MouseEvent,
+		isDisabled?: boolean,
+	) => {
+		if (!props.canWrite || isDisabled) return;
+		if (draggingEvent?.hasMoved) return;
+		const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+		const yPosition = event.clientY - rect.top;
+		const clickTime = getDateTimeFromClick(dayIndex, yPosition);
+		const start = roundDateTo15(clickTime, "floor");
+		setIsSelecting(true);
+		setSelectionDayIndex(dayIndex);
+		setSelectionStart(start);
+		setSelectionCurrent(start);
+		event.preventDefault();
+	};
+
+	const handleDayMouseMove = (
+		dayIndex: number,
+		event: React.MouseEvent,
+		isDisabled?: boolean,
+	) => {
+		if (!isSelecting || selectionDayIndex !== dayIndex || isDisabled) return;
+		const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+		const yPosition = event.clientY - rect.top;
+		const moveTimeRaw = getDateTimeFromClick(dayIndex, yPosition);
+		const moveTime = roundDateTo15(moveTimeRaw, "ceil");
+		const baseDay = weekDays[dayIndex];
+		setSelectionCurrent(clampToDay(baseDay, moveTime));
+	};
+
+	const handleDayMouseUp = (
+		dayIndex: number,
+		_event: React.MouseEvent,
+		isDisabled?: boolean,
+	) => {
+		if (!isSelecting || selectionDayIndex !== dayIndex || isDisabled) return;
+		setIsSelecting(false);
+		if (!selectionStart || !selectionCurrent) {
+			setSelectionDayIndex(null);
+			setSelectionStart(null);
+			setSelectionCurrent(null);
+			return;
+		}
+		let start = selectionStart;
+		let end = selectionCurrent;
+		if (end.getTime() < start.getTime()) {
+			const tmp = start;
+			start = end;
+			end = tmp;
+		}
+		if (end.getTime() - start.getTime() < MINUTES_15_MS) {
+			end = new Date(start.getTime() + MINUTES_15_MS);
+		}
+		// clamp end to same day just in case
+		end = clampToDay(start, end);
+
+		setNewEvent({
+			title: "",
+			startDate: start,
+			endDate: end,
+			type: "activity",
+			location: "",
+			cost: null,
+		});
+		setIsModalOpen(true);
+		// reset selection state
+		setSelectionDayIndex(null);
+		setSelectionStart(null);
+		setSelectionCurrent(null);
 	};
 
 	const handleCreateEvent = () => {
@@ -460,6 +564,10 @@ const RenderWeekViews = (props: {
 								const dayEvents = getEventsForDate(props.events, date);
 								const isWeekend = date.getDay() === 0 || date.getDay() === 6;
 								const disabled = restrictNonTravelDays && !isWithinTravel(date);
+								const selectionForThisDay =
+									isSelecting && selectionDayIndex === dayIndex && selectionStart && selectionCurrent
+										? { start: selectionStart, current: selectionCurrent }
+										: undefined;
 								return (
 									<DayCollumn
 										key={date.toISOString()}
@@ -468,7 +576,12 @@ const RenderWeekViews = (props: {
 										events={dayEvents}
 										isWeekend={isWeekend}
 										isDisabled={disabled}
+										isSelecting={isSelecting}
+										selection={selectionForThisDay}
 										onClick={handleCellClick}
+										onDayMouseDown={handleDayMouseDown}
+										onDayMouseMove={handleDayMouseMove}
+										onDayMouseUp={handleDayMouseUp}
 										draggingEvent={
 											draggingEvent
 												? {
@@ -800,7 +913,12 @@ interface DayCellProps {
 	events: AppEvent[];
 	isWeekend: boolean;
 	isDisabled?: boolean;
+	isSelecting?: boolean;
+	selection?: { start: Date; current: Date };
 	onClick: (dayIndex: number, event: React.MouseEvent) => void;
+	onDayMouseDown: (dayIndex: number, e: React.MouseEvent, isDisabled?: boolean) => void;
+	onDayMouseMove: (dayIndex: number, e: React.MouseEvent, isDisabled?: boolean) => void;
+	onDayMouseUp: (dayIndex: number, e: React.MouseEvent, isDisabled?: boolean) => void;
 	draggingEvent?: {
 		event: AppEvent;
 		hasMoved?: boolean;
@@ -821,7 +939,12 @@ const DayCollumn = ({
 	events: dayEvents,
 	isWeekend,
 	isDisabled,
+	isSelecting,
+	selection,
 	onClick,
+	onDayMouseDown,
+	onDayMouseMove,
+	onDayMouseUp,
 	draggingEvent,
 	onEventMouseDown,
 	onEventClick,
@@ -833,6 +956,10 @@ const DayCollumn = ({
 			className={`border-r last:border-r-0 relative ${
 				isDisabled ? "cursor-not-allowed" : "cursor-pointer hover:bg-accent/20"
 			} ${isWeekend ? "bg-muted" : ""}`}
+			onMouseDown={(e) => onDayMouseDown(dayIndex, e, isDisabled)}
+			onMouseMove={(e) => onDayMouseMove(dayIndex, e, isDisabled)}
+			onMouseUp={(e) => onDayMouseUp(dayIndex, e, isDisabled)}
+			onMouseLeave={(e) => onDayMouseUp(dayIndex, e, isDisabled)}
 			onClick={(e) => {
 				if (isDisabled) return;
 				onClick(dayIndex, e);
@@ -864,6 +991,19 @@ const DayCollumn = ({
 						aria-hidden="true"
 					/>
 				) : null}
+				{selection ? (() => {
+					const start = selection.start.getTime() <= selection.current.getTime() ? selection.start : selection.current;
+					const end = selection.start.getTime() <= selection.current.getTime() ? selection.current : selection.start;
+					const top = getTimePositionFromDate(start);
+					const bottom = getTimePositionFromDate(end);
+					const height = Math.max(8, bottom - top);
+					return (
+						<div
+							className="absolute left-1 right-1 rounded bg-primary/20 ring-1 ring-primary/40"
+							style={{ top: `${top}px`, height: `${height}px` }}
+						/>
+					);
+				})() : null}
 				{(() => {
 					const eventLayouts = getEventLayout(dayEvents);
 					return dayEvents.map((event) => {
