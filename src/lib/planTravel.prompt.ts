@@ -1,66 +1,66 @@
 type Airport = {
-	code: string;
-	name: string;
-	city: string;
-	state: string | null;
-	stateCode: string | null;
-	country: string;
-	countryCode: string;
-	type: "airport" | "city_group" | "state_group" | "country_group";
-	airportCount?: number;
-	airportCodes?: string[];
-};
+  code: string
+  name: string
+  city: string
+  state: string | null
+  stateCode: string | null
+  country: string
+  countryCode: string
+  type: "airport" | "city_group" | "state_group" | "country_group"
+  airportCount?: number
+  airportCodes?: string[]
+}
 
 type StartPlanTravelProps = {
-	tripDates: {
-		start: string;
-		end: string;
-	};
-	budget: {
-		perPerson: number;
-		currency: string;
-	};
-	destination: string;
-	groupSize: number;
-	departureAirports: Airport[];
-	schemaOverride?: string;
-};
+  tripDates: {
+    start: string
+    end: string
+  }
+  budget: {
+    perPerson: number
+    currency: string
+  }
+  destination: string
+  groupSize: number
+  departureAirports: Airport[]
+  schemaOverride?: string
+}
 export function startPlanTravel({
-	tripDates,
-	budget,
-	destination,
-	groupSize,
-	departureAirports,
+  tripDates,
+  budget,
+  destination,
+  groupSize,
+  departureAirports,
 }: StartPlanTravelProps) {
-	// Create enhanced departure airports information with city, state/country details
-	const departureAirportsInfo = departureAirports.map((airport) => ({
-		code: airport.code,
-		name: airport.name,
-		city: airport.city,
-		state: airport.state,
-		stateCode: airport.stateCode,
-		country: airport.country,
-		countryCode: airport.countryCode,
-		type: airport.type,
-		displayName:
-			airport.type === "city_group"
-				? `${airport.city} - ${airport.stateCode}`
-				: airport.type === "state_group"
-					? airport.state
-					: airport.type === "country_group"
-						? airport.country
-						: `${airport.city} - ${airport.code}`,
-	}));
+  // Create enhanced departure airports information with city, state/country details
+  const departureAirportsInfo = departureAirports.map((airport) => ({
+    code: airport.code,
+    name: airport.name,
+    city: airport.city,
+    state: airport.state,
+    stateCode: airport.stateCode,
+    country: airport.country,
+    countryCode: airport.countryCode,
+    type: airport.type,
+    displayName:
+      airport.type === "city_group"
+        ? `${airport.city} - ${airport.stateCode}`
+        : airport.type === "state_group"
+          ? airport.state
+          : airport.type === "country_group"
+            ? airport.country
+            : `${airport.city} - ${airport.code}`,
+  }))
 
-	const inputsJson = {
-		TRIP_DATES: tripDates,
-		BUDGET: budget,
-		DESTINATION: destination,
-		GROUP_SIZE: groupSize,
-		DEPARTURE_AIRPORTS: departureAirportsInfo,
-	};
+  const inputsJson = {
+    TRIP_DATES: tripDates,
+    BUDGET: budget,
+    DESTINATION: destination,
+    GROUP_SIZE: groupSize,
+    DEPARTURE_AIRPORTS: departureAirportsInfo,
+  }
 
-	return `
+  return `
   <Task>
 Atuar como um “Travel Planner” para um grupo brasileiro aventureiro que prioriza experiências sobre conforto, com foco em UM ÚNICO DESTINO-ALVO. O objetivo é gerar APENAS um objeto estruturado de roteiro. O assistente deve:
 1) Analisar **voos multi-origem** (múltiplas cidades de saída no Brasil) para o **destino-alvo**, calcular **média de custo** por origem, sugerir **janelas flexíveis** e aplicar **equalização de custos de voo** (quem paga mais recebe crédito de hospedagem).
@@ -68,7 +68,7 @@ Atuar como um “Travel Planner” para um grupo brasileiro aventureiro que prio
 3) Alocar orçamento com foco em aventura: **Atividades 60%**, **Comida 20%**, **Hospedagem 15%**, **Contingência 5%**, e **reserva extra de 15%** para emergências (grupo aventureiro).
 4) Planejar **logística flexível** (chegadas escalonadas, ponto de encontro, SIM local/WhatsApp, transporte até atividades).
 5) Aba “segurança & prático”: gestão de dinheiro (cartões x cash), seguro viagem com coberturas para esportes, timeline de compra de voos/atividades e apps/plataformas úteis.
-6) ENTREGAR APENAS um **OUTPUT ESTRUTURADO** seguindo o schema 'Travel', 'Accommodation', 'LocationInfo', 'VisaInfo' e 'AppEvent' (incluindo **café da manhã, almoço e jantar** todos os dias e **dependencies** para deslocamentos) — no formato JSON.
+6) ENTREGAR APENAS um **OUTPUT ESTRUTURADO** seguindo o schema 'Travel', 'Accommodation', 'VisaInfo' e 'AppEvent' (incluindo **café da manhã, almoço e jantar** todos os dias e **dependencies** para deslocamentos) — no formato JSON.
 7) Escrever **todas as cifras em R$ (BRL)**; usar valores realistas quando faltar fonte.
 </Task>
 
@@ -146,33 +146,12 @@ Estilo
 Início
 BEGIN PLANNING
 
-`;
+`
 }
 
 const schema = `
 type Travel = {
 	destination: string;
-	locationInfo: {
-		destination: string;
-		country: string;
-		climate: string;
-		currency: string;
-		language: string;
-		timeZone: string;
-		bestTimeToVisit: string;
-		emergencyNumbers?: {
-			police?: string;
-			medical?: string;
-			embassy?: string;
-		};
-	};
-	visaInfo: {
-		required: boolean;
-		stayDuration: string;
-		documents: string[];
-		vaccinations: string[];
-		entryRequirements?: string[];
-	};
 	name: string;
 	startDate: Date;
 	endDate: Date;
@@ -218,73 +197,4 @@ type Travel = {
 		parentEventId: string | null | undefined;
 	}[];
 };
-`;
-
-export type TravelPrompt = {
-	destination: string;
-	locationInfo: {
-		destination: string;
-		country: string;
-		climate: string;
-		currency: string;
-		language: string;
-		timeZone: string;
-		bestTimeToVisit: string;
-		emergencyNumbers?: {
-			police?: string;
-			medical?: string;
-			embassy?: string;
-		};
-	};
-	visaInfo: {
-		required: boolean;
-		stayDuration: string;
-		documents: string[];
-		vaccinations: string[];
-		entryRequirements?: string[];
-	};
-	name: string;
-	startDate: Date;
-	endDate: Date;
-	id?: string | undefined;
-	createdAt?: Date | undefined;
-	updatedAt?: Date | undefined;
-	accommodations: {
-		name: string;
-		type: "hotel" | "hostel" | "airbnb" | "resort" | "other";
-		startDate: Date;
-		endDate: Date;
-		travelId: string;
-		address?: string | null | undefined;
-		rating?: number | null | undefined;
-		price?: number | null | undefined;
-		currency?: string | null | undefined;
-		id?: string | undefined;
-		createdAt?: Date | undefined;
-		updatedAt?: Date | undefined;
-	}[];
-	events: {
-		startDate: Date;
-		endDate: Date;
-		type: "travel" | "food" | "activity";
-		travelId: string;
-		title: string;
-		id: string | undefined;
-		createdAt: Date | undefined;
-		updatedAt: Date | undefined;
-		estimatedCost: number | null | undefined;
-		location: string | null | undefined;
-		imageUrl?: string | null | undefined;
-		imageMetadata?:
-			| {
-					source: "pixabay" | "manual";
-					tags: string[];
-					photographer?: string;
-					fetchedAt: Date;
-					pixabayId?: number;
-			  }
-			| null
-			| undefined;
-		parentEventId: string | null | undefined;
-	}[];
-};
+`

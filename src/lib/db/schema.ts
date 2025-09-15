@@ -98,30 +98,6 @@ export const Travel = sqliteTable("travel", {
   userId: text("user_id")
     .notNull()
     .references(() => User.id, { onDelete: "cascade" }),
-  locationInfo: text("location_info", { mode: "json" }).notNull().$type<{
-    destination: string
-    country: string
-    climate: string
-    currency: string
-    language: string
-    timeZone: string
-    bestTimeToVisit: string
-    emergencyNumbers?: {
-      police?: string
-      medical?: string
-      embassy?: string
-    }
-    // Optional persisted selections to help prefill forms
-    departureAirports?: { code: string; label: string }[]
-    selectedDestinations?: { value: string; label: string }[]
-  }>(),
-  visaInfo: text("visa_info", { mode: "json" }).notNull().$type<{
-    required: boolean
-    stayDuration: string
-    documents: string[]
-    vaccinations: string[]
-    entryRequirements?: string[]
-  }>(),
   deletedAt: integer("deleted_at", { mode: "timestamp" }),
   deletedBy: text("deleted_by").references(() => User.id),
 })
