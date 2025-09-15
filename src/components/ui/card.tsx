@@ -32,7 +32,10 @@ function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
 			data-slot="card-title"
-			className={cn("leading-tight font-semibold text-foreground/90 group-hover:text-foreground transition-colors duration-200", className)}
+			className={cn(
+				"leading-tight font-semibold text-foreground/90 group-hover:text-foreground transition-colors duration-200",
+				className,
+			)}
 			{...props}
 		/>
 	);
@@ -42,7 +45,10 @@ function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
 			data-slot="card-description"
-			className={cn("text-muted-foreground/80 group-hover:text-muted-foreground text-sm leading-relaxed transition-colors duration-200", className)}
+			className={cn(
+				"text-muted-foreground/80 group-hover:text-muted-foreground text-sm leading-relaxed transition-colors duration-200",
+				className,
+			)}
 			{...props}
 		/>
 	);
@@ -75,7 +81,10 @@ function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
 			data-slot="card-footer"
-			className={cn("flex items-center px-6 [.border-t]:pt-6 [.border-t]:border-gradient-to-r [.border-t]:from-transparent [.border-t]:via-border/30 [.border-t]:to-transparent", className)}
+			className={cn(
+				"flex items-center px-6 [.border-t]:pt-6 [.border-t]:border-gradient-to-r [.border-t]:from-transparent [.border-t]:via-border/30 [.border-t]:to-transparent",
+				className,
+			)}
 			{...props}
 		/>
 	);

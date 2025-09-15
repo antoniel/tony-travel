@@ -36,7 +36,9 @@ export const FinancialSummarySchema = z.object({
 
 // Type exports
 export type UpdateTravelBudgetInput = z.infer<typeof UpdateTravelBudgetSchema>;
-export type GetFinancialSummaryInput = z.infer<typeof GetFinancialSummarySchema>;
+export type GetFinancialSummaryInput = z.infer<
+	typeof GetFinancialSummarySchema
+>;
 export type ExpenseCategory = z.infer<typeof ExpenseCategorySchema>;
 export type FinancialSummary = z.infer<typeof FinancialSummarySchema>;
 

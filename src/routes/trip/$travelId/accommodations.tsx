@@ -20,12 +20,16 @@ export const Route = createFileRoute("/trip/$travelId/accommodations")({
 });
 
 interface AccommodationCardProps {
-    accommodation: Accommodation;
-    onEdit: (accommodation: Accommodation) => void;
-    canWrite: boolean;
+	accommodation: Accommodation;
+	onEdit: (accommodation: Accommodation) => void;
+	canWrite: boolean;
 }
 
-function AccommodationCard({ accommodation, onEdit, canWrite }: AccommodationCardProps) {
+function AccommodationCard({
+	accommodation,
+	onEdit,
+	canWrite,
+}: AccommodationCardProps) {
 	const getAccommodationTypeIcon = (type: string) => {
 		switch (type?.toLowerCase()) {
 			case "hotel":
@@ -233,15 +237,15 @@ function AccommodationStats({
 }
 
 function PageHeader({
-    onAddAccommodation,
-    accommodations,
-    totalNights,
-    canWrite,
+	onAddAccommodation,
+	accommodations,
+	totalNights,
+	canWrite,
 }: {
-    onAddAccommodation: () => void;
-    accommodations: Accommodation[];
-    totalNights: number;
-    canWrite: boolean;
+	onAddAccommodation: () => void;
+	accommodations: Accommodation[];
+	totalNights: number;
+	canWrite: boolean;
 }) {
 	return (
 		<div className="flex flex-col sm:flex-row sm:justify-between sm:items-start">
@@ -273,8 +277,8 @@ function PageHeader({
 }
 
 function EmptyAccommodationsState({
-    onAddAccommodation,
-    canWrite,
+	onAddAccommodation,
+	canWrite,
 }: { onAddAccommodation: () => void; canWrite: boolean }) {
 	return (
 		<>
@@ -442,7 +446,10 @@ function AccommodationsPage() {
 					))}
 				</div>
 			) : (
-				<EmptyAccommodationsState onAddAccommodation={handleAddAccommodation} canWrite={canWrite} />
+				<EmptyAccommodationsState
+					onAddAccommodation={handleAddAccommodation}
+					canWrite={canWrite}
+				/>
 			)}
 
 			{canWrite ? (

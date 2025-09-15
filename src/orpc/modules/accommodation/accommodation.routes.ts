@@ -3,7 +3,11 @@ import {
 	InsertAccommodationSchema,
 } from "@/lib/db/schema";
 import { AppResult } from "@/orpc/appResult";
-import { authProcedure, baseProcedure, travelMemberProcedure } from "@/orpc/procedure";
+import {
+	authProcedure,
+	baseProcedure,
+	travelMemberProcedure,
+} from "@/orpc/procedure";
 import { ORPCError } from "@orpc/client";
 import * as z from "zod";
 import { createTravelDAO } from "../travel/travel.dao";

@@ -11,12 +11,11 @@ interface EventDetailsPanelProps {
 }
 
 export default function EventDetailsPanel({
-    event,
-    onClose,
-    isOpen,
+	event,
+	onClose,
+	isOpen,
 }: EventDetailsPanelProps) {
-
-    if (!isOpen || !event) return null;
+	if (!isOpen || !event) return null;
 
 	const getEventColor = (event: AppEvent) => {
 		const typeColors = {
@@ -111,14 +110,14 @@ export default function EventDetailsPanel({
 						{/* Activity Image - only show for activities */}
 						{event.type === "activity" && (
 							<div>
-                        <ActivityImage
-                            imageUrl={event.imageUrl ?? undefined}
-                            title={event.title}
-                            location={event.location}
-                            className="mb-4"
-                        />
-                    </div>
-                )}
+								<ActivityImage
+									imageUrl={event.imageUrl ?? undefined}
+									title={event.title}
+									location={event.location}
+									className="mb-4"
+								/>
+							</div>
+						)}
 
 						<div>
 							<h3 className="font-medium text-sm text-muted-foreground mb-2">

@@ -149,10 +149,16 @@ export function LocationSelector({
 											}}
 										>
 											<div className="flex items-center gap-3">
-												<div className={`h-4 w-4 ${isSelected ? "text-accent-foreground" : "text-muted-foreground group-hover:text-accent-foreground"}`}>
+												<div
+													className={`h-4 w-4 ${isSelected ? "text-accent-foreground" : "text-muted-foreground group-hover:text-accent-foreground"}`}
+												>
 													{icon}
 												</div>
-												<span className={`${isSelected ? "text-accent-foreground" : "group-hover:text-accent-foreground"}`}>{option.label}</span>
+												<span
+													className={`${isSelected ? "text-accent-foreground" : "group-hover:text-accent-foreground"}`}
+												>
+													{option.label}
+												</span>
 											</div>
 											{isSelected && <Check className="h-4 w-4 text-primary" />}
 										</div>

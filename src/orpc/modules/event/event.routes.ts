@@ -6,9 +6,9 @@ import { createTravelDAO } from "../travel/travel.dao";
 import { createEventDAO } from "./event.dao";
 import { CreateEventInputSchema, CreateEventOutputSchema } from "./event.model";
 import {
-    createEventService,
-    getEventService,
-    getEventsByTravelService,
+	createEventService,
+	getEventService,
+	getEventsByTravelService,
 } from "./event.service";
 
 /**

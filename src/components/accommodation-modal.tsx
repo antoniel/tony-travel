@@ -34,10 +34,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
-import {
-	formatNumberPtBR,
-	maskCurrencyInputPtBR,
-} from "@/lib/currency";
+import { formatNumberPtBR, maskCurrencyInputPtBR } from "@/lib/currency";
 
 const formSchema = InsertAccommodationSchema.omit({
 	id: true,
@@ -378,7 +375,9 @@ export function AccommodationModal({
 												placeholder="0,00"
 												value={priceDisplay}
 												onChange={(e) => {
-													const { display, numeric } = maskCurrencyInputPtBR(e.target.value);
+													const { display, numeric } = maskCurrencyInputPtBR(
+														e.target.value,
+													);
 													setPriceDisplay(display);
 													field.onChange(numeric ?? undefined);
 												}}

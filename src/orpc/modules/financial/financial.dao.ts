@@ -1,7 +1,10 @@
 import { eq } from "drizzle-orm";
 import type { DB } from "@/lib/db/types";
 import { Accommodation, AppEvent, Flight, Travel } from "@/lib/db/schema";
-import type { TravelFinancialData, UpdateTravelBudgetInput } from "./financial.model";
+import type {
+	TravelFinancialData,
+	UpdateTravelBudgetInput,
+} from "./financial.model";
 
 export class FinancialDao {
 	constructor(private readonly db: DB) {}
@@ -13,7 +16,9 @@ export class FinancialDao {
 			.where(eq(Travel.id, input.travelId));
 	}
 
-	async getTravelFinancialData(travelId: string): Promise<TravelFinancialData | null> {
+	async getTravelFinancialData(
+		travelId: string,
+	): Promise<TravelFinancialData | null> {
 		// Get travel budget
 		const [travel] = await this.db
 			.select({ id: Travel.id, budget: Travel.budget })

@@ -1,66 +1,66 @@
 type Airport = {
-  code: string
-  name: string
-  city: string
-  state: string | null
-  stateCode: string | null
-  country: string
-  countryCode: string
-  type: "airport" | "city_group" | "state_group" | "country_group"
-  airportCount?: number
-  airportCodes?: string[]
-}
+	code: string;
+	name: string;
+	city: string;
+	state: string | null;
+	stateCode: string | null;
+	country: string;
+	countryCode: string;
+	type: "airport" | "city_group" | "state_group" | "country_group";
+	airportCount?: number;
+	airportCodes?: string[];
+};
 
 type StartPlanTravelProps = {
-  tripDates: {
-    start: string
-    end: string
-  }
-  budget: {
-    perPerson: number
-    currency: string
-  }
-  destination: string
-  groupSize: number
-  departureAirports: Airport[]
-  schemaOverride?: string
-}
+	tripDates: {
+		start: string;
+		end: string;
+	};
+	budget: {
+		perPerson: number;
+		currency: string;
+	};
+	destination: string;
+	groupSize: number;
+	departureAirports: Airport[];
+	schemaOverride?: string;
+};
 export function startPlanTravel({
-  tripDates,
-  budget,
-  destination,
-  groupSize,
-  departureAirports,
+	tripDates,
+	budget,
+	destination,
+	groupSize,
+	departureAirports,
 }: StartPlanTravelProps) {
-  // Create enhanced departure airports information with city, state/country details
-  const departureAirportsInfo = departureAirports.map((airport) => ({
-    code: airport.code,
-    name: airport.name,
-    city: airport.city,
-    state: airport.state,
-    stateCode: airport.stateCode,
-    country: airport.country,
-    countryCode: airport.countryCode,
-    type: airport.type,
-    displayName:
-      airport.type === "city_group"
-        ? `${airport.city} - ${airport.stateCode}`
-        : airport.type === "state_group"
-          ? airport.state
-          : airport.type === "country_group"
-            ? airport.country
-            : `${airport.city} - ${airport.code}`,
-  }))
+	// Create enhanced departure airports information with city, state/country details
+	const departureAirportsInfo = departureAirports.map((airport) => ({
+		code: airport.code,
+		name: airport.name,
+		city: airport.city,
+		state: airport.state,
+		stateCode: airport.stateCode,
+		country: airport.country,
+		countryCode: airport.countryCode,
+		type: airport.type,
+		displayName:
+			airport.type === "city_group"
+				? `${airport.city} - ${airport.stateCode}`
+				: airport.type === "state_group"
+					? airport.state
+					: airport.type === "country_group"
+						? airport.country
+						: `${airport.city} - ${airport.code}`,
+	}));
 
-  const inputsJson = {
-    TRIP_DATES: tripDates,
-    BUDGET: budget,
-    DESTINATION: destination,
-    GROUP_SIZE: groupSize,
-    DEPARTURE_AIRPORTS: departureAirportsInfo,
-  }
+	const inputsJson = {
+		TRIP_DATES: tripDates,
+		BUDGET: budget,
+		DESTINATION: destination,
+		GROUP_SIZE: groupSize,
+		DEPARTURE_AIRPORTS: departureAirportsInfo,
+	};
 
-  return `
+	return `
   <Task>
 Atuar como um “Travel Planner” para um grupo brasileiro aventureiro que prioriza experiências sobre conforto, com foco em UM ÚNICO DESTINO-ALVO. O objetivo é gerar APENAS um objeto estruturado de roteiro. O assistente deve:
 1) Analisar **voos multi-origem** (múltiplas cidades de saída no Brasil) para o **destino-alvo**, calcular **média de custo** por origem, sugerir **janelas flexíveis** e aplicar **equalização de custos de voo** (quem paga mais recebe crédito de hospedagem).
@@ -146,7 +146,7 @@ Estilo
 Início
 BEGIN PLANNING
 
-`
+`;
 }
 
 const schema = `
@@ -196,4 +196,4 @@ type Travel = {
 		parentEventId: string | null | undefined;
 	}[];
 };
-`
+`;

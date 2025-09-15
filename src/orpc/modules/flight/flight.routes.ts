@@ -1,7 +1,11 @@
 import { FlightSchema, InsertFlightSchema } from "@/lib/db/schema";
 import { AppResult } from "@/orpc/appResult";
 import { requireAuth } from "@/orpc/middleware/auth-middleware";
-import { authProcedure, baseProcedure, travelMemberProcedure } from "@/orpc/procedure";
+import {
+	authProcedure,
+	baseProcedure,
+	travelMemberProcedure,
+} from "@/orpc/procedure";
 import { ORPCError } from "@orpc/client";
 import * as z from "zod";
 import { createTravelDAO } from "../travel/travel.dao";

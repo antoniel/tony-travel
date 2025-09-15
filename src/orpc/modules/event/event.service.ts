@@ -2,10 +2,7 @@ import { AppResult } from "@/orpc/appResult";
 import type { TravelDAO } from "../travel/travel.dao";
 import type { EventDAO } from "./event.dao";
 import { eventErrors } from "./event.errors";
-import type {
-	CreateEventInput,
-	CreateEventOutput,
-} from "./event.model";
+import type { CreateEventInput, CreateEventOutput } from "./event.model";
 
 export async function createEventService(
 	eventDAO: EventDAO,

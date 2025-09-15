@@ -1,87 +1,98 @@
-import { TanstackDevtools } from "@tanstack/react-devtools"
-import { HeadContent, Outlet, Scripts, createRootRouteWithContext, useRouterState } from "@tanstack/react-router"
-import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools"
+import { TanstackDevtools } from "@tanstack/react-devtools";
+import {
+	HeadContent,
+	Outlet,
+	Scripts,
+	createRootRouteWithContext,
+	useRouterState,
+} from "@tanstack/react-router";
+import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 
-import { TopbarMenu } from "../components/ui/topbar-menu"
-import TanStackQueryDevtools from "../integrations/tanstack-query/devtools"
+import { TopbarMenu } from "../components/ui/topbar-menu";
+import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 
-import appCss from "../styles.css?url"
+import appCss from "../styles.css?url";
 
-import { Toaster } from "@/components/ui/sonner"
-import type { QueryClient } from "@tanstack/react-query"
-import { Meta } from "@tanstack/react-start"
+import { Toaster } from "@/components/ui/sonner";
+import type { QueryClient } from "@tanstack/react-query";
+import { Meta } from "@tanstack/react-start";
 
 interface MyRouterContext {
-  queryClient: QueryClient
+	queryClient: QueryClient;
 }
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
-  head: () => ({
-    meta: [
-      {
-        charSet: "utf-8",
-      },
-      {
-        name: "viewport",
-        content: "width=device-width, initial-scale=1",
-      },
-      {
-        title: "Tony Viagens",
-      },
-    ],
-    links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
-    ],
-  }),
-  component: RootComponent,
-  shellComponent: RootDocument,
-})
+	head: () => ({
+		meta: [
+			{
+				charSet: "utf-8",
+			},
+			{
+				name: "viewport",
+				content: "width=device-width, initial-scale=1",
+			},
+			{
+				title: "Tony Viagens",
+			},
+		],
+		links: [
+			{
+				rel: "stylesheet",
+				href: appCss,
+			},
+		],
+	}),
+	component: RootComponent,
+	shellComponent: RootDocument,
+});
 
 function RootComponent() {
-  const routerState = useRouterState()
-  const isAuthRoute = routerState.location.pathname.startsWith("/auth")
+	const routerState = useRouterState();
+	const isAuthRoute = routerState.location.pathname.startsWith("/auth");
 
-  return (
-    <>
-      {!isAuthRoute && <TopbarMenu />}
-      <main className={isAuthRoute ? "" : "min-h-[calc(100vh-4rem)]"}>
-        <Outlet />
-      </main>
-    </>
-  )
+	return (
+		<>
+			{!isAuthRoute && <TopbarMenu />}
+			<main className={isAuthRoute ? "" : "min-h-[calc(100vh-4rem)]"}>
+				<Outlet />
+			</main>
+		</>
+	);
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en">
-      <head>
-        <HeadContent />
-        <link rel="icon" href="data:image/x-icon;base64,AA" />
-        <Meta />
-        {!import.meta.env.PROD && <script crossOrigin="anonymous" src="//unpkg.com/react-scan/dist/auto.global.js" />}
-      </head>
-      <body>
-        {children}
-        <Toaster />
-        {!import.meta.env.PROD && (
-          <TanstackDevtools
-            config={{
-              position: "bottom-left",
-            }}
-            plugins={[
-              {
-                name: "Tanstack Router",
-                render: <TanStackRouterDevtoolsPanel />,
-              },
-              TanStackQueryDevtools,
-            ]}
-          />
-        )}
-        <Scripts />
-      </body>
-    </html>
-  )
+	return (
+		<html lang="en">
+			<head>
+				<HeadContent />
+				<link rel="icon" href="data:image/x-icon;base64,AA" />
+				<Meta />
+				{!import.meta.env.PROD && (
+					<script
+						crossOrigin="anonymous"
+						src="//unpkg.com/react-scan/dist/auto.global.js"
+					/>
+				)}
+			</head>
+			<body>
+				{children}
+				<Toaster />
+				{!import.meta.env.PROD && (
+					<TanstackDevtools
+						config={{
+							position: "bottom-left",
+						}}
+						plugins={[
+							{
+								name: "Tanstack Router",
+								render: <TanStackRouterDevtoolsPanel />,
+							},
+							TanStackQueryDevtools,
+						]}
+					/>
+				)}
+				<Scripts />
+			</body>
+		</html>
+	);
 }
