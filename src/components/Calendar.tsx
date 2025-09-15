@@ -34,6 +34,17 @@ export default function Calendar(props: CalendarProps) {
   const [selectedEvent, setSelectedEvent] = useState<AppEvent | null>(null)
   const [isPanelOpen, setIsPanelOpen] = useState(false)
   const [currentDate, setCurrentDate] = useState(() => {
+    // Prefer the travel start when trip is shorter than 7 days
+    if (props.travelStartDate && props.travelEndDate) {
+      const start = new Date(props.travelStartDate)
+      start.setHours(0, 0, 0, 0)
+      const end = new Date(props.travelEndDate)
+      end.setHours(23, 59, 59, 999)
+      const travelDays = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1)
+      if (travelDays < 7) {
+        return start
+      }
+    }
     const [firstEvent] = props.events.sort((a, b) => {
       const aTime = a.startDate.getTime()
       const bTime = b.startDate.getTime()
@@ -102,8 +113,39 @@ const RenderWeekViews = (props: {
   travelEndDate?: Date
   canWrite?: boolean
 }) => {
+  // Travel range helpers
+  const normalizeStartOfDay = (d: Date) => {
+    const x = new Date(d)
+    x.setHours(0, 0, 0, 0)
+    return x
+  }
+  const normalizeEndOfDay = (d: Date) => {
+    const x = new Date(d)
+    x.setHours(23, 59, 59, 999)
+    return x
+  }
+  const travelStart = props.travelStartDate ? normalizeStartOfDay(props.travelStartDate) : undefined
+  const travelEnd = props.travelEndDate ? normalizeEndOfDay(props.travelEndDate) : undefined
+  const travelTotalDays =
+    travelStart && travelEnd
+      ? Math.max(1, Math.ceil((travelEnd.getTime() - travelStart.getTime()) / (1000 * 60 * 60 * 24)) + 1)
+      : undefined
+  const restrictNonTravelDays = Boolean(travelStart && travelEnd && (travelTotalDays ?? 0) < 7)
+  const isWithinTravel = (date: Date) => {
+    if (!travelStart || !travelEnd) return true
+    const dayStart = normalizeStartOfDay(date)
+    return dayStart.getTime() >= travelStart.getTime() && dayStart.getTime() <= travelEnd.getTime()
+  }
+
   const totalDays = Math.max(getHowManyDaysTravel(props.events), 7)
-  const weekDays = getWeekDays(props.events)
+  let weekDays = getWeekDays(props.events)
+  if (restrictNonTravelDays && travelStart) {
+    weekDays = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(travelStart)
+      d.setDate(travelStart.getDate() + i)
+      return d
+    })
+  }
   const [dayWidth, setDayWidth] = useState(0)
   const LEFT_GUTTER_PX = 80
   const containerRef = useRef<HTMLDivElement>(null)
@@ -138,6 +180,8 @@ const RenderWeekViews = (props: {
     dayWidth,
     weekDays,
     onUpdateEvent: props.onUpdateEvent,
+    restrictNonTravelDays: restrictNonTravelDays,
+    isDayWithin: isWithinTravel,
   })
 
   // Scroll synchronization
@@ -289,13 +333,25 @@ const RenderWeekViews = (props: {
               {weekDays.map((date) => {
                 const isWeekend = date.getDay() === 0 || date.getDay() === 6 // Sunday or Saturday
                 const isToday = new Date().toDateString() === date.toDateString()
-                console.log({ teste: "teste" })
+                const disabled = restrictNonTravelDays && !isWithinTravel(date)
 
                 return (
                   <div
                     key={date.toISOString()}
-                    className={`border-r last:border-r-0 p-2 text-center ${isWeekend ? "bg-muted" : "bg-card"}`}
+                    className={`relative border-r last:border-r-0 p-2 text-center ${
+                      isWeekend ? "bg-muted" : "bg-card"
+                    }`}
                   >
+                    {disabled ? (
+                      <div
+                        className="absolute inset-0 pointer-events-none"
+                        style={{
+                          backgroundImage:
+                            "repeating-linear-gradient(45deg, hsl(var(--border) / 0.35) 0, hsl(var(--border) / 0.35) 4px, transparent 4px, transparent 8px)",
+                        }}
+                        aria-hidden="true"
+                      />
+                    ) : null}
                     <div
                       className={`text-xs uppercase ${isWeekend ? "text-muted-foreground" : "text-muted-foreground"}`}
                     >
@@ -339,7 +395,7 @@ const RenderWeekViews = (props: {
               {weekDays.map((date, dayIndex) => {
                 const dayEvents = getEventsForDate(props.events, date)
                 const isWeekend = date.getDay() === 0 || date.getDay() === 6
-                console.log({ teste: "teste2" })
+                const disabled = restrictNonTravelDays && !isWithinTravel(date)
                 return (
                   <DayCollumn
                     key={date.toISOString()}
@@ -347,6 +403,7 @@ const RenderWeekViews = (props: {
                     dayIndex={dayIndex}
                     events={dayEvents}
                     isWeekend={isWeekend}
+                    isDisabled={disabled}
                     onClick={handleCellClick}
                     draggingEvent={
                       draggingEvent
@@ -392,13 +449,11 @@ const getWeekDays = (events: AppEvent[]) => {
 
   const weekDays = []
 
-  const totalDays = getHowManyDaysTravel(events)
   for (let i = 0; i < 7; i++) {
     const date = new Date(startOfWeek)
     date.setDate(startOfWeek.getDate() + i)
     weekDays.push(date)
   }
-  console.log(weekDays)
   return weekDays
 }
 
@@ -656,6 +711,7 @@ interface DayCellProps {
   dayIndex: number
   events: AppEvent[]
   isWeekend: boolean
+  isDisabled?: boolean
   onClick: (dayIndex: number, event: React.MouseEvent) => void
   draggingEvent?: {
     event: AppEvent
@@ -671,6 +727,7 @@ const DayCollumn = ({
   dayIndex,
   events: dayEvents,
   isWeekend,
+  isDisabled,
   onClick,
   draggingEvent,
   onEventMouseDown,
@@ -680,15 +737,22 @@ const DayCollumn = ({
   return (
     <div
       key={date.toISOString()}
-      className={`border-r last:border-r-0 relative cursor-pointer hover:bg-accent/20 ${isWeekend ? "bg-muted" : ""}`}
-      onClick={(e) => onClick(dayIndex, e)}
+      className={`border-r last:border-r-0 relative ${
+        isDisabled ? "cursor-not-allowed" : "cursor-pointer hover:bg-accent/20"
+      } ${isWeekend ? "bg-muted" : ""}`}
+      onClick={(e) => {
+        if (isDisabled) return
+        onClick(dayIndex, e)
+      }}
       onKeyDown={(e) => {
+        if (isDisabled) return
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault()
           onClick(dayIndex, e as unknown as React.MouseEvent)
         }
       }}
       aria-label={`Create event on ${date.toLocaleDateString()}`}
+      aria-disabled={isDisabled ? true : undefined}
     >
       {/* Hour lines */}
       {TIME_SLOTS.map((slot) => (
@@ -697,6 +761,16 @@ const DayCollumn = ({
 
       {/* Events overlay */}
       <div className="absolute inset-0 pointer-events-none">
+        {isDisabled ? (
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage:
+                "repeating-linear-gradient(45deg, hsl(var(--border) / 0.35) 0, hsl(var(--border) / 0.35) 4px, transparent 4px, transparent 8px)",
+            }}
+            aria-hidden="true"
+          />
+        ) : null}
         {(() => {
           const eventLayouts = getEventLayout(dayEvents)
           return dayEvents.map((event) => {

@@ -112,6 +112,8 @@ function ItineraryPage() {
 							travelId={travel.id}
 							events={events}
 							accommodations={travel.accommodations || []}
+							travelStartDate={new Date(travel.startDate)}
+							travelEndDate={new Date(travel.endDate)}
 							onUpdateEvent={handleUpdateEvent}
 							canWrite={canWrite}
 						/>

@@ -29,6 +29,8 @@ interface UseEventDragDropProps {
 	dayWidth: number;
 	weekDays: Date[];
 	onUpdateEvent?: (eventId: string, updatedEvent: Partial<AppEvent>) => void;
+	restrictNonTravelDays?: boolean;
+	isDayWithin?: (date: Date) => boolean;
 }
 let mutDraggingEvent: DragState | null = null;
 
@@ -36,6 +38,8 @@ export function useEventDragDrop({
 	dayWidth,
 	weekDays,
 	onUpdateEvent,
+	restrictNonTravelDays,
+	isDayWithin,
 }: UseEventDragDropProps) {
 	const [draggingEvent, setDraggingEvent] = useState<DragState | null>(null);
 
@@ -158,6 +162,10 @@ export function useEventDragDrop({
 		}
 
 		if (targetDay) {
+			// Prevent dragging into disabled days when restricting
+			if (restrictNonTravelDays && isDayWithin && !isDayWithin(targetDay)) {
+				return;
+			}
 			// Use original event duration, not the truncated display duration
 			const originalEvent = draggingEvent.event;
 			const originalDuration =
@@ -185,6 +193,10 @@ export function useEventDragDrop({
 
 		const targetDay = weekDays[draggingEvent.dayIndex];
 		if (targetDay) {
+			// Prevent resizing on disabled days when restricting
+			if (restrictNonTravelDays && isDayWithin && !isDayWithin(targetDay)) {
+				return;
+			}
 			const newTime = new Date(targetDay);
 			newTime.setHours(newHour, newMinute, 0, 0);
 
