@@ -65,7 +65,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 		<html lang="en">
 			<head>
 				<HeadContent />
-				<link rel="icon" href="data:image/x-icon;base64,AA" />
+				{/* favicon */}
+				<link rel="icon" href="/logo512.png" />
+				{/* manifest */}
+				<link rel="manifest" href="/manifest.json" />
 				<Meta />
 				{!import.meta.env.PROD && (
 					<script

@@ -50,3 +50,6 @@ Geração automática a partir de links Markdown entre arquivos em `docs/bank-me
 
 ## README.md
 - [00-visao-geral.md](./00-visao-geral.md)
+
+## 07-identidade-visual.md
+- [README.md](./README.md)

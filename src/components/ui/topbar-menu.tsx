@@ -146,9 +146,13 @@ export const TopbarMenu: React.FC = () => {
 						{/* Brand/Home link */}
 						<Link
 							to="/"
-							className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+							className="flex items-center hover:opacity-80 transition-opacity"
 						>
-							<Home className="h-5 w-5 text-primary" />
+							<img
+								src="/logo512.png"
+								alt="Tony Viagens logo"
+								className="h-14 w-14 object-contain"
+							/>
 							<span className="font-semibold text-lg hidden sm:inline">
 								Tony Travel
 							</span>

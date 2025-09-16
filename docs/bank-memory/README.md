@@ -15,6 +15,7 @@ Este diretório reúne documentação não‑técnica do domínio da aplicação
 - 04-regras-de-negocio.md — invariantes e políticas.
 - 05-arquitetura-conceitual.md — módulos e fluxo de dados (alto nível).
 - 06-decisoes.md — decisões e trade‑offs (ADR resumido).
+- 07-identidade-visual.md — princípios visuais, paleta por tokens, tipografia e a11y.
 
 Convenção de links:
 - Usar links relativos entre arquivos para navegação cruzada.
@@ -24,7 +25,8 @@ Sugestão de uso por LLM:
 - Preferir termos do glossário (01-vocabulario.md) ao responder.
 - Citar regras em 04-regras-de-negocio.md ao validar cenários.
 - Para contexto de módulos, referenciar 05-arquitetura-conceitual.md e 06-decisoes.md.
+- Para decisões de expressão visual e consistência de UI, ver 07-identidade-visual.md.
 
-Veja também: [00-visao-geral.md](./00-visao-geral.md), [01-vocabulario.md](./01-vocabulario.md)
+Veja também: [00-visao-geral.md](./00-visao-geral.md), [01-vocabulario.md](./01-vocabulario.md), [07-identidade-visual.md](./07-identidade-visual.md)
 
 Backreferences: index raiz
