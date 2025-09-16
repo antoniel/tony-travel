@@ -3,13 +3,14 @@ import { z } from "zod";
 
 export const serverEnv = createEnv({
 	server: {
-		SERVER_URL: z.string().url().optional(),
+		BETTER_AUTH_SECRET: z.string().optional(),
+		DATABASE_AUTH_TOKEN: z.string(),
+		DATABASE_URL: z.string(),
 		GOOGLE_CLIENT_ID: z.string().optional(),
 		GOOGLE_CLIENT_SECRET: z.string().optional(),
-		BETTER_AUTH_SECRET: z.string().optional(),
-		DATABASE_URL: z.string(),
-		DATABASE_AUTH_TOKEN: z.string(),
+		OPENROUTER_API_KEY: z.string(),
 		PIXABAY_API_KEY: z.string().optional(),
+		SERVER_URL: z.string().url().optional(),
 		VITE_APP_URL: z.string(),
 	},
 

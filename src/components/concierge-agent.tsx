@@ -28,7 +28,9 @@ import {
 	SourcesContent,
 	SourcesTrigger,
 } from "@/components/ai-elements/sources";
+import { client } from "@/orpc/client";
 import { useChat } from "@ai-sdk/react";
+import { eventIteratorToStream } from "@orpc/client";
 import { CalendarClock, CopyIcon, Plane, RefreshCcwIcon } from "lucide-react";
 import React, { useMemo, useState } from "react";
 
@@ -46,7 +48,25 @@ const models = [
 export const ConciergeAgent = () => {
 	const [input, setInput] = useState("");
 	const [model] = useState<string>(models[0].value);
-	const { messages, sendMessage, status } = useChat();
+	const { messages, sendMessage, status } = useChat({
+		transport: {
+			async sendMessages(options) {
+				const iterator = await client.conciergeRoutes.chat(
+					{
+						chatId: options.chatId,
+						messages: options.messages,
+						model,
+						webSearch: false,
+					},
+					{ signal: options.abortSignal },
+				);
+				return eventIteratorToStream(iterator);
+			},
+			reconnectToStream() {
+				throw new Error("Unsupported");
+			},
+		},
+	});
 
 	const handleSubmit = (message: PromptInputMessage) => {
 		const hasText = Boolean(message.text);
@@ -56,17 +76,10 @@ export const ConciergeAgent = () => {
 			return;
 		}
 
-		sendMessage(
-			{
-				text: message.text || "Sent with attachments",
-				files: message.files,
-			},
-			{
-				body: {
-					model: model,
-				},
-			},
-		);
+		sendMessage({
+			text: message.text || "Sent with attachments",
+			files: message.files,
+		});
 		setInput("");
 	};
 

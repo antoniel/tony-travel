@@ -24,6 +24,7 @@
     "@ai-sdk/react": "^2.0.44",
     "@hookform/resolvers": "^5.2.1",
     "@libsql/client": "^0.15.12",
+    "@openrouter/ai-sdk-provider": "^1.2.0",
     "@orpc/client": "^1.7.5",
     "@orpc/json-schema": "^1.7.5",
     "@orpc/openapi": "^1.7.5",
