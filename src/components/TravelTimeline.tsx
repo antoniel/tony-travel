@@ -64,28 +64,7 @@ export function TravelTimeline({ travel, canWrite }: TravelTimelineProps) {
 		cost: null as number | null,
 	});
 
-	const openGeneralAdd = () => {
-		if (!canWrite) return;
-		const now = new Date();
-		let start = now;
-		if (now < travel.startDate || now > travel.endDate) {
-			start = new Date(travel.startDate);
-		}
-		if (start.getHours() === 0 && start.getMinutes() === 0) {
-			start.setHours(9, 0);
-		}
-		const end = new Date(start);
-		end.setHours(start.getHours() + 1);
-		setNewEvent({
-			title: "",
-			startDate: start,
-			endDate: end,
-			type: "activity",
-			location: "",
-			cost: null,
-		});
-		setIsModalOpen(true);
-	};
+    // Removed unused openGeneralAdd helper to satisfy strict TS
 
 	const handleCreateEvent = () => {
 		if (!canWrite || !onAddEvent || !newEvent.title.trim()) return;

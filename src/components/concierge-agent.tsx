@@ -8,24 +8,13 @@ import { Loader } from "@/components/ai-elements/loader";
 import { Message, MessageContent } from "@/components/ai-elements/message";
 import {
 	PromptInput,
-	PromptInputActionAddAttachments,
-	PromptInputActionMenu,
-	PromptInputActionMenuContent,
-	PromptInputActionMenuTrigger,
 	PromptInputAttachment,
 	PromptInputAttachments,
 	PromptInputBody,
-	PromptInputButton,
 	type PromptInputMessage,
-	PromptInputModelSelect,
-	PromptInputModelSelectContent,
-	PromptInputModelSelectItem,
-	PromptInputModelSelectTrigger,
-	PromptInputModelSelectValue,
 	PromptInputSubmit,
 	PromptInputTextarea,
 	PromptInputToolbar,
-	PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
 import {
 	Reasoning,
@@ -40,8 +29,8 @@ import {
 	SourcesTrigger,
 } from "@/components/ai-elements/sources";
 import { useChat } from "@ai-sdk/react";
-import { CopyIcon, GlobeIcon, RefreshCcwIcon } from "lucide-react";
-import React, { useState } from "react";
+import { CalendarClock, CopyIcon, Plane, RefreshCcwIcon } from "lucide-react";
+import React, { useMemo, useState } from "react";
 
 const models = [
 	{
@@ -56,8 +45,7 @@ const models = [
 
 export const ConciergeAgent = () => {
 	const [input, setInput] = useState("");
-	const [model, setModel] = useState<string>(models[0].value);
-	const [webSearch, setWebSearch] = useState(false);
+	const [model] = useState<string>(models[0].value);
 	const { messages, sendMessage, status } = useChat();
 
 	const handleSubmit = (message: PromptInputMessage) => {
@@ -76,18 +64,51 @@ export const ConciergeAgent = () => {
 			{
 				body: {
 					model: model,
-					webSearch: webSearch,
 				},
 			},
 		);
 		setInput("");
 	};
 
+	const showIntro = useMemo(
+		() => messages.length === 0 && input.trim().length === 0,
+		[messages.length, input],
+	);
+
 	return (
-		<div className="max-w-4xl mx-auto p-6 relative size-full h-screen">
-			<div className="flex flex-col h-full">
-				<Conversation className="h-full">
-					<ConversationContent>
+		<div className="relative h-full w-full">
+			<div className="flex h-full w-full flex-col overflow-hidden">
+				<Conversation className="flex-1 min-h-0">
+					<ConversationContent className="p-0">
+						{showIntro ? (
+							<div className="mb-4 rounded-lg border bg-muted/40 p-4">
+								<h3 className="mb-2 text-sm font-medium">
+									O que o Concierge pode fazer
+								</h3>
+								<div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+									<div className="rounded-md border bg-background p-3 text-sm">
+										<div className="mb-1 flex items-center gap-2 font-medium">
+											<Plane className="h-4 w-4 text-muted-foreground" />
+											Adicionar voos
+										</div>
+										<p className="text-muted-foreground">
+											"Adicionar voo de GRU para JFK saindo 10/11 às 22:30 e
+											chegando 11/11 às 07:10".
+										</p>
+									</div>
+									<div className="rounded-md border bg-background p-3 text-sm">
+										<div className="mb-1 flex items-center gap-2 font-medium">
+											<CalendarClock className="h-4 w-4 text-muted-foreground" />
+											Eventos e horários
+										</div>
+										<p className="text-muted-foreground">
+											"Criar jantar 12/11 das 19:00 às 21:00" ou "Passeio 13/11
+											à tarde".
+										</p>
+									</div>
+								</div>
+							</div>
+						) : null}
 						{messages.map((message) => (
 							<div key={message.id}>
 								{message.role === "assistant" &&
@@ -170,7 +191,7 @@ export const ConciergeAgent = () => {
 
 				<PromptInput
 					onSubmit={handleSubmit}
-					className="mt-4"
+					className="sticky bottom-0 z-10 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
 					globalDrop
 					multiple
 				>
@@ -183,42 +204,7 @@ export const ConciergeAgent = () => {
 							value={input}
 						/>
 					</PromptInputBody>
-					<PromptInputToolbar>
-						<PromptInputTools>
-							<PromptInputActionMenu>
-								<PromptInputActionMenuTrigger />
-								<PromptInputActionMenuContent>
-									<PromptInputActionAddAttachments />
-								</PromptInputActionMenuContent>
-							</PromptInputActionMenu>
-							<PromptInputButton
-								variant={webSearch ? "default" : "ghost"}
-								onClick={() => setWebSearch(!webSearch)}
-							>
-								<GlobeIcon size={16} />
-								<span>Search</span>
-							</PromptInputButton>
-							<PromptInputModelSelect
-								onValueChange={(value) => {
-									setModel(value);
-								}}
-								value={model}
-							>
-								<PromptInputModelSelectTrigger>
-									<PromptInputModelSelectValue />
-								</PromptInputModelSelectTrigger>
-								<PromptInputModelSelectContent>
-									{models.map((model) => (
-										<PromptInputModelSelectItem
-											key={model.value}
-											value={model.value}
-										>
-											{model.name}
-										</PromptInputModelSelectItem>
-									))}
-								</PromptInputModelSelectContent>
-							</PromptInputModelSelect>
-						</PromptInputTools>
+					<PromptInputToolbar className="justify-end">
 						<PromptInputSubmit disabled={!input && !status} status={status} />
 					</PromptInputToolbar>
 				</PromptInput>
