@@ -22,6 +22,7 @@ import { Route as TripTravelIdMembersRouteImport } from './routes/trip/$travelId
 import { Route as TripTravelIdLocationsRouteImport } from './routes/trip/$travelId/locations'
 import { Route as TripTravelIdFlightsRouteImport } from './routes/trip/$travelId/flights'
 import { Route as TripTravelIdFinancialRouteImport } from './routes/trip/$travelId/financial'
+import { Route as TripTravelIdConciergeRouteImport } from './routes/trip/$travelId/concierge'
 import { Route as TripTravelIdAccommodationsRouteImport } from './routes/trip/$travelId/accommodations'
 import { ServerRoute as ApiSplatServerRouteImport } from './routes/api.$'
 import { ServerRoute as ApiRpcSplatServerRouteImport } from './routes/api.rpc.$'
@@ -84,6 +85,11 @@ const TripTravelIdFinancialRoute = TripTravelIdFinancialRouteImport.update({
   path: '/financial',
   getParentRoute: () => TripTravelIdRoute,
 } as any)
+const TripTravelIdConciergeRoute = TripTravelIdConciergeRouteImport.update({
+  id: '/concierge',
+  path: '/concierge',
+  getParentRoute: () => TripTravelIdRoute,
+} as any)
 const TripTravelIdAccommodationsRoute =
   TripTravelIdAccommodationsRouteImport.update({
     id: '/accommodations',
@@ -113,6 +119,7 @@ export interface FileRoutesByFullPath {
   '/invite/$token': typeof InviteTokenRoute
   '/trip/$travelId': typeof TripTravelIdRouteWithChildren
   '/trip/$travelId/accommodations': typeof TripTravelIdAccommodationsRoute
+  '/trip/$travelId/concierge': typeof TripTravelIdConciergeRoute
   '/trip/$travelId/financial': typeof TripTravelIdFinancialRoute
   '/trip/$travelId/flights': typeof TripTravelIdFlightsRoute
   '/trip/$travelId/locations': typeof TripTravelIdLocationsRoute
@@ -126,6 +133,7 @@ export interface FileRoutesByTo {
   '/auth/login': typeof AuthLoginRoute
   '/invite/$token': typeof InviteTokenRoute
   '/trip/$travelId/accommodations': typeof TripTravelIdAccommodationsRoute
+  '/trip/$travelId/concierge': typeof TripTravelIdConciergeRoute
   '/trip/$travelId/financial': typeof TripTravelIdFinancialRoute
   '/trip/$travelId/flights': typeof TripTravelIdFlightsRoute
   '/trip/$travelId/locations': typeof TripTravelIdLocationsRoute
@@ -141,6 +149,7 @@ export interface FileRoutesById {
   '/invite/$token': typeof InviteTokenRoute
   '/trip/$travelId': typeof TripTravelIdRouteWithChildren
   '/trip/$travelId/accommodations': typeof TripTravelIdAccommodationsRoute
+  '/trip/$travelId/concierge': typeof TripTravelIdConciergeRoute
   '/trip/$travelId/financial': typeof TripTravelIdFinancialRoute
   '/trip/$travelId/flights': typeof TripTravelIdFlightsRoute
   '/trip/$travelId/locations': typeof TripTravelIdLocationsRoute
@@ -157,6 +166,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/trip/$travelId'
     | '/trip/$travelId/accommodations'
+    | '/trip/$travelId/concierge'
     | '/trip/$travelId/financial'
     | '/trip/$travelId/flights'
     | '/trip/$travelId/locations'
@@ -170,6 +180,7 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/invite/$token'
     | '/trip/$travelId/accommodations'
+    | '/trip/$travelId/concierge'
     | '/trip/$travelId/financial'
     | '/trip/$travelId/flights'
     | '/trip/$travelId/locations'
@@ -184,6 +195,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/trip/$travelId'
     | '/trip/$travelId/accommodations'
+    | '/trip/$travelId/concierge'
     | '/trip/$travelId/financial'
     | '/trip/$travelId/flights'
     | '/trip/$travelId/locations'
@@ -308,6 +320,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TripTravelIdFinancialRouteImport
       parentRoute: typeof TripTravelIdRoute
     }
+    '/trip/$travelId/concierge': {
+      id: '/trip/$travelId/concierge'
+      path: '/concierge'
+      fullPath: '/trip/$travelId/concierge'
+      preLoaderRoute: typeof TripTravelIdConciergeRouteImport
+      parentRoute: typeof TripTravelIdRoute
+    }
     '/trip/$travelId/accommodations': {
       id: '/trip/$travelId/accommodations'
       path: '/accommodations'
@@ -345,6 +364,7 @@ declare module '@tanstack/react-start/server' {
 
 interface TripTravelIdRouteChildren {
   TripTravelIdAccommodationsRoute: typeof TripTravelIdAccommodationsRoute
+  TripTravelIdConciergeRoute: typeof TripTravelIdConciergeRoute
   TripTravelIdFinancialRoute: typeof TripTravelIdFinancialRoute
   TripTravelIdFlightsRoute: typeof TripTravelIdFlightsRoute
   TripTravelIdLocationsRoute: typeof TripTravelIdLocationsRoute
@@ -355,6 +375,7 @@ interface TripTravelIdRouteChildren {
 
 const TripTravelIdRouteChildren: TripTravelIdRouteChildren = {
   TripTravelIdAccommodationsRoute: TripTravelIdAccommodationsRoute,
+  TripTravelIdConciergeRoute: TripTravelIdConciergeRoute,
   TripTravelIdFinancialRoute: TripTravelIdFinancialRoute,
   TripTravelIdFlightsRoute: TripTravelIdFlightsRoute,
   TripTravelIdLocationsRoute: TripTravelIdLocationsRoute,

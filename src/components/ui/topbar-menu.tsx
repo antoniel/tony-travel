@@ -111,7 +111,6 @@ export const TopbarMenu: React.FC = () => {
 	};
 
 	const breadcrumbs = getBreadcrumbs();
-	const canGoBack = breadcrumbs.length > 1 && !breadcrumbs[0].current;
 
 	if (isLoading) {
 		return (

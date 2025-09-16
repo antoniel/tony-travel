@@ -9,6 +9,7 @@ import {
 import {
 	Calendar,
 	Clock,
+	ConciergeBell,
 	DollarSign,
 	Home,
 	MapPin,
@@ -32,6 +33,12 @@ function TripLayout() {
 	const travel = travelQuery.data;
 
 	const tabRoutes = [
+		{
+			value: "concierge",
+			path: `/trip/${travelId}/concierge`,
+			label: "Concierge",
+			icon: ConciergeBell,
+		},
 		{
 			value: "itinerary",
 			path: `/trip/${travelId}`,
