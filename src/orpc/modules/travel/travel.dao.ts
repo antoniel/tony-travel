@@ -125,28 +125,28 @@ export class TravelDAO {
 		return travel || null;
 	}
 
-    async getAllTravels(limit?: number): Promise<TravelWithRelations[]> {
-        const travels = await this.db.query.Travel.findMany({
-            where: isNull(Travel.deletedAt),
-            with: {
-                accommodations: true,
-                events: {
-                    with: {
-                        dependencies: true,
-                    },
-                },
-                members: {
-                    with: {
-                        user: true,
-                    },
-                },
-            },
-            orderBy: desc(Travel.createdAt),
-            limit,
-        });
+	async getAllTravels(limit?: number): Promise<TravelWithRelations[]> {
+		const travels = await this.db.query.Travel.findMany({
+			where: isNull(Travel.deletedAt),
+			with: {
+				accommodations: true,
+				events: {
+					with: {
+						dependencies: true,
+					},
+				},
+				members: {
+					with: {
+						user: true,
+					},
+				},
+			},
+			orderBy: desc(Travel.createdAt),
+			limit,
+		});
 
-        return travels;
-    }
+		return travels;
+	}
 
 	// TravelMember operations
 	async createTravelMember(

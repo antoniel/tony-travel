@@ -173,9 +173,10 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 		label: renderAiportName(airport),
 	}));
 	return (
-		<div className="relative h-full bg-gradient-to-b from-primary/10 via-background to-background">
+		<div className="relative h-full">
 			<div className="relative isolate min-h-screen pb-6 inset-0">
-				<div className="w-full  pointer-events-none absolute inset-0 -z-10 overflow-hidden top-0 left-0">
+				{/* Global Home background (fixed) so header blur picks it up */}
+				<div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-gradient-to-b from-primary/10 via-background to-background">
 					<div className="aurora aurora-a" aria-hidden />
 					<div className="aurora aurora-b" aria-hidden />
 					<div className="bg-grid-fade" aria-hidden />

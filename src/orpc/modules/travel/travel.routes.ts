@@ -112,14 +112,13 @@ export const listTravels = optionalAuthProcedure
 	.output(z.array(TravelSchema))
 	.handler(async ({ input, context }) => {
 		const travelDAO = createTravelDAO(context.db);
-        const limit = input?.limit ?? 10;
+		const limit = input?.limit ?? 10;
 		// Se especificou userId e não é o próprio usuário, só mostra públicas
 		if (input?.userId && input.userId !== context.user?.id) {
 			// Implementar filtro para travels públicas
 			return await travelDAO.getAllTravels(limit);
 		}
 
-		// Se é o próprio usuário ou não especificou, mostra todas
 		return await travelDAO.getAllTravels(limit);
 	});
 

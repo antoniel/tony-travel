@@ -3,7 +3,7 @@ import { signIn, signOut } from "@/lib/auth-client";
 import { orpc } from "@/orpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Home, LogOutIcon, UserIcon } from "lucide-react";
+import { Home, LogOutIcon, UserIcon } from "lucide-react";
 import type React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "./avatar";
 import { Button } from "./button";
@@ -115,7 +115,7 @@ export const TopbarMenu: React.FC = () => {
 
 	if (isLoading) {
 		return (
-			<header className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/50 sticky top-0 z-50">
+			<header className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
 				<div className="container mx-auto px-4 sm:px-6 lg:px-8">
 					<div className="flex items-center justify-between h-16">
 						<div className="flex items-center gap-4">
@@ -129,20 +129,11 @@ export const TopbarMenu: React.FC = () => {
 	}
 
 	return (
-		<header className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/50 sticky top-0 z-50">
+		<header className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60  sticky top-0 z-50">
 			<div className="container mx-auto px-4 sm:px-6 lg:px-8">
 				<div className="flex items-center justify-between h-16">
 					{/* Left section - Logo/Brand and Navigation */}
 					<div className="flex items-center gap-4">
-						{/* Back button for non-home pages */}
-						{canGoBack && (
-							<Button variant="ghost" size="sm" asChild className="h-8 w-8 p-0">
-								<Link to={breadcrumbs[breadcrumbs.length - 2]?.path || "/"}>
-									<ArrowLeft className="h-4 w-4" />
-								</Link>
-							</Button>
-						)}
-
 						{/* Brand/Home link */}
 						<Link
 							to="/"
@@ -151,7 +142,7 @@ export const TopbarMenu: React.FC = () => {
 							<img
 								src="/logo512.png"
 								alt="Tony Viagens logo"
-								className="h-14 w-14 object-contain"
+								className="h-8 w-8 object-contain"
 							/>
 							<span className="font-semibold text-lg hidden sm:inline">
 								Tony Travel
