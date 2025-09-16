@@ -115,7 +115,7 @@ function ItineraryPage() {
 						</TabsTrigger>
 					</TabsList>
 
-					{/* Quick stats + mobile add action */}
+					{/* Quick stats + add action (mobile + desktop) */}
 					<div className="flex flex-wrap items-center gap-3 text-sm">
 						<div className="flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-lg">
 							<Clock className="w-4 h-4 text-muted-foreground" />
@@ -124,18 +124,35 @@ function ItineraryPage() {
 							</span>
 						</div>
 						{canWrite ? (
-							<Button
-								variant="secondary"
-								size="sm"
-								className="h-8 gap-2 sm:hidden"
-								onClick={() => {
-									setNewEvent(defaultEvent);
-									setIsAddEventOpen(true);
-								}}
-								title="Adicionar evento"
-							>
-								<Plus className="w-4 h-4" /> Adicionar
-							</Button>
+							<>
+								{/* Mobile add button */}
+								<Button
+									variant="secondary"
+									size="sm"
+									className="h-8 gap-2 sm:hidden"
+									onClick={() => {
+										setNewEvent(defaultEvent);
+										setIsAddEventOpen(true);
+									}}
+									title="Adicionar evento"
+								>
+									<Plus className="w-4 h-4" /> Adicionar
+								</Button>
+
+								{/* Desktop add button aligned with stats */}
+								<Button
+									variant="default"
+									size="sm"
+									className="h-8 gap-2 hidden sm:inline-flex"
+									onClick={() => {
+										setNewEvent(defaultEvent);
+										setIsAddEventOpen(true);
+									}}
+									title="Adicionar evento"
+								>
+									<Plus className="w-4 h-4" /> Adicionar Evento
+								</Button>
+							</>
 						) : null}
 					</div>
 				</div>

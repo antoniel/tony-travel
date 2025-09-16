@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import type { InsertAppEvent } from "@/lib/db/schema";
 import type { Accommodation, AppEvent, TravelWithRelations } from "@/lib/types";
 import { orpc } from "@/orpc/client";
@@ -112,17 +111,6 @@ export function TravelTimeline({ travel, canWrite }: TravelTimelineProps) {
 	return (
 		<>
 			<div className=" space-y-8">
-				{canWrite ? (
-					<div className="hidden sm:flex items-center justify-end">
-						<Button
-							onClick={openGeneralAdd}
-							className="flex items-center gap-2"
-						>
-							<Plus className="w-4 h-4" />
-							Adicionar Evento
-						</Button>
-					</div>
-				) : null}
 				<div className="relative">
 					<div className="absolute left-8 top-16 bottom-0 w-0.5 bg-gradient-to-b from-primary via-accent to-chart-3 opacity-30" />
 
