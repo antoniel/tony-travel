@@ -65,7 +65,7 @@ function InChatHeader({ travelName }: { travelName?: string }) {
 
 export const ConciergeAgent = ({ travelName }: { travelName?: string }) => {
 	const [input, setInput] = useState("");
-	const { messages, sendMessage, status } = useChat({
+	const { messages, sendMessage, status, stop } = useChat({
 		transport: {
 			async sendMessages(options) {
 				const iterator = await client.conciergeRoutes.chat(
@@ -234,7 +234,12 @@ export const ConciergeAgent = ({ travelName }: { travelName?: string }) => {
 						/>
 					</PromptInputBody>
 					<PromptInputToolbar className="justify-end">
-						<PromptInputSubmit disabled={!input && !status} status={status} />
+						<PromptInputSubmit
+							disabled={!input && !status}
+							onClick={status === "streaming" ? () => stop() : undefined}
+							status={status}
+							type={status === "streaming" ? "button" : "submit"}
+						/>
 					</PromptInputToolbar>
 				</PromptInput>
 			</div>
