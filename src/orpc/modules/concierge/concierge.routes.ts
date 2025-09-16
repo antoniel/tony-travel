@@ -35,7 +35,6 @@ export const chat = optionalAuthProcedure
 		orpcType<{
 			chatId: string;
 			messages: UIMessage[];
-			model: string;
 			webSearch?: boolean;
 		}>(),
 	)

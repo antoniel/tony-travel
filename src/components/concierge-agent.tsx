@@ -28,26 +28,43 @@ import {
 	SourcesContent,
 	SourcesTrigger,
 } from "@/components/ai-elements/sources";
+import { Badge } from "@/components/ui/badge";
 import { client } from "@/orpc/client";
 import { useChat } from "@ai-sdk/react";
 import { eventIteratorToStream } from "@orpc/client";
-import { CalendarClock, CopyIcon, Plane, RefreshCcwIcon } from "lucide-react";
+import {
+	CalendarClock,
+	ConciergeBell,
+	CopyIcon,
+	Plane,
+	RefreshCcwIcon,
+} from "lucide-react";
 import React, { useMemo, useState } from "react";
 
-const models = [
-	{
-		name: "GPT 4o",
-		value: "openai/gpt-4o",
-	},
-	{
-		name: "Deepseek R1",
-		value: "deepseek/deepseek-r1",
-	},
-];
+function InChatHeader({ travelName }: { travelName?: string }) {
+	return (
+		<>
+			<div className="sticky top-0 z-10 bg-background/95 border-b border-border/20 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+				<div className="space-y-1">
+					<div className="flex items-center gap-2 text-muted-foreground text-sm">
+						<ConciergeBell className="h-4 w-4" />
+						<span>Concierge da Viagem</span>
+						<Badge variant="secondary">Beta</Badge>
+					</div>
+				</div>
+			</div>
+			<div className="flex flex-col gap-2 px-4 ">
+				<h2 className="text-xl sm:text-2xl font-semibold tracking-tight">
+					Seu assistente para organizar a viagem
+					{travelName ? `: ${travelName}` : ""}
+				</h2>
+			</div>
+		</>
+	);
+}
 
-export const ConciergeAgent = () => {
+export const ConciergeAgent = ({ travelName }: { travelName?: string }) => {
 	const [input, setInput] = useState("");
-	const [model] = useState<string>(models[0].value);
 	const { messages, sendMessage, status } = useChat({
 		transport: {
 			async sendMessages(options) {
@@ -55,8 +72,6 @@ export const ConciergeAgent = () => {
 					{
 						chatId: options.chatId,
 						messages: options.messages,
-						model,
-						webSearch: false,
 					},
 					{ signal: options.abortSignal },
 				);
@@ -93,6 +108,7 @@ export const ConciergeAgent = () => {
 			<div className="flex h-full w-full flex-col overflow-hidden">
 				<Conversation className="flex-1 min-h-0">
 					<ConversationContent className="p-0">
+						<InChatHeader travelName={travelName} />
 						{showIntro ? (
 							<div className="mb-4 rounded-lg border bg-muted/40 p-4">
 								<h3 className="mb-2 text-sm font-medium">
