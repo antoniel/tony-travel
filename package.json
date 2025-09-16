@@ -17,7 +17,8 @@
     "migration:run": "drizzle-kit migrate",
     "migration:drop": "drizzle-kit drop",
     "db:seed": "bun run scripts/seed.ts",
-    "clean:testdbs": "node scripts/clean-test-dbs.mjs"
+    "clean:testdbs": "node scripts/clean-test-dbs.mjs",
+    "docs:backrefs": "node scripts/generate-backrefs.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
