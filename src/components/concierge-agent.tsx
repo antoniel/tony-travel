@@ -14,7 +14,6 @@ import {
 	type PromptInputMessage,
 	PromptInputSubmit,
 	PromptInputTextarea,
-	PromptInputToolbar,
 } from "@/components/ai-elements/prompt-input";
 import {
 	Reasoning,
@@ -228,19 +227,21 @@ export const ConciergeAgent = ({ travelName }: { travelName?: string }) => {
 						<PromptInputAttachments>
 							{(attachment) => <PromptInputAttachment data={attachment} />}
 						</PromptInputAttachments>
-						<PromptInputTextarea
-							onChange={(e) => setInput(e.target.value)}
-							value={input}
-						/>
+						<div className="flex items-end gap-2 p-3">
+							<PromptInputTextarea
+								className="flex-1 px-0 py-2"
+								onChange={(e) => setInput(e.target.value)}
+								value={input}
+							/>
+							<PromptInputSubmit
+								className="shrink-0"
+								disabled={!input && !status}
+								onClick={status === "streaming" ? () => stop() : undefined}
+								status={status}
+								type={status === "streaming" ? "button" : "submit"}
+							/>
+						</div>
 					</PromptInputBody>
-					<PromptInputToolbar className="justify-end">
-						<PromptInputSubmit
-							disabled={!input && !status}
-							onClick={status === "streaming" ? () => stop() : undefined}
-							status={status}
-							type={status === "streaming" ? "button" : "submit"}
-						/>
-					</PromptInputToolbar>
 				</PromptInput>
 			</div>
 		</div>
