@@ -27,16 +27,30 @@ import {
 	SourcesContent,
 	SourcesTrigger,
 } from "@/components/ai-elements/sources";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardFooter,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
 import { formatCurrencyBRL } from "@/lib/currency";
 import { client, orpc } from "@/orpc/client";
 import type { CreateEventToolInput } from "@/orpc/modules/concierge/concierge.tools";
 import { useChat } from "@ai-sdk/react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { eventIteratorToStream } from "@orpc/client";
-import { CalendarClock, CopyIcon, Plane, RefreshCcwIcon, CheckIcon, XIcon } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+	CalendarClock,
+	CheckIcon,
+	CopyIcon,
+	Plane,
+	RefreshCcwIcon,
+	XIcon,
+} from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -56,15 +70,19 @@ function InChatHeader({ travelName }: { travelName?: string }) {
 interface EventConfirmationCardProps {
 	eventData: CreateEventToolInput;
 	travelId: string;
-	addToolResult: (args: { tool: string; toolCallId: string; output: unknown }) => Promise<void>;
+	addToolResult: (args: {
+		tool: string;
+		toolCallId: string;
+		output: unknown;
+	}) => Promise<void>;
 	toolCallId: string;
 }
 
-function EventConfirmationCard({ 
-	eventData, 
-	travelId, 
+function EventConfirmationCard({
+	eventData,
+	travelId,
 	addToolResult,
-	toolCallId 
+	toolCallId,
 }: EventConfirmationCardProps) {
 	const queryClient = useQueryClient();
 	const [isProcessed, setIsProcessed] = useState(false);
@@ -73,13 +91,15 @@ function EventConfirmationCard({
 		...orpc.eventRoutes.createEvent.mutationOptions(),
 		onSuccess: (result) => {
 			toast.success("Evento criado com sucesso!");
-			queryClient.invalidateQueries({ 
-				queryKey: orpc.eventRoutes.getEventsByTravel.queryKey({ input: { travelId } })
+			queryClient.invalidateQueries({
+				queryKey: orpc.eventRoutes.getEventsByTravel.queryKey({
+					input: { travelId },
+				}),
 			});
 			addToolResult({
 				tool: "createEvent",
 				toolCallId,
-				output: { success: true, eventId: result.id }
+				output: { success: true, eventId: result.id },
 			});
 			setIsProcessed(true);
 		},
@@ -89,7 +109,7 @@ function EventConfirmationCard({
 			addToolResult({
 				tool: "createEvent",
 				toolCallId,
-				output: { success: false, error: error.message }
+				output: { success: false, error: error.message },
 			});
 			setIsProcessed(true);
 		},
@@ -97,7 +117,7 @@ function EventConfirmationCard({
 
 	const handleAccept = () => {
 		if (isProcessed) return;
-		
+
 		createEventMutation.mutate({
 			travelId,
 			title: eventData.title,
@@ -111,12 +131,12 @@ function EventConfirmationCard({
 
 	const handleReject = () => {
 		if (isProcessed) return;
-		
+
 		toast.info("Sugestão de evento rejeitada");
 		addToolResult({
 			tool: "createEvent",
 			toolCallId,
-			output: { success: false, rejected: true }
+			output: { success: false, rejected: true },
 		});
 		setIsProcessed(true);
 	};
@@ -135,17 +155,22 @@ function EventConfirmationCard({
 	const getEventTypeLabel = (type: string) => {
 		const labels = {
 			travel: "Transporte",
-			food: "Alimentação", 
-			activity: "Atividade"
+			food: "Alimentação",
+			activity: "Atividade",
 		};
 		return labels[type as keyof typeof labels] || type;
 	};
 
-	const getEventTypeVariant = (type: string): "default" | "secondary" | "outline" | "destructive" => {
-		const variants: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
+	const getEventTypeVariant = (
+		type: string,
+	): "default" | "secondary" | "outline" | "destructive" => {
+		const variants: Record<
+			string,
+			"default" | "secondary" | "outline" | "destructive"
+		> = {
 			travel: "default",
 			food: "secondary",
-			activity: "outline"
+			activity: "outline",
 		};
 		return variants[type] || "default";
 	};
@@ -181,7 +206,9 @@ function EventConfirmationCard({
 					)}
 					{eventData.estimatedCost && (
 						<div>
-							<span className="font-medium text-muted-foreground">Custo estimado:</span>{" "}
+							<span className="font-medium text-muted-foreground">
+								Custo estimado:
+							</span>{" "}
 							{formatCurrencyBRL(eventData.estimatedCost)}
 						</div>
 					)}
@@ -190,7 +217,7 @@ function EventConfirmationCard({
 			<CardFooter className="flex gap-2">
 				{!isProcessed ? (
 					<>
-						<Button 
+						<Button
 							onClick={handleAccept}
 							disabled={createEventMutation.isPending}
 							className="flex-1"
@@ -198,8 +225,8 @@ function EventConfirmationCard({
 							<CheckIcon className="w-4 h-4 mr-2" />
 							{createEventMutation.isPending ? "Criando..." : "Aceitar"}
 						</Button>
-						<Button 
-							variant="outline" 
+						<Button
+							variant="outline"
 							onClick={handleReject}
 							disabled={createEventMutation.isPending}
 							className="flex-1"
@@ -210,7 +237,9 @@ function EventConfirmationCard({
 					</>
 				) : (
 					<div className="flex-1 text-center text-sm text-muted-foreground">
-						{createEventMutation.isSuccess ? "✅ Evento criado" : "❌ Rejeitado"}
+						{createEventMutation.isSuccess
+							? "✅ Evento criado"
+							: "❌ Rejeitado"}
 					</div>
 				)}
 			</CardFooter>
@@ -218,14 +247,16 @@ function EventConfirmationCard({
 	);
 }
 
-export const ConciergeAgent = ({ travelName, travelId }: { travelName?: string; travelId?: string }) => {
+export const ConciergeAgent = ({
+	travelName,
+	travelId,
+}: { travelName?: string; travelId?: string }) => {
 	const [input, setInput] = useState("");
 	const { messages, sendMessage, status, stop, addToolResult } = useChat({
 		transport: {
 			async sendMessages(options) {
 				const iterator = await client.conciergeRoutes.chat(
 					{
-						chatId: options.chatId,
 						messages: options.messages,
 					},
 					{ signal: options.abortSignal },
@@ -379,8 +410,13 @@ export const ConciergeAgent = ({ travelName, travelId }: { travelName?: string; 
 												} catch (error) {
 													console.error("Error parsing tool call args:", error);
 													return (
-														<div key={`${message.id}-${i}`} className="p-4 border border-destructive rounded-lg">
-															<p className="text-destructive">Erro ao processar sugestão de evento</p>
+														<div
+															key={`${message.id}-${i}`}
+															className="p-4 border border-destructive rounded-lg"
+														>
+															<p className="text-destructive">
+																Erro ao processar sugestão de evento
+															</p>
 														</div>
 													);
 												}
