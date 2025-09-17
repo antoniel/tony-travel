@@ -16,6 +16,15 @@ export const eventErrors = {
 			})
 			.optional(),
 	},
+	EVENT_DATES_INVALID: {
+		message: "Event dates are invalid",
+		data: z.object({
+			startDate: z.string(),
+			endDate: z.string(),
+			travelStartDate: z.string(),
+			travelEndDate: z.string(),
+		}),
+	},
 	IMAGE_FETCH_FAILED: {
 		message: "Image fetch failed",
 		data: z

@@ -9,6 +9,57 @@ import type {
 	UpdateEventOutput,
 } from "./event.model";
 
+function validateEventDates(
+	startDate: Date,
+	endDate: Date,
+	travelStartDate: Date,
+	travelEndDate: Date,
+) {
+	if (startDate >= endDate) {
+		return AppResult.failure(
+			eventErrors,
+			"EVENT_DATES_INVALID",
+			"Data de início deve ser anterior à data de fim",
+			{
+				startDate: startDate.toISOString(),
+				endDate: endDate.toISOString(),
+				travelStartDate: travelStartDate.toISOString(),
+				travelEndDate: travelEndDate.toISOString(),
+			},
+		);
+	}
+
+	if (startDate < travelStartDate) {
+		return AppResult.failure(
+			eventErrors,
+			"EVENT_DATES_INVALID",
+			"Início do evento não pode ser anterior ao início da viagem",
+			{
+				startDate: startDate.toISOString(),
+				endDate: endDate.toISOString(),
+				travelStartDate: travelStartDate.toISOString(),
+				travelEndDate: travelEndDate.toISOString(),
+			},
+		);
+	}
+
+	if (endDate > travelEndDate) {
+		return AppResult.failure(
+			eventErrors,
+			"EVENT_DATES_INVALID",
+			"Fim do evento não pode ser posterior ao fim da viagem",
+			{
+				startDate: startDate.toISOString(),
+				endDate: endDate.toISOString(),
+				travelStartDate: travelStartDate.toISOString(),
+				travelEndDate: travelEndDate.toISOString(),
+			},
+		);
+	}
+
+	return AppResult.success(true);
+}
+
 export async function createEventService(
 	eventDAO: EventDAO,
 	travelDAO: TravelDAO,
@@ -22,6 +73,17 @@ export async function createEventService(
 			"Viagem não encontrada",
 			{ travelId: input.travelId },
 		);
+	}
+
+	// validate dates are within travel
+	const validation = validateEventDates(
+		new Date(input.startDate),
+		new Date(input.endDate),
+		new Date(travel.startDate),
+		new Date(travel.endDate),
+	);
+	if (AppResult.isFailure(validation)) {
+		return validation;
 	}
 
 	try {
