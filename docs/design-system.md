@@ -46,7 +46,7 @@ Acessibilidade aplicada:
 Anti‑padrões (proibidos):
 - Introduzir cores ou gradientes fora dos tokens do DS.
 - Hardcode de cores, fontes ou tamanhos sem respaldo do DS.
-- Baixo contraste para priorizar “estética”.
+- Baixo contraste para priorizar "estética".
 - Ícones sem propósito, excesso de decoração ou animações intrusivas.
 
 Aplicação no produto (exemplos conceituais):
@@ -60,20 +60,20 @@ Conceito oficial:
 - Marca isométrica 3D com formas preenchidas e acabamento realista discreto.
 - Símbolo principal: mala em perspectiva isométrica a 30°, cantos suaves, acabamento matte, AO sutil.
 - Elementos complementares: mochila compacta encostada à direita (parcialmente atrás), luggage tag mínima no cabo e route pin esmaltado minúsculo no canto frontal.
-- Sem monograma/letra explícita. Nenhuma forma deve desenhar “T”.
-- Wordmark discreto “TonyViagens” permitido em variantes: plaqueta metálica pequena na face frontal OU tag OU lockup em linha abaixo (dimensão reduzida, baixo contraste).
+- Sem monograma/letra explícita. Nenhuma forma deve desenhar "T".
+- Wordmark discreto "TonyViagens" permitido em variantes: plaqueta metálica pequena na face frontal OU tag OU lockup em linha abaixo (dimensão reduzida, baixo contraste).
 
 Prompt canônico (geração do símbolo):
 - Descrição:
-  - “Isometric 3D logo for ‘TonyViagens’. Clean suitcase block at 30°, matte polymer, gentle chamfers, soft studio lighting, subtle ambient occlusion. Add a compact backpack leaning against the suitcase on the right, slightly behind it (25–30% size), matte finish, soft AO, gentle contact shadow. Include a minimal luggage tag on the handle and a tiny enamel route pin on the front corner. Filled shapes, teal/blue body, charcoal trims, light neutral highlights. Centered, transparent/white background, crisp edges, no text, no scene.”
+  - "Isometric 3D logo for 'TonyViagens'. Clean suitcase block at 30°, matte polymer, gentle chamfers, soft studio lighting, subtle ambient occlusion. Add a compact backpack leaning against the suitcase on the right, slightly behind it (25–30% size), matte finish, soft AO, gentle contact shadow. Include a minimal luggage tag on the handle and a tiny enamel route pin on the front corner. Filled shapes, teal/blue body, charcoal trims, light neutral highlights. Centered, transparent/white background, crisp edges, no text, no scene."
 - Negative prompt:
-  - “no letter monograms, no explicit letters, no large typography, no busy background, no watermark, no lens flare, no harsh specular, no heavy gradients, no drop shadow, no bevel text”
+  - "no letter monograms, no explicit letters, no large typography, no busy background, no watermark, no lens flare, no harsh specular, no heavy gradients, no drop shadow, no bevel text"
 - Parâmetros (sugestão):
   - Midjourney v6: `--ar 1:1 --v 6 --style raw --s 200 --chaos 5 --seed 12345`
   - SDXL: 1024×1024, Steps 30–36, CFG 6–7, Sampler DPM++ 2M Karras
-  - DALL·E 3: enfatizar “isometric 3D logo, filled, subtle realistic shading, centered, no text, transparent background”.
+  - DALL·E 3: enfatizar "isometric 3D logo, filled, subtle realistic shading, centered, no text, transparent background".
 
-Regras de uso do wordmark “TonyViagens” (discreto):
+Regras de uso do wordmark "TonyViagens" (discreto):
 - Tamanho: ≤ 10–15% da largura do ícone quando acoplado (lockup) ou proporcional na plaqueta/tag.
 - Peso: semibold (500–600); sans geométrica/humanista; tracking levemente negativo.
 - Contraste: baixo a médio; não competir com o símbolo. Evitar cores fora dos tokens do DS.
@@ -84,6 +84,6 @@ Variações e exportação (entregáveis):
 - Margens de proteção: manter respiro uniforme; evitar fundos complexos; preferir fundos `bg-background`.
 - Teste de legibilidade: verificar 24–32 px; garantir silhueta clara em mono.
 
-Veja também: [00-visao-geral.md](./00-visao-geral.md), [04-regras-de-negocio.md](./04-regras-de-negocio.md), [05-arquitetura-conceitual.md](./05-arquitetura-conceitual.md)
+Veja também: [overview.md](./overview.md), [business-rules.md](./business-rules.md), [architecture.md](./architecture.md)
 
-Backreferences: index raiz
+Backreferences: [concierge.md](./concierge.md)

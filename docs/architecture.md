@@ -9,6 +9,7 @@ Módulos de domínio (oRPC):
 - flight — voos e participantes.
 - financial — orçamento e resumo de despesas.
 - invitation — convites por token e aceitação.
+- concierge — assistente AI com tool calls e sugestões contextuais.
 
 Fluxo de dados (conceitual):
 - Frontend consulta/atualiza via oRPC, orquestrado por TanStack Query (cache/invalidations) — sem uso de fetch/axios diretos.
@@ -23,11 +24,12 @@ Alinhamentos de domínio
 Dependências externas (conceito):
 - UI (shadcn/ui + Tailwind v4) e TanStack Router para rotas por arquivo.
 - Integrações de autenticação e ambiente via T3 Env (validação de variáveis).
+- AI (Vercel AI SDK v5) para tool calling e streaming de respostas com human-in-the-loop.
 
 Observações para LLM
-- Ao descrever comportamento do sistema, preferir os termos do glossário e as regras deste banco de memória, não os nomes de arquivos.
-- Quando necessário, referenciar módulo conceitual (ex.: “módulo invitation”) e não detalhes de tipos/DB.
+- Ao descrever comportamento do sistema, preferir os termos do glossário e as regras desta documentação, não os nomes de arquivos.
+- Quando necessário, referenciar módulo conceitual (ex.: "módulo invitation") e não detalhes de tipos/DB.
 
-Veja também: [06-decisoes.md](./06-decisoes.md), [04-regras-de-negocio.md](./04-regras-de-negocio.md)
+Veja também: [decisions.md](./decisions.md), [business-rules.md](./business-rules.md), [vocabulary.md](./vocabulary.md), [concierge.md](./concierge.md)
 
-Backreferences: [00-visao-geral.md](./00-visao-geral.md), [02-entidades.md](./02-entidades.md)
+Backreferences: [overview.md](./overview.md), [entities.md](./entities.md)

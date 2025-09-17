@@ -48,6 +48,14 @@
 - Consequências: regras de permissão claras e auditáveis.
 - Quando reconsiderar: papéis adicionais (ex.: editor/leitor) ou políticas baseadas em atributos.
 
-Veja também: [05-arquitetura-conceitual.md](./05-arquitetura-conceitual.md), [04-regras-de-negocio.md](./04-regras-de-negocio.md)
+9) AI agêntico com human-in-the-loop para tool calls
+- Contexto: implementar assistente inteligente que sugere ações sem comprometer controle do usuário.
+- Decisão: Vercel AI SDK v5 com tool calling; AI sugere, humano confirma e executa via oRPC.
+- Alternativas consideradas: execução automática (rejeitada por segurança), AI apenas textual (limitada).
+- Consequências: UX mais rica; confiança preservada; integração com módulos existentes.
+- Implementação: Zod schemas para validação; cards de confirmação na UI; separação tool definition/execution.
+- Quando reconsiderar: se surgirem requisitos de automação confiável ou mudança de SDK.
 
-Backreferences: [03-processos.md](./03-processos.md), [00-visao-geral.md](./00-visao-geral.md)
+Veja também: [architecture.md](./architecture.md), [business-rules.md](./business-rules.md), [vocabulary.md](./vocabulary.md), [concierge.md](./concierge.md)
+
+Backreferences: [processes.md](./processes.md), [overview.md](./overview.md)

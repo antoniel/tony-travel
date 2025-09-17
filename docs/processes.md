@@ -7,7 +7,7 @@ Este documento descreve os principais processos do domínio, suas entradas/saíd
 - Regra: datas devem ser válidas (início < fim; início não no passado).
 - Saída: viagem criada com Owner definido para o criador.
 - Efeitos: registro do membro (owner) criado junto.
-Veja também: [04-regras-de-negocio.md](./04-regras-de-negocio.md)
+Veja também: [business-rules.md](./business-rules.md)
 
 2) Atualizar Configurações da Viagem
 - Entrada: campos atualizáveis da Viagem (nome, destino, datas, orçamento…).
@@ -52,6 +52,6 @@ Notas:
 - Moeda padrão: BRL; apresentar formatação pt‑BR externamente, armazenar como número.
 - Estimativas não confirmadas devem ser tratadas como tais — não confundir com custo real.
 
-Veja também: [02-entidades.md](./02-entidades.md), [04-regras-de-negocio.md](./04-regras-de-negocio.md)
+Veja também: [entities.md](./entities.md), [business-rules.md](./business-rules.md), [concierge.md](./concierge.md)
 
-Backreferences: [01-vocabulario.md](./01-vocabulario.md), [06-decisoes.md](./06-decisoes.md)
+Backreferences: [vocabulary.md](./vocabulary.md), [decisions.md](./decisions.md)

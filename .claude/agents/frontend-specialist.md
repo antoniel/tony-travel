@@ -103,6 +103,7 @@ Protocolo obrigatório:
 - Mutações: `useMutation(orpc.<modulo>.<proc>.mutationOptions())` e invalidar as queries afetadas.
 - Estratégias: `placeholderData`, `staleTime` conforme uso; optimistic updates com rollback no `onError`.
 - SSR: usar loaders para dados críticos e hidratar com TanStack Query quando fizer sentido.
+- **Tool Calling Frontend Logic**: Implementar execução de tool calls, confirmações de usuário, UI para interações agênticas, e processamento de resultados de ferramentas. Backend fornece apenas schemas - toda lógica de execução é responsabilidade do frontend.
 
 Exemplo (padrão):
 

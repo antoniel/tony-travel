@@ -22,6 +22,6 @@ Mapa rápido do domínio:
 - Convite controla entrada de novos membros por token e expiração.
 - Financeiro resume orçamento e despesas por categorias.
 
-Veja também: [01-vocabulario.md](./01-vocabulario.md), [02-entidades.md](./02-entidades.md)
+Veja também: [vocabulary.md](./vocabulary.md), [entities.md](./entities.md), [architecture.md](./architecture.md), [business-rules.md](./business-rules.md)
 
-Backreferences: [README](./README.md), [05-arquitetura-conceitual.md](./05-arquitetura-conceitual.md)
+Backreferences: [concierge.md](./concierge.md), [processes.md](./processes.md)

@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **CRITICAL**: Your primary role is to act as an **ORCHESTRATOR** for specialized agents and handle only small, simple tasks directly. For any substantial work, delegate to the appropriate specialist agents.
 
+**ZERO TOLERANCE RULE**: Do NOT start implementing any code that requires specialist agents. The moment you identify work that falls under specialist domains, IMMEDIATELY delegate without attempting implementation yourself.
+
 **Direct Tasks (Do Yourself)**:
 
 - Reading files and analyzing existing code
@@ -14,6 +16,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Basic project structure exploration
 - File organization and cleanup
 - **Architectural analysis and guidance** - Provide thorough problem analysis and solution architecture even when implementation will be delegated or handled by the user
+- **External documentation research** - When tasks require integration with external libraries/APIs, conduct thorough documentation research before delegation
+- **Documentation management and agent coordination** - Restructuring agent prompts, creating documentation templates, organizational changes to non-code files
+- **Multi-step organizational tasks** - Complex restructuring that involves multiple non-code file modifications, template creation, and process improvements
+- **User preference-driven restructuring** - Implementing organizational changes based on user feedback about preferred structures (e.g., flat vs hierarchical documentation)
 
 **Delegated Tasks (Use Specialist Agents)**:
 
@@ -27,9 +33,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Context
 
 **Project Type**: Full-stack travel management application
-**Tech Stack**: TanStack Start + oRPC + Drizzle ORM + Shadcn UI
+**Tech Stack**: TanStack Start + oRPC + Drizzle ORM + Shadcn UI + Vercel AI SDK
 **Package Manager**: Bun (preferred runtime and package manager)
 **Database**: PostgreSQL with Drizzle ORM
+**AI Integration**: Vercel AI SDK v5 with tool calling capabilities
 **Design Philosophy**: Create interfaces that are both functionally excellent and visually stunning
 
 ## Self-Improving CLAUDE Reflection
@@ -66,6 +73,7 @@ What counts as backend activities (non-exhaustive):
 - Backend testing: Vitest suites for modules using `getFakeDb()`, `createAppCall*`, FK-first seeding
 - Security/auth: authentication/authorization flows and server-only logic
 - External integrations performed server-side: service classes with caching/rate limiting
+- **Tool calling backend infrastructure**: oRPC tool schemas, tool validation, but NOT tool execution logic (frontend responsibility)
 
 Execution protocol when backend is requested:
 
@@ -94,6 +102,7 @@ What counts as frontend activities (non-exhaustive):
 - **Interactive features**: button functionality, modal behavior, form interactions
 - **Component modifications**: updating existing components, adding new features to components, form integration
 - **Data flow UI patterns**: leveraging existing form data, component-to-component data passing, URL-based state management
+- **Tool calling frontend logic**: executing tool calls, handling tool confirmations, UI for agent interactions, tool result processing
 
 Execution protocol when frontend is requested:
 
@@ -123,6 +132,51 @@ Nota (PT-BR): Sempre que o pedido envolver frontend (UI/UX, componentes React, T
 4. **Component Modification vs Creation**: Default to modifying existing components when they serve similar purposes
 
 **User Feedback Integration**: This pattern addresses the tendency to over-engineer new data collection when existing data sources should be leveraged instead.
+
+## External Documentation Research Protocol
+
+**MANDATORY PROCESS**: When tasks involve external libraries or APIs that require specific implementation patterns:
+
+1. **Pre-Delegation Research**: Conduct comprehensive documentation research BEFORE delegating to specialists
+2. **Knowledge Transfer**: Provide specialists with relevant documentation findings, code examples, and implementation patterns
+3. **Architecture Clarification**: Use research to clarify architectural boundaries (e.g., tool calls: backend schemas vs frontend execution)
+4. **Pattern Documentation**: Document discovered patterns in the relevant specialist instruction files for future reference
+
+**User Feedback Integration**: This protocol emerged from a task requiring Vercel AI SDK tool calling integration, where thorough upfront research would have prevented architectural confusion and improved delegation effectiveness.
+
+## Documentation Management Protocol
+
+**MANDATORY PROCESS**: When tasks involve documentation restructuring, agent coordination, or organizational improvements:
+
+1. **Scope Assessment**: Determine if the task involves code implementation (requires specialist) vs organizational/documentation changes (handle directly)
+2. **Template Creation**: For documentation restructuring, create comprehensive templates and migration guides
+3. **Agent Coordination**: When modifying agent prompts or workflows, ensure compatibility with existing specialist patterns
+4. **Validation Framework**: Implement examples and validation patterns for any new organizational structures
+
+**Delegation Boundaries**:
+- **Handle Directly**: Agent prompt modifications, documentation templates, organizational restructuring, process improvements
+- **Delegate**: Any code implementation, component creation, or technical development work
+
+**User Feedback Integration**: This protocol emerged from documentation restructuring tasks where users expressed specific organizational preferences (flat vs hierarchical structures) and required comprehensive migration strategies with immediate usability.
+
+## Multi-Step Organizational Task Patterns
+
+**CRITICAL REQUIREMENT**: For complex organizational restructuring tasks involving multiple non-code files:
+
+1. **Comprehensive Planning**: Create detailed implementation plans before execution
+2. **Template-First Approach**: Develop reusable templates and examples for future consistency
+3. **Migration Strategy**: Provide clear migration paths from old to new organizational structures
+4. **Validation Examples**: Include practical examples to demonstrate proper usage patterns
+
+**Quality Standards**:
+- All organizational changes must include comprehensive documentation
+- Templates must be immediately usable and well-documented
+- Migration guides must be step-by-step and actionable
+- Examples must demonstrate both correct and incorrect patterns
+- **Immediate Usability Principle**: Prioritize practical, ready-to-use solutions over theoretical frameworks
+- **User Preference Integration**: Always clarify and implement user's preferred organizational structures rather than imposing standard conventions
+
+**User Feedback Integration**: This pattern addresses the need for systematic approaches to complex organizational tasks that require multiple coordinated changes across documentation and process files. Users prefer immediate usability over academic documentation - templates must be ready-to-use with practical examples rather than theoretical frameworks.
 
 ### Environment Variables
 
@@ -198,3 +252,92 @@ const handleCreate = async () => {
 - Shadcn components for UI primitives
 - Global styles in `src/styles.css`
 - Class utilities via `clsx` and `tailwind-merge`
+
+## AI Agentic Patterns
+
+### Vercel AI SDK Tool Calling
+
+**CRITICAL RULE**: AI tool calls NEVER execute automatically. Always implement human-in-the-loop confirmation patterns.
+
+**MANDATORY Pattern for Tool Implementation**:
+
+```typescript
+// ✅ CORRECT: Tool definition with Zod schemas
+import { z } from 'zod';
+import { tool } from 'ai';
+
+const createEventTool = tool({
+  description: 'Create a new event in the travel timeline',
+  parameters: z.object({
+    title: z.string().describe('Event title'),
+    type: z.enum(['travel', 'food', 'activity']).describe('Event type'),
+    startDate: z.string().describe('Event start date (ISO string)'),
+    // ... other parameters
+  }),
+  execute: async (params) => {
+    // Tool execution logic here
+    return { success: true, eventId: 'evt_...' };
+  },
+});
+```
+
+**MANDATORY UX Pattern for Tool Calls**:
+
+```typescript
+// ✅ CORRECT: Render tool calls as confirmation cards
+{message.toolInvocations?.map((toolInvocation) => (
+  <div key={toolInvocation.toolCallId} className="border rounded-lg p-4">
+    <h3>AI suggests: {toolInvocation.toolName}</h3>
+    <p>Parameters: {JSON.stringify(toolInvocation.args)}</p>
+    <div className="flex gap-2 mt-2">
+      <Button onClick={() => confirmTool(toolInvocation)}>Confirm</Button>
+      <Button variant="outline" onClick={() => rejectTool(toolInvocation)}>Reject</Button>
+    </div>
+  </div>
+))}
+```
+
+**FORBIDDEN Patterns**:
+
+```typescript
+// ❌ WRONG: Auto-executing tools without confirmation
+const tools = {
+  createEvent: tool({
+    execute: async (params) => {
+      await createEventDirectly(params); // NO - never auto-execute
+      return result;
+    }
+  })
+};
+
+// ❌ WRONG: Direct tool execution in chat stream
+if (toolCall.toolName === 'createEvent') {
+  await executeImmediately(toolCall.args); // NO - always require confirmation
+}
+```
+
+**Benefits of Human-in-the-Loop Pattern**:
+
+- User maintains full control over actions
+- Prevents unintended side effects
+- Better trust and transparency
+- Easier debugging and rollback
+- Compliance with user intent verification
+
+### Tool Integration with oRPC
+
+**MANDATORY Pattern**: Separate tool definition from oRPC execution:
+
+```typescript
+// ✅ CORRECT: Tool suggests, oRPC executes after confirmation
+const confirmCreateEvent = async (toolArgs: CreateEventArgs) => {
+  const result = await orpc.event.create.mutate(toolArgs);
+  // Handle result...
+};
+```
+
+**Requirements**:
+- All tool parameters must use Zod schemas for validation
+- Tool execution must integrate with existing oRPC routes
+- UI must render tool calls as interactive confirmation cards
+- Never bypass existing validation or business logic

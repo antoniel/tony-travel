@@ -112,7 +112,7 @@ Quando múltiplas personas forem ativadas, cada uma deve produzir um Handoff Not
 ## Build, Test, and Development
 
 - Install deps: `bun install`
-- Dev server: `bunx --bun run dev` (Vite on `http://localhost:3000`).
+- Dev server: `bunx --bun run dev` (Vite on `http://localhost:5173`).
 - Build (SSR): `bunx --bun run build` (outputs to `.output/`).
 - Preview: `bunx --bun run serve`.
 - Start built server: `bunx --bun run start`.

@@ -42,6 +42,6 @@ erDiagram
   PARTICIPANTE_VOO }o--|| USUARIO : refere
 ```
 
-Veja também: [03-processos.md](./03-processos.md), [04-regras-de-negocio.md](./04-regras-de-negocio.md)
+Veja também: [processes.md](./processes.md), [business-rules.md](./business-rules.md), [vocabulary.md](./vocabulary.md)
 
-Backreferences: [00-visao-geral.md](./00-visao-geral.md), [01-vocabulario.md](./01-vocabulario.md)
+Backreferences: [overview.md](./overview.md), [architecture.md](./architecture.md)

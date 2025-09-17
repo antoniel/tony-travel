@@ -36,6 +36,6 @@ Identificadores e Moeda
 - IDs são opacos com prefixos tipados (ex.: `trv_`, `evt_`, `acm_`, `flt_`).
 - Padrão de moeda: BRL com formatação `pt-BR` em exibição; armazenar valores como números.
 
-Veja também: [03-processos.md](./03-processos.md), [05-arquitetura-conceitual.md](./05-arquitetura-conceitual.md)
+Veja também: [processes.md](./processes.md), [architecture.md](./architecture.md), [vocabulary.md](./vocabulary.md)
 
-Backreferences: [01-vocabulario.md](./01-vocabulario.md), [02-entidades.md](./02-entidades.md)
+Backreferences: [entities.md](./entities.md), [decisions.md](./decisions.md)

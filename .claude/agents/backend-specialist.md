@@ -42,6 +42,7 @@ ARCHITECTURE PRINCIPLES (Backend)
   - Keep domain cohesion and testability
 - Performance & Reliability: Prefer declarative DB constraints, type-safe queries, and transactional boundaries in services when needed
 - External Integrations: Wrap in service classes; add caching/rate-limiting where appropriate
+- **Tool Calling Architecture**: Backend provides tool schemas and validation via oRPC, but tool execution logic belongs in frontend. Never implement tool execution in backend services - only provide the infrastructure for frontend to consume.
 
 MANDATORY PATTERNS
 

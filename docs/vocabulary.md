@@ -20,12 +20,20 @@ Termos canônicos preferidos para respostas e raciocínio de LLM. Sinônimos lis
 - Categoria de Despesa: "passagens", "acomodacoes", "atracoes".
 - Linha do Tempo (Timeline): sequência cronológica de eventos na viagem.
 - Dependência de Evento: relação pai/filho entre eventos que compõem um custo e/ou sequência lógica.
+- Concierge: assistente AI que sugere ações através de tool calls com confirmação humana.
+  - Sinônimos: assistente virtual, AI agent.
+- Tool Call: sugestão de ação específica gerada pela AI com parâmetros estruturados.
+  - Estados: pendente (aguarda confirmação), confirmado, rejeitado.
+- Human-in-the-Loop: padrão onde AI sugere mas humano decide e executa.
+  - Sinônimos: confirmação humana, validação manual.
+- AI Agêntico: comportamento de AI que sugere ações estruturadas sem execução automática.
+  - Antônimo: AI automática, AI executiva.
 
 Notas de normalização:
 
 - Moeda padrão: BRL (pt-BR). Valores exibidos com máscara/formatador, mas armazenados como número.
 - IDs são strings com prefixos tipados (e.g., "trv*", "evt*", "acm\_"), mas tratar como opaco.
 
-Veja também: [02-entidades.md](./02-entidades.md), [04-regras-de-negocio.md](./04-regras-de-negocio.md)
+Veja também: [entities.md](./entities.md), [business-rules.md](./business-rules.md), [architecture.md](./architecture.md), [concierge.md](./concierge.md)
 
-Backreferences: [00-visao-geral.md](./00-visao-geral.md), [03-processos.md](./03-processos.md)
+Backreferences: [overview.md](./overview.md), [processes.md](./processes.md), [decisions.md](./decisions.md)

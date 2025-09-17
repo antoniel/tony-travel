@@ -40,7 +40,7 @@ export class InvitationService {
 			expiresAt,
 		});
 
-		const baseUrl = serverEnv.VITE_APP_URL || "http://localhost:3000";
+		const baseUrl = serverEnv.VITE_APP_URL || "http://localhost:5173";
 		const inviteUrl = `${baseUrl}/invite/${token}`;
 
 		return {
@@ -203,7 +203,7 @@ export class InvitationService {
 			return null;
 		}
 
-		const baseUrl = serverEnv.VITE_APP_URL || "http://localhost:3000";
+		const baseUrl = serverEnv.VITE_APP_URL || "http://localhost:5173";
 		const inviteUrl = `${baseUrl}/invite/${invitation.token}`;
 
 		return {
