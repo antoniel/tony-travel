@@ -250,7 +250,7 @@ function EventConfirmationCard({
 export const ConciergeAgent = ({
 	travelName,
 	travelId,
-}: { travelName?: string; travelId?: string }) => {
+}: { travelName?: string; travelId: string }) => {
 	const [input, setInput] = useState("");
 	const { messages, sendMessage, status, stop, addToolResult } = useChat({
 		transport: {
@@ -258,6 +258,7 @@ export const ConciergeAgent = ({
 				const iterator = await client.conciergeRoutes.chat(
 					{
 						messages: options.messages,
+						travelId: travelId,
 					},
 					{ signal: options.abortSignal },
 				);

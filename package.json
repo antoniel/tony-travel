@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "pretest": "node scripts/clean-test-dbs.mjs",
-    "dev": "vite dev --port 5173",
+    "dev": "vite dev --port 5173 --host" ,
     "start": "node .output/server/index.mjs",
     "build": "vite build",
     "serve": "vite preview",
