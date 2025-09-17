@@ -18,7 +18,7 @@ function ConciergePage() {
 		<div className="flex h-[calc(100svh-18rem)] flex-col">
 			<div className="flex flex-1 min-h-0">
 				<div className="w-full flex flex-1 min-h-0 flex-col">
-					<ConciergeAgent travelName={travel?.name ?? undefined} />
+					<ConciergeAgent travelName={travel?.name ?? undefined} travelId={travelId} />
 				</div>
 			</div>
 		</div>

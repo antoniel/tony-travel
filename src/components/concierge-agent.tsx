@@ -27,11 +27,18 @@ import {
 	SourcesContent,
 	SourcesTrigger,
 } from "@/components/ai-elements/sources";
-import { client } from "@/orpc/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { formatCurrencyBRL } from "@/lib/currency";
+import { client, orpc } from "@/orpc/client";
+import type { CreateEventToolInput } from "@/orpc/modules/concierge/concierge.tools";
 import { useChat } from "@ai-sdk/react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { eventIteratorToStream } from "@orpc/client";
-import { CalendarClock, CopyIcon, Plane, RefreshCcwIcon } from "lucide-react";
+import { CalendarClock, CopyIcon, Plane, RefreshCcwIcon, CheckIcon, XIcon } from "lucide-react";
 import React, { useMemo, useState } from "react";
+import { toast } from "sonner";
 
 function InChatHeader({ travelName }: { travelName?: string }) {
 	return (
@@ -46,9 +53,174 @@ function InChatHeader({ travelName }: { travelName?: string }) {
 	);
 }
 
-export const ConciergeAgent = ({ travelName }: { travelName?: string }) => {
+interface EventConfirmationCardProps {
+	eventData: CreateEventToolInput;
+	travelId: string;
+	addToolResult: (args: { tool: string; toolCallId: string; output: unknown }) => Promise<void>;
+	toolCallId: string;
+}
+
+function EventConfirmationCard({ 
+	eventData, 
+	travelId, 
+	addToolResult,
+	toolCallId 
+}: EventConfirmationCardProps) {
+	const queryClient = useQueryClient();
+	const [isProcessed, setIsProcessed] = useState(false);
+
+	const createEventMutation = useMutation({
+		...orpc.eventRoutes.createEvent.mutationOptions(),
+		onSuccess: (result) => {
+			toast.success("Evento criado com sucesso!");
+			queryClient.invalidateQueries({ 
+				queryKey: orpc.eventRoutes.getEventsByTravel.queryKey({ input: { travelId } })
+			});
+			addToolResult({
+				tool: "createEvent",
+				toolCallId,
+				output: { success: true, eventId: result.id }
+			});
+			setIsProcessed(true);
+		},
+		onError: (error) => {
+			toast.error("Erro ao criar evento");
+			console.error("Event creation error:", error);
+			addToolResult({
+				tool: "createEvent",
+				toolCallId,
+				output: { success: false, error: error.message }
+			});
+			setIsProcessed(true);
+		},
+	});
+
+	const handleAccept = () => {
+		if (isProcessed) return;
+		
+		createEventMutation.mutate({
+			travelId,
+			title: eventData.title,
+			startDate: new Date(eventData.startDate),
+			endDate: new Date(eventData.endDate),
+			type: eventData.type,
+			location: eventData.location,
+			estimatedCost: eventData.estimatedCost,
+		});
+	};
+
+	const handleReject = () => {
+		if (isProcessed) return;
+		
+		toast.info("Sugestão de evento rejeitada");
+		addToolResult({
+			tool: "createEvent",
+			toolCallId,
+			output: { success: false, rejected: true }
+		});
+		setIsProcessed(true);
+	};
+
+	const formatDate = (dateStr: string) => {
+		const date = new Date(dateStr);
+		return date.toLocaleDateString("pt-BR", {
+			day: "2-digit",
+			month: "2-digit",
+			year: "numeric",
+			hour: "2-digit",
+			minute: "2-digit",
+		});
+	};
+
+	const getEventTypeLabel = (type: string) => {
+		const labels = {
+			travel: "Transporte",
+			food: "Alimentação", 
+			activity: "Atividade"
+		};
+		return labels[type as keyof typeof labels] || type;
+	};
+
+	const getEventTypeVariant = (type: string): "default" | "secondary" | "outline" | "destructive" => {
+		const variants: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
+			travel: "default",
+			food: "secondary",
+			activity: "outline"
+		};
+		return variants[type] || "default";
+	};
+
+	return (
+		<Card className="w-full max-w-md mx-auto my-4">
+			<CardHeader>
+				<div className="flex items-center justify-between">
+					<CardTitle className="text-lg">{eventData.title}</CardTitle>
+					<Badge variant={getEventTypeVariant(eventData.type)}>
+						{getEventTypeLabel(eventData.type)}
+					</Badge>
+				</div>
+				<CardDescription>
+					O assistente sugere criar este evento na sua viagem
+				</CardDescription>
+			</CardHeader>
+			<CardContent className="space-y-3">
+				<div className="grid grid-cols-1 gap-2 text-sm">
+					<div>
+						<span className="font-medium text-muted-foreground">Início:</span>{" "}
+						{formatDate(eventData.startDate)}
+					</div>
+					<div>
+						<span className="font-medium text-muted-foreground">Fim:</span>{" "}
+						{formatDate(eventData.endDate)}
+					</div>
+					{eventData.location && (
+						<div>
+							<span className="font-medium text-muted-foreground">Local:</span>{" "}
+							{eventData.location}
+						</div>
+					)}
+					{eventData.estimatedCost && (
+						<div>
+							<span className="font-medium text-muted-foreground">Custo estimado:</span>{" "}
+							{formatCurrencyBRL(eventData.estimatedCost)}
+						</div>
+					)}
+				</div>
+			</CardContent>
+			<CardFooter className="flex gap-2">
+				{!isProcessed ? (
+					<>
+						<Button 
+							onClick={handleAccept}
+							disabled={createEventMutation.isPending}
+							className="flex-1"
+						>
+							<CheckIcon className="w-4 h-4 mr-2" />
+							{createEventMutation.isPending ? "Criando..." : "Aceitar"}
+						</Button>
+						<Button 
+							variant="outline" 
+							onClick={handleReject}
+							disabled={createEventMutation.isPending}
+							className="flex-1"
+						>
+							<XIcon className="w-4 h-4 mr-2" />
+							Recusar
+						</Button>
+					</>
+				) : (
+					<div className="flex-1 text-center text-sm text-muted-foreground">
+						{createEventMutation.isSuccess ? "✅ Evento criado" : "❌ Rejeitado"}
+					</div>
+				)}
+			</CardFooter>
+		</Card>
+	);
+}
+
+export const ConciergeAgent = ({ travelName, travelId }: { travelName?: string; travelId?: string }) => {
 	const [input, setInput] = useState("");
-	const { messages, sendMessage, status, stop } = useChat({
+	const { messages, sendMessage, status, stop, addToolResult } = useChat({
 		transport: {
 			async sendMessages(options) {
 				const iterator = await client.conciergeRoutes.chat(
@@ -190,6 +362,30 @@ export const ConciergeAgent = ({ travelName }: { travelName?: string }) => {
 													<ReasoningContent>{part.text}</ReasoningContent>
 												</Reasoning>
 											);
+										case "tool-createEvent":
+											// Renderizar tool calls (createEvent)
+											if (travelId && part.state === "input-available") {
+												try {
+													const eventData = part.input as CreateEventToolInput;
+													return (
+														<EventConfirmationCard
+															key={`${message.id}-${i}`}
+															eventData={eventData}
+															travelId={travelId}
+															addToolResult={addToolResult}
+															toolCallId={part.toolCallId}
+														/>
+													);
+												} catch (error) {
+													console.error("Error parsing tool call args:", error);
+													return (
+														<div key={`${message.id}-${i}`} className="p-4 border border-destructive rounded-lg">
+															<p className="text-destructive">Erro ao processar sugestão de evento</p>
+														</div>
+													);
+												}
+											}
+											return null;
 										default:
 											return null;
 									}
