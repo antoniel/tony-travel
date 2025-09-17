@@ -27,32 +27,16 @@ import {
 	SourcesContent,
 	SourcesTrigger,
 } from "@/components/ai-elements/sources";
-import { Badge } from "@/components/ui/badge";
 import { client } from "@/orpc/client";
 import { useChat } from "@ai-sdk/react";
 import { eventIteratorToStream } from "@orpc/client";
-import {
-	CalendarClock,
-	ConciergeBell,
-	CopyIcon,
-	Plane,
-	RefreshCcwIcon,
-} from "lucide-react";
+import { CalendarClock, CopyIcon, Plane, RefreshCcwIcon } from "lucide-react";
 import React, { useMemo, useState } from "react";
 
 function InChatHeader({ travelName }: { travelName?: string }) {
 	return (
 		<>
-			<div className="sticky top-0 z-10 bg-background/95 border-b border-border/20 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-				<div className="space-y-1">
-					<div className="flex items-center gap-2 text-muted-foreground text-sm">
-						<ConciergeBell className="h-4 w-4" />
-						<span>Concierge da Viagem</span>
-						<Badge variant="secondary">Beta</Badge>
-					</div>
-				</div>
-			</div>
-			<div className="flex flex-col gap-2 px-4 ">
+			<div className="flex flex-col gap-2  ">
 				<h2 className="text-xl sm:text-2xl font-semibold tracking-tight">
 					Seu assistente para organizar a viagem
 					{travelName ? `: ${travelName}` : ""}
@@ -109,7 +93,7 @@ export const ConciergeAgent = ({ travelName }: { travelName?: string }) => {
 					<ConversationContent className="p-0">
 						<InChatHeader travelName={travelName} />
 						{showIntro ? (
-							<div className="mb-4 rounded-lg border bg-muted/40 p-4">
+							<div className="mb-4 rounded-lg border bg-muted/40 p-4 mt-4">
 								<h3 className="mb-2 text-sm font-medium">
 									O que o Concierge pode fazer
 								</h3>

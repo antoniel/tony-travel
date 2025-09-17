@@ -257,7 +257,7 @@ function TripLayout() {
 
 			{/* Main Content */}
 			<main className="container mx-auto px-4 sm:px-6 lg:px-8">
-				<div className="py-8 lg:py-12">
+				<div className="pb-8 pt-4 lg:pb-12 lg:pt-8">
 					<div className="mx-auto">
 						<Outlet />
 					</div>
