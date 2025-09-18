@@ -1,19 +1,19 @@
 "use client";
 
-import * as React from "react";
 import {
 	ChevronDownIcon,
 	ChevronLeftIcon,
 	ChevronRightIcon,
 } from "lucide-react";
+import * as React from "react";
 import {
 	type DayButton,
 	DayPicker,
 	getDefaultClassNames,
 } from "react-day-picker";
 
-import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 function Calendar({
 	className,
@@ -29,6 +29,12 @@ function Calendar({
 }) {
 	const defaultClassNames = getDefaultClassNames();
 
+	// Safari detection
+	const isSafari = React.useMemo(() => {
+		if (typeof window === "undefined") return false;
+		return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+	}, []);
+
 	return (
 		<DayPicker
 			showOutsideDays={showOutsideDays}
@@ -36,6 +42,7 @@ function Calendar({
 				"bg-background group/calendar p-3 [--cell-size:--spacing(8)] [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent",
 				String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,
 				String.raw`rtl:**:[.rdp-button\_previous>svg]:rotate-180`,
+				isSafari && "min-h-[430px]", // Safari-specific minimum height
 				className,
 			)}
 			captionLayout={captionLayout}
