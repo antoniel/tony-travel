@@ -1,16 +1,9 @@
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import {
-	Dialog,
-	DialogContent,
-	DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-	Sheet,
-	SheetContent,
-	SheetTrigger,
-} from "@/components/ui/sheet";
 import type { ReactNode } from "react";
+import { ScrollArea } from "./scroll-area";
 
 interface ResponsiveModalProps {
 	open: boolean;
@@ -47,7 +40,9 @@ export function ResponsiveModal({
 						mobileClassName,
 					)}
 				>
-					<div className={contentWrapperClassName}>{children}</div>
+					<ScrollArea className={contentWrapperClassName}>
+						{children}
+					</ScrollArea>
 				</SheetContent>
 			</Sheet>
 		);

@@ -1,5 +1,5 @@
+import { ResponsiveModal } from "@/components/ui/ResponsiveModal";
 import { Button } from "@/components/ui/button";
-import { ResponsiveModal } from "@/components/ResponsiveModal";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
 	Form,
@@ -18,6 +18,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { formatNumberPtBR, maskCurrencyInputPtBR } from "@/lib/currency";
 import {
 	type Accommodation,
 	InsertAccommodationSchema,
@@ -30,7 +31,6 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
-import { formatNumberPtBR, maskCurrencyInputPtBR } from "@/lib/currency";
 
 const formSchema = InsertAccommodationSchema.omit({
 	id: true,
@@ -234,9 +234,7 @@ export function AccommodationModal({
 		>
 			<DialogHeader className="border-b px-6 py-4">
 				<DialogTitle className="text-left">
-					{editingAccommodation
-						? "Editar Acomodação"
-						: "Adicionar Acomodação"}
+					{editingAccommodation ? "Editar Acomodação" : "Adicionar Acomodação"}
 				</DialogTitle>
 			</DialogHeader>
 
@@ -392,7 +390,6 @@ export function AccommodationModal({
 								)}
 							/>
 						</div>
-
 					</div>
 					<div className="border-t bg-background px-6 py-4">
 						<div className="flex flex-col gap-3 sm:flex-row sm:justify-end">

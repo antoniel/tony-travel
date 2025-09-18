@@ -143,8 +143,8 @@ export const TopbarMenu: React.FC = () => {
 								alt="Tony Viagens logo"
 								className="h-8 w-8 object-contain"
 							/>
-							<span className="font-semibold text-lg hidden sm:inline">
-								Tony Travel
+						<span className="font-semibold text-lg hidden sm:inline">
+							Tony Viagens
 							</span>
 						</Link>
 

@@ -7,13 +7,13 @@ export const flightErrors = {
 	 * Flight not found errors
 	 */
 	FLIGHT_NOT_FOUND: {
-		message: "Flight not found",
+		message: "Voo não encontrado",
 		data: z.object({
 			flightId: z.string(),
 		}),
 	},
 	TRAVEL_NOT_FOUND: {
-		message: "Travel not found",
+		message: "Viagem não encontrada",
 		data: z.object({
 			travelId: z.string(),
 		}),
@@ -23,7 +23,7 @@ export const flightErrors = {
 	 * Flight duplicate and conflict handling
 	 */
 	DUPLICATE_FLIGHT_FOUND: {
-		message: "A similar flight already exists for this travel",
+		message: "Já existe um voo semelhante para esta viagem",
 		data: z.object({
 			existingFlightId: z.string(),
 			originAirport: z.string(),
@@ -33,7 +33,7 @@ export const flightErrors = {
 		}),
 	},
 	FLIGHT_CONFLICT: {
-		message: "Flight conflicts with existing booking",
+		message: "O voo conflita com uma reserva existente",
 		data: z.object({
 			flightId: z.string(),
 			conflictingFlightId: z.string(),
@@ -45,7 +45,7 @@ export const flightErrors = {
 	 * Flight validation errors
 	 */
 	FLIGHT_DATES_INVALID: {
-		message: "Flight dates are invalid",
+		message: "As datas do voo são inválidas",
 		data: z.object({
 			departureDate: z.string().optional(),
 			arrivalDate: z.string().optional(),
@@ -53,7 +53,7 @@ export const flightErrors = {
 		}),
 	},
 	FLIGHT_ROUTE_INVALID: {
-		message: "Flight route is invalid",
+		message: "A rota do voo é inválida",
 		data: z.object({
 			originAirport: z.string(),
 			destinationAirport: z.string(),
@@ -61,7 +61,7 @@ export const flightErrors = {
 		}),
 	},
 	FLIGHT_COST_INVALID: {
-		message: "Flight cost is invalid",
+		message: "O custo do voo é inválido",
 		data: z.object({
 			flightId: z.string().optional(),
 			cost: z.number(),
@@ -73,14 +73,14 @@ export const flightErrors = {
 	 * Participant management errors
 	 */
 	PARTICIPANT_NOT_FOUND: {
-		message: "Participant not found",
+		message: "Participante não encontrado",
 		data: z.object({
 			userId: z.string(),
 			flightId: z.string(),
 		}),
 	},
 	PARTICIPANT_ALREADY_EXISTS: {
-		message: "Participant already exists on this flight",
+		message: "Esse participante já está neste voo",
 		data: z.object({
 			userId: z.string(),
 			flightId: z.string(),
@@ -88,7 +88,7 @@ export const flightErrors = {
 		}),
 	},
 	PARTICIPANT_CANNOT_BE_ADDED: {
-		message: "Participant cannot be added to flight",
+		message: "Não foi possível adicionar o participante ao voo",
 		data: z.object({
 			userId: z.string(),
 			flightId: z.string(),
@@ -96,7 +96,7 @@ export const flightErrors = {
 		}),
 	},
 	PARTICIPANT_CANNOT_BE_REMOVED: {
-		message: "Participant cannot be removed from flight",
+		message: "Não foi possível remover o participante do voo",
 		data: z.object({
 			userId: z.string(),
 			flightId: z.string(),
@@ -108,7 +108,7 @@ export const flightErrors = {
 	 * Flight capacity and booking errors
 	 */
 	FLIGHT_CAPACITY_EXCEEDED: {
-		message: "Flight capacity would be exceeded",
+		message: "A capacidade do voo seria excedida",
 		data: z.object({
 			flightId: z.string(),
 			maxCapacity: z.number().optional(),
@@ -117,7 +117,7 @@ export const flightErrors = {
 		}),
 	},
 	FLIGHT_NOT_AVAILABLE: {
-		message: "Flight is not available for booking",
+		message: "O voo não está disponível para reserva",
 		data: z.object({
 			flightId: z.string(),
 			reason: z.string(),
@@ -129,7 +129,7 @@ export const flightErrors = {
 	 * Flight modification errors
 	 */
 	FLIGHT_CANNOT_BE_MODIFIED: {
-		message: "Flight cannot be modified",
+		message: "O voo não pode ser alterado",
 		data: z.object({
 			flightId: z.string(),
 			reason: z.string(),
@@ -137,14 +137,14 @@ export const flightErrors = {
 		}),
 	},
 	FLIGHT_DEPARTURE_PASSED: {
-		message: "Cannot modify flight after departure time",
+		message: "Não é possível alterar o voo após o horário de partida",
 		data: z.object({
 			flightId: z.string(),
 			departureDate: z.string(),
 		}),
 	},
 	CANCELLATION_NOT_ALLOWED: {
-		message: "Flight cancellation is not allowed",
+		message: "O cancelamento do voo não é permitido",
 		data: z.object({
 			flightId: z.string(),
 			reason: z.string(),
@@ -156,7 +156,7 @@ export const flightErrors = {
 	 * Business rule violations
 	 */
 	MINIMUM_PARTICIPANTS_REQUIRED: {
-		message: "Minimum number of participants required for flight",
+		message: "É necessário um número mínimo de participantes para o voo",
 		data: z.object({
 			flightId: z.string(),
 			minimumParticipants: z.number(),
@@ -164,7 +164,7 @@ export const flightErrors = {
 		}),
 	},
 	TRAVEL_BUDGET_EXCEEDED: {
-		message: "Flight cost would exceed travel budget",
+		message: "O custo do voo excederia o orçamento da viagem",
 		data: z.object({
 			flightId: z.string(),
 			flightCost: z.number(),

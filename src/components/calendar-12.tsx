@@ -1,6 +1,6 @@
 import * as React from "react";
 import type { DateRange } from "react-day-picker";
-import { enUS, es } from "react-day-picker/locale";
+import { es, ptBR } from "react-day-picker/locale";
 
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -20,9 +20,9 @@ import {
 } from "@/components/ui/select";
 
 const localizedStrings = {
-	en: {
-		title: "Book an appointment",
-		description: "Select the dates for your appointment",
+	pt: {
+		title: "Agende um compromisso",
+		description: "Selecione as datas do compromisso",
 	},
 	es: {
 		title: "Reserva una cita",
@@ -30,9 +30,14 @@ const localizedStrings = {
 	},
 } as const;
 
+const calendarLocale = {
+	pt: ptBR,
+	es,
+} satisfies Record<keyof typeof localizedStrings, typeof ptBR>;
+
 export default function Calendar12() {
 	const [locale, setLocale] =
-		React.useState<keyof typeof localizedStrings>("es");
+		React.useState<keyof typeof localizedStrings>("pt");
 	const [dateRange, setDateRange] = React.useState<DateRange | undefined>({
 		from: new Date(2025, 8, 9),
 		to: new Date(2025, 8, 17),
@@ -52,12 +57,12 @@ export default function Calendar12() {
 							setLocale(value as keyof typeof localizedStrings)
 						}
 					>
-						<SelectTrigger className="w-[100px]">
-							<SelectValue placeholder="Language" />
+						<SelectTrigger className="w-[120px]">
+							<SelectValue placeholder="Idioma" />
 						</SelectTrigger>
 						<SelectContent align="end">
+							<SelectItem value="pt">Português</SelectItem>
 							<SelectItem value="es">Español</SelectItem>
-							<SelectItem value="en">English</SelectItem>
 						</SelectContent>
 					</Select>
 				</CardAction>
@@ -69,7 +74,7 @@ export default function Calendar12() {
 					onSelect={setDateRange}
 					defaultMonth={dateRange?.from}
 					numberOfMonths={2}
-					locale={locale === "es" ? es : enUS}
+					locale={calendarLocale[locale]}
 					className="bg-transparent p-0"
 					buttonVariant="outline"
 				/>

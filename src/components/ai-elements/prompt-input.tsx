@@ -90,7 +90,7 @@ export function PromptInputAttachment({
     >
       {data.mediaType?.startsWith("image/") && data.url ? (
         <img
-          alt={data.filename || "attachment"}
+          alt={data.filename || "anexo"}
           className="size-full rounded-md object-cover"
           height={56}
           src={data.url}
@@ -102,7 +102,7 @@ export function PromptInputAttachment({
         </div>
       )}
       <Button
-        aria-label="Remove attachment"
+        aria-label="Remover anexo"
         className="-right-1.5 -top-1.5 absolute h-6 w-6 rounded-full opacity-0 group-hover:opacity-100"
         onClick={() => attachments.remove(data.id)}
         size="icon"
@@ -170,7 +170,7 @@ export type PromptInputActionAddAttachmentsProps = ComponentProps<
 };
 
 export const PromptInputActionAddAttachments = ({
-  label = "Add photos or files",
+  label = "Adicionar fotos ou arquivos",
   ...props
 }: PromptInputActionAddAttachmentsProps) => {
   const attachments = usePromptInputAttachments();
@@ -266,7 +266,7 @@ export const PromptInput = ({
       if (accepted.length === 0) {
         onError?.({
           code: "accept",
-          message: "No files match the accepted types.",
+          message: "Nenhum arquivo corresponde aos tipos aceitos.",
         });
         return;
       }
@@ -276,7 +276,7 @@ export const PromptInput = ({
       if (sized.length === 0 && accepted.length > 0) {
         onError?.({
           code: "max_file_size",
-          message: "All files exceed the maximum size.",
+          message: "Todos os arquivos ultrapassam o tamanho máximo.",
         });
         return;
       }
@@ -290,7 +290,7 @@ export const PromptInput = ({
         if (typeof capacity === "number" && sized.length > capacity) {
           onError?.({
             code: "max_files",
-            message: "Too many files. Some were not added.",
+            message: "Muitos arquivos. Alguns não foram adicionados.",
           });
         }
         const next: (FileUIPart & { id: string })[] = [];

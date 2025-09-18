@@ -3,13 +3,13 @@ import * as z from "zod";
 export type accommodationErrors = typeof accommodationErrors;
 export const accommodationErrors = {
 	ACCOMMODATION_NOT_FOUND: {
-		message: "Accommodation not found",
+		message: "Acomodação não encontrada",
 		data: z.object({
 			accommodationId: z.string(),
 		}),
 	},
 	ACCOMMODATION_DATES_INVALID: {
-		message: "Accommodation dates are invalid",
+		message: "As datas da acomodação são inválidas",
 		data: z.object({
 			startDate: z.string(),
 			endDate: z.string(),
@@ -18,7 +18,7 @@ export const accommodationErrors = {
 		}),
 	},
 	ACCOMMODATION_DATES_OUTSIDE_TRAVEL: {
-		message: "Accommodation dates are outside travel period",
+		message: "As datas da acomodação estão fora do período da viagem",
 		data: z.object({
 			accommodationStartDate: z.string(),
 			accommodationEndDate: z.string(),
@@ -31,7 +31,7 @@ export const accommodationErrors = {
 	 * Accommodation conflicts and overlaps
 	 */
 	ACCOMMODATION_OVERLAP_DETECTED: {
-		message: "Accommodation dates overlap with existing booking",
+		message: "As datas da acomodação conflitam com outra reserva",
 		data: z.object({
 			conflictingAccommodationId: z.string(),
 			conflictingAccommodationName: z.string().optional(),
@@ -49,7 +49,7 @@ export const accommodationErrors = {
 		}),
 	},
 	ACCOMMODATION_CAPACITY_EXCEEDED: {
-		message: "Accommodation capacity would be exceeded",
+		message: "A capacidade da acomodação seria excedida",
 		data: z.object({
 			accommodationId: z.string(),
 			maxCapacity: z.number(),
@@ -62,7 +62,7 @@ export const accommodationErrors = {
 	 * Accommodation booking and availability
 	 */
 	ACCOMMODATION_NOT_AVAILABLE: {
-		message: "Accommodation is not available for the requested dates",
+		message: "A acomodação não está disponível para as datas solicitadas",
 		data: z.object({
 			accommodationId: z.string(),
 			requestedStartDate: z.string(),
@@ -71,7 +71,7 @@ export const accommodationErrors = {
 		}),
 	},
 	ACCOMMODATION_BOOKING_CONFLICT: {
-		message: "Accommodation booking conflicts with existing reservations",
+		message: "A reserva da acomodação conflita com outras reservas",
 		data: z.object({
 			accommodationId: z.string(),
 			conflictingReservationId: z.string(),
@@ -79,7 +79,7 @@ export const accommodationErrors = {
 		}),
 	},
 	MINIMUM_STAY_REQUIRED: {
-		message: "Accommodation requires minimum stay duration",
+		message: "A acomodação exige uma estadia mínima",
 		data: z.object({
 			accommodationId: z.string(),
 			minimumNights: z.number(),
@@ -91,7 +91,7 @@ export const accommodationErrors = {
 	 * Accommodation costs and budget
 	 */
 	ACCOMMODATION_COST_INVALID: {
-		message: "Accommodation cost is invalid",
+		message: "O custo da acomodação é inválido",
 		data: z.object({
 			accommodationId: z.string(),
 			cost: z.number(),
@@ -99,7 +99,7 @@ export const accommodationErrors = {
 		}),
 	},
 	INSUFFICIENT_BUDGET_FOR_ACCOMMODATION: {
-		message: "Insufficient budget for accommodation booking",
+		message: "Orçamento insuficiente para reservar a acomodação",
 		data: z.object({
 			accommodationId: z.string(),
 			requiredAmount: z.number(),
@@ -111,7 +111,7 @@ export const accommodationErrors = {
 	 * Accommodation modifications
 	 */
 	ACCOMMODATION_CANNOT_BE_MODIFIED: {
-		message: "Accommodation cannot be modified",
+		message: "A acomodação não pode ser alterada",
 		data: z.object({
 			accommodationId: z.string(),
 			reason: z.string(),
@@ -119,14 +119,14 @@ export const accommodationErrors = {
 		}),
 	},
 	ACCOMMODATION_CHECK_IN_PASSED: {
-		message: "Cannot modify accommodation after check-in date",
+		message: "Não é possível alterar a acomodação após a data de check-in",
 		data: z.object({
 			accommodationId: z.string(),
 			checkInDate: z.string(),
 		}),
 	},
 	CANCELLATION_POLICY_VIOLATION: {
-		message: "Cancellation violates accommodation policy",
+		message: "A solicitação de cancelamento viola a política da acomodação",
 		data: z.object({
 			accommodationId: z.string(),
 			policyDetails: z.string(),

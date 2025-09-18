@@ -9,10 +9,9 @@ import { orpc } from "@/orpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { EventCreateModal } from "./EventCreateModal";
-import { EventEditModal } from "./EventEditModal";
-import EventDetailsPanel from "./EventDetailsPanel";
-
+import { EventCreateModal } from "../EventCreateModal";
+import { EventEditModal } from "../EventEditModal";
+import { EventDetailsModal } from "../ui/event-details-modal";
 interface DisplayEvent extends AppEvent {
 	originalStartDate?: Date;
 	originalEndDate?: Date;
@@ -35,9 +34,21 @@ const PX_PER_HOUR = 48;
 
 // Helpers to treat date-only values in UTC to avoid off-by-one issues
 const toUtcMidnight = (d: Date) =>
-	new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0, 0));
+	new Date(
+		Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0, 0),
+	);
 const toUtcEndOfDay = (d: Date) =>
-	new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 23, 59, 59, 999));
+	new Date(
+		Date.UTC(
+			d.getUTCFullYear(),
+			d.getUTCMonth(),
+			d.getUTCDate(),
+			23,
+			59,
+			59,
+			999,
+		),
+	);
 const isSameUTCDate = (a: Date, b: Date) =>
 	a.getUTCFullYear() === b.getUTCFullYear() &&
 	a.getUTCMonth() === b.getUTCMonth() &&
@@ -46,7 +57,7 @@ const isSameUTCDate = (a: Date, b: Date) =>
 export default function Calendar(props: CalendarProps) {
 	const [index, setIndex] = useState(0);
 	const [selectedEvent, setSelectedEvent] = useState<AppEvent | null>(null);
-	const [isPanelOpen, setIsPanelOpen] = useState(false);
+	const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [editingEvent, setEditingEvent] = useState<AppEvent | null>(null);
 	const controlsRef = useRef<{ scrollByDays: (delta: number) => void } | null>(
@@ -64,26 +75,24 @@ export default function Calendar(props: CalendarProps) {
 
 	const handleEventClick = (event: AppEvent) => {
 		setSelectedEvent(event);
-		setIsPanelOpen(true);
+		setIsDetailsOpen(true);
 	};
 
-	const handleClosePanel = () => {
-		setIsPanelOpen(false);
+	const handleCloseDetails = () => {
+		setIsDetailsOpen(false);
 		setSelectedEvent(null);
 	};
 
 	const handleEditEvent = (event: AppEvent) => {
 		setEditingEvent(event);
 		setIsEditModalOpen(true);
-		setIsPanelOpen(false); // Close details panel when opening edit modal
+		setIsDetailsOpen(false); // Close details modal when opening edit modal
 	};
 
 	return (
 		<>
-			<div
-				className={`transition-all duration-300 ${isPanelOpen ? "mr-96" : ""}`}
-			>
-				<div className="bg-card rounded-lg mb-2 border">
+			<div className="space-y-2">
+				<div className="bg-card rounded-lg border">
 					{/* Header */}
 					<div className="flex items-center justify-between p-4">
 						<h2 className="text-xl font-semibold text-foreground">{`${MONTHS[month]} ${year}`}</h2>
@@ -135,10 +144,10 @@ export default function Calendar(props: CalendarProps) {
 				</div>
 			</div>
 
-			<EventDetailsPanel
+			<EventDetailsModal
 				event={selectedEvent}
-				onClose={handleClosePanel}
-				isOpen={isPanelOpen}
+				isOpen={Boolean(selectedEvent) && isDetailsOpen}
+				onClose={handleCloseDetails}
 				onEditEvent={handleEditEvent}
 				canWrite={props.canWrite}
 			/>
@@ -704,10 +713,11 @@ const RenderWeekViews = (props: {
 								gridTemplateColumns: `repeat(${weekDays.length}, ${dayWidth}px)`,
 							}}
 						>
-						{weekDays.map((date) => {
-							const isWeekend = date.getUTCDay() === 0 || date.getUTCDay() === 6; // Sunday or Saturday
-							const isToday = isSameUTCDate(new Date(), date);
-							const disabled = restrictNonTravelDays && !isWithinTravel(date);
+							{weekDays.map((date) => {
+								const isWeekend =
+									date.getUTCDay() === 0 || date.getUTCDay() === 6; // Sunday or Saturday
+								const isToday = isSameUTCDate(new Date(), date);
+								const disabled = restrictNonTravelDays && !isWithinTravel(date);
 
 								return (
 									<div
@@ -1212,7 +1222,7 @@ const DayCollumn = ({
 					onClick(dayIndex, e as unknown as React.MouseEvent);
 				}
 			}}
-			aria-label={`Create event on ${date.toLocaleDateString()}`}
+			aria-label={`Criar evento em ${date.toLocaleDateString()}`}
 			aria-disabled={isDisabled ? true : undefined}
 		>
 			{/* Hour lines */}

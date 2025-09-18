@@ -3,13 +3,13 @@ import { z } from "zod";
 
 export const eventErrors = {
 	EVENT_NOT_FOUND: {
-		message: "Event not found",
+		message: "Evento não encontrado",
 		data: z.object({
 			eventId: z.string(),
 		}),
 	},
 	TRAVEL_NOT_FOUND: {
-		message: "Travel not found",
+		message: "Viagem não encontrada",
 		data: z
 			.object({
 				travelId: z.string(),
@@ -17,7 +17,7 @@ export const eventErrors = {
 			.optional(),
 	},
 	EVENT_DATES_INVALID: {
-		message: "Event dates are invalid",
+		message: "As datas do evento são inválidas",
 		data: z.object({
 			startDate: z.string(),
 			endDate: z.string(),
@@ -26,7 +26,7 @@ export const eventErrors = {
 		}),
 	},
 	IMAGE_FETCH_FAILED: {
-		message: "Image fetch failed",
+		message: "Não foi possível carregar a imagem",
 		data: z
 			.object({
 				title: z.string(),
@@ -35,7 +35,7 @@ export const eventErrors = {
 			.optional(),
 	},
 	IMAGE_UPDATE_FAILED: {
-		message: "Image update failed",
+		message: "Não foi possível atualizar a imagem",
 		data: z
 			.object({
 				eventId: z.string(),
@@ -43,7 +43,7 @@ export const eventErrors = {
 			.optional(),
 	},
 	INVALID_EVENT_DATA: {
-		message: "Invalid event data",
+		message: "Dados do evento inválidos",
 		data: z.object({}),
 	},
 } satisfies ErrorType;

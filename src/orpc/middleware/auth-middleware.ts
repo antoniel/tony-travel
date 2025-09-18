@@ -20,7 +20,7 @@ export const requireAuth = os
 	.middleware(async ({ context, next }) => {
 		if (!context.reqHeaders) {
 			throw new ORPCError("UNAUTHORIZED", {
-				message: "Authentication required",
+				message: "Autenticação necessária",
 			});
 		}
 
@@ -50,7 +50,7 @@ export const requireAuth = os
 
 		if (!authResult?.user || !authResult?.session) {
 			throw new ORPCError("UNAUTHORIZED", {
-				message: "Authentication required",
+				message: "Autenticação necessária",
 			});
 		}
 

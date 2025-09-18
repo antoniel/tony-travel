@@ -1,4 +1,4 @@
-import Calendar from "@/components/Calendar";
+import Calendar from "@/components/AppEvent/Calendar";
 import { EventCreateModal } from "@/components/EventCreateModal";
 import { TravelTimeline } from "@/components/TravelTimeline";
 import { Button } from "@/components/ui/button";
@@ -106,7 +106,7 @@ function ItineraryPage() {
 							className="flex items-center gap-2 px-6 "
 						>
 							<Clock className="w-4 h-4" />
-							<span>Timeline</span>
+							<span>Cronograma</span>
 						</TabsTrigger>
 						<TabsTrigger
 							value="calendar"

@@ -1,13 +1,12 @@
+import { ResponsiveModal } from "@/components/ui/ResponsiveModal";
+import { formatNumberPtBR, maskCurrencyInputPtBR } from "@/lib/currency";
 import type { AppEvent } from "@/lib/types";
-import { maskCurrencyInputPtBR, formatNumberPtBR } from "@/lib/currency";
 import { Clock2Icon } from "lucide-react";
-import { ResponsiveModal } from "@/components/ResponsiveModal";
 import { Button } from "./ui/button";
 import { Calendar } from "./ui/calendar";
 import { DialogHeader, DialogTitle } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { Textarea } from "./ui/textarea";
 import {
 	Select,
 	SelectContent,
@@ -15,6 +14,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "./ui/select";
+import { Textarea } from "./ui/textarea";
 
 interface EventCreateModalProps {
 	isOpen: boolean;
@@ -67,7 +67,7 @@ export function EventCreateModal({
 			contentClassName="gap-0"
 		>
 			<DialogHeader className="border-b px-6 py-4">
-				<DialogTitle className="text-left">Create New Event</DialogTitle>
+				<DialogTitle className="text-left">Criar novo evento</DialogTitle>
 			</DialogHeader>
 			<div className="flex flex-1 flex-col overflow-hidden">
 				<div className="flex-1 space-y-6 overflow-y-auto px-6 py-4">
@@ -75,7 +75,7 @@ export function EventCreateModal({
 					<div className="space-y-4">
 						<div className="grid grid-cols-2 gap-4">
 							<div className="space-y-2">
-								<Label htmlFor="title">Title</Label>
+								<Label htmlFor="title">Título</Label>
 								<Input
 									id="title"
 									value={newEvent.title}
@@ -85,11 +85,11 @@ export function EventCreateModal({
 											title: e.target.value,
 										}))
 									}
-									placeholder="Event title"
+									placeholder="Título do evento"
 								/>
 							</div>
 							<div className="space-y-2">
-								<Label htmlFor="type">Type</Label>
+								<Label htmlFor="type">Tipo</Label>
 								<Select
 									value={newEvent.type}
 									onValueChange={(value: AppEvent["type"]) =>
@@ -97,19 +97,19 @@ export function EventCreateModal({
 									}
 								>
 									<SelectTrigger>
-										<SelectValue placeholder="Select event type" />
+										<SelectValue placeholder="Selecione o tipo de evento" />
 									</SelectTrigger>
 									<SelectContent>
-										<SelectItem value="travel">Travel</SelectItem>
-										<SelectItem value="food">Food</SelectItem>
-										<SelectItem value="activity">Activity</SelectItem>
+										<SelectItem value="travel">Transporte</SelectItem>
+										<SelectItem value="food">Alimentação</SelectItem>
+										<SelectItem value="activity">Atividade</SelectItem>
 									</SelectContent>
 								</Select>
 							</div>
 						</div>
 
 						<div className="space-y-2">
-							<Label htmlFor="location">Location</Label>
+							<Label htmlFor="location">Local</Label>
 							<Input
 								id="location"
 								value={newEvent.location}
@@ -119,7 +119,7 @@ export function EventCreateModal({
 										location: e.target.value,
 									}))
 								}
-								placeholder="Event location (optional)"
+								placeholder="Local do evento (opcional)"
 							/>
 						</div>
 						<div className="space-y-2">
@@ -182,7 +182,7 @@ export function EventCreateModal({
 
 					{/* Date & Time */}
 					<div className="space-y-4">
-						<h3 className="text-sm font-medium">Date & Time</h3>
+						<h3 className="text-sm font-medium">Data e horário</h3>
 						<div className="space-y-4">
 							<Calendar
 								mode="single"
@@ -226,7 +226,7 @@ export function EventCreateModal({
 
 							<div className="grid grid-cols-2 gap-4">
 								<div className="space-y-2">
-									<Label htmlFor="time-from">Start Time</Label>
+									<Label htmlFor="time-from">Horário de início</Label>
 									<div className="relative">
 										<Clock2Icon className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 select-none" />
 										<Input
@@ -258,7 +258,7 @@ export function EventCreateModal({
 								</div>
 
 								<div className="space-y-2">
-									<Label htmlFor="time-to">End Time</Label>
+									<Label htmlFor="time-to">Horário de término</Label>
 									<div className="relative">
 										<Clock2Icon className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 select-none" />
 										<Input
@@ -296,14 +296,14 @@ export function EventCreateModal({
 							onClick={onClose}
 							className="w-full sm:w-auto"
 						>
-							Cancel
+							Cancelar
 						</Button>
 						<Button
 							onClick={onCreate}
 							disabled={!newEvent.title.trim()}
 							className="w-full sm:w-auto"
 						>
-							Create Event
+							Criar evento
 						</Button>
 					</div>
 				</div>

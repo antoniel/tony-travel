@@ -26,7 +26,7 @@ const requireTravelMember = (role?: "owner" | "member") =>
 		const travelId = inputObj?.travelId || inputObj?.id;
 
 		if (!travelId) {
-			throw new ORPCError("BAD_REQUEST", { message: "Travel ID required" });
+			throw new ORPCError("BAD_REQUEST", { message: "ID da viagem é obrigatório" });
 		}
 
 		const contextWithUser = context as AppOrpcContext & {
@@ -35,7 +35,7 @@ const requireTravelMember = (role?: "owner" | "member") =>
 		const user = contextWithUser.user;
 		if (!user) {
 			throw new ORPCError("UNAUTHORIZED", {
-				message: "Authentication required",
+				message: "Autenticação necessária",
 			});
 		}
 
@@ -44,7 +44,7 @@ const requireTravelMember = (role?: "owner" | "member") =>
 		});
 		if (!travel) {
 			throw new ORPCError("NOT_FOUND", {
-				message: "Travel not found",
+				message: "Viagem não encontrada",
 			});
 		}
 
@@ -72,13 +72,13 @@ const requireTravelMember = (role?: "owner" | "member") =>
 
 		if (!membership) {
 			throw new ORPCError("FORBIDDEN", {
-				message: "Travel membership required",
+				message: "Você precisa ser membro desta viagem",
 			});
 		}
 
 		if (role === "owner" && membership.role !== "owner") {
 			throw new ORPCError("FORBIDDEN", {
-				message: "Travel owner role required",
+				message: "Apenas o proprietário da viagem pode executar essa ação",
 			});
 		}
 

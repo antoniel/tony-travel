@@ -35,7 +35,6 @@ type TimelineItem = {
 };
 
 export function TravelTimeline({ travel, canWrite }: TravelTimelineProps) {
-	console.log("travel", travel);
 	const timelineItems = createTimelineItems(travel);
 	const groupedByDay = groupItemsByDay(timelineItems);
 
@@ -76,7 +75,7 @@ export function TravelTimeline({ travel, canWrite }: TravelTimelineProps) {
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [editingEvent, setEditingEvent] = useState<AppEvent | null>(null);
 
-    // Removed unused openGeneralAdd helper to satisfy strict TS
+	// Removed unused openGeneralAdd helper to satisfy strict TS
 
 	const handleCreateEvent = () => {
 		if (!canWrite || !newEvent.title.trim()) return;
@@ -296,7 +295,7 @@ function TimelineItemComponent({
 									type="button"
 									onClick={() => onEditEvent?.(item.data as AppEvent)}
 									className="opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity p-2 rounded-full hover:bg-accent/20 text-muted-foreground hover:text-foreground"
-									title="Edit event"
+									title="Editar evento"
 								>
 									<Pencil className="w-4 h-4" />
 								</button>

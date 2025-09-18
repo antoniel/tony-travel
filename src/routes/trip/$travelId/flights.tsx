@@ -1,4 +1,5 @@
 import { AddOrEditFlightForm } from "@/components/flights/add-or-edit-flight-form";
+import { ResponsiveModal } from "@/components/ui/ResponsiveModal";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,6 @@ import {
 	CollapsibleContent,
 	CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ResponsiveModal } from "@/components/ResponsiveModal";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
 	Tooltip,
@@ -130,31 +130,31 @@ function FlightPageHeader({
 					Gerencie os voos de todos os membros da viagem
 				</p>
 			</div>
-		{canWrite ? (
-			<ResponsiveModal
-				open={isAddFlightOpen}
-				onOpenChange={setIsAddFlightOpen}
-				trigger={
-					<Button className="flex items-center gap-2">
-						<Plus className="w-4 h-4" />
-						Adicionar Voo
-					</Button>
-				}
-				desktopClassName="sm:max-w-2xl"
-				contentClassName="gap-0"
-			>
-				<DialogHeader className="border-b px-6 py-4">
-					<DialogTitle className="text-left">Adicionar Novo Voo</DialogTitle>
-				</DialogHeader>
-				<div className="flex flex-1 flex-col overflow-hidden">
-					<AddOrEditFlightForm
-						travelId={travelId}
-						members={members}
-						onClose={() => setIsAddFlightOpen(false)}
-					/>
-				</div>
-			</ResponsiveModal>
-		) : null}
+			{canWrite ? (
+				<ResponsiveModal
+					open={isAddFlightOpen}
+					onOpenChange={setIsAddFlightOpen}
+					trigger={
+						<Button className="flex items-center gap-2">
+							<Plus className="w-4 h-4" />
+							Adicionar Voo
+						</Button>
+					}
+					desktopClassName="sm:max-w-2xl"
+					contentClassName="gap-0"
+				>
+					<DialogHeader className="border-b px-6 py-4">
+						<DialogTitle className="text-left">Adicionar Novo Voo</DialogTitle>
+					</DialogHeader>
+					<div className="flex flex-1 flex-col overflow-hidden">
+						<AddOrEditFlightForm
+							travelId={travelId}
+							members={members}
+							onClose={() => setIsAddFlightOpen(false)}
+						/>
+					</div>
+				</ResponsiveModal>
+			) : null}
 		</div>
 	);
 }

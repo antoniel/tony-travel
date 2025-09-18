@@ -59,7 +59,7 @@ export class InvitationService {
 		if (!invitation) {
 			return {
 				success: false,
-				message: "Invalid or expired invite",
+				message: "Convite inválido ou expirado",
 				travelId: "",
 			};
 		}
@@ -67,7 +67,7 @@ export class InvitationService {
 		if (invitation.expiresAt && new Date() > invitation.expiresAt) {
 			return {
 				success: false,
-				message: "Invite has expired",
+				message: "Convite expirou",
 				travelId: invitation.travelId,
 			};
 		}
@@ -80,7 +80,7 @@ export class InvitationService {
 		if (existingMember) {
 			return {
 				success: true,
-				message: "Already a member",
+				message: "Você já é membro desta viagem",
 				travelId: invitation.travelId,
 				travelName: invitation.travel?.name,
 			};
@@ -123,15 +123,21 @@ export class InvitationService {
 		);
 
 		if (!targetMember) {
-			return { success: false, message: "Member not found" };
+			return { success: false, message: "Membro não encontrado" };
 		}
 
 		if (targetMember.role === "owner") {
-			return { success: false, message: "Cannot remove travel owner" };
+			return {
+				success: false,
+				message: "Não é possível remover o proprietário da viagem",
+			};
 		}
 
 		if (requestorRole !== "owner") {
-			return { success: false, message: "Only owners can remove members" };
+			return {
+				success: false,
+				message: "Apenas proprietários podem remover membros",
+			};
 		}
 
 		const removed = await this.invitationDAO.removeTravelMember(
@@ -141,8 +147,8 @@ export class InvitationService {
 		return {
 			success: removed,
 			message: removed
-				? "Member removed successfully"
-				: "Failed to remove member",
+				? "Membro removido com sucesso"
+				: "Não foi possível remover o membro",
 		};
 	}
 
@@ -154,7 +160,7 @@ export class InvitationService {
 				isValid: false,
 				travel: null,
 				isExpired: false,
-				message: "Invalid invite link",
+				message: "Link de convite inválido",
 			};
 		}
 
@@ -175,7 +181,7 @@ export class InvitationService {
 						}
 					: null,
 				isExpired: true,
-				message: "Invite link has expired",
+				message: "O link de convite expirou",
 			};
 		}
 

@@ -1,15 +1,11 @@
-import type { AppEvent } from "@/lib/types";
+import { ResponsiveModal } from "@/components/ui/ResponsiveModal";
 import { maskCurrencyInputPtBR, formatNumberPtBR } from "@/lib/currency";
+import type { AppEvent } from "@/lib/types";
 import { Clock2Icon } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { Calendar } from "./ui/calendar";
-import {
-	Dialog,
-	DialogContent,
-	DialogHeader,
-	DialogTitle,
-} from "./ui/dialog";
+import { DialogHeader, DialogTitle } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
@@ -84,17 +80,26 @@ export function EventEditModal({
 	};
 
 	return (
-		<Dialog open={isOpen} onOpenChange={handleClose}>
-			<DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-				<DialogHeader>
-					<DialogTitle>Edit Event</DialogTitle>
-				</DialogHeader>
-				<div className="space-y-6">
+		<ResponsiveModal
+			open={isOpen}
+			onOpenChange={(open) => {
+				if (!open) {
+					handleClose();
+				}
+			}}
+			desktopClassName="sm:max-w-[500px]"
+			contentClassName="gap-0"
+		>
+			<DialogHeader className="border-b px-6 py-4">
+				<DialogTitle className="text-left">Editar evento</DialogTitle>
+			</DialogHeader>
+			<div className="flex flex-1 flex-col overflow-hidden">
+				<div className="flex-1 space-y-6 overflow-y-auto px-6 py-4">
 					{/* Basic Info */}
 					<div className="space-y-4">
 						<div className="grid grid-cols-2 gap-4">
 							<div className="space-y-2">
-								<Label htmlFor="edit-title">Title</Label>
+								<Label htmlFor="edit-title">Título</Label>
 								<Input
 									id="edit-title"
 									value={editEvent.title}
@@ -104,11 +109,11 @@ export function EventEditModal({
 											title: e.target.value,
 										}))
 									}
-									placeholder="Event title"
+									placeholder="Título do evento"
 								/>
 							</div>
 							<div className="space-y-2">
-								<Label htmlFor="edit-type">Type</Label>
+								<Label htmlFor="edit-type">Tipo</Label>
 								<Select
 									value={editEvent.type}
 									onValueChange={(value: AppEvent["type"]) =>
@@ -116,19 +121,19 @@ export function EventEditModal({
 									}
 								>
 									<SelectTrigger>
-										<SelectValue placeholder="Select event type" />
+										<SelectValue placeholder="Selecione o tipo de evento" />
 									</SelectTrigger>
 									<SelectContent>
-										<SelectItem value="travel">Travel</SelectItem>
-										<SelectItem value="food">Food</SelectItem>
-										<SelectItem value="activity">Activity</SelectItem>
+										<SelectItem value="travel">Transporte</SelectItem>
+										<SelectItem value="food">Alimentação</SelectItem>
+										<SelectItem value="activity">Atividade</SelectItem>
 									</SelectContent>
 								</Select>
 							</div>
 						</div>
 
 						<div className="space-y-2">
-							<Label htmlFor="edit-location">Location</Label>
+							<Label htmlFor="edit-location">Local</Label>
 							<Input
 								id="edit-location"
 								value={editEvent.location}
@@ -138,7 +143,7 @@ export function EventEditModal({
 										location: e.target.value,
 									}))
 								}
-								placeholder="Event location (optional)"
+								placeholder="Local do evento (opcional)"
 							/>
 						</div>
 						<div className="space-y-2">
@@ -201,7 +206,7 @@ export function EventEditModal({
 
 					{/* Date & Time */}
 					<div className="space-y-4">
-						<h3 className="text-sm font-medium">Date & Time</h3>
+						<h3 className="text-sm font-medium">Data e horário</h3>
 						<div className="space-y-4">
 							<Calendar
 								mode="single"
@@ -244,8 +249,8 @@ export function EventEditModal({
 							/>
 
 							<div className="grid grid-cols-2 gap-4">
-								<div className="space-y-2">
-									<Label htmlFor="edit-time-from">Start Time</Label>
+							<div className="space-y-2">
+								<Label htmlFor="edit-time-from">Horário de início</Label>
 									<div className="relative">
 										<Clock2Icon className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 select-none" />
 										<Input
@@ -276,8 +281,8 @@ export function EventEditModal({
 									</div>
 								</div>
 
-								<div className="space-y-2">
-									<Label htmlFor="edit-time-to">End Time</Label>
+							<div className="space-y-2">
+								<Label htmlFor="edit-time-to">Horário de término</Label>
 									<div className="relative">
 										<Clock2Icon className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 select-none" />
 										<Input
@@ -307,16 +312,25 @@ export function EventEditModal({
 						</div>
 					</div>
 				</div>
-
-				<div className="flex justify-end gap-2">
-					<Button variant="outline" onClick={handleClose}>
-						Cancel
-					</Button>
-					<Button onClick={handleSave} disabled={!editEvent.title.trim()}>
-						Save Changes
-					</Button>
+				<div className="border-t bg-background px-6 py-4">
+					<div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+						<Button
+							variant="outline"
+							onClick={handleClose}
+							className="w-full sm:w-auto"
+						>
+							Cancelar
+						</Button>
+						<Button
+							onClick={handleSave}
+							disabled={!editEvent.title.trim()}
+							className="w-full sm:w-auto"
+						>
+							Salvar alterações
+						</Button>
+					</div>
 				</div>
-			</DialogContent>
-		</Dialog>
+			</div>
+		</ResponsiveModal>
 	);
 }

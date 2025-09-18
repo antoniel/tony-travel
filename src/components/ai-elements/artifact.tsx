@@ -57,8 +57,8 @@ export const ArtifactClose = ({
     variant={variant}
     {...props}
   >
-    {children ?? <XIcon className="size-4" />}
-    <span className="sr-only">Close</span>
+	{children ?? <XIcon className="size-4" />}
+	<span className="sr-only">Fechar</span>
   </Button>
 );
 

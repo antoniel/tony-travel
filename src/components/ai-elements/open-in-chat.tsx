@@ -16,8 +16,8 @@ import {
 import { type ComponentProps, createContext, useContext } from "react";
 
 const providers = {
-  github: {
-    title: "Open in GitHub",
+	github: {
+		title: "Abrir no GitHub",
     createUrl: (url: string) => url,
     icon: (
       <svg fill="currentColor" role="img" viewBox="0 0 24 24">
@@ -26,8 +26,8 @@ const providers = {
       </svg>
     ),
   },
-  scira: {
-    title: "Open in Scira",
+	scira: {
+		title: "Abrir no Scira",
     createUrl: (q: string) =>
       `https://scira.ai/?${new URLSearchParams({
         q,
@@ -91,8 +91,8 @@ const providers = {
       </svg>
     ),
   },
-  chatgpt: {
-    title: "Open in ChatGPT",
+	chatgpt: {
+		title: "Abrir no ChatGPT",
     createUrl: (q: string) =>
       `https://chatgpt.com/?${new URLSearchParams({
         hints: "search",
@@ -110,8 +110,8 @@ const providers = {
       </svg>
     ),
   },
-  claude: {
-    title: "Open in Claude",
+	claude: {
+		title: "Abrir no Claude",
     createUrl: (q: string) =>
       `https://claude.ai/new?${new URLSearchParams({
         q,
@@ -128,16 +128,16 @@ const providers = {
       </svg>
     ),
   },
-  t3: {
-    title: "Open in T3 Chat",
+	t3: {
+		title: "Abrir no T3 Chat",
     createUrl: (q: string) =>
       `https://t3.chat/new?${new URLSearchParams({
         q,
       })}`,
     icon: <MessageCircleIcon />,
   },
-  v0: {
-    title: "Open in V0",
+	v0: {
+		title: "Abrir no V0",
     createUrl: (q: string) =>
       `https://v0.app?${new URLSearchParams({
         q,
@@ -207,13 +207,13 @@ export const OpenInSeparator = (props: OpenInSeparatorProps) => (
 export type OpenInTriggerProps = ComponentProps<typeof DropdownMenuTrigger>;
 
 export const OpenInTrigger = ({ children, ...props }: OpenInTriggerProps) => (
-  <DropdownMenuTrigger {...props} asChild>
-    {children ?? (
-      <Button type="button" variant="outline">
-        Open in chat
-        <ChevronDownIcon className="ml-2 size-4" />
-      </Button>
-    )}
+	<DropdownMenuTrigger {...props} asChild>
+		{children ?? (
+			<Button type="button" variant="outline">
+				Abrir no chat
+				<ChevronDownIcon className="ml-2 size-4" />
+			</Button>
+		)}
   </DropdownMenuTrigger>
 );
 

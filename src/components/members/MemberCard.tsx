@@ -2,14 +2,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ResponsiveModal } from "@/components/ui/ResponsiveModal";
 import {
-	Dialog,
-	DialogContent,
 	DialogDescription,
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
-	DialogTrigger,
 } from "@/components/ui/dialog";
 import { orpc } from "@/orpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -171,39 +169,39 @@ export function MemberCard({
 						</Badge>
 
 						{canRemoveMember && (
-							<Dialog
+							<ResponsiveModal
 								open={isRemoveDialogOpen}
 								onOpenChange={setIsRemoveDialogOpen}
-							>
-								<DialogTrigger asChild>
+								trigger={
 									<Button
 										variant="ghost"
 										size="sm"
-										className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20"
+										className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300"
 									>
 										<UserMinus className="w-4 h-4" />
-										<span className="hidden sm:inline ml-2">Remover</span>
+										<span className="ml-2 hidden sm:inline">Remover</span>
 									</Button>
-								</DialogTrigger>
-								<DialogContent>
-									<DialogHeader>
-										<DialogTitle className="flex items-center gap-2">
-											<Trash2 className="w-5 h-5 text-red-600" />
-											Remover Membro
-										</DialogTitle>
-										<DialogDescription>
-											Tem certeza de que deseja remover{" "}
-											<strong>{member.user.name}</strong> desta viagem? Esta
-											ação não pode ser desfeita.
-										</DialogDescription>
-									</DialogHeader>
-									<div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+								}
+								desktopClassName="sm:max-w-md"
+								contentClassName="gap-0"
+							>
+								<DialogHeader className="border-b px-6 py-4">
+									<DialogTitle className="flex items-center gap-2 text-left">
+										<Trash2 className="h-5 w-5 text-red-600" />
+										Remover Membro
+									</DialogTitle>
+									<DialogDescription>
+										Tem certeza de que deseja remover <strong>{member.user.name}</strong> desta viagem? Esta ação não pode ser desfeita.
+									</DialogDescription>
+								</DialogHeader>
+								<div className="px-6 py-4">
+									<div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
 										<p className="text-sm text-red-700 dark:text-red-300">
-											⚠️ O membro perderá acesso imediatamente a todos os dados
-											da viagem e não poderá mais visualizar ou editar
-											informações.
+											⚠️ O membro perderá acesso imediatamente a todos os dados da viagem e não poderá mais visualizar ou editar informações.
 										</p>
 									</div>
+								</div>
+								<div className="border-t bg-background px-6 py-4">
 									<DialogFooter className="gap-2">
 										<Button
 											variant="outline"
@@ -219,19 +217,19 @@ export function MemberCard({
 										>
 											{removeMemberMutation.isPending ? (
 												<>
-													<Loader2 className="w-4 h-4 mr-2 animate-spin" />
+													<Loader2 className="mr-2 h-4 w-4 animate-spin" />
 													Removendo...
 												</>
 											) : (
 												<>
-													<UserMinus className="w-4 h-4 mr-2" />
+													<UserMinus className="mr-2 h-4 w-4" />
 													Remover Membro
 												</>
 											)}
 										</Button>
 									</DialogFooter>
-								</DialogContent>
-							</Dialog>
+								</div>
+							</ResponsiveModal>
 						)}
 					</div>
 				</div>
