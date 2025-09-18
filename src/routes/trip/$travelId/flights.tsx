@@ -8,13 +8,8 @@ import {
 	CollapsibleContent,
 	CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import {
-	Dialog,
-	DialogContent,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from "@/components/ui/dialog";
+import { ResponsiveModal } from "@/components/ResponsiveModal";
+import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
 	Tooltip,
 	TooltipContent,
@@ -135,26 +130,31 @@ function FlightPageHeader({
 					Gerencie os voos de todos os membros da viagem
 				</p>
 			</div>
-			{canWrite ? (
-				<Dialog open={isAddFlightOpen} onOpenChange={setIsAddFlightOpen}>
-					<DialogTrigger asChild>
-						<Button className="flex items-center gap-2">
-							<Plus className="w-4 h-4" />
-							Adicionar Voo
-						</Button>
-					</DialogTrigger>
-					<DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-						<DialogHeader>
-							<DialogTitle>Adicionar Novo Voo</DialogTitle>
-						</DialogHeader>
-						<AddOrEditFlightForm
-							travelId={travelId}
-							members={members}
-							onClose={() => setIsAddFlightOpen(false)}
-						/>
-					</DialogContent>
-				</Dialog>
-			) : null}
+		{canWrite ? (
+			<ResponsiveModal
+				open={isAddFlightOpen}
+				onOpenChange={setIsAddFlightOpen}
+				trigger={
+					<Button className="flex items-center gap-2">
+						<Plus className="w-4 h-4" />
+						Adicionar Voo
+					</Button>
+				}
+				desktopClassName="sm:max-w-2xl"
+				contentClassName="gap-0"
+			>
+				<DialogHeader className="border-b px-6 py-4">
+					<DialogTitle className="text-left">Adicionar Novo Voo</DialogTitle>
+				</DialogHeader>
+				<div className="flex flex-1 flex-col overflow-hidden">
+					<AddOrEditFlightForm
+						travelId={travelId}
+						members={members}
+						onClose={() => setIsAddFlightOpen(false)}
+					/>
+				</div>
+			</ResponsiveModal>
+		) : null}
 		</div>
 	);
 }
@@ -280,12 +280,22 @@ function FlightsPage() {
 
 			{/* Edit Flight Dialog (members only) */}
 			{canWrite ? (
-				<Dialog open={isEditFlightOpen} onOpenChange={setIsEditFlightOpen}>
-					<DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-						<DialogHeader>
-							<DialogTitle>Editar Voo</DialogTitle>
-						</DialogHeader>
-						{editingFlight && (
+				<ResponsiveModal
+					open={isEditFlightOpen}
+					onOpenChange={(open) => {
+						setIsEditFlightOpen(open);
+						if (!open) {
+							setEditingFlight(null);
+						}
+					}}
+					desktopClassName="sm:max-w-2xl"
+					contentClassName="gap-0"
+				>
+					<DialogHeader className="border-b px-6 py-4">
+						<DialogTitle className="text-left">Editar Voo</DialogTitle>
+					</DialogHeader>
+					{editingFlight ? (
+						<div className="flex flex-1 flex-col overflow-hidden">
 							<AddOrEditFlightForm
 								flight={editingFlight}
 								travelId={travelId}
@@ -295,9 +305,9 @@ function FlightsPage() {
 									setEditingFlight(null);
 								}}
 							/>
-						)}
-					</DialogContent>
-				</Dialog>
+						</div>
+					) : null}
+				</ResponsiveModal>
 			) : null}
 		</div>
 	);

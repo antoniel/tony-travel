@@ -1,10 +1,6 @@
 import { Button } from "@/components/ui/button";
-import {
-	Dialog,
-	DialogContent,
-	DialogHeader,
-	DialogTitle,
-} from "@/components/ui/dialog";
+import { ResponsiveModal } from "@/components/ResponsiveModal";
+import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
 	Form,
 	FormControl,
@@ -230,18 +226,26 @@ export function AccommodationModal({
 	];
 
 	return (
-		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="sm:max-w-[500px]">
-				<DialogHeader>
-					<DialogTitle>
-						{editingAccommodation
-							? "Editar Acomodação"
-							: "Adicionar Acomodação"}
-					</DialogTitle>
-				</DialogHeader>
+		<ResponsiveModal
+			open={open}
+			onOpenChange={onOpenChange}
+			desktopClassName="sm:max-w-[500px]"
+			contentClassName="gap-0"
+		>
+			<DialogHeader className="border-b px-6 py-4">
+				<DialogTitle className="text-left">
+					{editingAccommodation
+						? "Editar Acomodação"
+						: "Adicionar Acomodação"}
+				</DialogTitle>
+			</DialogHeader>
 
-				<Form {...form}>
-					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+			<Form {...form}>
+				<form
+					onSubmit={form.handleSubmit(onSubmit)}
+					className="flex flex-1 flex-col overflow-hidden"
+				>
+					<div className="flex-1 space-y-4 overflow-y-auto px-6 py-4">
 						<FormField
 							control={form.control}
 							name="name"
@@ -389,16 +393,22 @@ export function AccommodationModal({
 							/>
 						</div>
 
-						<div className="flex gap-3 pt-4">
+					</div>
+					<div className="border-t bg-background px-6 py-4">
+						<div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
 							<Button
 								type="button"
 								variant="outline"
 								onClick={() => onOpenChange(false)}
-								className="flex-1"
+								className="w-full sm:w-auto"
 							>
 								Cancelar
 							</Button>
-							<Button type="submit" disabled={isSubmitting} className="flex-1">
+							<Button
+								type="submit"
+								disabled={isSubmitting}
+								className="w-full sm:w-auto"
+							>
 								{isSubmitting
 									? editingAccommodation
 										? "Salvando..."
@@ -408,9 +418,9 @@ export function AccommodationModal({
 										: "Criar Acomodação"}
 							</Button>
 						</div>
-					</form>
-				</Form>
-			</DialogContent>
-		</Dialog>
+					</div>
+				</form>
+			</Form>
+		</ResponsiveModal>
 	);
 }

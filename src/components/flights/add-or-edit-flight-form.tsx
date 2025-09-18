@@ -259,44 +259,59 @@ export function AddOrEditFlightForm({
 
 	return (
 		<Form {...form}>
-			<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-				<FlightDetailsSection
-					form={form}
-					setDuplicateInfo={isEditMode ? () => {} : setDuplicateInfo}
-				/>
+			<form
+				onSubmit={form.handleSubmit(onSubmit)}
+				className="flex h-full flex-col overflow-hidden"
+			>
+				<div className="flex-1 space-y-6 overflow-y-auto px-6 py-4">
+					<FlightDetailsSection
+						form={form}
+						setDuplicateInfo={isEditMode ? () => {} : setDuplicateInfo}
+					/>
 
-				<FlightTimesSection form={form} minDate={minDate} maxDate={maxDate} />
+					<FlightTimesSection form={form} minDate={minDate} maxDate={maxDate} />
 
-				<FlightCostSection
-					form={form}
-					setDuplicateInfo={isEditMode ? () => {} : setDuplicateInfo}
-				/>
+					<FlightCostSection
+						form={form}
+						setDuplicateInfo={isEditMode ? () => {} : setDuplicateInfo}
+					/>
 
-				{!isEditMode && duplicateInfo?.isDuplicate && (
-					<Alert>
-						<Info className="h-4 w-4" />
-						<AlertDescription>
-							{duplicateInfo.message} Os participantes selecionados serão
-							adicionados ao voo existente.
-						</AlertDescription>
-					</Alert>
-				)}
+					{!isEditMode && duplicateInfo?.isDuplicate && (
+						<Alert>
+							<Info className="h-4 w-4" />
+							<AlertDescription>
+								{duplicateInfo.message} Os participantes selecionados serão
+								adicionados ao voo existente.
+							</AlertDescription>
+						</Alert>
+					)}
 
-				<FlightParticipantsSection form={form} members={members} />
-
-				<div className="flex justify-end gap-4">
-					<Button type="button" variant="outline" onClick={onClose}>
-						Cancelar
-					</Button>
-					<Button type="submit" disabled={isSubmitting}>
-						{isSubmitting
-							? isEditMode
-								? "Atualizando..."
-								: "Adicionando..."
-							: isEditMode
-								? "Atualizar Voo"
-								: "Adicionar Voo"}
-					</Button>
+					<FlightParticipantsSection form={form} members={members} />
+				</div>
+				<div className="border-t bg-background px-6 py-4">
+					<div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+						<Button
+							type="button"
+							variant="outline"
+							onClick={onClose}
+							className="w-full sm:w-auto"
+						>
+							Cancelar
+						</Button>
+						<Button
+							type="submit"
+							disabled={isSubmitting}
+							className="w-full sm:w-auto"
+						>
+							{isSubmitting
+								? isEditMode
+									? "Atualizando..."
+									: "Adicionando..."
+								: isEditMode
+									? "Atualizar Voo"
+									: "Adicionar Voo"}
+						</Button>
+					</div>
 				</div>
 			</form>
 		</Form>

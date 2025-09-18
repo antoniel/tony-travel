@@ -1,19 +1,21 @@
 import type { InsertAppEvent } from "@/lib/db/schema";
 import type { Accommodation, AppEvent, TravelWithRelations } from "@/lib/types";
 import { orpc } from "@/orpc/client";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { differenceInDays, format, isSameDay } from "date-fns";
 import {
 	Calendar,
 	Camera,
 	Hotel,
 	MapPin,
+	Pencil,
 	Plane,
 	Plus,
 	UtensilsCrossed,
 } from "lucide-react";
 import { useState } from "react";
 import { EventCreateModal } from "./EventCreateModal";
+import { EventEditModal } from "./EventEditModal";
 
 interface TravelTimelineProps {
 	travel: TravelWithRelations;
@@ -37,9 +39,22 @@ export function TravelTimeline({ travel, canWrite }: TravelTimelineProps) {
 	const timelineItems = createTimelineItems(travel);
 	const groupedByDay = groupItemsByDay(timelineItems);
 
+	const queryClient = useQueryClient();
 	const createEventMutation = useMutation(
 		orpc.eventRoutes.createEvent.mutationOptions(),
 	);
+	const updateEventMutation = useMutation(
+		orpc.eventRoutes.updateEvent.mutationOptions({
+			onSuccess: () => {
+				queryClient.invalidateQueries(
+					orpc.travelRoutes.getTravel.queryOptions({
+						input: { id: travel.id },
+					}),
+				);
+			},
+		}),
+	);
+
 	const onAddEvent = (newEvent: InsertAppEvent) => {
 		createEventMutation.mutate(newEvent);
 	};
@@ -56,6 +71,10 @@ export function TravelTimeline({ travel, canWrite }: TravelTimelineProps) {
 		description: "",
 		link: "",
 	});
+
+	// Edit modal state
+	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+	const [editingEvent, setEditingEvent] = useState<AppEvent | null>(null);
 
     // Removed unused openGeneralAdd helper to satisfy strict TS
 
@@ -82,6 +101,24 @@ export function TravelTimeline({ travel, canWrite }: TravelTimelineProps) {
 		});
 
 		setIsModalOpen(false);
+	};
+
+	const handleEditEvent = (event: AppEvent) => {
+		setEditingEvent(event);
+		setIsEditModalOpen(true);
+	};
+
+	const handleSaveEvent = (changes: Partial<AppEvent>) => {
+		if (!editingEvent) return;
+
+		updateEventMutation.mutate({
+			travelId: travel.id,
+			id: editingEvent.id,
+			event: changes,
+		});
+
+		setIsEditModalOpen(false);
+		setEditingEvent(null);
 	};
 
 	return (
@@ -116,6 +153,7 @@ export function TravelTimeline({ travel, canWrite }: TravelTimelineProps) {
 								});
 								setIsModalOpen(true);
 							}}
+							onEditEvent={handleEditEvent}
 							canWrite={canWrite}
 						/>
 					))}
@@ -123,15 +161,28 @@ export function TravelTimeline({ travel, canWrite }: TravelTimelineProps) {
 			</div>
 
 			{canWrite ? (
-				<EventCreateModal
-					isOpen={isModalOpen}
-					newEvent={newEvent}
-					onClose={() => setIsModalOpen(false)}
-					onCreate={handleCreateEvent}
-					onEventChange={setNewEvent}
-					travelStartDate={travel.startDate}
-					travelEndDate={travel.endDate}
-				/>
+				<>
+					<EventCreateModal
+						isOpen={isModalOpen}
+						newEvent={newEvent}
+						onClose={() => setIsModalOpen(false)}
+						onCreate={handleCreateEvent}
+						onEventChange={setNewEvent}
+						travelStartDate={travel.startDate}
+						travelEndDate={travel.endDate}
+					/>
+					<EventEditModal
+						isOpen={isEditModalOpen}
+						event={editingEvent}
+						onClose={() => {
+							setIsEditModalOpen(false);
+							setEditingEvent(null);
+						}}
+						onSave={handleSaveEvent}
+						travelStartDate={travel.startDate}
+						travelEndDate={travel.endDate}
+					/>
+				</>
 			) : null}
 		</>
 	);
@@ -141,11 +192,13 @@ function DaySection({
 	date,
 	items,
 	onAddEvent,
+	onEditEvent,
 	canWrite,
 }: {
 	date: string;
 	items: TimelineItem[];
 	onAddEvent?: (date: string) => void;
+	onEditEvent?: (event: AppEvent) => void;
 	canWrite?: boolean;
 }) {
 	const formatDayUTC = (d: Date) =>
@@ -189,6 +242,8 @@ function DaySection({
 					item={item}
 					index={index}
 					isLast={index === items.length - 1}
+					onEditEvent={onEditEvent}
+					canWrite={canWrite}
 				/>
 			))}
 		</div>
@@ -197,10 +252,14 @@ function DaySection({
 
 function TimelineItemComponent({
 	item,
+	onEditEvent,
+	canWrite,
 }: {
 	item: TimelineItem;
 	index: number;
 	isLast: boolean;
+	onEditEvent?: (event: AppEvent) => void;
+	canWrite?: boolean;
 }) {
 	const Icon = item.icon;
 	const iconColor = getEventColor(item.type);
@@ -216,7 +275,7 @@ function TimelineItemComponent({
 			</div>
 
 			<div className="flex-1 min-w-0 pt-2">
-				<div className="travel-card rounded-lg p-6 hover:shadow-md transition-all duration-300">
+				<div className="travel-card rounded-lg p-6 hover:shadow-md transition-all duration-300 group">
 					<div className="flex items-start justify-between mb-3">
 						<div>
 							<h3 className="text-lg font-semibold text-foreground mb-1">
@@ -226,11 +285,23 @@ function TimelineItemComponent({
 								{format(item.date, "HH:mm")}
 							</p>
 						</div>
-						{item.cost && (
-							<div className="bg-chart-3/10 text-chart-3 px-3 py-1 rounded-full text-sm font-medium">
-								R$ {item.cost.toLocaleString()}
-							</div>
-						)}
+						<div className="flex items-center gap-2">
+							{item.cost && (
+								<div className="bg-chart-3/10 text-chart-3 px-3 py-1 rounded-full text-sm font-medium">
+									R$ {item.cost.toLocaleString()}
+								</div>
+							)}
+							{canWrite && item.type === "event" && item.data && (
+								<button
+									type="button"
+									onClick={() => onEditEvent?.(item.data as AppEvent)}
+									className="opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity p-2 rounded-full hover:bg-accent/20 text-muted-foreground hover:text-foreground"
+									title="Edit event"
+								>
+									<Pencil className="w-4 h-4" />
+								</button>
+							)}
+						</div>
 					</div>
 
 					<p className="text-foreground/80 mb-3 leading-relaxed">

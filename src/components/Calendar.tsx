@@ -10,6 +10,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { EventCreateModal } from "./EventCreateModal";
+import { EventEditModal } from "./EventEditModal";
 import EventDetailsPanel from "./EventDetailsPanel";
 
 interface DisplayEvent extends AppEvent {
@@ -46,6 +47,8 @@ export default function Calendar(props: CalendarProps) {
 	const [index, setIndex] = useState(0);
 	const [selectedEvent, setSelectedEvent] = useState<AppEvent | null>(null);
 	const [isPanelOpen, setIsPanelOpen] = useState(false);
+	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+	const [editingEvent, setEditingEvent] = useState<AppEvent | null>(null);
 	const controlsRef = useRef<{ scrollByDays: (delta: number) => void } | null>(
 		null,
 	);
@@ -67,6 +70,12 @@ export default function Calendar(props: CalendarProps) {
 	const handleClosePanel = () => {
 		setIsPanelOpen(false);
 		setSelectedEvent(null);
+	};
+
+	const handleEditEvent = (event: AppEvent) => {
+		setEditingEvent(event);
+		setIsEditModalOpen(true);
+		setIsPanelOpen(false); // Close details panel when opening edit modal
 	};
 
 	return (
@@ -114,6 +123,13 @@ export default function Calendar(props: CalendarProps) {
 							canWrite={props.canWrite}
 							controlsRef={controlsRef}
 							setIndex={setIndex}
+							editingEvent={editingEvent}
+							isEditModalOpen={isEditModalOpen}
+							onEditEvent={handleEditEvent}
+							onCloseEditModal={() => {
+								setIsEditModalOpen(false);
+								setEditingEvent(null);
+							}}
 						/>
 					</div>
 				</div>
@@ -123,6 +139,8 @@ export default function Calendar(props: CalendarProps) {
 				event={selectedEvent}
 				onClose={handleClosePanel}
 				isOpen={isPanelOpen}
+				onEditEvent={handleEditEvent}
+				canWrite={props.canWrite}
 			/>
 		</>
 	);
@@ -142,6 +160,10 @@ const RenderWeekViews = (props: {
 	controlsRef?: React.RefObject<{
 		scrollByDays: (delta: number) => void;
 	} | null>;
+	editingEvent: AppEvent | null;
+	isEditModalOpen: boolean;
+	onEditEvent: (event: AppEvent) => void;
+	onCloseEditModal: () => void;
 }) => {
 	// Mutations and cache handling
 	const queryClient = useQueryClient();
@@ -592,6 +614,18 @@ const RenderWeekViews = (props: {
 		setIsModalOpen(false);
 	};
 
+	const handleSaveEvent = (changes: Partial<AppEvent>) => {
+		if (!props.editingEvent) return;
+
+		updateEventMutation.mutate({
+			travelId: props.travelId,
+			id: props.editingEvent.id,
+			event: changes,
+		});
+
+		props.onCloseEditModal();
+	};
+
 	return (
 		<div
 			className="relative h-[70vh] bg-card "
@@ -791,15 +825,25 @@ const RenderWeekViews = (props: {
 			</div>
 
 			{props.canWrite ? (
-				<EventCreateModal
-					isOpen={isModalOpen}
-					newEvent={newEvent}
-					onClose={() => setIsModalOpen(false)}
-					onCreate={handleCreateEvent}
-					onEventChange={setNewEvent}
-					travelStartDate={props.travelStartDate}
-					travelEndDate={props.travelEndDate}
-				/>
+				<>
+					<EventCreateModal
+						isOpen={isModalOpen}
+						newEvent={newEvent}
+						onClose={() => setIsModalOpen(false)}
+						onCreate={handleCreateEvent}
+						onEventChange={setNewEvent}
+						travelStartDate={props.travelStartDate}
+						travelEndDate={props.travelEndDate}
+					/>
+					<EventEditModal
+						isOpen={props.isEditModalOpen}
+						event={props.editingEvent}
+						onClose={props.onCloseEditModal}
+						onSave={handleSaveEvent}
+						travelStartDate={props.travelStartDate}
+						travelEndDate={props.travelEndDate}
+					/>
+				</>
 			) : null}
 		</div>
 	);

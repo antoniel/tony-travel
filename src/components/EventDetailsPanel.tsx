@@ -1,5 +1,5 @@
 import type { AppEvent } from "@/lib/types";
-import { ExternalLink, X } from "lucide-react";
+import { ExternalLink, Pencil, X } from "lucide-react";
 import ActivityImage from "./ActivityImage";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
@@ -8,12 +8,16 @@ interface EventDetailsPanelProps {
 	event: AppEvent | null;
 	onClose: () => void;
 	isOpen: boolean;
+	onEditEvent?: (event: AppEvent) => void;
+	canWrite?: boolean;
 }
 
 export default function EventDetailsPanel({
 	event,
 	onClose,
 	isOpen,
+	onEditEvent,
+	canWrite,
 }: EventDetailsPanelProps) {
 	if (!isOpen || !event) return null;
 
@@ -83,9 +87,21 @@ export default function EventDetailsPanel({
 			<div className="p-6">
 				<div className="flex items-center justify-between mb-6">
 					<h2 className="text-lg font-semibold">Detalhes do Evento</h2>
-					<Button variant="ghost" size="sm" onClick={onClose}>
-						<X className="h-4 w-4" />
-					</Button>
+					<div className="flex items-center gap-1">
+						{canWrite && onEditEvent && (
+							<Button
+								variant="ghost"
+								size="sm"
+								onClick={() => onEditEvent(event)}
+								title="Edit event"
+							>
+								<Pencil className="h-4 w-4" />
+							</Button>
+						)}
+						<Button variant="ghost" size="sm" onClick={onClose}>
+							<X className="h-4 w-4" />
+						</Button>
+					</div>
 				</div>
 
 				<Card>
