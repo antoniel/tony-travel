@@ -1,0 +1,1 @@
+ALTER TABLE `travel` ADD `destination_airports` text default '[]' NOT NULL;
