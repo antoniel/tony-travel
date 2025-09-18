@@ -38,6 +38,11 @@ export function newId(prefix: keyof typeof prefixes): string {
 	return [prefixes[prefix], nanoid()].join("_");
 }
 
+export type TravelDestinationAirportOption = {
+	value: string;
+	label: string;
+};
+
 export const User = sqliteTable("user", {
 	...defaultColumn("user"),
 	name: text("name").notNull(),
@@ -96,6 +101,10 @@ export const Travel = sqliteTable("travel", {
 	name: text("name").notNull(),
 	description: text("description"),
 	destination: text("destination").notNull(),
+	destinationAirports: text("destination_airports", { mode: "json" })
+		.$type<TravelDestinationAirportOption[]>()
+		.notNull()
+		.$defaultFn((): TravelDestinationAirportOption[] => []),
 	startDate: integer("start_date", { mode: "timestamp" }).notNull(),
 	endDate: integer("end_date", { mode: "timestamp" }).notNull(),
 	budget: real("budget"),

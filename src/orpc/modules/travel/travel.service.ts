@@ -62,12 +62,24 @@ export async function createTravelService(
 		return dateValidation;
 	}
 
+	const normalizedTravelData: typeof travelData = {
+		...travelData,
+		destinationAirports: Array.from(
+			new Map(
+				travelData.destinationAirports.map((airport) => [
+					airport.value,
+					airport,
+				]),
+			).values(),
+		),
+	};
+
 	try {
 		// Use database transaction to ensure atomicity
 		const result = await db.transaction(async (tx) => {
 			// Create the travel first
 			const travelId = await travelDAO.createTravelWithTransaction(tx, {
-				...travelData,
+				...normalizedTravelData,
 				userId,
 			});
 
@@ -266,8 +278,39 @@ export async function updateTravelService(
 			}
 		}
 
+		const normalizedUpdateData: typeof updateData = { ...updateData };
+
+		if (
+			normalizedUpdateData.destinationAirports &&
+			normalizedUpdateData.destinationAirports.length === 0
+		) {
+			return AppResult.failure(
+				travelErrors,
+				"TRAVEL_UPDATE_FAILED",
+				"Falha ao atualizar viagem",
+				{
+					travelId,
+					reason: "Lista de aeroportos de destino não pode ficar vazia",
+				},
+			);
+		}
+
+		if (normalizedUpdateData.destinationAirports) {
+			normalizedUpdateData.destinationAirports = Array.from(
+				new Map(
+					normalizedUpdateData.destinationAirports.map((airport) => [
+						airport.value,
+						airport,
+					]),
+				).values(),
+			);
+		}
+
 		// Update the travel
-		const updatedTravel = await travelDAO.updateTravel(travelId, updateData);
+		const updatedTravel = await travelDAO.updateTravel(
+			travelId,
+			normalizedUpdateData,
+		);
 
 		if (!updatedTravel) {
 			return AppResult.failure(

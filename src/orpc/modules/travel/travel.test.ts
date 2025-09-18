@@ -11,6 +11,11 @@ import {
 import { beforeEach, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import enhancedAirports from "./enhanced-airports.json";
+import type { LocationOption } from "./travel.model";
+
+const SAMPLE_DESTINATION_AIRPORTS: LocationOption[] = [
+	{ value: "GIG", label: "Rio de Janeiro - GIG" },
+];
 
 describe("travel service", () => {
 	let db: DB;
@@ -27,6 +32,7 @@ describe("travel service", () => {
 			const travelInput = {
 				name: travelStub.name,
 				destination: travelStub.destination,
+				destinationAirports: SAMPLE_DESTINATION_AIRPORTS,
 				startDate: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
 				endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Next week
 				accommodations: [],
@@ -40,6 +46,9 @@ describe("travel service", () => {
 			expect(result.id).toBeDefined();
 			expect(result.travel).toBeDefined();
 			expect(result.travel.name).toBe(travelInput.name);
+			expect(result.travel.destinationAirports).toEqual(
+				SAMPLE_DESTINATION_AIRPORTS,
+			);
 
 			// Verify TravelMember was created automatically (query DB to avoid middleware noise)
 			const members = await db.query.TravelMember.findMany({
@@ -58,6 +67,7 @@ describe("travel service", () => {
 			const travelInput = {
 				name: travelStub.name,
 				destination: travelStub.destination,
+				destinationAirports: SAMPLE_DESTINATION_AIRPORTS,
 				startDate: new Date(Date.now() - 24 * 60 * 60 * 1000), // Yesterday
 				endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Next week
 				accommodations: [],
@@ -78,6 +88,7 @@ describe("travel service", () => {
 			const travelInput = {
 				name: travelStub.name,
 				destination: travelStub.destination,
+				destinationAirports: SAMPLE_DESTINATION_AIRPORTS,
 				startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Next week
 				endDate: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
 				accommodations: [],
@@ -103,6 +114,7 @@ describe("travel service", () => {
 			const travelInput = {
 				name: travelStub.name,
 				destination: travelStub.destination,
+				destinationAirports: SAMPLE_DESTINATION_AIRPORTS,
 				startDate,
 				endDate,
 
@@ -128,6 +140,9 @@ describe("travel service", () => {
 			});
 
 			expect(travel).toBeDefined();
+			expect(travel?.destinationAirports).toEqual(
+				SAMPLE_DESTINATION_AIRPORTS,
+			);
 			// Note: accommodations are handled separately by accommodation service
 		});
 
@@ -141,6 +156,7 @@ describe("travel service", () => {
 			const travelInput = {
 				name: travelStub.name,
 				destination: travelStub.destination,
+				destinationAirports: SAMPLE_DESTINATION_AIRPORTS,
 				startDate,
 				endDate,
 				budget: 4321.99,
@@ -155,6 +171,9 @@ describe("travel service", () => {
 
 			expect(result.travel.budget).toBeCloseTo(4321.99, 2);
 			expect(result.travel.peopleEstimate).toBe(5);
+			expect(result.travel.destinationAirports).toEqual(
+				SAMPLE_DESTINATION_AIRPORTS,
+			);
 
 			// Verify persisted in DB
 			const saved = await db.query.Travel.findFirst({
@@ -162,6 +181,7 @@ describe("travel service", () => {
 			});
 			expect(saved?.budget).toBeCloseTo(4321.99, 2);
 			expect(saved?.peopleEstimate).toBe(5);
+			expect(saved?.destinationAirports).toEqual(SAMPLE_DESTINATION_AIRPORTS);
 		});
 	});
 
@@ -339,6 +359,7 @@ describe("travel service", () => {
 			const travelInput = {
 				name: travelStub.name,
 				destination: travelStub.destination,
+				destinationAirports: SAMPLE_DESTINATION_AIRPORTS,
 				startDate,
 				endDate,
 
@@ -381,6 +402,8 @@ describe("travel service", () => {
 			const updateData = {
 				name: "Updated Travel Name",
 				description: "Updated travel description",
+				destination: "Rio de Janeiro - GIG",
+				destinationAirports: SAMPLE_DESTINATION_AIRPORTS,
 			};
 
 			const result = await appCall(router.travelRoutes.updateTravel, {
@@ -390,6 +413,8 @@ describe("travel service", () => {
 
 			expect(result.name).toBe(updateData.name);
 			expect(result.description).toBe(updateData.description);
+			expect(result.destination).toBe(updateData.destination);
+			expect(result.destinationAirports).toEqual(updateData.destinationAirports);
 		});
 
 		it("should reject travel update for non-owner", async () => {
@@ -667,6 +692,7 @@ describe("travel service", () => {
 				name: travelStub.name,
 				description: "This is a test travel description",
 				destination: travelStub.destination,
+				destinationAirports: SAMPLE_DESTINATION_AIRPORTS,
 				startDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
 				endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
 
@@ -688,6 +714,7 @@ describe("travel service", () => {
 			const travelInput = {
 				name: travelStub.name,
 				destination: travelStub.destination,
+				destinationAirports: SAMPLE_DESTINATION_AIRPORTS,
 				startDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
 				endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
 

@@ -681,9 +681,43 @@ function DialogCreateTravel(props: {
 			endDate: toDate(ev.endDate) as Date,
 			dependencies: (ev.dependencies ?? []).map(normalizeEvent),
 		});
+		const normalizeDestinationOption = (option: unknown) => {
+			if (
+				typeof option === "object" &&
+				option !== null &&
+				"value" in option &&
+				"label" in option
+			) {
+				const { value, label } = option as { value: string; label: string };
+				return { value, label };
+			}
+			if (typeof option === "string") {
+				return { value: option, label: option };
+			}
+			return null;
+		};
+
+		const destinationAirports = (() => {
+			if (Array.isArray(raw.destinationAirports)) {
+				return raw.destinationAirports
+					.map(normalizeDestinationOption)
+					.filter(Boolean) as { value: string; label: string }[];
+			}
+			if (Array.isArray(raw.destinations)) {
+				return raw.destinations
+					.map(normalizeDestinationOption)
+					.filter(Boolean) as { value: string; label: string }[];
+			}
+			if (typeof raw.destination === "string" && raw.destination.trim().length > 0) {
+				return [{ value: raw.destination, label: raw.destination }];
+			}
+			return [];
+		})();
+
 		return {
 			name: raw.name,
 			destination: raw.destination,
+			destinationAirports,
 			startDate: toDate(raw.startDate) as Date,
 			endDate: toDate(raw.endDate) as Date,
 			// biome-ignore lint/suspicious/noExplicitAny: <explanation>

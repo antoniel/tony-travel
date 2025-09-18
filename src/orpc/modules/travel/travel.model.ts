@@ -1,13 +1,24 @@
 import {
 	InsertAccommodationSchema,
 	InsertAppEventSchema,
+	type TravelDestinationAirportOption,
 } from "@/lib/db/schema";
 import * as z from "zod";
+
+export const LocationOptionSchema: z.ZodType<TravelDestinationAirportOption> = z
+	.object({
+		value: z.string(),
+		label: z.string(),
+	});
+export type LocationOption = z.infer<typeof LocationOptionSchema>;
 
 export const InsertFullTravel = z.object({
 	name: z.string(),
 	description: z.string().optional(),
 	destination: z.string(),
+	destinationAirports: z
+		.array(LocationOptionSchema)
+		.min(1, "Selecione pelo menos um aeroporto de destino"),
 	startDate: z.date(),
 	endDate: z.date(),
 	budget: z.number().optional(),

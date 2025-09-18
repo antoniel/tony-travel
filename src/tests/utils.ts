@@ -132,6 +132,7 @@ AUTH_TEST_HEADERS.set("Authorization", "Bearer test-token");
 				// Ensure optional FKs don't violate constraints in inserts
 				deletedAt: null,
 				deletedBy: null,
+				destinationAirports: generated.destinationAirports ?? [],
 			};
 		};
 		return { ...zTravel(), ...travel };

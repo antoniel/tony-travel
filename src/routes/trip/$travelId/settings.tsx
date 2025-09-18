@@ -20,15 +20,18 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { LocationSelector } from "@/components/ui/location-selector";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import type { Travel } from "@/lib/db/schema";
+import { useAirportsSearch } from "@/hooks/useAirportsSearch";
 import { orpc } from "@/orpc/client";
+import type { Airport, LocationOption } from "@/orpc/modules/travel/travel.model";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Plane, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
@@ -47,6 +50,14 @@ const TravelSettingsSchema = z
 		startDate: z.date({ message: "Data de início é obrigatória" }),
 		endDate: z.date({ message: "Data de fim é obrigatória" }),
 		description: z.string().max(1000, "Descrição muito longa").optional(),
+		destinationAirports: z
+			.array(
+				z.object({
+					value: z.string(),
+					label: z.string(),
+				}),
+			)
+			.min(1, "Selecione ao menos um aeroporto de destino"),
 	})
 	.refine((data) => data.endDate >= data.startDate, {
 		message: "Data de fim deve ser posterior à data de início",
@@ -126,10 +137,52 @@ function TripSettingsPage() {
 function TravelSettingsForm({
 	travel,
 }: {
-	travel: Pick<Travel, "id" | "name" | "startDate" | "endDate" | "description">;
+	travel: Pick<
+		Travel,
+		"id" | "name" | "startDate" | "endDate" | "description" | "destinationAirports" | "destination"
+	>;
 }) {
 	const queryClient = useQueryClient();
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [destinationSearch, setDestinationSearch] = useState("");
+	const [isDestinationOpen, setIsDestinationOpen] = useState(false);
+
+	const { data: destinationResults = [] } = useAirportsSearch(
+		destinationSearch,
+		15,
+		true,
+	);
+
+	const destinationQueryString = useMemo(() => {
+		const raw = travel.destination?.split(",")[0]?.trim();
+		if (!raw) return "";
+		return raw.replace(/\s+-\s+Todos os aeroportos$/i, "").trim();
+	}, [travel.destination]);
+
+	const { data: recommendedDestinationAirports = [] } = useQuery({
+		...orpc.travelRoutes.searchAirports.queryOptions({
+			input: {
+				query: destinationQueryString,
+				limit: 25,
+				expandGroups: true,
+			},
+		}),
+		enabled: destinationQueryString.length > 0,
+		staleTime: 5 * 60 * 1000,
+	});
+
+const formatAirportLabel = (airport: Airport) => {
+		if (airport.type === "city_group") {
+			return `${airport.city} - ${airport.stateCode}`;
+		}
+		if (airport.type === "state_group") {
+			return `${airport.state}`;
+		}
+		if (airport.type === "country_group") {
+			return `${airport.country}`;
+		}
+		return `${airport.city} - ${airport.code}`;
+	};
 
 	const form = useForm<TravelSettingsFormData>({
 		resolver: zodResolver(TravelSettingsSchema),
@@ -138,8 +191,47 @@ function TravelSettingsForm({
 			startDate: travel.startDate ? new Date(travel.startDate) : new Date(),
 			endDate: travel.endDate ? new Date(travel.endDate) : new Date(),
 			description: travel.description || "",
+			destinationAirports:
+				travel.destinationAirports && travel.destinationAirports.length > 0
+					? travel.destinationAirports
+					: [
+						{
+							value: travel.destination,
+							label: travel.destination,
+						},
+					],
 		},
 	});
+
+	const currentDestinationAirports =
+		(form.watch("destinationAirports") as LocationOption[] | undefined) || [];
+
+	const recommendedOptions = useMemo(
+		() =>
+			recommendedDestinationAirports.map((airport) => ({
+				value: airport.code,
+				label: formatAirportLabel(airport),
+			})),
+		[recommendedDestinationAirports],
+	);
+
+	const destinationOptions = useMemo(() => {
+		const mappedResults = destinationResults.map((airport) => ({
+			value: airport.code,
+			label: formatAirportLabel(airport),
+		}));
+		const merged = new Map<string, LocationOption>();
+		for (const option of [
+			...currentDestinationAirports,
+			...recommendedOptions,
+			...mappedResults,
+		]) {
+			if (!merged.has(option.value)) {
+				merged.set(option.value, option);
+			}
+		}
+		return Array.from(merged.values());
+	}, [destinationResults, recommendedOptions, currentDestinationAirports]);
 
 	const updateTravelMutation = useMutation({
 		...orpc.travelRoutes.updateTravel.mutationOptions(),
@@ -168,6 +260,8 @@ function TravelSettingsForm({
 			description: data.description || null,
 			startDate: data.startDate,
 			endDate: data.endDate,
+			destination: data.destinationAirports.map((airport) => airport.label).join(", "),
+			destinationAirports: data.destinationAirports,
 		};
 		updateTravelMutation.mutate({
 			travelId: travel.id,
@@ -204,10 +298,10 @@ function TravelSettingsForm({
 							)}
 						/>
 
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-							<FormField
-								control={form.control}
-								name="startDate"
+			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+				<FormField
+					control={form.control}
+					name="startDate"
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel>Data de Início</FormLabel>
@@ -254,11 +348,42 @@ function TravelSettingsForm({
 									</FormItem>
 								)}
 							/>
-						</div>
+				</div>
 
-						<FormField
-							control={form.control}
-							name="description"
+				<FormField
+					control={form.control}
+					name="destinationAirports"
+					render={({ field }) => (
+						<FormItem>
+							<FormLabel>Aeroportos de Destino</FormLabel>
+							<FormDescription>
+								Selecione todos os aeroportos possíveis para a chegada desta viagem.
+							</FormDescription>
+							<FormControl>
+								<LocationSelector
+									label="Aeroportos de Destino"
+									placeholder="Selecione aeroporto(s) de destino"
+									searchPlaceholder="Buscar por cidade, aeroporto ou código..."
+									selectedLabel="Aeroportos selecionados"
+									icon={<Plane className="h-4 w-4" />}
+									options={destinationOptions}
+									selected={(field.value as LocationOption[]) ?? []}
+									onSelectionChange={(selected) => field.onChange(selected)}
+									multiple
+									searchValue={destinationSearch}
+									onSearchChange={setDestinationSearch}
+									isOpen={isDestinationOpen}
+									onOpenChange={setIsDestinationOpen}
+								/>
+							</FormControl>
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
+
+				<FormField
+					control={form.control}
+					name="description"
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>Descrição (Opcional)</FormLabel>

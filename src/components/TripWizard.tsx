@@ -156,6 +156,13 @@ export default function TripWizard({ initialData }: TripWizardProps) {
 	};
 
 	const handleFinish = form.handleSubmit(async (data) => {
+		if (!data.destinations || data.destinations.length === 0) {
+			toast.error("Erro nos dados", {
+				description: "Selecione ao menos um destino ou aeroporto.",
+			});
+			return;
+		}
+
 		if (!data.dateRange?.from || !data.dateRange?.to) {
 			toast.error("Erro nos dados", {
 				description: "Verifique se todas as informações estão preenchidas.",
@@ -172,6 +179,10 @@ export default function TripWizard({ initialData }: TripWizardProps) {
 			destination:
 				data.destinations?.map((d) => d.label).join(", ") ||
 				"Destino não especificado",
+			destinationAirports: data.destinations.map((d) => ({
+				value: d.value,
+				label: d.label,
+			})),
 			startDate: data.dateRange?.from || new Date(),
 			endDate: data.dateRange?.to || new Date(),
 			budget: data.budget,
