@@ -281,7 +281,10 @@ function TimelineItemComponent({
 								{item.title}
 							</h3>
 							<p className="text-sm text-muted-foreground">
-								{format(item.date, "HH:mm")}
+								{item.type === "event" && item.data ? 
+									`${format(item.date, "HH:mm")} - ${format((item.data as AppEvent).endDate, "HH:mm")}` :
+									format(item.date, "HH:mm")
+								}
 							</p>
 						</div>
 						<div className="flex items-center gap-2">

@@ -4,6 +4,7 @@ import type { Tool } from "ai";
 import { eq } from "drizzle-orm";
 
 export interface TripContext {
+	travelId: string;
 	destination: string;
 	startDate: string;
 	endDate: string;
@@ -69,6 +70,8 @@ ${toolsDescription}
 - Se faltarem apenas detalhes menores (como horário), colete rapidamente e execute
 - NUNCA pergunte se deve executar quando o usuário já solicitou a ação
 - Use padrões sensatos quando informações específicas não forem fornecidas
+- **CRITICAL**: SEMPRE analise e responda baseado nos resultados das ferramentas executadas
+- **MANDATORY**: Após executar qualquer ferramenta, você DEVE fornecer uma resposta textual interpretando os resultados
 
 ### Conhecimento de Contexto Temporal
 - Calcule datas automaticamente baseado no período da viagem
@@ -108,6 +111,14 @@ ${toolsDescription}
 3. **Para solicitações diretas**: colete apenas o mínimo necessário e execute
 4. **Para sugestões**: explique, detalhe e pergunte se deve executar
 5. **Execute** imediatamente quando tiver informações suficientes
+6. **SEMPRE responda** após executar ferramentas, interpretando e explicando os resultados
+
+### Processamento de Resultados de Ferramentas
+- **OBRIGATÓRIO**: Após executar listEvents, analise os eventos encontrados e forneça insights úteis
+- **OBRIGATÓRIO**: Após executar createEvent, confirme a criação e sugira próximos passos
+- **NEVER**: Pare de processar após executar uma ferramenta - continue para responder ao usuário
+- **Formato da resposta**: Sempre inclua uma análise textual dos resultados obtidos
+- **Sugestões proativas**: Use os dados obtidos para fazer recomendações adicionais
 
 ### Melhor Geração de Respostas
 Para oferecer sugestões mais precisas, sempre que necessário pergunte sobre:
@@ -134,6 +145,18 @@ AI: [EXECUTA ferramenta imediatamente]
 ### Sugestões Proativas (Pergunte Antes)
 ✅ Bom: "Notei que você tem tempo livre na terça-feira à noite. Com base no seu interesse em gastronomia local, sugiro uma experiência no restaurante Y, conhecido pela culinária típica da região. O horário ideal seria às 19h30 para evitar multidões. Gostaria que eu crie este evento no seu roteiro?"
 
+### Exemplos de Processamento de Resultados
+**Resultado de listEvents:**
+✅ Bom: "Encontrei 3 eventos no seu roteiro atual:
+- Jantar no restaurante Central (15/03, 20h) 
+- Visita ao Cristo Redentor (16/03, 10h)
+- Passeio de barco (17/03, 14h)
+
+Notei que você ainda não tem nada planejado para o último dia da viagem (20/03). Que tal eu sugira algumas atividades para fechar a viagem com chave de ouro?"
+
+**Resultado de createEvent:**
+✅ Bom: "Perfeito! Acabei de adicionar o jantar no restaurante Central para 15/03 às 20h no seu roteiro. Como eles são famosos pelo ambiente romântico, sugiro fazer uma reserva com antecedência. Quer que eu sugira outras atividades para complementar essa noite especial?"
+
 Mantenha um tom amigável, profissional e entusiasmado, sempre priorizando a experiência do usuário.`;
 }
 
@@ -146,6 +169,7 @@ export async function getTripContext(
 	});
 
 	return {
+		travelId,
 		destination: travel?.destination ?? "",
 		startDate: travel?.startDate.toISOString() ?? "",
 		endDate: travel?.endDate.toISOString() ?? "",

@@ -10,5 +10,5 @@ export const chat = travelMemberProcedure
 	.input(orpcType<ConciergeChatStreamInput & { travelId: string }>())
 	.handler(async ({ input, context }) => {
 		const tripContext = await getTripContext(context.db, input.travelId);
-		return createConciergeStream(input, tripContext);
+		return createConciergeStream(input, tripContext, context.db);
 	});
