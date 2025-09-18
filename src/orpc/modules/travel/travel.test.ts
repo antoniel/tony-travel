@@ -10,6 +10,7 @@ import {
 } from "@/tests/utils";
 import { beforeEach, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
+import enhancedAirports from "./enhanced-airports.json";
 
 describe("travel service", () => {
 	let db: DB;
@@ -699,6 +700,77 @@ describe("travel service", () => {
 			});
 
 			expect(result.travel.description).toBeNull();
+		});
+	});
+
+	describe("searchAirports", () => {
+		it("should not return country aggregators in search results", async () => {
+			const appCall = createAppCall(db);
+
+			const result = await appCall(router.travelRoutes.searchAirports, {
+				query: "Brazil",
+				limit: 20,
+			});
+
+			expect(result.length).toBeGreaterThan(0);
+			expect(result.every((airport) => airport.type !== "country_group"))
+				.toBe(true);
+		});
+
+		it("should expand state groups when expandGroups is true", async () => {
+			const appCall = createAppCall(db);
+
+			const result = await appCall(router.travelRoutes.searchAirports, {
+				query: "Sao Paulo",
+				limit: 20,
+				expandGroups: true,
+			});
+
+			expect(result.length).toBeGreaterThan(0);
+			expect(result.every((airport) => airport.type === "airport")).toBe(true);
+			expect(result.some((airport) => airport.code === "GRU")).toBe(true);
+		});
+	});
+
+	describe("generatePrompt", () => {
+		it("should expand state aggregator into constituent airports", async () => {
+			const appCall = createAppCall(db);
+
+			const stateAggregator = enhancedAirports.find(
+				(airport) => airport.iata === "STATE_SP_ALL",
+			);
+			expect(stateAggregator).toBeDefined();
+			if (!stateAggregator) {
+				throw new Error("Missing state aggregator fixture");
+			}
+
+			const prompt = await appCall(router.travelRoutes.generatePrompt, {
+				tripDates: {
+					start: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+					end: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+				},
+				budget: { perPerson: 2500, currency: "BRL" },
+				destination: "Aventura Teste",
+				groupSize: 3,
+				departureAirports: [
+					{
+						code: stateAggregator.iata,
+						name: stateAggregator.name,
+						city: stateAggregator.city,
+						state: stateAggregator.state,
+						stateCode: stateAggregator.stateCode,
+						country: stateAggregator.country,
+						countryCode: stateAggregator.countryCode,
+						type: "state_group",
+						airportCount: stateAggregator.airportCount,
+						airportCodes: stateAggregator.airportCodes,
+					},
+				],
+			});
+
+			expect(prompt).not.toContain("STATE_SP_ALL");
+			expect(prompt).toContain("\"GRU\"");
+			expect(prompt).toContain("\"CGH\"");
 		});
 	});
 });

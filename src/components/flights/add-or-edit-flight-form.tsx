@@ -31,7 +31,7 @@ type FlightForForm = {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Calendar, DollarSign, Info, Plane } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { type UseFormReturn, useForm } from "react-hook-form";
 import { match } from "ts-pattern";
 import { z } from "zod";
@@ -134,6 +134,34 @@ export function AddOrEditFlightForm({
 	const travelQuery = useQuery(
 		orpc.travelRoutes.getTravel.queryOptions({ input: { id: travelId } }),
 	);
+
+	const destinationQueryString = useMemo(() => {
+		const rawDestination = travelQuery.data?.destination?.trim();
+		if (!rawDestination) return "";
+		return rawDestination
+			.split(",")[0]?.replace(/\s+-\s+Todos os aeroportos$/i, "")
+			.trim();
+	}, [travelQuery.data?.destination]);
+
+	const destinationAirportsQuery = useQuery({
+		...orpc.travelRoutes.searchAirports.queryOptions({
+			input: {
+				query: destinationQueryString,
+				limit: 50,
+				expandGroups: true,
+			},
+		}),
+		enabled: destinationQueryString.length > 0,
+		staleTime: 5 * 60 * 1000,
+	});
+
+	const recommendedDestinationOptions: LocationOption[] = useMemo(() => {
+		if (!destinationAirportsQuery.data) return [];
+		return destinationAirportsQuery.data.map((airport) => ({
+			value: airport.code,
+			label: renderAirportName(airport),
+		}));
+	}, [destinationAirportsQuery.data]);
 
 	// Calculate date limits (2 days before/after travel dates)
 	const { minDate, maxDate } = (() => {
@@ -267,6 +295,7 @@ export function AddOrEditFlightForm({
 					<FlightDetailsSection
 						form={form}
 						setDuplicateInfo={isEditMode ? () => {} : setDuplicateInfo}
+						recommendedDestinationOptions={recommendedDestinationOptions}
 					/>
 
 					<FlightTimesSection form={form} minDate={minDate} maxDate={maxDate} />
@@ -393,9 +422,11 @@ function FlightParticipantsSection({
 function FlightDetailsSection({
 	form,
 	setDuplicateInfo,
+	recommendedDestinationOptions,
 }: {
 	form: UseFormReturn<FlightFormData>;
 	setDuplicateInfo: (info: DuplicateInfo | null) => void;
+	recommendedDestinationOptions: LocationOption[];
 }) {
 	const [originSearch, setOriginSearch] = useState("");
 	const [destinationSearch, setDestinationSearch] = useState("");
@@ -403,37 +434,15 @@ function FlightDetailsSection({
 	const [isDestinationOpen, setIsDestinationOpen] = useState(false);
 
 	// Recommended options based on last home selections
-	const [recommendedOriginOptions, setRecommendedOriginOptions] = useState<
-		LocationOption[]
-	>([]);
-	const [recommendedDestinationOptions, setRecommendedDestinationOptions] =
-		useState<LocationOption[]>([]);
-
-	useEffect(() => {
-		try {
-			const rawDep = localStorage.getItem("tt_last_departure_airports");
-			if (rawDep) {
-				const airports: Airport[] = JSON.parse(rawDep);
-				const opts: LocationOption[] = airports.map((a) => ({
-					value: a.code,
-					label: renderAirportName(a),
-				}));
-				setRecommendedOriginOptions(opts);
-			}
-		} catch {}
-		try {
-			const rawDest = localStorage.getItem("tt_last_destinations");
-			if (rawDest) {
-				const opts: LocationOption[] = JSON.parse(rawDest);
-				setRecommendedDestinationOptions(opts);
-			}
-		} catch {}
-	}, []);
-
-	const { data: originResults = [] } = useAirportsSearch(originSearch, 10);
+	const { data: originResults = [] } = useAirportsSearch(
+		originSearch,
+		10,
+		true,
+	);
 	const { data: destinationResults = [] } = useAirportsSearch(
 		destinationSearch,
 		10,
+		true,
 	);
 
 	const originOptions = useMemo(() => {
@@ -442,11 +451,11 @@ function FlightDetailsSection({
 			label: renderAirportName(airport),
 		}));
 		const map = new Map<string, LocationOption>();
-		for (const o of [...recommendedOriginOptions, ...results]) {
+		for (const o of results) {
 			if (!map.has(o.value)) map.set(o.value, o);
 		}
 		return Array.from(map.values());
-	}, [originResults, recommendedOriginOptions]);
+	}, [originResults]);
 
 	const destinationOptions = useMemo(() => {
 		const results = destinationResults.map((airport) => ({
@@ -454,11 +463,14 @@ function FlightDetailsSection({
 			label: renderAirportName(airport),
 		}));
 		const map = new Map<string, LocationOption>();
-		for (const o of [...recommendedDestinationOptions, ...results]) {
+		const combined = destinationSearch.trim().length > 0
+			? [...results, ...recommendedDestinationOptions]
+			: [...recommendedDestinationOptions, ...results];
+		for (const o of combined) {
 			if (!map.has(o.value)) map.set(o.value, o);
 		}
 		return Array.from(map.values());
-	}, [destinationResults, recommendedDestinationOptions]);
+	}, [destinationResults, recommendedDestinationOptions, destinationSearch]);
 
 	return (
 		<div className="space-y-6">

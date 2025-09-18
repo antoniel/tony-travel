@@ -19,6 +19,54 @@ import enhancedAirports from "./enhanced-airports.json";
 import { createTravelDAO } from "./travel.dao";
 import { travelErrors } from "./travel.errors";
 import { type Airport, AirportSchema, InsertFullTravel } from "./travel.model";
+
+type EnhancedAirport = (typeof enhancedAirports)[number];
+
+const enhancedAirportByCode = new Map<string, EnhancedAirport>(
+	enhancedAirports.map((airport) => [airport.iata, airport]),
+);
+
+const toAirport = (airport: EnhancedAirport): Airport => ({
+	code: airport.iata,
+	name: airport.name,
+	city: airport.city,
+	state: airport.state,
+	stateCode: airport.stateCode,
+	country: airport.country,
+	countryCode: airport.countryCode,
+	type: airport.type as Airport["type"],
+	airportCount: airport.airportCount,
+	airportCodes: airport.airportCodes,
+});
+
+const expandStateGroupedAirports = (airports: Airport[]): Airport[] => {
+	const expanded: Airport[] = [];
+	const seen = new Set<string>();
+
+	for (const airport of airports) {
+		if (
+			airport.type === "state_group" &&
+			Array.isArray(airport.airportCodes) &&
+			airport.airportCodes.length > 0
+		) {
+			for (const code of airport.airportCodes) {
+				const raw = enhancedAirportByCode.get(code);
+				if (!raw) continue;
+				const mapped = toAirport(raw);
+				if (seen.has(mapped.code)) continue;
+				expanded.push(mapped);
+				seen.add(mapped.code);
+			}
+			continue;
+		}
+
+		if (seen.has(airport.code)) continue;
+		expanded.push(airport);
+		seen.add(airport.code);
+	}
+
+	return expanded;
+};
 import {
 	createTravelService,
 	getTravelMembersService,
@@ -39,7 +87,14 @@ export const generatePrompt = os
 	)
 	.output(z.string())
 	.handler(({ input }) => {
-		return startPlanTravel(input);
+		const expandedDepartureAirports = expandStateGroupedAirports(
+			input.departureAirports,
+		);
+
+		return startPlanTravel({
+			...input,
+			departureAirports: expandedDepartureAirports,
+		});
 	});
 
 export const saveTravel = authProcedure
@@ -147,32 +202,19 @@ export const searchAirports = os
 		z.object({
 			query: z.string().optional().default(""),
 			limit: z.number().int().min(1).max(50).optional().default(10),
+			expandGroups: z.boolean().optional().default(false),
 		}),
 	)
 	.output(z.array(AirportSchema))
 	.handler(({ input }) => {
-		const { query, limit } = input;
+		const { query, limit, expandGroups } = input;
 
 		// Convert enhanced airports data to our Airport type
-		let filteredAirports: Airport[] = enhancedAirports.map((airport) => ({
-			code: airport.iata,
-			name: airport.name,
-			city: airport.city,
-			state: airport.state,
-			stateCode: airport.stateCode,
-			country: airport.country,
-			countryCode: airport.countryCode,
-			type: airport.type as
-				| "airport"
-				| "city_group"
-				| "state_group"
-				| "country_group",
-			airportCount: airport.airportCount,
-			airportCodes: airport.airportCodes,
-		}));
+		let filteredAirports: Airport[] = enhancedAirports.map(toAirport);
 
-		if (query.trim()) {
-			const searchTerm = query.toLowerCase().trim();
+		const trimmedQuery = query.trim();
+		if (trimmedQuery) {
+			const searchTerm = trimmedQuery.toLowerCase();
 
 			filteredAirports = filteredAirports.filter((airport) => {
 				const matchesName = airport.name.toLowerCase().includes(searchTerm);
@@ -198,31 +240,51 @@ export const searchAirports = os
 			});
 		}
 
-		return filteredAirports.slice(0, limit).sort((a, b) => {
-			// Country groups come first
-			if (a.type === "country_group" && b.type !== "country_group") return -1;
-			if (a.type !== "country_group" && b.type === "country_group") return 1;
+		// Remove country aggregators from search results
+		filteredAirports = filteredAirports.filter(
+			(airport) => airport.type !== "country_group",
+		);
 
-			// State groups come second
-			if (
-				a.type === "state_group" &&
-				b.type !== "state_group" &&
-				b.type !== "country_group"
-			)
-				return -1;
-			if (
-				a.type !== "state_group" &&
-				a.type !== "country_group" &&
-				b.type === "state_group"
-			)
-				return 1;
+		if (expandGroups) {
+			filteredAirports = expandStateGroupedAirports(filteredAirports).filter(
+				(airport) => airport.type === "airport",
+			);
+		}
 
-			// City groups come third
+		const sortedAirports = [...filteredAirports].sort((a, b) => {
+			if (expandGroups) {
+				if (trimmedQuery) {
+					const searchTerm = trimmedQuery.toLowerCase();
+					const aExactIata = a.code.toLowerCase() === searchTerm;
+					const bExactIata = b.code.toLowerCase() === searchTerm;
+					if (aExactIata && !bExactIata) return -1;
+					if (!aExactIata && bExactIata) return 1;
+
+					const aExactCity = a.city.toLowerCase() === searchTerm;
+					const bExactCity = b.city.toLowerCase() === searchTerm;
+					if (aExactCity && !bExactCity) return -1;
+					if (!aExactCity && bExactCity) return 1;
+				}
+
+				const countryCompare = a.country.localeCompare(b.country);
+				if (countryCompare !== 0) return countryCompare;
+
+				const cityCompare = a.city.localeCompare(b.city);
+				if (cityCompare !== 0) return cityCompare;
+
+				return a.code.localeCompare(b.code);
+			}
+
+			// State groups come first
+			if (a.type === "state_group" && b.type !== "state_group") return -1;
+			if (a.type !== "state_group" && b.type === "state_group") return 1;
+
+			// City groups come second
 			if (a.type === "city_group" && b.type === "airport") return -1;
 			if (a.type === "airport" && b.type === "city_group") return 1;
 
-			if (query.trim()) {
-				const searchTerm = query.toLowerCase().trim();
+			if (trimmedQuery) {
+				const searchTerm = trimmedQuery.toLowerCase();
 
 				// Among individual airports, exact IATA code match comes first
 				if (a.type === "airport" && b.type === "airport") {
@@ -245,6 +307,8 @@ export const searchAirports = os
 
 			return a.city.localeCompare(b.city);
 		});
+
+		return sortedAirports.slice(0, limit);
 	});
 
 export const searchDestinations = os

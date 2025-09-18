@@ -3,7 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useDebounce } from "@uidotdev/usehooks";
 import { useMemo } from "react";
 
-export function useAirportsSearch(query: string, limit = 10) {
+export function useAirportsSearch(
+	query: string,
+	limit = 10,
+	expandGroups = false,
+) {
 	// Debounce the search query by 300ms
 	const debouncedQuery = useDebounce(query, 300);
 
@@ -14,9 +18,10 @@ export function useAirportsSearch(query: string, limit = 10) {
 				input: {
 					query: debouncedQuery,
 					limit,
+					expandGroups,
 				},
 			}),
-		[debouncedQuery, limit],
+		[debouncedQuery, limit, expandGroups],
 	);
 
 	return useQuery({
