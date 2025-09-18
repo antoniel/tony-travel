@@ -160,6 +160,8 @@ export const AppEvent = sqliteTable("app_event", {
 	cost: real("cost"),
 	type: text("type", { enum: ["travel", "food", "activity"] }).notNull(),
 	location: text("location"),
+	description: text("description"),
+	link: text("link"),
 	imageUrl: text("image_url"),
 	imageMetadata: text("image_metadata", { mode: "json" }).$type<{
 		source: "pixabay" | "manual";

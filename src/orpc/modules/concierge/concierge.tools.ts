@@ -32,6 +32,15 @@ export const CreateEventToolSchema = z.object({
 		.number()
 		.optional()
 		.describe("Custo estimado em reais (ex: 150.50)"),
+	description: z
+		.string()
+		.optional()
+		.describe("Descrição detalhada do evento (ex: 'Jantar romântico com vista para o mar')"),
+	link: z
+		.string()
+		.url({ message: "Link deve ser uma URL válida" })
+		.optional()
+		.describe("Link relacionado ao evento (ex: 'https://restaurante.com', 'https://museu.com')"),
 });
 
 export type CreateEventToolInput = z.infer<typeof CreateEventToolSchema>;

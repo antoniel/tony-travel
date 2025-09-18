@@ -51,6 +51,8 @@ function ItineraryPage() {
 			type: "activity" as AppEvent["type"],
 			location: "",
 			cost: null as number | null,
+			description: "",
+			link: "",
 		};
 	}, [travel?.startDate, travel?.endDate]);
 	const [newEvent, setNewEvent] = useState(defaultEvent);

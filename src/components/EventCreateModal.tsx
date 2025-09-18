@@ -12,6 +12,7 @@ import {
 } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { Textarea } from "./ui/textarea";
 import {
 	Select,
 	SelectContent,
@@ -29,6 +30,8 @@ interface EventCreateModalProps {
 		type: AppEvent["type"];
 		location: string;
 		cost: number | null;
+		description: string;
+		link: string;
 	};
 	onClose: () => void;
 	onCreate: () => void;
@@ -40,6 +43,8 @@ interface EventCreateModalProps {
 			type: AppEvent["type"];
 			location: string;
 			cost: number | null;
+			description: string;
+			link: string;
 		}>
 	>;
 	children?: React.ReactNode;
@@ -139,6 +144,38 @@ export function EventCreateModal({
 									}}
 								/>
 							</div>
+						</div>
+
+						<div className="space-y-2">
+							<Label htmlFor="description">Descrição — opcional</Label>
+							<Textarea
+								id="description"
+								value={newEvent.description}
+								onChange={(e) =>
+									onEventChange((prev) => ({
+										...prev,
+										description: e.target.value,
+									}))
+								}
+								placeholder="Adicione detalhes sobre este evento..."
+								rows={3}
+							/>
+						</div>
+
+						<div className="space-y-2">
+							<Label htmlFor="link">Link — opcional</Label>
+							<Input
+								id="link"
+								type="url"
+								value={newEvent.link}
+								onChange={(e) =>
+									onEventChange((prev) => ({
+										...prev,
+										link: e.target.value,
+									}))
+								}
+								placeholder="https://exemplo.com"
+							/>
 						</div>
 					</div>
 

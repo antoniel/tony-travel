@@ -249,6 +249,8 @@ const RenderWeekViews = (props: {
 		type: "activity" as AppEvent["type"],
 		location: "",
 		cost: null as number | null,
+		description: "",
+		link: "",
 	});
 
 	// Prevent click handler from overriding a just-committed drag selection
@@ -483,6 +485,8 @@ const RenderWeekViews = (props: {
 			type: "activity",
 			location: "",
 			cost: null,
+			description: "",
+			link: "",
 		});
 
 		setIsModalOpen(true);
@@ -553,6 +557,8 @@ const RenderWeekViews = (props: {
 			type: "activity",
 			location: "",
 			cost: null,
+			description: "",
+			link: "",
 		});
 		setIsModalOpen(true);
 		// Ensure subsequent click from this mouse interaction doesn't override the selection
@@ -579,6 +585,8 @@ const RenderWeekViews = (props: {
 			type: "activity",
 			location: "",
 			cost: null,
+			description: "",
+			link: "",
 		});
 
 		setIsModalOpen(false);

@@ -126,6 +126,8 @@ function EventConfirmationCard({
 			type: eventData.type,
 			location: eventData.location,
 			estimatedCost: eventData.estimatedCost,
+			description: eventData.description,
+			link: eventData.link,
 		});
 	};
 
@@ -210,6 +212,27 @@ function EventConfirmationCard({
 								Custo estimado:
 							</span>{" "}
 							{formatCurrencyBRL(eventData.estimatedCost)}
+						</div>
+					)}
+					{eventData.description && (
+						<div>
+							<span className="font-medium text-muted-foreground">Descrição:</span>{" "}
+							{eventData.description}
+						</div>
+					)}
+					{eventData.link && (
+						<div>
+							<span className="font-medium text-muted-foreground">Link:</span>{" "}
+							<a
+								href={eventData.link}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="text-primary hover:text-primary/80 underline underline-offset-4 transition-colors"
+							>
+								{eventData.link.length > 40
+									? `${eventData.link.substring(0, 40)}...`
+									: eventData.link}
+							</a>
 						</div>
 					)}
 				</div>

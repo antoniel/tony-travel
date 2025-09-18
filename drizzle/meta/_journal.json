@@ -64,6 +64,13 @@
       "when": 1757951111870,
       "tag": "0008_clever_spitfire",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1758155559214,
+      "tag": "0009_fair_kingpin",
+      "breakpoints": true
     }
   ]
 }

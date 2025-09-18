@@ -1,5 +1,5 @@
 import type { AppEvent } from "@/lib/types";
-import { X } from "lucide-react";
+import { ExternalLink, X } from "lucide-react";
 import ActivityImage from "./ActivityImage";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
@@ -156,6 +156,34 @@ export default function EventDetailsPanel({
 									LOCAL
 								</h3>
 								<p className="text-sm">{event.location}</p>
+							</div>
+						)}
+
+						{event.description && (
+							<div>
+								<h3 className="font-medium text-sm text-muted-foreground mb-2">
+									DESCRIÇÃO
+								</h3>
+								<p className="text-sm leading-relaxed">{event.description}</p>
+							</div>
+						)}
+
+						{event.link && (
+							<div>
+								<h3 className="font-medium text-sm text-muted-foreground mb-2">
+									LINK
+								</h3>
+								<a
+									href={event.link}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary/80 underline underline-offset-4 transition-colors"
+								>
+									<ExternalLink className="w-3 h-3" />
+									{event.link.length > 50
+										? `${event.link.substring(0, 50)}...`
+										: event.link}
+								</a>
 							</div>
 						)}
 					</CardContent>

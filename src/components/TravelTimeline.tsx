@@ -18,15 +18,6 @@ import { EventCreateModal } from "./EventCreateModal";
 interface TravelTimelineProps {
 	travel: TravelWithRelations;
 	canWrite?: boolean;
-	onAddEvent?: (event: {
-		title: string;
-		startDate: Date;
-		endDate: Date;
-		type: AppEvent["type"];
-		location: string;
-		cost?: number | null;
-		travelId: string;
-	}) => void;
 }
 
 type TimelineItem = {
@@ -62,16 +53,20 @@ export function TravelTimeline({ travel, canWrite }: TravelTimelineProps) {
 		type: "activity" as AppEvent["type"],
 		location: "",
 		cost: null as number | null,
+		description: "",
+		link: "",
 	});
 
     // Removed unused openGeneralAdd helper to satisfy strict TS
 
 	const handleCreateEvent = () => {
-		if (!canWrite || !onAddEvent || !newEvent.title.trim()) return;
+		if (!canWrite || !newEvent.title.trim()) return;
 
 		onAddEvent({
 			...newEvent,
 			cost: newEvent.cost ?? undefined,
+			description: newEvent.description || undefined,
+			link: newEvent.link || undefined,
 			travelId: travel.id,
 		});
 
@@ -82,6 +77,8 @@ export function TravelTimeline({ travel, canWrite }: TravelTimelineProps) {
 			type: "activity",
 			location: "",
 			cost: null,
+			description: "",
+			link: "",
 		});
 
 		setIsModalOpen(false);
@@ -114,6 +111,8 @@ export function TravelTimeline({ travel, canWrite }: TravelTimelineProps) {
 									type: "activity",
 									location: "",
 									cost: null,
+									description: "",
+									link: "",
 								});
 								setIsModalOpen(true);
 							}}
@@ -375,6 +374,12 @@ function getEventIcon(
 }
 
 function getEventDescription(event: AppEvent): string {
+	// If the event has a custom description, use it
+	if (event.description) {
+		return event.description;
+	}
+
+	// Otherwise, generate a default description
 	const duration = differenceInDays(event.endDate, event.startDate);
 	const timeInfo = isSameDay(event.startDate, event.endDate)
 		? `às ${format(event.startDate, "HH:mm")}`
