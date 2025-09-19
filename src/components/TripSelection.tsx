@@ -116,6 +116,8 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 	const [generatedPrompt] = useState("");
 	const [chatgptResponse, setChatgptResponse] = useState("");
 
+	const now = new Date();
+
 	// Derived helpers for people/budget display on featured cards
 	const getSelectedPeopleCount = () => {
 		if (form.people === "custom") {
@@ -579,15 +581,31 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 							Planejamentos em destaque
 						</h2>
 						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-							{predefinedTrips.map((trip) => (
-								<Card
-									key={trip.id}
-									className="cursor-pointer travel-card rounded-xl hover:-translate-y-0.5 hover:shadow-xl transition-all bg-gradient-to-br from-primary/5 via-card to-card"
-									onClick={() => handleSelectPredefinedTrip(trip)}
+							{predefinedTrips.map((trip) => {
+								const daysUntilStart = differenceInUtcCalendarDays(
+									trip.startDate,
+									now,
+								);
+								const startDateForDisplay = getUtcDateForDisplay(trip.startDate);
+								const endDateForDisplay = getUtcDateForDisplay(trip.endDate);
+								const countdownLabel =
+									trip.userMembership && daysUntilStart >= 0
+										? daysUntilStart === 0
+											? "Hoje"
+											: daysUntilStart === 1
+												? "Amanhã"
+												: `Em ${daysUntilStart} dias`
+										: null;
+
+								return (
+									<Card
+										key={trip.id}
+										className="cursor-pointer travel-card rounded-xl hover:-translate-y-0.5 hover:shadow-xl transition-all bg-gradient-to-br from-primary/5 via-card to-card"
+										onClick={() => handleSelectPredefinedTrip(trip)}
 								>
-									<CardHeader>
-										<div className="flex items-start justify-between">
-											<div>
+										<CardHeader>
+											<div className="flex items-start justify-between">
+												<div>
 												<CardTitle className="text-lg mb-2">
 													{trip.name}
 												</CardTitle>
@@ -595,25 +613,28 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 													<MapPin className="h-4 w-4 mr-1" />
 													<span className="text-sm">{trip.destination}</span>
 												</div>
+												</div>
+												<div className="flex flex-col items-end gap-1">
+													{trip.userMembership ? (
+														<Badge variant="outline">Sua viagem</Badge>
+													) : null}
+													{countdownLabel ? (
+														<Badge variant="default">{countdownLabel}</Badge>
+													) : null}
+													<Badge variant="secondary">
+														{getDurationInDays(trip.startDate, trip.endDate)} dias
+													</Badge>
+												</div>
 											</div>
-                            <div className="flex flex-col items-end gap-1">
-                                {trip.userMembership ? (
-                                    <Badge variant="outline">Sua viagem</Badge>
-                                ) : null}
-                                <Badge variant="secondary">
-                                    {getDurationInDays(trip.startDate, trip.endDate)} dias
-                                </Badge>
-                            </div>
-										</div>
-									</CardHeader>
-									<CardContent>
+										</CardHeader>
+										<CardContent>
 										<div className="space-y-3">
 											<div className="flex items-center text-sm text-muted-foreground">
 												<Clock className="h-4 w-4 mr-2" />
-												<span>
-													{format(trip.startDate, "dd/MM", { locale: ptBR })} -{" "}
-													{format(trip.endDate, "dd/MM/yyyy", { locale: ptBR })}
-												</span>
+													<span>
+														{format(startDateForDisplay, "dd/MM", { locale: ptBR })} -{" "}
+														{format(endDateForDisplay, "dd/MM/yyyy", { locale: ptBR })}
+													</span>
 											</div>
 
 											{typeof trip.peopleEstimate === "number" && Number.isFinite(trip.peopleEstimate) ? (
@@ -632,7 +653,8 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 										</div>
 									</CardContent>
 								</Card>
-							))}
+								);
+							})}
 						</div>
 					</div>
 				</div>
@@ -838,3 +860,23 @@ const renderAiportName = (airport: Airport) => {
 		.with("country_group", () => `${airport.country}`)
 		.otherwise(() => `${airport.city} - ${airport.code}`);
 };
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+function differenceInUtcCalendarDays(target: Date, reference: Date): number {
+	const targetUtc = Date.UTC(
+		target.getUTCFullYear(),
+		target.getUTCMonth(),
+		target.getUTCDate(),
+	);
+	const referenceUtc = Date.UTC(
+		reference.getUTCFullYear(),
+		reference.getUTCMonth(),
+		reference.getUTCDate(),
+	);
+	return Math.round((targetUtc - referenceUtc) / MS_PER_DAY);
+}
+
+function getUtcDateForDisplay(date: Date): Date {
+	return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+}

@@ -181,3 +181,40 @@ export async function updateEventService(
 		);
 	}
 }
+
+export async function deleteEventService(
+	eventDAO: EventDAO,
+	eventId: string,
+	travelId: string,
+): Promise<AppResult<{ success: boolean }>> {
+	const existing = await eventDAO.getEventById(eventId);
+	if (!existing || existing.travelId !== travelId) {
+		return AppResult.failure(
+			eventErrors,
+			"EVENT_NOT_FOUND",
+			"Evento não encontrado",
+			{ eventId },
+		);
+	}
+
+	try {
+		const deleted = await eventDAO.deleteEvent(eventId);
+		if (!deleted) {
+			return AppResult.failure(
+				eventErrors,
+				"EVENT_NOT_FOUND",
+				"Evento não encontrado",
+				{ eventId },
+			);
+		}
+
+		return AppResult.success({ success: true });
+	} catch (error) {
+		console.error("Error deleting event:", error);
+		return AppResult.failure(
+			eventErrors,
+			"INVALID_EVENT_DATA",
+			"Erro ao deletar evento",
+		);
+	}
+}

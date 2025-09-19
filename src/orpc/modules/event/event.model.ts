@@ -30,3 +30,13 @@ export const UpdateEventOutputSchema = z.object({ success: z.boolean() });
 
 export type UpdateEventInput = z.infer<typeof UpdateEventInputSchema>;
 export type UpdateEventOutput = z.infer<typeof UpdateEventOutputSchema>;
+
+export const DeleteEventInputSchema = z.object({
+	travelId: z.string(),
+	id: z.string(),
+});
+
+export const DeleteEventOutputSchema = z.object({ success: z.boolean() });
+
+export type DeleteEventInput = z.infer<typeof DeleteEventInputSchema>;
+export type DeleteEventOutput = z.infer<typeof DeleteEventOutputSchema>;

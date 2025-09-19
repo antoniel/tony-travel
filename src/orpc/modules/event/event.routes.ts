@@ -5,13 +5,16 @@ import * as z from "zod";
 import { createTravelDAO } from "../travel/travel.dao";
 import { createEventDAO } from "./event.dao";
 import {
-  CreateEventInputSchema,
-  CreateEventOutputSchema,
-  UpdateEventInputSchema,
-  UpdateEventOutputSchema,
+	CreateEventInputSchema,
+	CreateEventOutputSchema,
+	DeleteEventInputSchema,
+	DeleteEventOutputSchema,
+	UpdateEventInputSchema,
+	UpdateEventOutputSchema,
 } from "./event.model";
 import {
   createEventService,
+  deleteEventService,
   getEventService,
   getEventsByTravelService,
   updateEventService,
@@ -106,3 +109,25 @@ export const updateEvent = travelMemberProcedure
 
     return result.data;
   });
+
+export const deleteEvent = travelMemberProcedure
+	.input(DeleteEventInputSchema)
+	.output(DeleteEventOutputSchema)
+	.handler(async ({ input, context }) => {
+		const eventDAO = createEventDAO(context.db);
+
+		const result = await deleteEventService(
+			eventDAO,
+			input.id,
+			input.travelId,
+		);
+
+		if (AppResult.isFailure(result)) {
+			throw new ORPCError(result.error.type, {
+				message: result.error.message,
+				data: result.error.data,
+			});
+		}
+
+		return result.data;
+	});

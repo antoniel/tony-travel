@@ -18,7 +18,10 @@ import {
 	GetAccomodationsTool,
 	GetTravelParticipantsTool,
 	ListEventsTool,
+	RequestToCreateAccommodationTool,
 	RequestToCreateEventTool,
+	RequestToDeleteAccommodationTool,
+	RequestToUpdateAccommodationTool,
 } from "./concierge.tools";
 
 /**
@@ -58,6 +61,15 @@ export function createConciergeStream(
 function createConciergeTools(db: DB, tripContext: TripContext) {
 	return {
 		requestToCreateEvent: tool(new RequestToCreateEventTool(db, tripContext)),
+		requestToCreateAccommodation: tool(
+			new RequestToCreateAccommodationTool(db, tripContext),
+		),
+		requestToUpdateAccommodation: tool(
+			new RequestToUpdateAccommodationTool(db, tripContext),
+		),
+		requestToDeleteAccommodation: tool(
+			new RequestToDeleteAccommodationTool(db, tripContext),
+		),
 		listEvents: tool(new ListEventsTool(db, tripContext)),
 		getTravelParticipants: tool(new GetTravelParticipantsTool(db, tripContext)),
 		getAccomodations: tool(new GetAccomodationsTool(db, tripContext)),

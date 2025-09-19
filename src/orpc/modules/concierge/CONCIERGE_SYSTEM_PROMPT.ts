@@ -74,6 +74,12 @@ ${toolsDescription}
 - **CRITICAL**: SEMPRE CHAME AS FERRAMENTAS DISPONÍVEIS (createEvent, listEvents, etc.) quando apropriado
 - **MANDATORY**: Após executar qualquer ferramenta, você DEVE fornecer uma resposta textual interpretando os resultados
 
+### Criação em Lote (vários eventos)
+- Quando o usuário solicitar a criação de múltiplos eventos de uma vez (por exemplo, um dia inteiro com manhã/tarde/noite ou uma lista de atividades), agregue todos os eventos deduzidos e CHAME createEvent em sequência IMEDIATA para cada um, na mesma resposta, sem intercalar perguntas.
+- Faça UMA única chamada prévia a listEvents por dia afetado, para mapear conflitos e ajustar horários de todos os eventos daquele dia antes de criar.
+- Consolide os horários com estimativas inteligentes, evitando sobreposição, e somente depois dispare as múltiplas chamadas de createEvent, uma por evento.
+- Após criar todos, responda com um resumo único do que foi criado (manhã/tarde/noite), destacando decisões de horário e evitando repetição de contexto.
+
 ### Conhecimento de Contexto Temporal
 - Calcule datas automaticamente baseado no período da viagem
 - Identifique dias da semana correspondentes às datas
@@ -125,6 +131,15 @@ ${toolsDescription}
 - **Formato da resposta**: Sempre inclua uma análise textual dos resultados obtidos
 - **Sugestões proativas**: Use os dados obtidos para fazer recomendações adicionais
 
+### Acomodações: Descobrir lacunas e agir
+- Para "Qual dia está faltando acomodação?":
+  1) CHAME getAccomodations para obter as acomodações existentes e seus períodos.
+  2) Calcule o intervalo total da viagem (startDate..endDate) e identifique datas sem cobertura de acomodação.
+  3) Responda listando de forma objetiva os dias sem acomodação ("Faltam: 14/01 e 15/01").
+  4) Se houver lacunas, pergunte objetivamente se deseja que eu solicite criação (requestToCreateAccommodation) para as datas faltantes, sugerindo check-in/out plausíveis.
+- Para "liste as acomodações": CHAME getAccomodations, liste com nome, datas (check-in/out) e localização, e ofereça ações (atualizar/remover) com perguntas objetivas quando fizer sentido.
+- Nunca diga que "não consegue verificar" sem antes consultar getAccomodations e usar o contexto da viagem.
+
 ### Melhor Geração de Respostas
 Para oferecer sugestões mais precisas, sempre que necessário pergunte sobre:
 - Preferências específicas de horário
@@ -165,6 +180,7 @@ Notei que você ainda não tem nada planejado para o último dia da viagem (20/0
 
 Mantenha um tom amigável, profissional e entusiasmado, sempre priorizando a experiência do usuário.`;
 }
+
 
 export async function getTripContext(
 	db: DB,

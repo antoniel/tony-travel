@@ -76,6 +76,141 @@ export class RequestToCreateEventTool implements AppTool {
 	});
 }
 
+export class RequestToCreateAccommodationTool implements AppTool {
+	constructor(
+		readonly db: DB,
+		readonly travelContext: TripContext,
+	) {}
+	description =
+		"Solicitar criação de uma nova acomodação para a viagem atual com todos os detalhes necessários";
+	inputSchema = z.object({
+		name: z
+			.string()
+			.describe("Nome ou título da acomodação (ex: 'Hotel Copacabana Palace')"),
+		type: z
+			.enum(["hotel", "hostel", "airbnb", "resort", "other"])
+			.describe("Tipo da acomodação"),
+		address: z
+			.string()
+			.describe("Endereço completo ou referência principal da acomodação"),
+		startDate: z
+			.string()
+			.describe(
+				"Data de check-in no formato ISO 8601 (ex: '2025-09-18T15:00:00')",
+			),
+		endDate: z
+			.string()
+			.describe(
+				"Data de check-out no formato ISO 8601 (ex: '2025-09-20T11:00:00')",
+			),
+		price: z.number().describe("Custo estimado total em reais para a estadia"),
+	});
+	outputSchema = z.object({
+		success: z.boolean(),
+		accommodation: z
+			.object({
+				accommodationId: z
+					.string()
+					.describe("Identificador da acomodação criada"),
+			})
+			.optional(),
+		message: z
+			.string()
+			.optional()
+			.describe(
+				"Mensagem de confirmação ou erro da ação executada pelo cliente",
+			),
+	});
+}
+
+export class RequestToUpdateAccommodationTool implements AppTool {
+	constructor(
+		readonly db: DB,
+		readonly travelContext: TripContext,
+	) {}
+	description =
+		"Solicitar atualização de uma acomodação existente, permitindo ajustar datas, preço ou detalhes";
+	inputSchema = z.object({
+		accommodationId: z
+			.string()
+			.describe("Identificador da acomodação a ser atualizada"),
+	updates: z
+		.object({
+			name: z.string().optional().describe("Novo nome da acomodação"),
+			type: z
+				.enum(["hotel", "hostel", "airbnb", "resort", "other"])
+				.optional()
+				.describe("Novo tipo da acomodação"),
+			address: z.string().optional().describe("Novo endereço ou referência"),
+			startDate: z
+				.string()
+				.optional()
+				.describe("Nova data de check-in em ISO 8601"),
+			endDate: z
+				.string()
+				.optional()
+				.describe("Nova data de check-out em ISO 8601"),
+			price: z.number().optional().describe("Novo custo estimado em reais"),
+		})
+			.refine(
+				(updates) =>
+					Object.values(updates).some((value) => value !== undefined),
+				{
+					message: "Pelo menos um campo de atualização deve ser informado",
+					path: ["updates"],
+				},
+			),
+	});
+	outputSchema = z.object({
+		success: z.boolean(),
+		accommodation: z
+			.object({
+				accommodationId: z.string(),
+				updatedFields: z
+					.array(z.string())
+					.describe("Lista de campos atualizados pelo cliente"),
+			})
+			.optional(),
+		validationError: z
+			.string()
+			.optional()
+			.describe("Mensagem de erro retornada ao executar a atualização"),
+	});
+}
+
+export class RequestToDeleteAccommodationTool implements AppTool {
+	constructor(
+		readonly db: DB,
+		readonly travelContext: TripContext,
+	) {}
+	description =
+		"Solicitar remoção de uma acomodação cadastrada quando ela não for mais necessária";
+	inputSchema = z.object({
+		accommodationId: z
+			.string()
+			.describe("Identificador da acomodação que deve ser removida"),
+		reason: z
+			.string()
+			.optional()
+			.describe(
+				"Motivo da exclusão (ex: reserva cancelada, alteração de planos)",
+			),
+		confirm: z
+			.boolean()
+			.default(false)
+			.describe("Confirma explicitamente que a acomodação pode ser removida"),
+	});
+	outputSchema = z.object({
+		success: z.boolean(),
+		message: z
+			.string()
+			.optional()
+			.describe(
+				"Mensagem informando o resultado da exclusão realizada pelo cliente",
+			),
+	});
+}
+
 export class ListEventsTool implements AppTool {
 	constructor(
 		readonly db: DB,
