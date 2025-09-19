@@ -404,10 +404,14 @@ export const searchDestinations = os
 export const updateTravel = authProcedure
 	.errors(travelErrors)
 	.input(
-		z.object({
-			travelId: z.string(),
-			updateData: UpdateTravelSchema,
-		}),
+    z.object({
+        travelId: z.string(),
+        // Accepts either timestamps (Date) per schema or ISO strings from clients and coerces to Date
+        updateData: UpdateTravelSchema.extend({
+            startDate: z.union([z.date(), z.string().datetime()]).optional().transform((v) => (typeof v === "string" ? new Date(v) : v as Date)),
+            endDate: z.union([z.date(), z.string().datetime()]).optional().transform((v) => (typeof v === "string" ? new Date(v) : v as Date)),
+        }),
+    }),
 	)
 	.output(TravelSchema)
 	.handler(async ({ input, context }) => {

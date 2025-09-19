@@ -476,6 +476,51 @@ describe("travel service", () => {
 			).rejects.toThrow();
 		});
 
+		it("should currently fail with TRAVEL_DATES_INVALID for the curl payload", async () => {
+			const appCall = createAppCallAuthenticated(db);
+
+			await db.insert(Travel).values({
+				id: "trv_7gdiHVVGT74GL7ML",
+				name: "asdasd",
+				description: null,
+				destination: "Rio de Janeiro",
+				destinationAirports: [],
+				startDate: new Date("2025-09-18T03:00:00.000Z"),
+				endDate: new Date("2025-09-27T03:00:00.000Z"),
+				budget: null,
+				peopleEstimate: null,
+				userId: ALWAYS_USER_TEST.id,
+				createdAt: new Date("2025-09-18T15:04:39.000Z"),
+				updatedAt: new Date("2025-09-18T15:04:39.000Z"),
+				deletedAt: null,
+				deletedBy: null,
+			});
+
+			await db.insert(TravelMember).values({
+				travelId: "trv_7gdiHVVGT74GL7ML",
+				userId: ALWAYS_USER_TEST.id,
+				role: "owner",
+			});
+
+			const updateData = {
+				name: "Rio de janeiro teste",
+				description: null,
+				startDate: "2025-09-18T03:00:00.000Z",
+				endDate: "2025-09-27T03:00:00.000Z",
+				destination: "Rio de Janeiro",
+				destinationAirports: [
+					{ value: "Rio de Janeiro", label: "Rio de Janeiro" },
+				],
+			};
+
+			await expect(
+				appCall(router.travelRoutes.updateTravel, {
+					travelId: "trv_7gdiHVVGT74GL7ML",
+					updateData,
+				}),
+			).rejects.toThrow(/Data de início não pode ser no passado/);
+		});
+
 		it("should reject update for non-existent travel", async () => {
 			const appCall = createAppCallAuthenticated(db);
 

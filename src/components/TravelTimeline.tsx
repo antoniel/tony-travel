@@ -16,6 +16,7 @@ import {
 import { useState } from "react";
 import { EventCreateModal } from "./EventCreateModal";
 import { EventEditModal } from "./EventEditModal";
+import { EventDetailsModal } from "./ui/event-details-modal";
 
 interface TravelTimelineProps {
 	travel: TravelWithRelations;
@@ -75,6 +76,10 @@ export function TravelTimeline({ travel, canWrite }: TravelTimelineProps) {
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [editingEvent, setEditingEvent] = useState<AppEvent | null>(null);
 
+	// Details modal state (same responsive modal used by Calendar)
+	const [selectedEvent, setSelectedEvent] = useState<AppEvent | null>(null);
+	const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+
 	// Removed unused openGeneralAdd helper to satisfy strict TS
 
 	const handleCreateEvent = () => {
@@ -105,6 +110,17 @@ export function TravelTimeline({ travel, canWrite }: TravelTimelineProps) {
 	const handleEditEvent = (event: AppEvent) => {
 		setEditingEvent(event);
 		setIsEditModalOpen(true);
+		setIsDetailsOpen(false);
+	};
+
+	const handleEventClick = (event: AppEvent) => {
+		setSelectedEvent(event);
+		setIsDetailsOpen(true);
+	};
+
+	const handleCloseDetails = () => {
+		setIsDetailsOpen(false);
+		setSelectedEvent(null);
 	};
 
 	const handleSaveEvent = (changes: Partial<AppEvent>) => {
@@ -153,11 +169,21 @@ export function TravelTimeline({ travel, canWrite }: TravelTimelineProps) {
 								setIsModalOpen(true);
 							}}
 							onEditEvent={handleEditEvent}
+							onEventClick={handleEventClick}
 							canWrite={canWrite}
 						/>
 					))}
 				</div>
 			</div>
+
+			{/* Details modal for viewing timeline items (events) */}
+			<EventDetailsModal
+				event={selectedEvent}
+				isOpen={Boolean(selectedEvent) && isDetailsOpen}
+				onClose={handleCloseDetails}
+				onEditEvent={canWrite ? handleEditEvent : undefined}
+				canWrite={canWrite}
+			/>
 
 			{canWrite ? (
 				<>
@@ -192,12 +218,14 @@ function DaySection({
 	items,
 	onAddEvent,
 	onEditEvent,
+	onEventClick,
 	canWrite,
 }: {
 	date: string;
 	items: TimelineItem[];
 	onAddEvent?: (date: string) => void;
 	onEditEvent?: (event: AppEvent) => void;
+	onEventClick?: (event: AppEvent) => void;
 	canWrite?: boolean;
 }) {
 	const formatDayUTC = (d: Date) =>
@@ -242,6 +270,7 @@ function DaySection({
 					index={index}
 					isLast={index === items.length - 1}
 					onEditEvent={onEditEvent}
+					onEventClick={onEventClick}
 					canWrite={canWrite}
 				/>
 			))}
@@ -252,12 +281,14 @@ function DaySection({
 function TimelineItemComponent({
 	item,
 	onEditEvent,
+	onEventClick,
 	canWrite,
 }: {
 	item: TimelineItem;
 	index: number;
 	isLast: boolean;
 	onEditEvent?: (event: AppEvent) => void;
+	onEventClick?: (event: AppEvent) => void;
 	canWrite?: boolean;
 }) {
 	const Icon = item.icon;
@@ -274,7 +305,26 @@ function TimelineItemComponent({
 			</div>
 
 			<div className="flex-1 min-w-0 pt-2">
-				<div className="travel-card rounded-lg p-6 hover:shadow-md transition-all duration-300 group">
+				<div
+					className="travel-card rounded-lg p-6 hover:shadow-md transition-all duration-300 group cursor-pointer"
+					role={item.type === "event" ? "button" : undefined}
+					tabIndex={item.type === "event" ? 0 : -1}
+					onClick={() => {
+						if (item.type === "event" && item.data) {
+							onEventClick?.(item.data as AppEvent);
+						}
+					}}
+					onKeyDown={(e) => {
+						if (
+							item.type === "event" &&
+							item.data &&
+							(e.key === "Enter" || e.key === " ")
+						) {
+							e.preventDefault();
+							onEventClick?.(item.data as AppEvent);
+						}
+					}}
+				>
 					<div className="flex items-start justify-between mb-3">
 						<div>
 							<h3 className="text-lg font-semibold text-foreground mb-1">
@@ -296,7 +346,10 @@ function TimelineItemComponent({
 							{canWrite && item.type === "event" && item.data && (
 								<button
 									type="button"
-									onClick={() => onEditEvent?.(item.data as AppEvent)}
+									onClick={(e) => {
+									e.stopPropagation();
+									onEditEvent?.(item.data as AppEvent);
+								}}
 									className="opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity p-2 rounded-full hover:bg-accent/20 text-muted-foreground hover:text-foreground"
 									title="Editar evento"
 								>
