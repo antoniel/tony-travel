@@ -36,7 +36,6 @@ Preencha e injete sempre que invocar uma persona. Mantenha textos objetivos e vi
 - Fora do escopo: …
 - Artefatos/rotas/módulos afetados: …
 - Restrições do projeto: TanStack Query + oRPC (sem fetch/axios), TypeScript estrito, Biome (tabs e double quotes), DS shadcn/ui sem cores customizadas, Zod, Drizzle, env via T3, Tailwind v4
-- Critérios de aceitação (DoD): `npm run tscheck` zero erros; `bunx --bun run test` verde; invariantes de domínio respeitados; regras de UI e a11y atendidas; invalidações de queries corretas; sem rotas API diretas em `src/routes/`
 - Riscos/assunções: …
 
 ## Prompt de Invocação (formato)
@@ -53,7 +52,6 @@ Output Contract recomendado (todas as personas):
 
 - Plano curto (3–6 passos)
 - Patchs focados (diffs) com mudanças mínimas e explicadas
-- Passos de verificação manual e comandos para rodar (`npm run tscheck`, `bunx --bun run test`, etc.)
 - Limitações, riscos e próximos passos
 
 ## Regras chave por persona (resumo)
@@ -148,7 +146,6 @@ Quando múltiplas personas forem ativadas, cada uma deve produzir um Handoff Not
 ## Commit & PR Guidelines
 
 - Commits: Imperative, concise subject with optional details, mirroring history (e.g., “Add EventDetailsPanel to Calendar: integrate and handle click”). Prefer small, scoped commits.
-- PRs: Include clear description, linked issues, screenshots for UI changes, and a test plan. Ensure `npm run tscheck ` and tests pass; update docs when behavior changes.
 
 ## Security & Configuration
 

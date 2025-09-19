@@ -101,7 +101,7 @@ export async function createEventService(
 			imageMetadata: input.imageMetadata,
 		});
 
-		return AppResult.success({ id: eventId });
+		return AppResult.success({ success: true, eventId });
 	} catch (error) {
 		console.error("Error creating event:", error);
 		return AppResult.failure(

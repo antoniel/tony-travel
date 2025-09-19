@@ -8,21 +8,22 @@ export const CreateEventInputSchema = InsertAppEventSchema.extend({
 });
 
 export const CreateEventOutputSchema = z.object({
-	id: z.string(),
+	success: z.boolean(),
+	eventId: z.string().nullable(),
 });
 export type CreateEventInput = z.infer<typeof CreateEventInputSchema>;
 export type CreateEventOutput = z.infer<typeof CreateEventOutputSchema>;
 
 // Update event (partial) requires travelId for membership check and event id
 export const UpdateEventInputSchema = z.object({
-  travelId: z.string(),
-  id: z.string(),
-  event: InsertAppEventSchema.partial().omit({
-    id: true,
-    createdAt: true,
-    updatedAt: true,
-    travelId: true,
-  }),
+	travelId: z.string(),
+	id: z.string(),
+	event: InsertAppEventSchema.partial().omit({
+		id: true,
+		createdAt: true,
+		updatedAt: true,
+		travelId: true,
+	}),
 });
 
 export const UpdateEventOutputSchema = z.object({ success: z.boolean() });

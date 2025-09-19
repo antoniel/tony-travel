@@ -52,7 +52,6 @@ Protocolo obrigatório:
 5. Integração, testes e revisão:
 
 - Integrar TanStack Query + oRPC e invalidar queries corretamente.
-- Executar `npm run tscheck ` e testes relevantes.
 - Preparar instruções claras de verificação manual.
 
 ## Navigation and UX Analysis Pattern
@@ -216,13 +215,64 @@ Notas:
 - Evitar re-render: memorização prudente, chaves estáveis, seletores de query.
 - Lista grande: virtualização quando necessário.
 - Rede: ajustar `staleTime` e cache; evitar N+1 de queries.
-- Qualidade: `npm run tscheck ` sempre verde; testes de UI onde há lógica relevante.
 
 ## Estrutura, Nomes e Estilo
 
 - TS estrito; imports com `@/*`; seguir Biome (tabs e double quotes).
 - Componentes em PascalCase (`src/components`); UI primitives em kebab-case (`src/components/ui`).
 - Não adicionar comentários redundantes
+
+### **MANDATORY FILE ORGANIZATION: .tsx Dependency Hierarchy**
+
+**CRITICAL RULE**: Components and functions in .tsx files MUST be ordered by dependency hierarchy - ROOT to LEAF pattern.
+
+**MANDATORY Organization Pattern**:
+
+1. **MAIN/EXPORTED component ALWAYS FIRST** - the primary component that gets exported
+2. **ROOT components next** - components that import/use other local functions
+3. **INTERMEDIATE functions** - ordered by their position in the dependency chain
+4. **LEAF functions LAST** - utility functions that don't import other local functions
+
+**Example Structure**:
+
+```tsx
+// ✅ CORRECT: Dependency hierarchy ordering
+export function MessagesPage() {
+  // Main component - always first (exports/imports others)
+  return <MessagesList messages={messages} />
+}
+
+function MessagesList({ messages }: Props) {
+  // Root component - imports/uses leaf functions
+  return messages.map((msg) => formatMessage(msg))
+}
+
+function formatMessage(message: Message) {
+  // Leaf function - doesn't import other local functions
+  return message.content.toUpperCase()
+}
+```
+
+**FORBIDDEN Pattern**:
+
+```tsx
+// ❌ WRONG: Random ordering ignoring dependency hierarchy
+function formatMessage(message: Message) {
+  return message.content.toUpperCase()
+}
+
+export function MessagesPage() {
+  return <MessagesList messages={messages} />
+}
+
+function MessagesList({ messages }: Props) {
+  return messages.map((msg) => formatMessage(msg))
+}
+```
+
+**Anti-Pattern Detection**: If you see comment-based sections (e.g., `// Header Section`, `// Stats Section`), this indicates need for component decomposition with proper hierarchy ordering.
+
+**User Feedback Integration**: "O componente principal é sempre o primeiro na ordem de um arquivo .tsx - se ele usa outras funções no mesmo arquivo eles devem ser ordenados por importação o Primeiro é sempre quem importa todo mundo quem é leaf vai ficando pra baixo - quem é root fica mais acima - sempre"
 
 ## Checklists de Entrega
 
@@ -248,9 +298,14 @@ Acessibilidade
 
 Qualidade
 
-- [ ] `npm run tscheck ` sem erros.
 - [ ] Testes para lógica complexa de UI (quando houver).
 - [ ] Docs curtas de verificação manual no PR.
+
+Estrutura e Organização
+
+- [ ] **Dependency hierarchy ordering**: Main/exported component first, ROOT components next, LEAF functions last.
+- [ ] **Anti-pattern detection**: No comment-based sections requiring component decomposition.
+- [ ] Proper component boundaries and state colocation.
 
 ## Formato de Entrega do Agente
 

@@ -8,18 +8,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **ZERO TOLERANCE RULE**: Do NOT start implementing any code that requires specialist agents. The moment you identify work that falls under specialist domains, IMMEDIATELY delegate without attempting implementation yourself.
 
+**MANDATORY PRE-IMPLEMENTATION CHECK**: Before writing ANY code, ask yourself:
+1. "Does this involve React components, UI logic, or styling?" → DELEGATE to @frontend-specialist
+2. "Does this involve oRPC, databases, or backend logic?" → DELEGATE to @backend-specialist
+3. "Does this modify component behavior or add UI features?" → DELEGATE to @frontend-specialist
+
+**VIOLATION PREVENTION**: If you find yourself about to edit .tsx, .jsx files or add UI logic, STOP IMMEDIATELY and delegate.
+
 **Direct Tasks (Do Yourself)**:
 
-- Reading files and analyzing existing code
+- Reading files and analyzing existing code (READ-ONLY analysis)
 - Simple file searches and basic information gathering
-- Quick one-line fixes or small edits
+- Quick one-line fixes in configuration files ONLY (not .tsx/.jsx)
 - Basic project structure exploration
-- File organization and cleanup
+- File organization and cleanup (non-code files)
 - **Architectural analysis and guidance** - Provide thorough problem analysis and solution architecture even when implementation will be delegated or handled by the user
 - **External documentation research** - When tasks require integration with external libraries/APIs, conduct thorough documentation research before delegation
 - **Documentation management and agent coordination** - Restructuring agent prompts, creating documentation templates, organizational changes to non-code files
 - **Multi-step organizational tasks** - Complex restructuring that involves multiple non-code file modifications, template creation, and process improvements
 - **User preference-driven restructuring** - Implementing organizational changes based on user feedback about preferred structures (e.g., flat vs hierarchical documentation)
+
+**CRITICAL CLARIFICATION**: "Quick one-line fixes" means ONLY configuration files (.json, .md, .env). NEVER edit React components (.tsx, .jsx) or any UI-related files directly.
 
 **Delegated Tasks (Use Specialist Agents)**:
 
@@ -29,6 +38,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Complex multi-step implementations**: Use appropriate specialist based on the domain
 
 **CRITICAL**: Form creation, component modifications, and UI implementations are ALWAYS frontend work requiring delegation.
+
+**ABSOLUTE FRONTEND DELEGATION TRIGGERS**:
+- ANY modification to .tsx or .jsx files
+- ANY addition of React components or hooks
+- ANY UI state management changes
+- ANY component rendering logic updates
+- ANY TypeScript interfaces for UI components
+- ANY loading states, confirmation cards, or UI interactions
+- ANY tool calling UI implementation (confirmation cards, loading states)
+- ANY component architecture changes
+
+**ENFORCEMENT REMINDER**: If the task involves changing how users interact with the interface, it's frontend work - DELEGATE IMMEDIATELY.
 
 ## Project Context
 
@@ -51,14 +72,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **ENFORCEMENT**: After completing any qualifying task, you MUST immediately ask: "Should I offer Self-Improving CLAUDE Reflection for this task?" and proceed with the reflection process if applicable.
 
+**MANDATORY DELEGATION VIOLATION REFLECTION**: If ANY delegation rule was violated during the task, reflection is REQUIRED regardless of task complexity.
+
 **Reflection Process**:
 
 1. **Review Interaction**: Synthesize all feedback provided by the user throughout the entire conversation history for the task
 2. **Identify Active Rules**: List the specific global and workspace CLAUDE.md files active during the task
-3. **Formulate Improvements**: Generate specific, actionable suggestions for improving the content of the relevant active rule files
-4. **Await User Action**: Ask the user if they agree with the proposed improvements and if they'd like to apply them
+3. **Delegation Violation Analysis**: If applicable, specifically analyze what triggered the violation and what warning signs were missed
+4. **Formulate Improvements**: Generate specific, actionable suggestions for improving the content of the relevant active rule files, with special focus on delegation enforcement
+5. **Await User Action**: Ask the user if they agree with the proposed improvements and if they'd like to apply them
 
-**Constraint**: Do not offer reflection if the task was very simple and involved no feedback.
+**Constraint**: Do not offer reflection if the task was very simple and involved no feedback AND no delegation violations occurred.
 
 ## Specialist Agent Invocation (Backend)
 
@@ -106,12 +130,51 @@ What counts as frontend activities (non-exhaustive):
 
 Execution protocol when frontend is requested:
 
-1. Announce invocation: "Invoking @frontend-specialist for frontend tasks".
-2. Hand off frontend design/implementation to `@frontend-specialist`
-3. After completion, resume with the base assistant only for non-frontend follow-ups (e.g., backend integration), preserving the frontend contracts.
-4. If the task qualifies, offer Self-Improving CLAUDE Reflection as usual.
+1. **MANDATORY EARLY DETECTION**: The moment you identify ANY frontend work, IMMEDIATELY announce: "This requires frontend work. Invoking @frontend-specialist for frontend tasks."
+2. **ZERO IMPLEMENTATION RULE**: Do NOT attempt any code changes yourself - hand off immediately to `@frontend-specialist`
+3. **COMPLETE HANDOFF**: Provide full context about the requirements and any architectural analysis, then let the specialist handle ALL implementation
+4. After completion, resume with the base assistant only for non-frontend follow-ups (e.g., backend integration), preserving the frontend contracts.
+5. If the task qualifies, offer Self-Improving CLAUDE Reflection as usual.
+
+**VIOLATION PREVENTION CHECKLIST**:
+- [ ] Did I identify this as frontend work before starting implementation?
+- [ ] Did I delegate immediately without writing any component code?
+- [ ] Am I about to edit a .tsx/.jsx file? → STOP and delegate
+- [ ] Am I adding UI logic or state management? → STOP and delegate
 
 Nota (PT-BR): Sempre que o pedido envolver frontend (UI/UX, componentes React, TanStack Start, design system, formulários, estados de UI), acione obrigatoriamente o `@frontend-specialist` para garantir a implementação correta dos padrões de interface e arquitetura de componentes.
+
+## Delegation Violation Prevention
+
+**CRITICAL ENFORCEMENT PROTOCOL**: To prevent violations of the ZERO TOLERANCE RULE, implement these mandatory safeguards:
+
+### Pre-Implementation Detection Patterns
+
+**RED FLAGS - IMMEDIATE DELEGATION REQUIRED**:
+- Task mentions "component", "UI", "interface", "styling", "form", "modal", "button"
+- User requests changes to how something "looks" or "behaves" in the interface
+- Task involves "loading states", "confirmation cards", "tool calling UI"
+- Any mention of React, JSX, TypeScript interfaces for UI components
+- Changes to user interaction patterns or workflow
+
+### Self-Check Protocol
+
+Before EVERY code modification, ask these questions:
+1. **File Extension Check**: Am I about to modify a .tsx, .jsx, or UI-related file?
+2. **Domain Check**: Does this change affect what users see or how they interact?
+3. **Technology Check**: Does this involve React components, hooks, or UI state?
+
+**IF ANY ANSWER IS YES**: STOP IMMEDIATELY and delegate to the appropriate specialist.
+
+### Violation Recovery Protocol
+
+If you catch yourself implementing specialist work:
+1. **Immediate Stop**: Cease all implementation
+2. **Acknowledge Error**: Explicitly state "I should have delegated this frontend work"
+3. **Delegate Properly**: Invoke the appropriate specialist with full context
+4. **Flag for Reflection**: Mark this interaction for CLAUDE.md improvement
+
+**ACCOUNTABILITY MEASURE**: Every violation of delegation rules must trigger immediate reflection and CLAUDE.md updates to prevent recurrence.
 
 ### Key Configuration Files
 

@@ -6,7 +6,7 @@ import {
 	type UpdateTravelSchema,
 } from "@/lib/db/schema";
 import type { DB } from "@/lib/db/types";
-import type { TravelWithRelations } from "@/lib/types";
+import type { TravelWithRelations, TravelMemberWithUser } from "@/lib/types";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import type * as z from "zod";
 import type { InsertFullTravel } from "./travel.model";
@@ -191,7 +191,7 @@ export class TravelDAO {
 
 	async getTravelMembers(
 		travelId: string,
-	): Promise<(typeof TravelMember.$inferSelect)[]> {
+	): Promise<TravelMemberWithUser[]> {
 		const members = await this.db.query.TravelMember.findMany({
 			where: eq(TravelMember.travelId, travelId),
 			with: {

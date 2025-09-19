@@ -167,7 +167,6 @@ Before completing any test suite:
 - [ ] Exercises behavior via oRPC; uses DB direct access only for seeding/structural validation
 - [ ] Has readable tests with AAA structure and descriptive names
 - [ ] Avoids trivial/duplicate tests and test execution order dependency
-- [ ] Runs successfully with `bunx --bun run test` and `npm run tscheck`
 - [ ] **CRITICAL**: All TODO implementations completed before test finalization
 - [ ] Tests reflect intended behavior, not current broken behavior
 - [ ] No test accommodations for incomplete validation or business logic

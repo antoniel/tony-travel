@@ -35,4 +35,3 @@ export const ConciergeChatResponseSchema = z.object({
 });
 
 export type ConciergeChatResponse = z.infer<typeof ConciergeChatResponseSchema>;
-

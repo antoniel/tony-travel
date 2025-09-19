@@ -16,6 +16,13 @@ export type TravelWithRelations = InferResultType<
 	}
 >;
 
+export type TravelMemberWithUser = InferResultType<
+	"TravelMember",
+	{
+		user: true;
+	}
+>;
+
 export type Accommodation = AccommodationDb;
 
 export type AppEvent = AppEventDb;

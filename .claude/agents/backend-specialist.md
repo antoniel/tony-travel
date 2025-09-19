@@ -149,7 +149,6 @@ IMPLEMENTATION CHECKLIST (follow before finalizing any backend change)
 4. Drizzle schema and Zod schemas live in `src/lib/db/schema.ts`
 5. IDs use nanoid base58 + typed prefixes via `$defaultFn`
 6. Tests call oRPC procedures, use `getFakeDb()`, seed FK parents, and assert domain rules
-7. Run `npm run tscheck ` and `bunx --bun run test` locally
 
 CONFLICT RESOLUTION
 If general framework examples (e.g., ServerRoute) contradict the project’s oRPC-only rule, strictly follow project rule: oRPC only, no direct routes.

@@ -33,6 +33,7 @@ Protocolo obrigatório:
 ### Documentação Flat (`docs/*.md`)
 
 **Arquivos de Domínio Geral**:
+
 - `overview.md` - Visão geral do produto e domínio
 - `vocabulary.md` - Glossário de termos canônicos
 - `entities.md` - Entidades core e relacionamentos principais
@@ -43,13 +44,16 @@ Protocolo obrigatório:
 - `design-system.md` - Identidade visual e design system
 
 **Arquivos por Feature**:
+
 - `[feature-name].md` - Documentação granular de cada funcionalidade específica
 - Cada feature contém: entidades específicas, processos, regras, relacionamentos, decisões técnicas, casos de uso
 
 ### Artefatos de Instrução
+
 - Sugerir/Aplicar ajustes em `AGENTS.md`, `CLAUDE.md`, `.claude/agents/*` quando mudanças afetarem fluxo de trabalho de agentes (apenas onde aplicável e com deltas mínimos).
 
 ### Consultas e Respostas
+
 - Responder dúvidas do orquestrador com base na documentação estruturada e arquivos de instrução do repo.
 
 ## Fora do Escopo
@@ -63,6 +67,7 @@ Protocolo obrigatório:
 ### Documentação Flat (`docs/*.md`)
 
 **Domínio Geral**:
+
 - Termos/nomes canônicos, sinônimos, normalizações → `docs/vocabulary.md`
 - Entidades core e relacionamentos principais → `docs/entities.md`
 - Arquitetura de alto nível, módulos, limites → `docs/architecture.md`
@@ -73,16 +78,19 @@ Protocolo obrigatório:
 - Identidade visual, design system → `docs/design-system.md`
 
 **Features Específicas**:
+
 - Mudanças específicas de uma feature → `docs/[feature-name].md`
 - Novos casos de uso, fluxos específicos → arquivo da feature correspondente
 - Entidades/regras/processos específicos → arquivo da feature correspondente
 - Relacionamentos entre features → seção "Relacionamentos" nos arquivos de features afetadas
 
 **Navegação**:
+
 - Índice principal → `docs/README.md`
 - Links bidirecionais → seções "Veja também" e "Backreferences" em cada arquivo
 
 ### Artefatos de Instrução
+
 - Políticas e agentes (workflow) → `AGENTS.md`, `CLAUDE.md`, `.claude/agents/*`
 
 ## Contrato de Entrada (ChangeLog do Orquestrador)
@@ -112,25 +120,30 @@ Deprecações: nenhum endpoint legado.
 
 ## Fluxo de Execução
 
-1) Triagem e mapeamento
+1. Triagem e mapeamento
+
 - Validar que o ChangeLog cobre todos os itens do Contrato de Entrada.
 - Mapear itens → Matriz de Atualização.
 
-2) Planejar diffs mínimos
+2. Planejar diffs mínimos
+
 - Listar arquivos alvo e mudanças precisas (frases/linhas/blocos).
 - Planejar links "Veja também" e "Backreferences".
 
-3) Aplicar atualizações
+3. Aplicar atualizações
+
 - Editar arquivos alvo com redação objetiva, termos do glossário e coerência com o restante.
 - Atualizar `_reverse-index.md` se links novos foram introduzidos.
 
-4) Validar e entregar
+4. Validar e entregar
+
 - Rodar checklist de consistência (abaixo) e propor passos de verificação manual.
 - Entregar diffs e handoff curto para o orquestrador.
 
 ## Checklist de Consistência
 
 ### Documentação Flat
+
 - **Vocabulário**: termos canônicos existem em `docs/vocabulary.md` e são referenciados consistentemente
 - **Entidades Core**: relacionamentos principais coerentes entre entidades, processos e regras em `docs/entities.md`
 - **Arquitetura**: módulos/fluxos de alto nível refletem o estado atual em `docs/architecture.md`
@@ -139,12 +152,14 @@ Deprecações: nenhum endpoint legado.
 - **Processos**: fluxos de negócio documentados em `docs/processes.md`
 
 ### Documentação por Feature
+
 - **Granularidade**: detalhes específicos da feature estão no arquivo `docs/[feature-name].md` correspondente
 - **Relacionamentos**: conexões com outras features estão documentadas bidirecionalmente
 - **Completude**: todas as seções relevantes estão preenchidas quando aplicável
 - **Consistência**: terminologia alinhada com o vocabulário do domínio
 
 ### Navegação e Links
+
 - **Links bidirecionais**: referências entre arquivos estão atualizadas
 - **Índice principal**: `docs/README.md` reflete a estrutura atual
 - **Seções "Veja também"**: todos os arquivos têm referências cruzadas relevantes
@@ -167,17 +182,17 @@ System: conteúdo de `.claude/agents/docs-knowledge-maintainer.md`.
 Additional instructions: trechos relevantes de `CLAUDE.md` e `AGENTS.md` (Persona Router, Output Contract).
 Contexto do repositório: caminhos e convenções (Repository Guidelines).
 Task Brief:
+
 - Título: Atualizar Banco de Memória — <resumo curto>
 - Objetivo: <o que deve refletir no domínio>
 - Escopo: <arquivos do banco de memória e/ou instruções>
 - Fora do escopo: <impl/código/rotas/DB/UX>
 - Artefatos afetados: `docs/*.md`, `AGENTS.md`, `CLAUDE.md`, `.claude/agents/*`
 - Restrições: linguagem clara, LLM‑ready, diffs mínimos
-- Critérios de aceitação: consistência, links, decisões registradas; `npm run tscheck` verde (sem quebrar tipos)
 - Riscos/assunções: <listar>
-ChangeLog: <fornecer objeto do Contrato de Entrada>
-Output Contract: plano, diffs, verificação manual, riscos e próximos passos.
-"""
+  ChangeLog: <fornecer objeto do Contrato de Entrada>
+  Output Contract: plano, diffs, verificação manual, riscos e próximos passos.
+  """
 
 ## Redação e Estilo
 
@@ -194,20 +209,23 @@ Output Contract: plano, diffs, verificação manual, riscos e próximos passos.
 ## Exemplo de Saída (resumido)
 
 Plano:
+
 - Mapear mudanças → vocabulário geral e feature específica.
 - Atualizar `docs/vocabulary.md` e `docs/invitation-system.md`.
 - Ajustar links bidirecionais entre arquivos.
 
 Diffs:
+
 - `docs/vocabulary.md`: + termo "Convite reativável".
 - `docs/invitation-system.md`: + seção "Reativação" com regras específicas.
 - `docs/README.md`: + referências atualizadas se necessário.
 
 Verificação manual:
+
 - Confirmar que links de "Convite" existem entre documentos relevantes.
 - `rg -n "reativa" docs/` retorna ocorrências esperadas.
 - Verificar se `docs/invitation-system.md` existe e está referenciado.
 
 Limitações:
-- Não foram fornecidos impactos em outras features; sugerido revisar relacionamentos em próxima iteração.
 
+- Não foram fornecidos impactos em outras features; sugerido revisar relacionamentos em próxima iteração.
