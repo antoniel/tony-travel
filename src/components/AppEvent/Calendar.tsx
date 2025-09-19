@@ -1378,6 +1378,31 @@ const AllDayEventsSection = (props: {
 		weekDays,
 	);
 
+	// Track horizontal scroll to keep labels visible when scrolled
+	const [scrollLeft, setScrollLeft] = useState(0);
+
+	useEffect(() => {
+		const viewport = props.allDayScrollAreaRef.current?.querySelector(
+			"[data-radix-scroll-area-viewport]",
+		) as HTMLElement | null;
+		if (!viewport) return;
+
+		let raf = 0;
+		const handleScroll = () => {
+			// rAF to avoid excessive state updates
+			cancelAnimationFrame(raf);
+			raf = requestAnimationFrame(() => setScrollLeft(viewport.scrollLeft));
+		};
+
+		// Initialize and listen
+		setScrollLeft(viewport.scrollLeft);
+		viewport.addEventListener("scroll", handleScroll, { passive: true });
+		return () => {
+			cancelAnimationFrame(raf);
+			viewport.removeEventListener("scroll", handleScroll);
+		};
+	}, [props.allDayScrollAreaRef]);
+
 	return (
 		<div
 			className="absolute top-16 left-20 right-0 bg-muted/20 border-b z-15"
@@ -1412,16 +1437,17 @@ const AllDayEventsSection = (props: {
 							))}
 						</div>
 
-						{/* Accommodation bars */}
-						{accommodationsLayout.map((acc) => (
-							<AccommodationBar
-								key={acc.id}
-								accommodation={acc}
-								dayWidth={dayWidth}
-								weekDays={weekDays}
-								row={acc.row}
-							/>
-						))}
+					{/* Accommodation bars */}
+					{accommodationsLayout.map((acc) => (
+						<AccommodationBar
+							key={acc.id}
+							accommodation={acc}
+							dayWidth={dayWidth}
+							weekDays={weekDays}
+							row={acc.row}
+							scrollLeft={scrollLeft}
+						/>
+					))}
 					</div>
 				</div>
 			</ScrollArea>
@@ -1435,8 +1461,9 @@ const AccommodationBar = (props: {
 	dayWidth: number;
 	weekDays: Date[];
 	row: number;
+	scrollLeft: number;
 }) => {
-	const { accommodation, dayWidth, weekDays, row } = props;
+	const { accommodation, dayWidth, weekDays, row, scrollLeft } = props;
 
 	// Calculate position and width
 	const startDay = weekDays.findIndex((day) => {
@@ -1463,6 +1490,12 @@ const AccommodationBar = (props: {
 	const width = (actualEndDay - actualStartDay + 1) * dayWidth;
 	const left = actualStartDay * dayWidth;
 
+	// Compute how much of the bar is clipped by the viewport on the left
+	const barLeftPx = left + 2; // matches style left offset
+	const barWidthPx = width - 4; // matches style width offset
+	const leftClip = Math.max(0, scrollLeft - barLeftPx);
+	const labelPadLeft = Math.max(0, Math.min(leftClip, barWidthPx - 8));
+
 	const getAccommodationColor = (type: Accommodation["type"]) => {
 		const colors = {
 			hotel: "var(--chart-4)",
@@ -1488,7 +1521,12 @@ const AccommodationBar = (props: {
 			}}
 			title={`${accommodation.name} (${accommodation.type}) - ${new Date(accommodation.startDate).toLocaleDateString("pt-BR", { timeZone: "UTC" })} até ${new Date(accommodation.endDate).toLocaleDateString("pt-BR", { timeZone: "UTC" })}`}
 		>
-			<div className="truncate text-xs">{accommodation.name}</div>
+			<div
+				className="truncate text-xs whitespace-nowrap"
+				style={{ paddingLeft: `${labelPadLeft}px` }}
+			>
+				{accommodation.name}
+			</div>
 		</div>
 	);
 };
