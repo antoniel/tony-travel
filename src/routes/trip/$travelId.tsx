@@ -176,7 +176,6 @@ function TripLayout() {
 		}
 		// Financial tab - hide if user is not logged in (no userMembership info)
 		if (tab.value === "financial") {
-			console.log("travel?.userMembership", travel?.userMembership);
 			return travel?.userMembership !== null;
 		}
 		// All other tabs are visible to all users

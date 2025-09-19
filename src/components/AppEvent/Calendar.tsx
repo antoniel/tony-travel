@@ -788,7 +788,8 @@ const RenderWeekViews = (props: {
 						>
 							{weekDays.map((date, dayIndex) => {
 								const dayEvents = getEventsForDate(props.events, date);
-								const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+								const isWeekend =
+									date.getUTCDay() === 0 || date.getUTCDay() === 6;
 								const disabled = restrictNonTravelDays && !isWithinTravel(date);
 								const selectionForThisDay =
 									isSelecting &&
@@ -1429,7 +1430,7 @@ const AllDayEventsSection = (props: {
 								<div
 									key={date.toISOString()}
 									className={`border-r ${index === weekDays.length - 1 ? "border-r-0" : ""} ${
-										date.getDay() === 0 || date.getDay() === 6
+										date.getUTCDay() === 0 || date.getUTCDay() === 6
 											? "bg-muted/20"
 											: ""
 									}`}
