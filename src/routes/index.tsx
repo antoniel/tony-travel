@@ -8,9 +8,9 @@ export const Route = createFileRoute("/")({
 });
 
 function HomePage() {
-	const listTravels = useQuery(
-		orpc.travelRoutes.listTravels.queryOptions({ input: {} }),
-	);
+    const featured = useQuery(
+        orpc.travelRoutes.featuredTravels.queryOptions({ input: { limit: 3 } }),
+    );
 
-	return <TripSelection predefinedTrips={listTravels.data ?? []} />;
+    return <TripSelection predefinedTrips={featured.data ?? []} />;
 }

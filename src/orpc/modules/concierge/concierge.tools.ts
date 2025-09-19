@@ -8,11 +8,6 @@ import { getEventsByTravelService } from "../event/event.service";
 import { createTravelDAO } from "../travel/travel.dao";
 import type { TripContext } from "./CONCIERGE_SYSTEM_PROMPT";
 
-/**
- * Schema para buscar participantes da viagem
- */
-// export const GetTravelParticipantsToolSchema =
-
 interface AppTool extends Pick<Tool, "description" | "execute"> {
 	db: DB;
 	travelContext: TripContext;
@@ -406,54 +401,3 @@ export class GetAccomodationsTool implements AppTool {
 		}
 	};
 }
-
-/**
- * Schema para buscar viagens do usuário
- */
-export const SearchTravelsToolSchema = z.object({
-	limit: z
-		.number()
-		.default(10)
-		.describe("Número máximo de viagens para retornar"),
-	status: z
-		.enum(["upcoming", "ongoing", "completed", "all"])
-		.default("all")
-		.describe("Filtrar viagens por status"),
-});
-
-export type SearchTravelsToolInput = z.infer<typeof SearchTravelsToolSchema>;
-
-/**
- * Schema para consultar previsão do tempo
- */
-export const GetWeatherForecastToolSchema = z.object({
-	location: z
-		.string()
-		.optional()
-		.describe(
-			"Local para consultar o tempo (se não especificado, usa destino da viagem)",
-		),
-	days: z
-		.number()
-		.max(14)
-		.default(7)
-		.describe("Número de dias de previsão (máximo 14)"),
-});
-
-export type GetWeatherForecastToolInput = z.infer<
-	typeof GetWeatherForecastToolSchema
->;
-
-/**
- * Schema para todas as tools disponíveis do concierge
- */
-export const ConciergeToolsSchema = z.object({
-	createEvent: RequestToCreateEventTool.prototype.inputSchema,
-	listEvents: ListEventsTool.prototype.inputSchema,
-	searchTravels: SearchTravelsToolSchema,
-	getTravelParticipants: GetTravelParticipantsTool.prototype.inputSchema,
-	searchAccommodations: GetAccomodationsTool.prototype.inputSchema,
-	getWeatherForecast: GetWeatherForecastToolSchema,
-});
-
-export type ConciergeToolsInput = z.infer<typeof ConciergeToolsSchema>;

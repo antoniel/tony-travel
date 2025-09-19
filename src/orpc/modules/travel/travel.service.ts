@@ -7,9 +7,11 @@ import type {
 import type { DB } from "@/lib/db/types";
 import { AppResult } from "@/orpc/appResult";
 import type * as z from "zod";
+import type { FlightDAO } from "../flight/flight.dao";
 import type { TravelDAO } from "./travel.dao";
 import { travelErrors } from "./travel.errors";
 import type { InsertFullTravel } from "./travel.model";
+import { FeaturedTravelSchema } from "./travel.model";
 
 export function validateTravelDates(
 	startDate: Date,
@@ -422,6 +424,106 @@ export async function softDeleteTravelService(
 			{
 				travelId,
 				reason: errorMessage,
+			},
+		);
+	}
+}
+
+// Compute and return featured travels according to business rules
+export async function getFeaturedTravelsService(
+	travelDAO: TravelDAO,
+	flightDAO: FlightDAO,
+	userId: string | undefined,
+	limit = 3,
+): Promise<
+	AppResult<z.infer<typeof FeaturedTravelSchema>[], typeof travelErrors>
+> {
+	try {
+		// Fetch a reasonable pool to rank from
+		const baseList = await travelDAO.getAllTravels(50);
+
+		// Enrich with counts and membership
+		const enriched = await Promise.all(
+			baseList.map(async (t) => {
+				const eventsCount = t.events?.length ?? 0;
+				const accommodationsCount = t.accommodations?.length ?? 0;
+				let flightsCount = 0;
+				try {
+					const flights = await flightDAO.getFlightsByTravel(t.id);
+					flightsCount = flights.length;
+				} catch {
+					flightsCount = 0;
+				}
+
+				let userMembership = null as TravelMember | null;
+				if (userId) {
+					try {
+						userMembership = await travelDAO.getTravelMember(t.id, userId);
+					} catch {
+						userMembership = null;
+					}
+				}
+
+				return {
+					// Base travel fields
+					id: t.id,
+					name: t.name,
+					description: t.description ?? null,
+					destination: t.destination,
+					destinationAirports: t.destinationAirports,
+					startDate: t.startDate,
+					endDate: t.endDate,
+					budget: t.budget ?? null,
+					peopleEstimate: t.peopleEstimate ?? null,
+					userId: t.userId,
+					createdAt: t.createdAt,
+					updatedAt: t.updatedAt,
+					deletedAt: t.deletedAt ?? null,
+					deletedBy: t.deletedBy ?? null,
+
+					// Computed
+					eventsCount,
+					accommodationsCount,
+					flightsCount,
+					userMembership,
+				};
+			}),
+		);
+
+		// Filter and rank
+		const userZeroEvent = enriched
+			.filter((t) => (t.eventsCount ?? 0) === 0 && !!t.userMembership)
+			.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+
+		const others = enriched
+			.filter((t) => (t.eventsCount ?? 0) > 0)
+			.sort((a, b) => {
+				const score = (x: typeof a) =>
+					(x.eventsCount ?? 0) * 10 +
+					(x.flightsCount ?? 0) * 3 +
+					(x.accommodationsCount ?? 0) * 2;
+				const diff = score(b) - score(a);
+				if (diff !== 0) return diff;
+				// tiebreaker by recency
+				return b.updatedAt.getTime() - a.updatedAt.getTime();
+			});
+
+		const finalList = [...userZeroEvent, ...others].slice(
+			0,
+			Math.max(1, limit),
+		);
+
+		// Validate against schema to ensure consistency
+		const parsed = FeaturedTravelSchema.array().parse(finalList);
+		return AppResult.success(parsed);
+	} catch (error) {
+		return AppResult.failure(
+			travelErrors,
+			"TRANSACTION_FAILED",
+			"Erro ao buscar viagens em destaque",
+			{
+				operation: "getFeaturedTravels",
+				reason: error instanceof Error ? error.message : String(error),
 			},
 		);
 	}

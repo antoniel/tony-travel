@@ -17,8 +17,14 @@ import { os } from "@orpc/server";
 import * as z from "zod";
 import enhancedAirports from "./enhanced-airports.json";
 import { createTravelDAO } from "./travel.dao";
+import { createFlightDAO } from "../flight/flight.dao";
 import { travelErrors } from "./travel.errors";
-import { type Airport, AirportSchema, InsertFullTravel } from "./travel.model";
+import {
+    type Airport,
+    AirportSchema,
+    InsertFullTravel,
+    FeaturedTravelSchema,
+} from "./travel.model";
 
 type EnhancedAirport = (typeof enhancedAirports)[number];
 
@@ -68,11 +74,12 @@ const expandStateGroupedAirports = (airports: Airport[]): Airport[] => {
 	return expanded;
 };
 import {
-	createTravelService,
-	getTravelMembersService,
-	getTravelService,
-	softDeleteTravelService,
-	updateTravelService,
+    createTravelService,
+    getTravelMembersService,
+    getTravelService,
+    softDeleteTravelService,
+    updateTravelService,
+    getFeaturedTravelsService,
 } from "./travel.service";
 
 export const generatePrompt = os
@@ -310,6 +317,37 @@ export const searchAirports = os
 
 		return sortedAirports.slice(0, limit);
 	});
+
+// Featured travels: ranked by completeness with user's zero-event trips prioritized
+export const featuredTravels = optionalAuthProcedure
+    .errors(travelErrors)
+    .input(
+        z
+            .object({ limit: z.number().int().min(1).max(10).optional().default(3) })
+            .optional(),
+    )
+    .output(z.array(FeaturedTravelSchema))
+    .handler(async ({ input, context }) => {
+        const travelDAO = createTravelDAO(context.db);
+        const flightDAO = createFlightDAO(context.db);
+        const limit = input?.limit ?? 3;
+
+        const result = await getFeaturedTravelsService(
+            travelDAO,
+            flightDAO,
+            context.user?.id,
+            limit,
+        );
+
+        if (AppResult.isFailure(result)) {
+            throw new ORPCError(result.error.type, {
+                message: result.error.message,
+                data: result.error.data,
+            });
+        }
+
+        return result.data;
+    });
 
 export const searchDestinations = os
 	.input(

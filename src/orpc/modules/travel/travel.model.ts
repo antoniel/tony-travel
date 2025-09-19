@@ -1,6 +1,8 @@
 import {
 	InsertAccommodationSchema,
 	InsertAppEventSchema,
+	TravelSchema,
+	TravelMemberSchema,
 	type TravelDestinationAirportOption,
 } from "@/lib/db/schema";
 import * as z from "zod";
@@ -41,3 +43,12 @@ export const AirportSchema = z.object({
 	airportCodes: z.array(z.string()).optional(), // IATA codes for grouped options
 });
 export type Airport = z.infer<typeof AirportSchema>;
+
+// Featured travel output: base Travel + computed fields used for ranking/UI
+export const FeaturedTravelSchema = TravelSchema.extend({
+	eventsCount: z.number().int().nonnegative(),
+	accommodationsCount: z.number().int().nonnegative(),
+	flightsCount: z.number().int().nonnegative(),
+	userMembership: TravelMemberSchema.nullable().optional(),
+});
+export type FeaturedTravel = z.infer<typeof FeaturedTravelSchema>;

@@ -26,14 +26,11 @@ import {
 import { useAirportsSearch } from "@/hooks/useAirportsSearch";
 import { useUser } from "@/hooks/useUser";
 import { signIn } from "@/lib/auth-client";
-import type { InsertAppEvent, Travel } from "@/lib/db/schema";
+import type { InsertAppEvent } from "@/lib/db/schema";
 import type { TravelWithRelations } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { orpc } from "@/orpc/client";
-import type {
-	Airport,
-	InsertFullTravel,
-} from "@/orpc/modules/travel/travel.model";
+import type { Airport, InsertFullTravel, FeaturedTravel } from "@/orpc/modules/travel/travel.model";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { format } from "date-fns";
@@ -54,7 +51,7 @@ import { toast } from "sonner";
 import { match } from "ts-pattern";
 
 interface TripSelectionProps {
-	predefinedTrips: Travel[];
+    predefinedTrips: FeaturedTravel[];
 }
 
 interface TripSearchForm {
@@ -140,9 +137,9 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 	};
 
 
-	const handleSelectPredefinedTrip = (trip: Travel) => {
-		navigate({ to: `/trip/${trip.id}` });
-	};
+    const handleSelectPredefinedTrip = (trip: FeaturedTravel) => {
+        navigate({ to: `/trip/${trip.id}` });
+    };
 
 	const handleGoogleLogin = async () => {
 		try {
@@ -599,9 +596,14 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 													<span className="text-sm">{trip.destination}</span>
 												</div>
 											</div>
-											<Badge variant="secondary">
-												{getDurationInDays(trip.startDate, trip.endDate)} dias
-											</Badge>
+                            <div className="flex flex-col items-end gap-1">
+                                {trip.userMembership ? (
+                                    <Badge variant="outline">Sua viagem</Badge>
+                                ) : null}
+                                <Badge variant="secondary">
+                                    {getDurationInDays(trip.startDate, trip.endDate)} dias
+                                </Badge>
+                            </div>
 										</div>
 									</CardHeader>
 									<CardContent>

@@ -18,7 +18,7 @@ import { client } from "@/orpc/client";
 import type { MyUIMessage } from "@/orpc/modules/concierge/concierge.ai";
 import { useChat } from "@ai-sdk/react";
 import { eventIteratorToStream } from "@orpc/client";
-import { CalendarClock, Plane } from "lucide-react";
+import { CalendarClock, MapPin, Plane } from "lucide-react";
 import { useMemo, useState } from "react";
 
 function InChatHeader({ travelName }: { travelName?: string }) {
@@ -108,6 +108,16 @@ export const ConciergeAgent = ({
 										<p className="text-muted-foreground">
 											"Criar jantar 12/11 das 19:00 às 21:00" ou "Passeio 13/11
 											à tarde".
+										</p>
+									</div>
+									<div className="rounded-md border bg-background p-3 text-sm">
+										<div className="mb-1 flex items-center gap-2 font-medium">
+											<MapPin className="h-4 w-4 text-muted-foreground" />
+											Adicione Atividades
+										</div>
+										<p className="text-muted-foreground">
+											"Adicione atividade leve para começar a viagem" ou
+											"Adicione no primeiro dia aclimatação".
 										</p>
 									</div>
 								</div>
