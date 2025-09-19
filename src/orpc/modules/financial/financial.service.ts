@@ -46,15 +46,19 @@ export async function validateFinancialAccess(
  */
 export function transformToExpenseItems(
 	financialData: TravelFinancialData,
+	participantsMultiplier: number,
 ): ExpenseItem[] {
+	const multiplier = Math.max(participantsMultiplier, 1);
 	const expenseItems: ExpenseItem[] = [];
 
 	// Add flight expenses (passagens)
 	for (const flight of financialData.flights) {
+		const flightParticipants = Math.max(flight.participantCount ?? 0, 0);
+		const flightMultiplier = flightParticipants > 0 ? flightParticipants : multiplier;
 		expenseItems.push({
 			id: flight.id,
 			name: flight.airline,
-			cost: flight.cost,
+			cost: (flight.cost ?? 0) * flightMultiplier,
 			category: "passagens",
 		});
 	}
@@ -78,7 +82,7 @@ export function transformToExpenseItems(
 		expenseItems.push({
 			id: event.id,
 			name: event.name,
-			cost: effectiveCost,
+			cost: effectiveCost * multiplier,
 			category: "atracoes",
 			parentId: event.parentEventId,
 		});
@@ -272,8 +276,15 @@ export async function getFinancialSummaryService(
 			);
 		}
 
-		// Transform data into expense items
-		const rawExpenseItems = transformToExpenseItems(financialData);
+		const participantsCount = financialData.participantsCount ?? 0;
+		// All costs are shared equally until we introduce cost-level granularity.
+		const effectiveParticipants = Math.max(participantsCount, 1);
+
+		// Transform data into expense items already scaled for the group
+		const rawExpenseItems = transformToExpenseItems(
+			financialData,
+			effectiveParticipants,
+		);
 
 		// Calculate hierarchical expenses (for parent/child events)
 		const expenseItems = calculateHierarchicalExpenses(rawExpenseItems);
@@ -287,24 +298,43 @@ export async function getFinancialSummaryService(
 		// Group by category with percentages
 		const categories = groupExpensesByCategory(expenseItems, totalExpenses);
 
-		// Calculate budget utilization
-		let remainingBudget: number | null = null;
-		let budgetUtilization: number | null = null;
+		const perPersonExpenses = totalExpenses / effectiveParticipants;
+		const budgetPerPerson = financialData.budget;
+		const groupBudget =
+			budgetPerPerson !== null
+				? budgetPerPerson * effectiveParticipants
+				: null;
 
-		if (financialData.budget !== null) {
-			remainingBudget = financialData.budget - totalExpenses;
-			budgetUtilization =
-				financialData.budget > 0
-					? (totalExpenses / financialData.budget) * 100
-					: 0;
-		}
+		const perPersonRemaining =
+			budgetPerPerson !== null ? budgetPerPerson - perPersonExpenses : null;
+		const groupRemaining =
+			groupBudget !== null ? groupBudget - totalExpenses : null;
+
+		const perPersonUtilization =
+			budgetPerPerson !== null && budgetPerPerson > 0
+				? (perPersonExpenses / budgetPerPerson) * 100
+				: null;
+		const groupUtilization =
+			groupBudget !== null && groupBudget > 0
+				? (totalExpenses / groupBudget) * 100
+				: null;
 
 		const summary: FinancialSummary = {
 			travelId,
-			budget: financialData.budget,
-			totalExpenses,
-			remainingBudget,
-			budgetUtilization,
+			participantsCount,
+			budgetPerPerson,
+			perPerson: {
+				budget: budgetPerPerson,
+				totalExpenses: perPersonExpenses,
+				remainingBudget: perPersonRemaining,
+				budgetUtilization: perPersonUtilization,
+			},
+			group: {
+				budget: groupBudget,
+				totalExpenses,
+				remainingBudget: groupRemaining,
+				budgetUtilization: groupUtilization,
+			},
 			categories,
 		};
 

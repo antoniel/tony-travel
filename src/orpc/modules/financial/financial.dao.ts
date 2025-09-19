@@ -1,6 +1,13 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import type { DB } from "@/lib/db/types";
-import { Accommodation, AppEvent, Flight, Travel } from "@/lib/db/schema";
+import {
+	Accommodation,
+	AppEvent,
+	Flight,
+	FlightParticipant,
+	Travel,
+	TravelMember,
+} from "@/lib/db/schema";
 import type {
 	TravelFinancialData,
 	UpdateTravelBudgetInput,
@@ -29,6 +36,11 @@ export class FinancialDao {
 			return null;
 		}
 
+		const [{ value: participantsCount }] = await this.db
+			.select({ value: sql<number>`cast(count(*) as integer)` })
+			.from(TravelMember)
+			.where(eq(TravelMember.travelId, travelId));
+
 		// Get accommodations
 		const accommodations = await this.db
 			.select({
@@ -46,9 +58,15 @@ export class FinancialDao {
 				originAirport: Flight.originAirport,
 				destinationAirport: Flight.destinationAirport,
 				cost: Flight.cost,
+				participantCount: sql<number>`cast(count(${FlightParticipant.id}) as integer)`,
 			})
 			.from(Flight)
-			.where(eq(Flight.travelId, travelId));
+			.leftJoin(
+				FlightParticipant,
+				eq(FlightParticipant.flightId, Flight.id),
+			)
+			.where(eq(Flight.travelId, travelId))
+			.groupBy(Flight.id);
 
 		// Get events
 		const events = await this.db
@@ -65,6 +83,7 @@ export class FinancialDao {
 		return {
 			id: travel.id,
 			budget: travel.budget,
+			participantsCount: participantsCount ?? 0,
 			accommodations: accommodations.map((acc) => ({
 				id: acc.id,
 				name: acc.name,
@@ -74,6 +93,7 @@ export class FinancialDao {
 				id: flight.id,
 				airline: `${flight.originAirport} → ${flight.destinationAirport}`,
 				cost: flight.cost ?? 0,
+				participantCount: flight.participantCount ?? 0,
 			})),
 			events: events.map((event) => ({
 				id: event.id,

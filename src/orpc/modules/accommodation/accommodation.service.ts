@@ -39,6 +39,20 @@ export function validateAccommodationDates(
 		);
 	}
 
+	if (endDate > travelEndDate) {
+		return AppResult.failure(
+			accommodationErrors,
+			"ACCOMMODATION_DATES_INVALID",
+			"Check-out não pode ser posterior ao fim da viagem",
+			{
+				startDate: startDate.toISOString(),
+				endDate: endDate.toISOString(),
+				travelStartDate: travelStartDate.toISOString(),
+				travelEndDate: travelEndDate.toISOString(),
+			},
+		);
+	}
+
 	return AppResult.success(true);
 }
 

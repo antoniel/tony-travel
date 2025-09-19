@@ -13,8 +13,8 @@ import type { DB } from "@/lib/db/types";
 import type { AppOrpcContext } from "@/orpc/procedure";
 import { drizzle } from "drizzle-orm/libsql";
 import { migrate } from "drizzle-orm/libsql/migrator";
-import path from "node:path";
 import fs from "node:fs";
+import path from "node:path";
 import * as schema from "../lib/db/schema";
 
 export const ALWAYS_USER_TEST: schema.User = {
@@ -117,7 +117,7 @@ export const createAppCallAuthenticated =
 export const AUTH_TEST_HEADERS = new Headers();
 AUTH_TEST_HEADERS.set("Authorization", "Bearer test-token");
 
-	export const testStub = {
+export const testStub = {
 	accommodation: (accommodation?: Partial<schema.Accommodation>) => {
 		const zAccomodation = zocker(schema.AccommodationSchema);
 		return { ...zAccomodation.generate(), ...accommodation };
@@ -126,13 +126,46 @@ AUTH_TEST_HEADERS.set("Authorization", "Bearer test-token");
 		// Generate a base travel and ensure optional FK fields are safe
 		const zTravel = (): schema.Travel => {
 			const generated = zocker(schema.TravelSchema).generate();
+			const normalizeNumber = (value: unknown) => {
+				if (value === null || value === undefined) {
+					return null;
+				}
+				if (typeof value === "number") {
+					return value;
+				}
+				if (typeof value === "bigint") {
+					return Number(value);
+				}
+				const parsed = Number(value);
+				return Number.isNaN(parsed) ? null : parsed;
+			};
+			const normalizeDate = (value: unknown, fallback: Date) => {
+				if (value instanceof Date) {
+					return value;
+				}
+				const parsed = new Date((value as string) ?? fallback);
+				return Number.isNaN(parsed.getTime()) ? fallback : parsed;
+			};
+			const normalizedStart = normalizeDate(generated.startDate, new Date());
+			const normalizedEnd = normalizeDate(generated.endDate, normalizedStart);
 			return {
 				...generated,
 				userId: ALWAYS_USER_TEST.id,
 				// Ensure optional FKs don't violate constraints in inserts
 				deletedAt: null,
 				deletedBy: null,
-				destinationAirports: generated.destinationAirports ?? [],
+				destinationAirports: Array.isArray(generated.destinationAirports)
+					? generated.destinationAirports.map((airport) => ({
+							value: String((airport as { value?: unknown })?.value ?? "GIG"),
+							label: String(
+								(airport as { label?: unknown })?.label ?? "Default",
+							),
+						}))
+					: [],
+				peopleEstimate: normalizeNumber(generated.peopleEstimate),
+				budget: normalizeNumber(generated.budget),
+				startDate: normalizedStart,
+				endDate: normalizedEnd,
 			};
 		};
 		return { ...zTravel(), ...travel };

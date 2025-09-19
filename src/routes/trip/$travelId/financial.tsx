@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
 	formatCurrencyBRL,
 	formatNumberPtBR,
@@ -50,6 +51,8 @@ const BudgetUpdateSchema = z.object({
 
 type BudgetUpdateFormData = z.infer<typeof BudgetUpdateSchema>;
 
+type BudgetViewMode = "perPerson" | "group";
+
 function BudgetSection({
 	financialData,
 	canWrite,
@@ -62,12 +65,12 @@ function BudgetSection({
 	isUpdating: boolean;
 }) {
 	const [isEditing, setIsEditing] = useState(false);
-	const budgetUtilization = financialData.budgetUtilization || 0;
+	const [viewMode, setViewMode] = useState<BudgetViewMode>("perPerson");
 
 	const form = useForm<BudgetUpdateFormData>({
 		resolver: zodResolver(BudgetUpdateSchema),
 		defaultValues: {
-			budget: financialData.budget || 0,
+			budget: financialData.budgetPerPerson ?? 0,
 		},
 	});
 
@@ -76,7 +79,10 @@ function BudgetSection({
 		setIsEditing(false);
 	};
 
-	// currency formatting handled by shared util when needed
+	const handleModeChange = (value: string) => {
+		if (!value) return;
+		setViewMode(value as BudgetViewMode);
+	};
 
 	const getUtilizationColor = (percentage: number) => {
 		if (percentage <= 50) return "bg-green-500";
@@ -90,12 +96,31 @@ function BudgetSection({
 		return { text: "Limite", color: "text-red-600" };
 	};
 
+	const currentSummary =
+		viewMode === "perPerson" ? financialData.perPerson : financialData.group;
+	const hasBudget = currentSummary.budget !== null && currentSummary.budget > 0;
+	const budgetUtilization = hasBudget
+		? (currentSummary.budgetUtilization ?? 0)
+		: 0;
 	const status = getUtilizationStatus(budgetUtilization);
+
+	const participantsLabel =
+		financialData.participantsCount === 0
+			? "Nenhum viajante cadastrado"
+			: financialData.participantsCount === 1
+				? "1 viajante"
+				: `${financialData.participantsCount} viajantes`;
+	const baseBudgetLabel =
+		financialData.budgetPerPerson !== null
+			? `${formatCurrencyBRL(financialData.budgetPerPerson)} por pessoa`
+			: null;
+	const modeLabel =
+		viewMode === "perPerson" ? "Modo por pessoa" : "Modo por grupo";
 
 	return (
 		<Card className="border-2 border-primary/10 bg-gradient-to-br from-primary/5 to-primary/10">
 			<CardHeader>
-				<div className="flex items-center justify-between">
+				<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 					<div className="flex items-center gap-3">
 						<div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
 							<Wallet className="w-6 h-6 text-primary" />
@@ -107,17 +132,41 @@ function BudgetSection({
 							</p>
 						</div>
 					</div>
-					{canWrite && !isEditing && (
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={() => setIsEditing(true)}
-							className="gap-2"
-						>
-							<Calculator className="w-4 h-4" />
-							Editar Orçamento
-						</Button>
-					)}
+					<div className="flex flex-col items-stretch gap-2 sm:items-end">
+						<div className="flex items-center gap-2 self-end text-xs text-muted-foreground">
+							<ToggleGroup
+								type="single"
+								value={viewMode}
+								onValueChange={handleModeChange}
+								variant="outline"
+								size="sm"
+							>
+								<ToggleGroupItem
+									value="perPerson"
+									aria-label="Visualizar por pessoa"
+								>
+									Por pessoa
+								</ToggleGroupItem>
+								<ToggleGroupItem
+									value="group"
+									aria-label="Visualizar por grupo"
+								>
+									Por grupo
+								</ToggleGroupItem>
+							</ToggleGroup>
+						</div>
+						{canWrite && !isEditing && (
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={() => setIsEditing(true)}
+								className="gap-2 self-end"
+							>
+								<Calculator className="w-4 h-4" />
+								Editar Orçamento
+							</Button>
+						)}
+					</div>
 				</div>
 			</CardHeader>
 			<CardContent className="space-y-6">
@@ -129,7 +178,7 @@ function BudgetSection({
 								name="budget"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>Orçamento Total</FormLabel>
+										<FormLabel>Orçamento por pessoa</FormLabel>
 										<FormControl>
 											<div className="relative">
 												<span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -155,13 +204,14 @@ function BudgetSection({
 											</div>
 										</FormControl>
 										<FormDescription>
-											Defina o orçamento total disponível para esta viagem
+											Defina o orçamento base individual para distribuir entre
+											os participantes
 										</FormDescription>
 										<FormMessage />
 									</FormItem>
 								)}
 							/>
-							<div className="flex gap-2 justify-end">
+							<div className="flex justify-end gap-2">
 								<Button
 									type="button"
 									variant="outline"
@@ -178,10 +228,10 @@ function BudgetSection({
 					</Form>
 				) : (
 					<div className="space-y-4">
-						<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+						<div className="grid grid-cols-1 gap-4 md:grid-cols-3">
 							<div className="text-center p-4 bg-card rounded-lg border">
 								<div className="text-2xl font-bold text-primary">
-									{formatCurrencyBRL(financialData.budget || 0)}
+									{formatCurrencyBRL(currentSummary.budget ?? 0)}
 								</div>
 								<div className="text-sm text-muted-foreground">
 									Orçamento Total
@@ -189,19 +239,19 @@ function BudgetSection({
 							</div>
 							<div className="text-center p-4 bg-card rounded-lg border">
 								<div className="text-2xl font-bold">
-									{formatCurrencyBRL(financialData.totalExpenses)}
+									{formatCurrencyBRL(currentSummary.totalExpenses)}
 								</div>
 								<div className="text-sm text-muted-foreground">Gasto Atual</div>
 							</div>
 							<div className="text-center p-4 bg-card rounded-lg border">
 								<div className="text-2xl font-bold">
-									{formatCurrencyBRL(financialData.remainingBudget || 0)}
+									{formatCurrencyBRL(currentSummary.remainingBudget ?? 0)}
 								</div>
 								<div className="text-sm text-muted-foreground">Restante</div>
 							</div>
 						</div>
 
-						{financialData.budget && financialData.budget > 0 && (
+						{hasBudget && (
 							<div className="space-y-3">
 								<div className="flex items-center justify-between">
 									<span className="text-sm font-medium">
@@ -226,6 +276,18 @@ function BudgetSection({
 								/>
 							</div>
 						)}
+
+						<div className="flex flex-col gap-1 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+							<span>{participantsLabel}</span>
+							<div className="flex flex-col items-start gap-1 text-foreground sm:flex-row sm:items-center sm:gap-2">
+								<span className="font-medium">{modeLabel}</span>
+								{baseBudgetLabel && (
+									<span className="text-xs text-muted-foreground sm:text-right">
+										Base: {baseBudgetLabel}
+									</span>
+								)}
+							</div>
+						</div>
 					</div>
 				)}
 			</CardContent>
@@ -304,9 +366,20 @@ function ExpenseBreakdown({
 				<BarChart3 className="w-6 h-6 text-primary" />
 				<div>
 					<h2 className="text-xl font-semibold">Resumo de Gastos</h2>
-					<p className="text-sm text-muted-foreground">
-						Breakdown detalhado por categoria
-					</p>
+					<div className="space-y-1">
+						<p className="text-sm text-muted-foreground">
+							Breakdown detalhado por categoria
+						</p>
+						<p className="text-xs text-muted-foreground">
+							Valores consideram rateio igual entre{" "}
+							{financialData.participantsCount === 0
+								? "os participantes cadastrados"
+								: financialData.participantsCount === 1
+									? "o viajante desta trip"
+									: `${financialData.participantsCount} viajantes`}
+							.
+						</p>
+					</div>
 				</div>
 			</div>
 
@@ -403,6 +476,15 @@ function AttractionsTree({
 					<h2 className="text-xl font-semibold">Detalhamento de Atrações</h2>
 					<p className="text-sm text-muted-foreground">
 						Custos organizados por atividade principal
+					</p>
+					<p className="text-xs text-muted-foreground">
+						Valores rateados igualmente entre{" "}
+						{financialData.participantsCount === 0
+							? "os participantes cadastrados"
+							: financialData.participantsCount === 1
+								? "o viajante desta trip"
+								: `${financialData.participantsCount} viajantes`}
+						.
 					</p>
 				</div>
 			</div>

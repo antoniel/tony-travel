@@ -11,6 +11,13 @@ export const GetFinancialSummarySchema = z.object({
 });
 
 // Output DTOs
+export const FinancialModeSummarySchema = z.object({
+	budget: z.number().nullable(),
+	totalExpenses: z.number(),
+	remainingBudget: z.number().nullable(),
+	budgetUtilization: z.number().nullable(),
+});
+
 export const ExpenseCategorySchema = z.object({
 	category: z.enum(["passagens", "acomodacoes", "atracoes"]),
 	total: z.number(),
@@ -27,10 +34,10 @@ export const ExpenseCategorySchema = z.object({
 
 export const FinancialSummarySchema = z.object({
 	travelId: z.string(),
-	budget: z.number().nullable(),
-	totalExpenses: z.number(),
-	remainingBudget: z.number().nullable(),
-	budgetUtilization: z.number().nullable(),
+	participantsCount: z.number().int().nonnegative(),
+	budgetPerPerson: z.number().nullable(),
+	perPerson: FinancialModeSummarySchema,
+	group: FinancialModeSummarySchema,
 	categories: z.array(ExpenseCategorySchema),
 });
 
@@ -40,6 +47,7 @@ export type GetFinancialSummaryInput = z.infer<
 	typeof GetFinancialSummarySchema
 >;
 export type ExpenseCategory = z.infer<typeof ExpenseCategorySchema>;
+export type FinancialModeSummary = z.infer<typeof FinancialModeSummarySchema>;
 export type FinancialSummary = z.infer<typeof FinancialSummarySchema>;
 
 // Internal DAO types
@@ -54,6 +62,7 @@ export interface ExpenseItem {
 export interface TravelFinancialData {
 	id: string;
 	budget: number | null;
+	participantsCount: number;
 	accommodations: Array<{
 		id: string;
 		name: string;
@@ -63,6 +72,7 @@ export interface TravelFinancialData {
 		id: string;
 		airline: string; // formatted as "origin → destination"
 		cost: number;
+		participantCount: number;
 	}>;
 	events: Array<{
 		id: string;

@@ -17,16 +17,14 @@ describe("event routes - createEvent", () => {
 		db = await getFakeDb();
 	});
 
-	const insertTravelWithMember = async (
-		travelDates: { startDate: Date; endDate: Date },
-	) => {
+	const insertTravelWithMember = async (travelDates: {
+		startDate: Date;
+		endDate: Date;
+	}) => {
 		const travelStub = testStub.travel(travelDates);
-		const [travel] = await db
-			.insert(Travel)
-			.values(travelStub)
-			.returning({
-				id: Travel.id,
-			});
+		const [travel] = await db.insert(Travel).values(travelStub).returning({
+			id: Travel.id,
+		});
 
 		await db.insert(TravelMember).values(
 			testStub.travelMember({
@@ -60,12 +58,12 @@ describe("event routes - createEvent", () => {
 			location: "Downtown",
 		});
 
-		expect(result.id).toBeDefined();
+		expect(result.eventId).toBeDefined();
 
 		const storedEvent = await db.query.AppEvent.findFirst({
 			where: and(
 				eq(AppEvent.travelId, travel.id),
-				eq(AppEvent.id, result.id),
+				eq(AppEvent.id, result.eventId ?? ""),
 			),
 		});
 
@@ -84,15 +82,15 @@ describe("event routes - createEvent", () => {
 
 		const appCall = createAppCallAuthenticated(db);
 
-	await expect(
-		appCall(router.eventRoutes.createEvent, {
-			title: "Breakfast",
-			startDate: new Date("2030-02-09T08:00:00.000Z"),
-			endDate: new Date("2030-02-09T09:00:00.000Z"),
-			travelId: travel.id,
-			type: "food",
-		}),
-	).rejects.toThrow();
+		await expect(
+			appCall(router.eventRoutes.createEvent, {
+				title: "Breakfast",
+				startDate: new Date("2030-02-09T08:00:00.000Z"),
+				endDate: new Date("2030-02-09T09:00:00.000Z"),
+				travelId: travel.id,
+				type: "food",
+			}),
+		).rejects.toThrow();
 	});
 
 	it("rejects event ending after the travel end date", async () => {
@@ -105,15 +103,15 @@ describe("event routes - createEvent", () => {
 
 		const appCall = createAppCallAuthenticated(db);
 
-	await expect(
-		appCall(router.eventRoutes.createEvent, {
-			title: "Closing dinner",
-			startDate: new Date("2030-03-05T20:00:00.000Z"),
-			endDate: new Date("2030-03-06T21:00:00.000Z"),
-			travelId: travel.id,
-			type: "food",
-		}),
-	).rejects.toThrow();
+		await expect(
+			appCall(router.eventRoutes.createEvent, {
+				title: "Closing dinner",
+				startDate: new Date("2030-03-05T20:00:00.000Z"),
+				endDate: new Date("2030-03-06T21:00:00.000Z"),
+				travelId: travel.id,
+				type: "food",
+			}),
+		).rejects.toThrow();
 	});
 
 	it("allows event starting exactly at travel start date", async () => {
@@ -136,11 +134,11 @@ describe("event routes - createEvent", () => {
 			type: "activity",
 		});
 
-		expect(result.id).toBeDefined();
+		expect(result.eventId).toBeDefined();
 		const saved = await db.query.AppEvent.findFirst({
 			where: and(
 				eq(AppEvent.travelId, travel.id),
-				eq(AppEvent.id, result.id),
+				eq(AppEvent.id, result.eventId ?? ""),
 			),
 		});
 		expect(saved?.startDate.toISOString()).toBe(eventStart.toISOString());
@@ -167,11 +165,11 @@ describe("event routes - createEvent", () => {
 			type: "activity",
 		});
 
-		expect(result.id).toBeDefined();
+		expect(result.eventId).toBeDefined();
 		const saved = await db.query.AppEvent.findFirst({
 			where: and(
 				eq(AppEvent.travelId, travel.id),
-				eq(AppEvent.id, result.id),
+				eq(AppEvent.id, result.eventId ?? ""),
 			),
 		});
 		expect(saved?.startDate.toISOString()).toBe(eventStart.toISOString());
