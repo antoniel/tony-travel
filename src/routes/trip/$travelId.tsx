@@ -162,6 +162,10 @@ function TripLayout() {
 	}, []);
 
 	const visibleTabs = tabRoutes.filter((tab) => {
+		// Concierge tab - only for members/owners
+		if (tab.value === "concierge") {
+			return !!travel?.userMembership;
+		}
 		// Members tab - only show if user is a member
 		if (tab.value === "members") {
 			return !!travel?.userMembership;
