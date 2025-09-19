@@ -130,35 +130,17 @@ export function Messages({
 								);
 
 							case "tool-requestToCreateEvent":
-								// Properly typed tool call for createEvent
 								if (part.state === "input-available") {
-									try {
-										const eventData = part.input;
-										return (
-											<EventConfirmationCard
-												key={`${message.id}-${i}`}
-												eventData={eventData}
-												travelId={travelId}
-												addToolResult={addToolResult}
-												toolCallId={part.toolCallId}
-											/>
-										);
-									} catch (error) {
-										console.error(
-											"Error parsing requestToCreateEvent tool call:",
-											error,
-										);
-										return (
-											<div
-												key={`${message.id}-${i}`}
-												className="p-4 border border-destructive rounded-lg"
-											>
-												<p className="text-destructive">
-													Erro ao processar sugestão de evento
-												</p>
-											</div>
-										);
-									}
+									const eventData = part.input;
+									return (
+										<EventConfirmationCard
+											key={`${message.id}-${i}`}
+											eventData={eventData}
+											travelId={travelId}
+											addToolResult={addToolResult}
+											toolCallId={part.toolCallId}
+										/>
+									);
 								}
 								return null;
 
@@ -178,33 +160,14 @@ export function Messages({
 								}
 
 								if (part.state === "output-available") {
-									try {
-										const eventsData = part.output;
+									const eventsData = part.output;
 
-										return (
-											<EventsListDisplay
-												key={`${message.id}-${i}`}
-												eventsData={eventsData}
-												addToolResult={addToolResult}
-												toolCallId={part.toolCallId}
-											/>
-										);
-									} catch (error) {
-										console.error(
-											"Error parsing listEvents tool result:",
-											error,
-										);
-										return (
-											<div
-												key={`${message.id}-${i}`}
-												className="p-4 border border-destructive rounded-lg"
-											>
-												<p className="text-destructive">
-													Erro ao processar lista de eventos
-												</p>
-											</div>
-										);
-									}
+									return (
+										<EventsListDisplay
+											key={`${message.id}-${i}`}
+											eventsData={eventsData}
+										/>
+									);
 								}
 
 								return null;
@@ -501,49 +464,9 @@ function EventConfirmationCard({
 
 interface EventsListDisplayProps {
 	eventsData: InferUITools<MyConciergeTools>["listEvents"]["output"];
-
-	addToolResult: AddToolResultType;
-	toolCallId: string;
 }
 
-function EventsListDisplay({
-	eventsData,
-	addToolResult,
-	toolCallId,
-}: EventsListDisplayProps) {
-	const [isProcessed, setIsProcessed] = useState(false);
-
-	React.useEffect(() => {
-		if (!isProcessed) {
-			// Automatically mark as processed since this is just a display
-			if (eventsData.success) {
-				addToolResult({
-					tool: "listEvents",
-					toolCallId,
-					output: {
-						success: eventsData.success,
-						events: eventsData.events,
-						count: eventsData.count,
-						message: eventsData.message,
-					},
-				});
-				return;
-			}
-
-			setIsProcessed(true);
-			addToolResult({
-				tool: "listEvents",
-				toolCallId,
-				output: {
-					success: false,
-					error: eventsData.message ?? "",
-					events: [],
-					message: eventsData.message,
-				},
-			});
-		}
-	}, [addToolResult, toolCallId, eventsData, isProcessed]);
-
+function EventsListDisplay({ eventsData }: EventsListDisplayProps) {
 	const formatDate = (dateStr: string) => {
 		const date = new Date(dateStr);
 		return date.toLocaleDateString("pt-BR", {
