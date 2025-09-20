@@ -1,4 +1,3 @@
-import { FlightSchema, InsertFlightSchema } from "@/lib/db/schema";
 import { AppResult } from "@/orpc/appResult";
 import { requireAuth } from "@/orpc/middleware/auth-middleware";
 import {
@@ -15,6 +14,8 @@ import {
 	CreateFlightWithParticipantsSchema,
 	DuplicateFlightResultSchema,
 	FlightGroupSchema,
+	FlightWithParticipantsSchema,
+	UpdateFlightWithParticipantsSchema,
 } from "./flight.model";
 import {
 	addFlightParticipantService,
@@ -80,21 +81,7 @@ export const getFlightsByTravel = baseProcedure
 export const getFlight = baseProcedure
 	.errors(flightErrors)
 	.input(z.object({ id: z.string() }))
-	.output(
-		FlightSchema.extend({
-			participants: z.array(
-				z.object({
-					id: z.string(),
-					user: z.object({
-						id: z.string(),
-						name: z.string(),
-						email: z.string(),
-						image: z.string().nullable().optional(),
-					}),
-				}),
-			),
-		}).nullable(),
-	)
+	.output(FlightWithParticipantsSchema.nullable())
 	.handler(async ({ input, context }) => {
 		const flightDAO = createFlightDAO(context.db);
 
@@ -114,17 +101,12 @@ export const getFlight = baseProcedure
 export const updateFlight = authProcedure
 	.use(requireAuth)
 	.errors(flightErrors)
-	.input(
-		z.object({
-			id: z.string(),
-			flight: InsertFlightSchema.partial(),
-		}),
-	)
+	.input(UpdateFlightWithParticipantsSchema)
 	.output(z.object({ success: z.boolean() }))
 	.handler(async ({ input, context }) => {
 		const flightDAO = createFlightDAO(context.db);
 
-		const result = await updateFlightService(flightDAO, input.id, input.flight);
+		const result = await updateFlightService(flightDAO, input);
 
 		if (AppResult.isFailure(result)) {
 			throw new ORPCError(result.error.type, {

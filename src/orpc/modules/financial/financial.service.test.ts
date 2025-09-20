@@ -5,15 +5,17 @@ import {
 	AppEvent,
 	Flight,
 	FlightParticipant,
+	FlightSegment,
+	FlightSlice,
 	Travel,
 	TravelMember,
 	User,
 } from "@/lib/db/schema";
+import { AppResult } from "@/orpc/appResult";
+import { getFakeDb, testStub } from "@/tests/utils";
+import { createTravelDAO } from "../travel/travel.dao";
 import { FinancialDao } from "./financial.dao";
 import { getFinancialSummaryService } from "./financial.service";
-import { createTravelDAO } from "../travel/travel.dao";
-import { getFakeDb, testStub } from "@/tests/utils";
-import { AppResult } from "@/orpc/appResult";
 
 const OWNER_ID = "usr_owner";
 const MEMBER_ID = "usr_member";
@@ -66,6 +68,9 @@ describe("getFinancialSummaryService", () => {
 			testStub.flight({
 				id: "flt_salvador_lima",
 				travelId: TRAVEL_ID,
+				metadata: {},
+				createdAt: new Date(),
+				updatedAt: new Date(),
 				originAirport: "SSA",
 				destinationAirport: "LIM",
 				departureDate: new Date("2025-01-01"),
@@ -73,8 +78,50 @@ describe("getFinancialSummaryService", () => {
 				arrivalDate: new Date("2025-01-01"),
 				arrivalTime: "13:00",
 				cost: 4_000,
+				totalAmount: 4_000,
+				currency: "BRL",
+				baseAmount: 4_000,
+				taxAmount: 0,
+				provider: "manual",
+				offerReference: "manual",
+				dataSource: "manual",
+				legacyMigratedAt: null,
 			}),
 		);
+
+		await db.insert(FlightSlice).values({
+			id: "fls_salvador_lima",
+			flightId: "flt_salvador_lima",
+			sliceIndex: 0,
+			originAirport: "SSA",
+			destinationAirport: "LIM",
+			durationMinutes: null,
+			cabinClass: null,
+			cabinClassMarketingName: null,
+			createdAt: new Date(),
+			updatedAt: new Date(),
+		});
+
+		await db.insert(FlightSegment).values({
+			id: "fsg_salvador_lima",
+			sliceId: "fls_salvador_lima",
+			segmentIndex: 0,
+			originAirport: "SSA",
+			destinationAirport: "LIM",
+			departureDate: new Date("2025-01-01"),
+			departureTime: "08:00",
+			arrivalDate: new Date("2025-01-01"),
+			arrivalTime: "13:00",
+			marketingFlightNumber: null,
+			operatingCarrierCode: null,
+			aircraftName: null,
+			aircraftType: null,
+			distanceMeters: null,
+			durationMinutes: null,
+			baggageAllowance: null,
+			createdAt: new Date(),
+			updatedAt: new Date(),
+		});
 
 		await db.insert(FlightParticipant).values([
 			testStub.flightParticipant({

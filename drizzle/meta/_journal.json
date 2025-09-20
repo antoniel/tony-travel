@@ -78,6 +78,13 @@
       "when": 1758210268615,
       "tag": "0010_jazzy_the_liberteens",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1758331114987,
+      "tag": "0011_daffy_rawhide_kid",
+      "breakpoints": true
     }
   ]
 }

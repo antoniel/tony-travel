@@ -8,6 +8,8 @@ import type {
 	CreateFlightWithParticipantsSchema,
 	FlightGroup,
 	FlightWithParticipants,
+	UpdateFlightWithParticipantsSchema,
+	UpsertFlightPayload,
 } from "./flight.model";
 
 /**
@@ -37,12 +39,14 @@ export async function createFlightService(
 		);
 	}
 
+	const summary = getFlightSummary(input.flight);
+
 	// Check for duplicate flight
 	const existingFlightId = await flightDAO.findDuplicateFlight(
 		input.travelId,
-		input.flight.originAirport,
-		input.flight.destinationAirport,
-		input.flight.cost || undefined,
+		summary.originAirport,
+		summary.destinationAirport,
+		input.flight.totalAmount ?? undefined,
 	);
 
 	// If duplicate found, add participants to existing flight
@@ -62,10 +66,25 @@ export async function createFlightService(
 
 	// Create new flight
 	const flightData: InsertFlight = {
-		...input.flight,
+		originAirport: summary.originAirport,
+		destinationAirport: summary.destinationAirport,
+		departureDate: summary.departureDate,
+		departureTime: summary.departureTime,
+		arrivalDate: summary.arrivalDate,
+		arrivalTime: summary.arrivalTime,
+		cost: input.flight.totalAmount ?? null,
+		totalAmount: input.flight.totalAmount ?? null,
+		currency: input.flight.currency ?? "BRL",
+		baseAmount: input.flight.baseAmount ?? null,
+		taxAmount: input.flight.taxAmount ?? null,
+		provider: input.flight.provider ?? null,
+		offerReference: input.flight.offerReference ?? null,
+		dataSource: input.flight.dataSource ?? null,
+		metadata: input.flight.metadata ?? null,
+		legacyMigratedAt: null,
 		travelId: input.travelId,
 	};
-	const flightId = await flightDAO.createFlight(flightData);
+	const flightId = await flightDAO.createFlight(flightData, input.flight.slices);
 
 	// Add participants to new flight
 	const participantIds = input.participantIds || [];
@@ -90,13 +109,15 @@ export async function getFlightsByTravelService(
 	const flights = await flightDAO.getFlightsByTravel(travelId);
 
 	const grouped = flights.reduce((acc, flight) => {
-		const existing = acc.find((g) => g.originAirport === flight.originAirport);
+		const originAirport =
+			flight.slices[0]?.segments[0]?.originAirport ?? flight.originAirport;
+		const existing = acc.find((g) => g.originAirport === originAirport);
 
 		if (existing) {
 			existing.flights.push(flight);
 		} else {
 			acc.push({
-				originAirport: flight.originAirport,
+				originAirport,
 				flights: [flight],
 			});
 		}
@@ -123,21 +144,40 @@ export async function getFlightService(
  */
 export async function updateFlightService(
 	flightDAO: FlightDAO,
-	flightId: string,
-	flightData: Partial<InsertFlight>,
+	input: z.infer<typeof UpdateFlightWithParticipantsSchema>,
 ): Promise<AppResult<{ success: boolean }>> {
 	// Verify flight exists
-	const existingFlight = await flightDAO.getFlightById(flightId);
+	const existingFlight = await flightDAO.getFlightById(input.id);
 	if (!existingFlight) {
 		return AppResult.failure(
 			flightErrors,
 			"FLIGHT_NOT_FOUND",
 			"Voo não encontrado",
-			{ flightId },
+			{ flightId: input.id },
 		);
 	}
 
-	await flightDAO.updateFlight(flightId, flightData);
+	const summary = getFlightSummary(input.flight);
+	const updatePayload: Partial<InsertFlight> = {
+		originAirport: summary.originAirport,
+		destinationAirport: summary.destinationAirport,
+		departureDate: summary.departureDate,
+		departureTime: summary.departureTime,
+		arrivalDate: summary.arrivalDate,
+		arrivalTime: summary.arrivalTime,
+		cost: input.flight.totalAmount ?? null,
+		totalAmount: input.flight.totalAmount ?? null,
+		currency: input.flight.currency ?? "BRL",
+		baseAmount: input.flight.baseAmount ?? null,
+		taxAmount: input.flight.taxAmount ?? null,
+		provider: input.flight.provider ?? null,
+		offerReference: input.flight.offerReference ?? null,
+		dataSource: input.flight.dataSource ?? null,
+		metadata: input.flight.metadata ?? null,
+		legacyMigratedAt: existingFlight.legacyMigratedAt ?? null,
+	};
+
+	await flightDAO.updateFlight(input.id, updatePayload, input.flight.slices);
 	return AppResult.success({ success: true });
 }
 
@@ -221,6 +261,23 @@ export async function removeFlightParticipantService(
 
 	await flightDAO.removeFlightParticipant(flightId, userId);
 	return AppResult.success({ success: true });
+}
+
+function getFlightSummary(flight: UpsertFlightPayload) {
+	const firstSlice = flight.slices[0];
+	const firstSegment = firstSlice.segments[0];
+	const lastSlice = flight.slices[flight.slices.length - 1];
+	const lastSegment =
+		lastSlice.segments[lastSlice.segments.length - 1] ?? firstSegment;
+
+	return {
+		originAirport: firstSegment.originAirport,
+		destinationAirport: lastSegment.destinationAirport,
+		departureDate: firstSegment.departureDate,
+		departureTime: firstSegment.departureTime,
+		arrivalDate: lastSegment.arrivalDate,
+		arrivalTime: lastSegment.arrivalTime,
+	};
 }
 
 /**

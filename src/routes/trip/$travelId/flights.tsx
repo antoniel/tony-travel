@@ -56,11 +56,38 @@ interface FlightWithParticipants {
 	departureTime: string;
 	arrivalDate: Date;
 	arrivalTime: string;
-	cost: number | null;
+	totalAmount: number | null;
+	currency: string | null;
 	travelId: string;
 	createdAt: Date;
 	updatedAt: Date;
+	slices: FlightSliceWithSegments[];
 	participants: FlightParticipant[];
+}
+
+interface FlightSliceWithSegments {
+	id: string;
+	originAirport: string;
+	destinationAirport: string;
+	durationMinutes: number | null;
+	cabinClass?: string | null;
+	segments: FlightSegment[];
+}
+
+interface FlightSegment {
+	id: string;
+	originAirport: string;
+	destinationAirport: string;
+	departureDate: Date;
+	departureTime: string;
+	arrivalDate: Date;
+	arrivalTime: string;
+	marketingFlightNumber?: string | null;
+	operatingCarrierCode?: string | null;
+	aircraftName?: string | null;
+	aircraftType?: string | null;
+	distanceMeters?: number | null;
+	durationMinutes?: number | null;
 }
 
 interface Member {
@@ -74,6 +101,63 @@ interface FlightGroup {
 	originAirport: string;
 	flights: FlightWithParticipants[];
 }
+
+const getFlightCostValue = (flight: FlightWithParticipants) =>
+	flight.totalAmount ?? null;
+
+const getFlightCurrency = (flight: FlightWithParticipants) =>
+	flight.currency || "BRL";
+
+const getPrimarySegmentFromFlight = (flight: FlightWithParticipants) => {
+	const firstSlice = flight.slices[0];
+	const firstSegment = firstSlice?.segments[0];
+	if (firstSegment) {
+		return firstSegment;
+	}
+
+	return {
+		id: "legacy",
+		originAirport: flight.originAirport,
+		destinationAirport: flight.destinationAirport,
+		departureDate: flight.departureDate,
+		departureTime: flight.departureTime,
+		arrivalDate: flight.arrivalDate,
+		arrivalTime: flight.arrivalTime,
+		marketingCarrierCode: null,
+		marketingFlightNumber: null,
+		operatingCarrierCode: null,
+		aircraftName: null,
+		aircraftType: null,
+		distanceMeters: null,
+		durationMinutes: null,
+	};
+};
+
+const getFinalSegmentFromFlight = (flight: FlightWithParticipants) => {
+	const lastSlice = flight.slices[flight.slices.length - 1];
+	const segments = lastSlice?.segments ?? [];
+	const lastSegment = segments[segments.length - 1];
+	if (lastSegment) {
+		return lastSegment;
+	}
+	return getPrimarySegmentFromFlight(flight);
+};
+
+const formatDuration = (minutes: number | null) => {
+	if (!minutes || Number.isNaN(minutes)) {
+		return null;
+	}
+	const hours = Math.floor(minutes / 60);
+	const remainingMinutes = minutes % 60;
+	const parts = [] as string[];
+	if (hours > 0) {
+		parts.push(`${hours}h`);
+	}
+	if (remainingMinutes > 0) {
+		parts.push(`${remainingMinutes}min`);
+	}
+	return parts.length > 0 ? parts.join(" ") : `${minutes}min`;
+};
 
 function FlightWarnings({
 	flightsWithoutParticipants,
@@ -205,7 +289,9 @@ function FlightsPage() {
 	const flightsWithoutParticipants = allFlights.filter(
 		(f) => f.participants.length === 0,
 	);
-	const flightsWithoutCost = allFlights.filter((f) => !f.cost);
+	const flightsWithoutCost = allFlights.filter(
+		(f) => getFlightCostValue(f) === null,
+	);
 
 	const formatDate = (date: Date) => {
 		// Datas de voo são "date-only" (sem horário); formatamos em UTC para
@@ -368,6 +454,15 @@ function FlightGroupHeader({
 		(total, flight) => total + flight.participants.length,
 		0,
 	);
+	const totalSegments = group.flights.reduce((segmentsCount, flight) => {
+		return (
+			segmentsCount +
+			flight.slices.reduce(
+				(sliceTotal, slice) => sliceTotal + slice.segments.length,
+				0,
+			)
+		);
+	}, 0);
 
 	return (
 		<div className="relative">
@@ -389,7 +484,8 @@ function FlightGroupHeader({
 						</h2>
 						<p className="text-sm text-muted-foreground font-medium">
 							{group.flights.length}{" "}
-							{group.flights.length === 1 ? "voo" : "voos"} • {totalPassengers}{" "}
+							{group.flights.length === 1 ? "voo" : "voos"} • {totalSegments}{" "}
+							{totalSegments === 1 ? "trecho" : "trechos"} • {totalPassengers}{" "}
 							{totalPassengers === 1 ? "passageiro" : "passageiros"}
 						</p>
 					</div>
@@ -514,7 +610,16 @@ function FlightCard({
 	canWrite: boolean;
 }) {
 	const hasParticipants = flight.participants.length > 0;
-	const hasCost = flight.cost !== null && flight.cost !== undefined;
+	const primarySegment = getPrimarySegmentFromFlight(flight);
+	const finalSegment = getFinalSegmentFromFlight(flight);
+	const costValue = getFlightCostValue(flight);
+	const hasCost = costValue !== null && costValue !== undefined;
+	const currency = getFlightCurrency(flight);
+	const currencyLabel = currency === "BRL" ? "R$" : currency;
+	const totalSegments = flight.slices.reduce(
+		(total, slice) => total + slice.segments.length,
+		0,
+	);
 
 	return (
 		<Card className="group relative overflow-hidden border-0 shadow-sm hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-background via-background to-muted/20">
@@ -616,15 +721,15 @@ function FlightCard({
 							<div className="flex-1 max-w-[140px]">
 								<div className="text-center space-y-2">
 									<div className="text-3xl font-bold text-foreground tracking-tight">
-										{formatTime(flight.departureTime)}
+										{formatTime(primarySegment.departureTime)}
 									</div>
 									<div className="space-y-1">
 										<div className="text-2xl font-bold text-primary tracking-wide">
-											{flight.originAirport}
+											{primarySegment.originAirport}
 										</div>
 										<div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
 											<Calendar className="w-3 h-3" />
-											{formatDate(flight.departureDate)}
+											{formatDate(primarySegment.departureDate)}
 										</div>
 									</div>
 								</div>
@@ -649,20 +754,34 @@ function FlightCard({
 							<div className="flex-1 max-w-[140px]">
 								<div className="text-center space-y-2">
 									<div className="text-3xl font-bold text-foreground tracking-tight">
-										{formatTime(flight.arrivalTime)}
+										{formatTime(finalSegment.arrivalTime)}
 									</div>
 									<div className="space-y-1">
 										<div className="text-2xl font-bold text-accent tracking-wide">
-											{flight.destinationAirport}
+											{finalSegment.destinationAirport}
 										</div>
 										<div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
 											<Calendar className="w-3 h-3" />
-											{formatDate(flight.arrivalDate)}
+											{formatDate(finalSegment.arrivalDate)}
 										</div>
 									</div>
 								</div>
 							</div>
 						</div>
+					</div>
+
+					{/* Detailed slices and segments */}
+					<div className="mt-6 space-y-4">
+						{flight.slices.map((slice, sliceIndex) => (
+							<FlightSliceSegments
+								key={slice.id}
+								slice={slice}
+								sliceIndex={sliceIndex}
+								totalSegments={totalSegments}
+								formatDate={formatDate}
+								formatTime={formatTime}
+							/>
+						))}
 					</div>
 
 					{/* Cost and additional info */}
@@ -672,8 +791,8 @@ function FlightCard({
 								<div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200">
 									<DollarSign className="w-4 h-4 text-emerald-600" />
 									<span className="text-sm font-bold text-emerald-700">
-										R${" "}
-										{flight.cost?.toLocaleString("pt-BR", {
+										{currencyLabel}{" "}
+										{costValue?.toLocaleString("pt-BR", {
 											minimumFractionDigits: 2,
 										})}
 									</span>
@@ -697,5 +816,94 @@ function FlightCard({
 				</div>
 			</CardContent>
 		</Card>
+	);
+}
+
+function FlightSliceSegments({
+	slice,
+	sliceIndex,
+	totalSegments,
+	formatDate,
+	formatTime,
+}: {
+	slice: FlightSliceWithSegments;
+	sliceIndex: number;
+	totalSegments: number;
+	formatDate: (date: Date) => string;
+	formatTime: (time: string) => string;
+}) {
+	const sliceDurationLabel = formatDuration(slice.durationMinutes ?? null);
+	return (
+		<div className="rounded-lg border border-border/50 bg-background/80 p-4">
+			<div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+				<div>
+					<p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+						Rota {sliceIndex + 1}{" "}
+						{totalSegments > 1 ? `• ${slice.segments.length} trechos` : ""}
+					</p>
+					<h6 className="text-sm font-semibold text-foreground">
+						{slice.originAirport ||
+							slice.segments[0]?.originAirport ||
+							"Origem"}{" "}
+						→{" "}
+						{slice.destinationAirport ||
+							slice.segments[slice.segments.length - 1]?.destinationAirport ||
+							"Destino"}
+					</h6>
+				</div>
+				{sliceDurationLabel ? (
+					<span className="text-xs font-medium text-muted-foreground">
+						Duração total {sliceDurationLabel}
+					</span>
+				) : null}
+			</div>
+
+			<div className="mt-4 space-y-4">
+				{slice.segments.map((segment) => {
+					const marketingInfo = [segment.marketingFlightNumber]
+						.filter(Boolean)
+						.join(" ");
+					const operatingInfo = segment.operatingCarrierCode
+						? `Operado por ${segment.operatingCarrierCode}`
+						: null;
+					const segmentDurationLabel = formatDuration(
+						segment.durationMinutes ?? null,
+					);
+					return (
+						<div
+							key={segment.id}
+							className="rounded-lg border border-border/40 bg-background/60 p-3"
+						>
+							<div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+								<div className="flex-1">
+									<div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+										<span>{segment.originAirport}</span>
+										<Plane className="h-3.5 w-3.5 rotate-90 text-muted-foreground" />
+										<span>{segment.destinationAirport}</span>
+									</div>
+									<div className="mt-1 text-xs text-muted-foreground space-y-1">
+										<p>
+											Partida: {formatDate(segment.departureDate)} •{" "}
+											{formatTime(segment.departureTime)}
+										</p>
+										<p>
+											Chegada: {formatDate(segment.arrivalDate)} •{" "}
+											{formatTime(segment.arrivalTime)}
+										</p>
+										{marketingInfo ? <p>{marketingInfo}</p> : null}
+										{operatingInfo ? <p>{operatingInfo}</p> : null}
+									</div>
+								</div>
+								{segmentDurationLabel ? (
+									<div className="text-xs font-medium text-muted-foreground">
+										Duração {segmentDurationLabel}
+									</div>
+								) : null}
+							</div>
+						</div>
+					);
+				})}
+			</div>
+		</div>
 	);
 }

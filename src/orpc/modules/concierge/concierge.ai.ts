@@ -45,7 +45,8 @@ export function createConciergeStream(
 		tripContext,
 	);
 	const result = streamText({
-		model: openrouter("google/gemini-2.0-flash-lite-001"),
+		// model: openrouter("google/gemini-2.0-flash-lite-001"),
+		model: openrouter("x-ai/grok-4-fast:free"),
 		system: CONCIERGE_SYSTEM_PROMPT,
 		messages: convertToModelMessages(input.messages),
 		tools,

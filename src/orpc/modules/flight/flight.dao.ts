@@ -1,16 +1,31 @@
-import { Flight, FlightParticipant, type InsertFlight } from "@/lib/db/schema";
+import {
+	Flight,
+	FlightParticipant,
+	FlightSegment,
+	FlightSlice,
+	type InsertFlight,
+} from "@/lib/db/schema";
 import type { DB } from "@/lib/db/types";
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
+import type { FlightSliceInput } from "./flight.model";
 
 export class FlightDAO {
 	constructor(private readonly db: DB) {}
-	async createFlight(flightData: InsertFlight): Promise<string> {
-		const [flight] = await this.db
-			.insert(Flight)
-			.values(flightData)
-			.returning({ id: Flight.id });
 
-		return flight.id;
+	async createFlight(
+		flightData: InsertFlight,
+		slices: FlightSliceInput[],
+	): Promise<string> {
+		return this.db.transaction(async (tx) => {
+			const [flight] = await tx
+				.insert(Flight)
+				.values(flightData)
+				.returning({ id: Flight.id });
+
+			await this.replaceFlightStructure(tx as unknown as DB, flight.id, slices);
+
+			return flight.id;
+		});
 	}
 
 	async findDuplicateFlight(
@@ -45,8 +60,18 @@ export class FlightDAO {
 						user: true,
 					},
 				},
+				slices: {
+					with: {
+						segments: {
+							orderBy: (fields, { asc: orderAsc }) => [
+								orderAsc(fields.segmentIndex),
+							],
+						},
+					},
+					orderBy: (fields, { asc: orderAsc }) => [orderAsc(fields.sliceIndex)],
+				},
 			},
-			orderBy: [Flight.originAirport, Flight.departureDate],
+			orderBy: [asc(Flight.departureDate)],
 		});
 
 		return flights;
@@ -60,6 +85,16 @@ export class FlightDAO {
 					with: {
 						user: true,
 					},
+				},
+				slices: {
+					with: {
+						segments: {
+							orderBy: (fields, { asc: orderAsc }) => [
+								orderAsc(fields.segmentIndex),
+							],
+						},
+					},
+					orderBy: (fields, { asc: orderAsc }) => [orderAsc(fields.sliceIndex)],
 				},
 			},
 		});
@@ -108,8 +143,19 @@ export class FlightDAO {
 	async updateFlight(
 		flightId: string,
 		flightData: Partial<InsertFlight>,
+		slices?: FlightSliceInput[],
 	): Promise<void> {
-		await this.db.update(Flight).set(flightData).where(eq(Flight.id, flightId));
+		await this.db.transaction(async (tx) => {
+			await tx.update(Flight).set(flightData).where(eq(Flight.id, flightId));
+
+			if (slices && slices.length > 0) {
+				await this.replaceFlightStructure(
+					tx as unknown as DB,
+					flightId,
+					slices,
+				);
+			}
+		});
 	}
 
 	async deleteFlight(flightId: string): Promise<void> {
@@ -119,6 +165,49 @@ export class FlightDAO {
 			.where(eq(FlightParticipant.flightId, flightId));
 
 		await this.db.delete(Flight).where(eq(Flight.id, flightId));
+	}
+
+	private async replaceFlightStructure(
+		tx: DB,
+		flightId: string,
+		slices: FlightSliceInput[],
+	): Promise<void> {
+		await tx.delete(FlightSlice).where(eq(FlightSlice.flightId, flightId));
+
+		for (const [sliceIndex, slice] of slices.entries()) {
+			const [createdSlice] = await tx
+				.insert(FlightSlice)
+				.values({
+					flightId,
+					sliceIndex,
+					originAirport: slice.originAirport,
+					destinationAirport: slice.destinationAirport,
+					durationMinutes: slice.durationMinutes ?? null,
+					cabinClass: slice.cabinClass ?? null,
+					cabinClassMarketingName: slice.cabinClassMarketingName ?? null,
+				})
+				.returning({ id: FlightSlice.id });
+
+			for (const [segmentIndex, segment] of slice.segments.entries()) {
+				await tx.insert(FlightSegment).values({
+					sliceId: createdSlice.id,
+					segmentIndex,
+					originAirport: segment.originAirport,
+					destinationAirport: segment.destinationAirport,
+					departureDate: segment.departureDate,
+					departureTime: segment.departureTime,
+					arrivalDate: segment.arrivalDate,
+					arrivalTime: segment.arrivalTime,
+					marketingFlightNumber: segment.marketingFlightNumber ?? null,
+					operatingCarrierCode: segment.operatingCarrierCode ?? null,
+					aircraftName: segment.aircraftName ?? null,
+					aircraftType: segment.aircraftType ?? null,
+					distanceMeters: segment.distanceMeters ?? null,
+					durationMinutes: segment.durationMinutes ?? null,
+					baggageAllowance: segment.baggageAllowance ?? null,
+				});
+			}
+		}
 	}
 }
 

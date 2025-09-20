@@ -22,10 +22,35 @@ describe("flight", () => {
 			.values(travelStub)
 			.returning({ id: Travel.id });
 
-		const flightStub = testStub.flight();
-
 		await appCall(router.flightRoutes.createFlight, {
-			flight: flightStub,
+			flight: {
+				totalAmount: 1200,
+				currency: "BRL",
+				slices: [
+					{
+						originAirport: "SSA",
+						destinationAirport: "GRU",
+						durationMinutes: 150,
+						segments: [
+							{
+								originAirport: "SSA",
+								destinationAirport: "GRU",
+								departureDate: new Date("2025-02-01"),
+								departureTime: "08:00",
+								arrivalDate: new Date("2025-02-01"),
+								arrivalTime: "10:30",
+								marketingFlightNumber: "3456",
+								operatingCarrierCode: "LA",
+								aircraftName: "Airbus A320",
+								aircraftType: "A320",
+								distanceMeters: 1460000,
+								durationMinutes: 150,
+								baggageAllowance: null,
+							},
+						],
+					},
+				],
+			},
 			travelId: travel.id,
 			participantIds: [ALWAYS_USER_TEST.id],
 		});
@@ -37,5 +62,10 @@ describe("flight", () => {
 			},
 		);
 		await expect(flightsByTravel.length).toEqual(1);
+		const [group] = flightsByTravel;
+		expect(group.originAirport).toBe("SSA");
+		expect(group.flights[0].slices[0].segments[0].destinationAirport).toBe(
+			"GRU",
+		);
 	});
 });

@@ -18,6 +18,8 @@ const prefixes = {
 	event: "evt",
 	flight: "flt",
 	flightParticipant: "flp",
+	flightSlice: "fls",
+	flightSegment: "fsg",
 	travelMember: "trm",
 	invitation: "inv",
 } as const;
@@ -212,18 +214,90 @@ export const Flight = sqliteTable("flight", {
 	arrivalDate: integer("arrival_date", { mode: "timestamp" }).notNull(),
 	arrivalTime: text("arrival_time").notNull(),
 	cost: real("cost"),
+	totalAmount: real("total_amount"),
+	currency: text("currency").default("BRL"),
+	baseAmount: real("base_amount"),
+	taxAmount: real("tax_amount"),
+	provider: text("provider"),
+	offerReference: text("offer_reference"),
+	dataSource: text("data_source"),
+	metadata: text("metadata", { mode: "json" })
+		.$type<Record<string, unknown> | null>()
+		.default(null),
+	legacyMigratedAt: integer("legacy_migrated_at", { mode: "timestamp" }),
 	travelId: text("travel_id")
 		.notNull()
 		.references(() => Travel.id, { onDelete: "cascade" }),
 });
 export const FlightSchema = createSelectSchema(Flight);
 export const InsertFlightSchema = createInsertSchema(Flight);
+
+export const FlightSlice = sqliteTable("flight_slice", {
+	...defaultColumn("flightSlice"),
+	flightId: text("flight_id")
+		.notNull()
+		.references(() => Flight.id, { onDelete: "cascade" }),
+	sliceIndex: integer("slice_index").notNull(),
+	originAirport: text("origin_airport").notNull(),
+	destinationAirport: text("destination_airport").notNull(),
+	durationMinutes: integer("duration_minutes"),
+	cabinClass: text("cabin_class"),
+	cabinClassMarketingName: text("cabin_class_marketing_name"),
+});
+export type FlightSlice = typeof FlightSlice.$inferSelect;
+export type InsertFlightSlice = typeof FlightSlice.$inferInsert;
+export const FlightSliceSchema = createSelectSchema(FlightSlice);
+export const InsertFlightSliceSchema = createInsertSchema(FlightSlice);
+
+export const FlightSegment = sqliteTable("flight_segment", {
+	...defaultColumn("flightSegment"),
+	sliceId: text("slice_id")
+		.notNull()
+		.references(() => FlightSlice.id, { onDelete: "cascade" }),
+	segmentIndex: integer("segment_index").notNull(),
+	originAirport: text("origin_airport").notNull(),
+	destinationAirport: text("destination_airport").notNull(),
+	departureDate: integer("departure_date", { mode: "timestamp" }).notNull(),
+	departureTime: text("departure_time").notNull(),
+	arrivalDate: integer("arrival_date", { mode: "timestamp" }).notNull(),
+	arrivalTime: text("arrival_time").notNull(),
+	marketingFlightNumber: text("marketing_flight_number"),
+	operatingCarrierCode: text("operating_carrier_code"),
+	aircraftName: text("aircraft_name"),
+	aircraftType: text("aircraft_type"),
+	distanceMeters: integer("distance_meters"),
+	durationMinutes: integer("duration_minutes"),
+	baggageAllowance: text("baggage_allowance", { mode: "json" })
+		.$type<Record<string, unknown> | null>()
+		.default(null),
+});
+export type FlightSegment = typeof FlightSegment.$inferSelect;
+export type InsertFlightSegment = typeof FlightSegment.$inferInsert;
+export const FlightSegmentSchema = createSelectSchema(FlightSegment);
+export const InsertFlightSegmentSchema = createInsertSchema(FlightSegment);
+
+export const flightSegmentRelations = relations(FlightSegment, ({ one }) => ({
+	slice: one(FlightSlice, {
+		fields: [FlightSegment.sliceId],
+		references: [FlightSlice.id],
+	}),
+}));
+
+export const flightSliceRelations = relations(FlightSlice, ({ one, many }) => ({
+	flight: one(Flight, {
+		fields: [FlightSlice.flightId],
+		references: [Flight.id],
+	}),
+	segments: many(FlightSegment),
+}));
+
 export const flightRelations = relations(Flight, ({ one, many }) => ({
 	travel: one(Travel, {
 		fields: [Flight.travelId],
 		references: [Travel.id],
 	}),
 	participants: many(FlightParticipant),
+	slices: many(FlightSlice),
 }));
 
 export type FlightParticipant = typeof FlightParticipant.$inferSelect;

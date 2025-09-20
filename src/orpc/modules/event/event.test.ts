@@ -72,6 +72,37 @@ describe("event routes - createEvent", () => {
 		expect(storedEvent?.endDate.toISOString()).toBe(eventEnd.toISOString());
 	});
 
+	it("allows events that end later on the last travel day when end date is normalized midnight", async () => {
+		const travelStart = new Date("2031-03-18T00:00:00.000Z");
+		const travelEnd = new Date("2031-03-20T00:00:00.000Z");
+		const travel = await insertTravelWithMember({
+			startDate: travelStart,
+			endDate: travelEnd,
+		});
+
+		const appCall = createAppCallAuthenticated(db);
+		const eventStart = new Date("2031-03-20T10:00:00.000Z");
+		const eventEnd = new Date("2031-03-20T18:00:00.000Z");
+
+		const result = await appCall(router.eventRoutes.createEvent, {
+			title: "Passeio final",
+			startDate: eventStart,
+			endDate: eventEnd,
+			travelId: travel.id,
+			type: "activity",
+		});
+
+		expect(result.eventId).toBeDefined();
+		const storedEvent = await db.query.AppEvent.findFirst({
+			where: and(
+				eq(AppEvent.travelId, travel.id),
+				eq(AppEvent.id, result.eventId ?? ""),
+			),
+		});
+
+		expect(storedEvent?.endDate.toISOString()).toBe(eventEnd.toISOString());
+	});
+
 	it("rejects event starting before the travel start date", async () => {
 		const travelStart = new Date("2030-02-10T00:00:00.000Z");
 		const travelEnd = new Date("2030-02-15T00:00:00.000Z");

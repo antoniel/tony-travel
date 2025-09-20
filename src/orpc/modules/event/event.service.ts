@@ -15,6 +15,21 @@ function validateEventDates(
 	travelStartDate: Date,
 	travelEndDate: Date,
 ) {
+	const dayInMs = 24 * 60 * 60 * 1000;
+	const isStartOfDay = (date: Date) =>
+		date.getUTCHours() === 0 &&
+		date.getUTCMinutes() === 0 &&
+		date.getUTCSeconds() === 0 &&
+		date.getUTCMilliseconds() === 0;
+
+	const travelEndBoundary = (() => {
+		if (!isStartOfDay(travelEndDate)) {
+			return travelEndDate;
+		}
+
+		return new Date(travelEndDate.getTime() + dayInMs - 1);
+	})();
+
 	if (startDate >= endDate) {
 		return AppResult.failure(
 			eventErrors,
@@ -43,7 +58,7 @@ function validateEventDates(
 		);
 	}
 
-	if (endDate > travelEndDate) {
+	if (endDate > travelEndBoundary) {
 		return AppResult.failure(
 			eventErrors,
 			"EVENT_DATES_INVALID",
@@ -52,7 +67,7 @@ function validateEventDates(
 				startDate: startDate.toISOString(),
 				endDate: endDate.toISOString(),
 				travelStartDate: travelStartDate.toISOString(),
-				travelEndDate: travelEndDate.toISOString(),
+				travelEndDate: travelEndBoundary.toISOString(),
 			},
 		);
 	}

@@ -14,57 +14,121 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { LocationOption } from "@/components/ui/location-selector";
 import { LocationSelector } from "@/components/ui/location-selector";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { useAirportsSearch } from "@/hooks/useAirportsSearch";
 import { orpc } from "@/orpc/client";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { DollarSign, Info, Plane, Plus, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+	type Resolver,
+	type UseFormReturn,
+	useFieldArray,
+	useForm,
+} from "react-hook-form";
+import { match } from "ts-pattern";
+import { z } from "zod";
 // Minimal flight type needed by this form
 type FlightForForm = {
 	id: string;
-	originAirport: string;
-	destinationAirport: string;
-	departureDate: Date;
-	departureTime: string;
-	arrivalDate: Date;
-	arrivalTime: string;
-	cost: number | null;
+	totalAmount: number | null;
+	currency: string;
+	slices: {
+		id: string;
+		originAirport: string;
+		destinationAirport: string;
+		cabinClass?: string | null;
+		cabinClassMarketingName?: string | null;
+		durationMinutes?: number | null;
+		segments: {
+			id: string;
+			originAirport: string;
+			destinationAirport: string;
+			departureDate: Date;
+			departureTime: string;
+			arrivalDate: Date;
+			arrivalTime: string;
+			marketingFlightNumber?: string | null;
+			operatingCarrierCode?: string | null;
+			aircraftName?: string | null;
+			aircraftType?: string | null;
+			distanceMeters?: number | null;
+			durationMinutes?: number | null;
+		}[];
+	}[];
 	participants: { id: string; user: { id: string } }[];
 };
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Calendar, DollarSign, Info, Plane } from "lucide-react";
-import { useMemo, useState } from "react";
-import { type UseFormReturn, useForm } from "react-hook-form";
-import { match } from "ts-pattern";
-import { z } from "zod";
 
-// Form validation schema
-const flightFormSchema = z
+const flightSegmentSchema = z
 	.object({
+		id: z.string().optional(),
 		originAirport: z.string().min(1, "Aeroporto de origem é obrigatório"),
 		destinationAirport: z.string().min(1, "Aeroporto de destino é obrigatório"),
 		departureDate: z.string().min(1, "Data de partida é obrigatória"),
 		departureTime: z.string().min(1, "Horário de partida é obrigatório"),
 		arrivalDate: z.string().min(1, "Data de chegada é obrigatória"),
 		arrivalTime: z.string().min(1, "Horário de chegada é obrigatório"),
-		cost: z.string().optional(),
-		participantIds: z
-			.array(z.string())
-			.min(0, "Selecione pelo menos um participante"),
+		marketingFlightNumber: z.string().optional(),
+		operatingCarrierCode: z.string().optional(),
+		aircraftName: z.string().optional(),
+		aircraftType: z.string().optional(),
+		distanceMeters: z.string().optional(),
+		durationMinutes: z.string().optional(),
 	})
-	.superRefine((data, ctx) => {
-		try {
-			const dep = new Date(`${data.departureDate}T${data.departureTime}:00`);
-			const arr = new Date(`${data.arrivalDate}T${data.arrivalTime}:00`);
-			if (Number.isNaN(dep.getTime()) || Number.isNaN(arr.getTime())) return;
-			if (arr.getTime() <= dep.getTime()) {
-				const issue = {
-					code: z.ZodIssueCode.custom,
-					message: "Chegada deve ser após a partida",
-				};
-				ctx.addIssue({ ...issue, path: ["arrivalDate"] });
-				ctx.addIssue({ ...issue, path: ["arrivalTime"] });
-			}
-		} catch {}
+	.superRefine((segment, ctx) => {
+		const departure = new Date(
+			`${segment.departureDate}T${segment.departureTime}:00`,
+		);
+		const arrival = new Date(
+			`${segment.arrivalDate}T${segment.arrivalTime}:00`,
+		);
+		if (Number.isNaN(departure.getTime()) || Number.isNaN(arrival.getTime())) {
+			return;
+		}
+		if (arrival.getTime() <= departure.getTime()) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				message: "Chegada deve ser após a partida",
+				path: ["arrivalDate"],
+			});
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				message: "Chegada deve ser após a partida",
+				path: ["arrivalTime"],
+			});
+		}
 	});
+
+const flightSliceSchema = z.object({
+	id: z.string().optional(),
+	originAirport: z.string().optional(),
+	destinationAirport: z.string().optional(),
+	cabinClass: z.string().optional(),
+	cabinClassMarketingName: z.string().optional(),
+	durationMinutes: z.string().optional(),
+	segments: z
+		.array(flightSegmentSchema)
+		.min(1, "Adicione pelo menos um trecho"),
+});
+
+// Form validation schema
+const flightFormSchema = z.object({
+	totalAmount: z.string().optional(),
+	currency: z
+		.string()
+		.trim()
+		.length(3, "Moeda deve conter 3 caracteres")
+		.default("BRL"),
+	slices: z.array(flightSliceSchema).min(1, "Adicione pelo menos um slice"),
+	participantIds: z.array(z.string()).min(0),
+});
 
 type FlightFormData = z.infer<typeof flightFormSchema>;
 
@@ -94,6 +158,68 @@ interface Airport {
 	airportCodes?: string[];
 }
 
+const createEmptySegment = () => ({
+	id: undefined as string | undefined,
+	originAirport: "",
+	destinationAirport: "",
+	departureDate: "",
+	departureTime: "",
+	arrivalDate: "",
+	arrivalTime: "",
+	marketingFlightNumber: "",
+	operatingCarrierCode: "",
+	aircraftName: "",
+	aircraftType: "",
+	distanceMeters: "",
+	durationMinutes: "",
+});
+
+const createEmptySlice = () => ({
+	id: undefined as string | undefined,
+	originAirport: "",
+	destinationAirport: "",
+	cabinClass: "",
+	cabinClassMarketingName: "",
+	durationMinutes: "",
+	segments: [createEmptySegment()],
+});
+
+const mapFlightToFormValues = (flight?: FlightForForm): FlightFormData => {
+	const slices = (flight?.slices || []).map((slice) => ({
+		id: slice.id,
+		originAirport: slice.originAirport,
+		destinationAirport: slice.destinationAirport,
+		cabinClass: slice.cabinClass ?? "",
+		cabinClassMarketingName: slice.cabinClassMarketingName ?? "",
+		durationMinutes: slice.durationMinutes?.toString() ?? "",
+		segments: slice.segments.map((segment) => ({
+			id: segment.id,
+			originAirport: segment.originAirport,
+			destinationAirport: segment.destinationAirport,
+			departureDate: formatDateForInput(segment.departureDate),
+			departureTime: segment.departureTime,
+			arrivalDate: formatDateForInput(segment.arrivalDate),
+			arrivalTime: segment.arrivalTime,
+			marketingFlightNumber: segment.marketingFlightNumber ?? "",
+			operatingCarrierCode: segment.operatingCarrierCode ?? "",
+			aircraftName: segment.aircraftName ?? "",
+			aircraftType: segment.aircraftType ?? "",
+			distanceMeters: segment.distanceMeters?.toString() ?? "",
+			durationMinutes: segment.durationMinutes?.toString() ?? "",
+		})),
+	}));
+
+	return {
+		totalAmount:
+			flight?.totalAmount != null ? flight.totalAmount.toString() : "",
+		currency: flight?.currency ?? "BRL",
+		slices: slices.length > 0 ? slices : [createEmptySlice()],
+		participantIds: flight
+			? flight.participants.map((participant) => participant.user.id)
+			: [],
+	};
+};
+
 export function AddOrEditFlightForm({
 	flight,
 	travelId,
@@ -113,21 +239,16 @@ export function AddOrEditFlightForm({
 
 	// Initialize form with default values
 	const form = useForm<FlightFormData>({
-		resolver: zodResolver(flightFormSchema),
-		defaultValues: {
-			originAirport: flight?.originAirport || "",
-			destinationAirport: flight?.destinationAirport || "",
-			departureDate: flight
-				? new Date(flight.departureDate).toISOString().split("T")[0]
-				: "",
-			departureTime: flight?.departureTime || "",
-			arrivalDate: flight
-				? new Date(flight.arrivalDate).toISOString().split("T")[0]
-				: "",
-			arrivalTime: flight?.arrivalTime || "",
-			cost: flight?.cost?.toString() || "",
-			participantIds: flight ? flight.participants.map((p) => p.user.id) : [],
-		},
+		resolver: zodResolver(flightFormSchema) as Resolver<FlightFormData>,
+		defaultValues:
+			flight != null
+				? mapFlightToFormValues(flight)
+				: {
+						currency: "BRL",
+						totalAmount: "",
+						slices: [createEmptySlice()],
+						participantIds: [],
+					},
 	});
 
 	// Fetch travel data for date limits
@@ -139,7 +260,8 @@ export function AddOrEditFlightForm({
 		const rawDestination = travelQuery.data?.destination?.trim();
 		if (!rawDestination) return "";
 		return rawDestination
-			.split(",")[0]?.replace(/\s+-\s+Todos os aeroportos$/i, "")
+			.split(",")[0]
+			?.replace(/\s+-\s+Todos os aeroportos$/i, "")
 			.trim();
 	}, [travelQuery.data?.destination]);
 
@@ -195,19 +317,54 @@ export function AddOrEditFlightForm({
 
 	const onSubmit = async (data: FlightFormData) => {
 		try {
+			const totalAmount = parseCurrencyInput(data.totalAmount);
+			const slicesPayload = data.slices.map((slice) => {
+				const firstSegment = slice.segments[0];
+				const lastSegment =
+					slice.segments[slice.segments.length - 1] ?? firstSegment;
+
+				const sliceDurationFromSegments = calculateSliceDurationMinutes(
+					slice.segments,
+				);
+
+				return {
+					originAirport:
+						firstSegment?.originAirport ?? slice.originAirport ?? "",
+					destinationAirport:
+						lastSegment?.destinationAirport ?? slice.destinationAirport ?? "",
+					durationMinutes:
+						toOptionalInteger(slice.durationMinutes) ??
+						sliceDurationFromSegments,
+					cabinClass: emptyToNull(slice.cabinClass),
+					cabinClassMarketingName: emptyToNull(slice.cabinClassMarketingName),
+					segments: slice.segments.map((segment) => ({
+						originAirport: segment.originAirport,
+						destinationAirport: segment.destinationAirport,
+						departureDate: new Date(segment.departureDate),
+						departureTime: segment.departureTime,
+						arrivalDate: new Date(segment.arrivalDate),
+						arrivalTime: segment.arrivalTime,
+						marketingFlightNumber: emptyToNull(segment.marketingFlightNumber),
+						operatingCarrierCode: emptyToNull(segment.operatingCarrierCode),
+						aircraftName: emptyToNull(segment.aircraftName),
+						aircraftType: emptyToNull(segment.aircraftType),
+						distanceMeters: toOptionalInteger(segment.distanceMeters),
+						durationMinutes: toOptionalInteger(segment.durationMinutes),
+					})),
+				};
+			});
+
+			const baseFlightPayload = {
+				totalAmount,
+				currency: data.currency || "BRL",
+				slices: slicesPayload,
+			};
+
 			if (isEditMode && flight) {
 				// Update existing flight
 				const flightData = {
 					id: flight.id,
-					flight: {
-						originAirport: data.originAirport,
-						destinationAirport: data.destinationAirport,
-						departureDate: new Date(data.departureDate),
-						departureTime: data.departureTime,
-						arrivalDate: new Date(data.arrivalDate),
-						arrivalTime: data.arrivalTime,
-						cost: data.cost ? Number.parseFloat(data.cost) : null,
-					},
+					flight: baseFlightPayload,
 				};
 
 				await updateFlightMutation.mutateAsync(flightData);
@@ -240,16 +397,7 @@ export function AddOrEditFlightForm({
 				// Create new flight
 				const flightData = {
 					travelId,
-					flight: {
-						originAirport: data.originAirport,
-						destinationAirport: data.destinationAirport,
-						departureDate: new Date(data.departureDate),
-						departureTime: data.departureTime,
-						arrivalDate: new Date(data.arrivalDate),
-						arrivalTime: data.arrivalTime,
-						cost: data.cost ? Number.parseFloat(data.cost) : null,
-						travelId,
-					},
+					flight: baseFlightPayload,
 					participantIds: data.participantIds,
 				};
 
@@ -292,15 +440,15 @@ export function AddOrEditFlightForm({
 				className="flex h-full flex-col overflow-hidden"
 			>
 				<div className="flex-1 space-y-6 overflow-y-auto px-6 py-4">
-					<FlightDetailsSection
+					<FlightSlicesSection
 						form={form}
-						setDuplicateInfo={isEditMode ? () => {} : setDuplicateInfo}
+						minDate={minDate}
+						maxDate={maxDate}
 						recommendedDestinationOptions={recommendedDestinationOptions}
+						setDuplicateInfo={isEditMode ? () => {} : setDuplicateInfo}
 					/>
 
-					<FlightTimesSection form={form} minDate={minDate} maxDate={maxDate} />
-
-					<FlightCostSection
+					<FlightPricingSection
 						form={form}
 						setDuplicateInfo={isEditMode ? () => {} : setDuplicateInfo}
 					/>
@@ -347,15 +495,566 @@ export function AddOrEditFlightForm({
 	);
 }
 
-const formatDateForInput = (date: Date) => {
-	return date.toISOString().split("T")[0];
-};
+function FlightSlicesSection({
+	form,
+	minDate,
+	maxDate,
+	recommendedDestinationOptions,
+	setDuplicateInfo,
+}: {
+	form: UseFormReturn<FlightFormData>;
+	minDate: string;
+	maxDate: string;
+	recommendedDestinationOptions: LocationOption[];
+	setDuplicateInfo: (info: DuplicateInfo | null) => void;
+}) {
+	const slicesArray = useFieldArray({
+		control: form.control,
+		name: "slices",
+	});
 
-const addDaysToDate = (date: Date, days: number) => {
-	const result = new Date(date);
-	result.setDate(result.getDate() + days);
-	return result;
-};
+	return (
+		<div className="space-y-6">
+			<div className="flex items-center justify-between">
+				<div>
+					<h4 className="font-semibold text-base text-foreground">
+						Rotas e trechos
+					</h4>
+					<p className="text-sm text-muted-foreground">
+						Adicione conexões ou rotas separadas para o mesmo voo.
+					</p>
+				</div>
+				{/** optional info area */}
+			</div>
+
+			<div className="space-y-4">
+				{slicesArray.fields.map((sliceField, sliceIndex) => (
+					<FlightSliceCard
+						key={sliceField.id}
+						form={form}
+						sliceIndex={sliceIndex}
+						totalSlices={slicesArray.fields.length}
+						removeSlice={(index) => {
+							slicesArray.remove(index);
+							setDuplicateInfo(null);
+						}}
+						minDate={minDate}
+						maxDate={maxDate}
+						recommendedDestinationOptions={recommendedDestinationOptions}
+						setDuplicateInfo={setDuplicateInfo}
+					/>
+				))}
+			</div>
+
+			<Button
+				type="button"
+				variant="outline"
+				onClick={() => {
+					slicesArray.append(createEmptySlice());
+					setDuplicateInfo(null);
+				}}
+				className="w-full justify-center gap-2"
+			>
+				<Plus className="h-4 w-4" /> Adicionar rota
+			</Button>
+		</div>
+	);
+}
+
+function FlightSliceCard({
+	form,
+	sliceIndex,
+	totalSlices,
+	removeSlice,
+	minDate,
+	maxDate,
+	recommendedDestinationOptions,
+	setDuplicateInfo,
+}: {
+	form: UseFormReturn<FlightFormData>;
+	sliceIndex: number;
+	totalSlices: number;
+	removeSlice: (index: number) => void;
+	minDate: string;
+	maxDate: string;
+	recommendedDestinationOptions: LocationOption[];
+	setDuplicateInfo: (info: DuplicateInfo | null) => void;
+}) {
+	const segmentsArray = useFieldArray({
+		control: form.control,
+		name: `slices.${sliceIndex}.segments` as const,
+	});
+
+	const segments = form.watch(
+		`slices.${sliceIndex}.segments` as const,
+	) as FlightFormData["slices"][number]["segments"];
+	const firstSegment = segments?.[0];
+	const lastSegment = segments?.[segments.length - 1] ?? firstSegment;
+
+	useEffect(() => {
+		if (firstSegment?.originAirport) {
+			form.setValue(
+				`slices.${sliceIndex}.originAirport` as const,
+				firstSegment.originAirport,
+				{ shouldDirty: true },
+			);
+		}
+	}, [firstSegment?.originAirport, form, sliceIndex]);
+
+	useEffect(() => {
+		if (lastSegment?.destinationAirport) {
+			form.setValue(
+				`slices.${sliceIndex}.destinationAirport` as const,
+				lastSegment.destinationAirport,
+				{ shouldDirty: true },
+			);
+		}
+	}, [lastSegment?.destinationAirport, form, sliceIndex]);
+
+	return (
+		<div className="rounded-xl border border-border/60 bg-background/70 shadow-sm">
+			<div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
+				<div className="space-y-1">
+					<p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+						Rota {sliceIndex + 1}
+					</p>
+					<h5 className="text-lg font-semibold text-foreground">
+						{firstSegment?.originAirport || "Origem"} →{" "}
+						{lastSegment?.destinationAirport || "Destino"}
+					</h5>
+				</div>
+				{totalSlices > 1 ? (
+					<Button
+						type="button"
+						variant="ghost"
+						size="sm"
+						onClick={() => removeSlice(sliceIndex)}
+						className="text-destructive hover:text-destructive"
+					>
+						<Trash2 className="h-4 w-4" />
+					</Button>
+				) : null}
+			</div>
+			<div className="space-y-4 p-4">
+				{segmentsArray.fields.map((segmentField, segmentIndex) => (
+					<FlightSegmentFields
+						key={segmentField.id}
+						form={form}
+						sliceIndex={sliceIndex}
+						segmentIndex={segmentIndex}
+						minDate={minDate}
+						maxDate={maxDate}
+						recommendedDestinationOptions={recommendedDestinationOptions}
+						canRemove={segmentsArray.fields.length > 1}
+						removeSegment={() => segmentsArray.remove(segmentIndex)}
+						shouldClearDuplicate={sliceIndex === 0 && segmentIndex === 0}
+						setDuplicateInfo={setDuplicateInfo}
+					/>
+				))}
+
+				<Button
+					type="button"
+					variant="ghost"
+					onClick={() => {
+						segmentsArray.append(createEmptySegment());
+						setDuplicateInfo(null);
+					}}
+					className="flex w-full items-center justify-center gap-2"
+				>
+					<Plus className="h-4 w-4" /> Adicionar trecho
+				</Button>
+			</div>
+		</div>
+	);
+}
+
+function FlightSegmentFields({
+	form,
+	sliceIndex,
+	segmentIndex,
+	minDate,
+	maxDate,
+	recommendedDestinationOptions,
+	canRemove,
+	removeSegment,
+	shouldClearDuplicate,
+	setDuplicateInfo,
+}: {
+	form: UseFormReturn<FlightFormData>;
+	sliceIndex: number;
+	segmentIndex: number;
+	minDate: string;
+	maxDate: string;
+	recommendedDestinationOptions: LocationOption[];
+	canRemove: boolean;
+	removeSegment: () => void;
+	shouldClearDuplicate: boolean;
+	setDuplicateInfo: (info: DuplicateInfo | null) => void;
+}) {
+	const [isOriginOpen, setIsOriginOpen] = useState(false);
+	const [isDestinationOpen, setIsDestinationOpen] = useState(false);
+	const baseName = `slices.${sliceIndex}.segments.${segmentIndex}` as const;
+	const departureDate = form.watch(`${baseName}.departureDate` as const);
+	const departureTime = form.watch(`${baseName}.departureTime` as const);
+	const arrivalDate = form.watch(`${baseName}.arrivalDate` as const);
+
+	const arrivalMinDate = departureDate || minDate;
+	const arrivalMinTime =
+		arrivalDate && departureDate && arrivalDate === departureDate
+			? departureTime || undefined
+			: undefined;
+
+	const [originSearch, setOriginSearch] = useState("");
+	const [destinationSearch, setDestinationSearch] = useState("");
+
+	const { data: originResults = [] } = useAirportsSearch(
+		originSearch,
+		10,
+		true,
+	);
+	const originOptions = useMemo(() => {
+		const options = originResults.map((airport) => ({
+			value: airport.code,
+			label: renderAirportName(airport),
+		}));
+		const map = new Map<string, LocationOption>();
+		for (const option of options) {
+			if (!map.has(option.value)) {
+				map.set(option.value, option);
+			}
+		}
+		return Array.from(map.values());
+	}, [originResults]);
+
+	const { data: destinationResults = [] } = useAirportsSearch(
+		destinationSearch,
+		10,
+		true,
+	);
+	const destinationOptions = useMemo(() => {
+		const resultOptions = destinationResults.map((airport) => ({
+			value: airport.code,
+			label: renderAirportName(airport),
+		}));
+		const map = new Map<string, LocationOption>();
+		const combined =
+			destinationSearch.trim().length > 0
+				? [...resultOptions, ...recommendedDestinationOptions]
+				: [...recommendedDestinationOptions, ...resultOptions];
+		for (const option of combined) {
+			if (!map.has(option.value)) {
+				map.set(option.value, option);
+			}
+		}
+		return Array.from(map.values());
+	}, [destinationResults, recommendedDestinationOptions, destinationSearch]);
+
+	const clearDuplicateIfNeeded = () => {
+		if (shouldClearDuplicate) {
+			setDuplicateInfo(null);
+		}
+	};
+
+	return (
+		<div className="space-y-4 rounded-lg border border-border/50 bg-background p-4">
+			<div className="flex items-center justify-between">
+				<h6 className="text-sm font-semibold text-foreground">
+					Trecho {segmentIndex + 1}
+				</h6>
+				{canRemove ? (
+					<Button
+						type="button"
+						variant="ghost"
+						size="sm"
+						onClick={() => {
+							removeSegment();
+							setDuplicateInfo(null);
+						}}
+						className="text-destructive hover:text-destructive"
+					>
+						<Trash2 className="h-4 w-4" />
+					</Button>
+				) : null}
+			</div>
+
+			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+				<FormField
+					control={form.control}
+					name={`${baseName}.originAirport` as const}
+					render={({ field }) => {
+						const selected = field.value
+							? [{ value: field.value, label: field.value }]
+							: [];
+						return (
+							<FormItem>
+								<FormControl>
+									<LocationSelector
+										isOpen={isOriginOpen}
+										onOpenChange={setIsOriginOpen}
+										label="Origem *"
+										placeholder="Selecione o aeroporto de partida"
+										searchPlaceholder="Buscar aeroporto..."
+										selectedLabel="Origem selecionada"
+										icon={<Plane className="h-4 w-4" />}
+										options={originOptions}
+										selected={selected}
+										onSelectionChange={(selectedOption) => {
+											field.onChange(selectedOption[0]?.value || "");
+											clearDuplicateIfNeeded();
+										}}
+										multiple={false}
+										searchValue={originSearch}
+										onSearchChange={setOriginSearch}
+									/>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						);
+					}}
+				/>
+
+				<FormField
+					control={form.control}
+					name={`${baseName}.destinationAirport` as const}
+					render={({ field }) => {
+						const selected = field.value
+							? [{ value: field.value, label: field.value }]
+							: [];
+						return (
+							<FormItem>
+								<FormControl>
+									<LocationSelector
+										isOpen={isDestinationOpen}
+										onOpenChange={setIsDestinationOpen}
+										label="Destino *"
+										placeholder="Selecione o aeroporto de chegada"
+										searchPlaceholder="Buscar aeroporto..."
+										selectedLabel="Destino selecionado"
+										icon={<Plane className="h-4 w-4" />}
+										options={destinationOptions}
+										selected={selected}
+										onSelectionChange={(selectedOption) => {
+											field.onChange(selectedOption[0]?.value || "");
+											clearDuplicateIfNeeded();
+										}}
+										multiple={false}
+										searchValue={destinationSearch}
+										onSearchChange={setDestinationSearch}
+									/>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						);
+					}}
+				/>
+			</div>
+
+			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+				<FormField
+					control={form.control}
+					name={`${baseName}.departureDate` as const}
+					render={({ field }) => (
+						<FormItem>
+							<FormLabel>Data de partida *</FormLabel>
+							<FormControl>
+								<Input
+									{...field}
+									type="date"
+									min={minDate}
+									max={maxDate}
+									onChange={(event) => {
+										field.onChange(event.target.value);
+										clearDuplicateIfNeeded();
+									}}
+									className="h-11"
+								/>
+							</FormControl>
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
+
+				<FormField
+					control={form.control}
+					name={`${baseName}.departureTime` as const}
+					render={({ field }) => (
+						<FormItem>
+							<FormLabel>Horário de partida *</FormLabel>
+							<FormControl>
+								<Input
+									{...field}
+									type="time"
+									onChange={(event) => {
+										field.onChange(event.target.value);
+										clearDuplicateIfNeeded();
+									}}
+									className="h-11"
+								/>
+							</FormControl>
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
+			</div>
+
+			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+				<FormField
+					control={form.control}
+					name={`${baseName}.arrivalDate` as const}
+					render={({ field }) => (
+						<FormItem>
+							<FormLabel>Data de chegada *</FormLabel>
+							<FormControl>
+								<Input
+									{...field}
+									type="date"
+									min={arrivalMinDate}
+									max={maxDate}
+									onChange={(event) => {
+										field.onChange(event.target.value);
+										clearDuplicateIfNeeded();
+									}}
+									className="h-11"
+								/>
+							</FormControl>
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
+
+				<FormField
+					control={form.control}
+					name={`${baseName}.arrivalTime` as const}
+					render={({ field }) => (
+						<FormItem>
+							<FormLabel>Horário de chegada *</FormLabel>
+							<FormControl>
+								<Input
+									{...field}
+									type="time"
+									min={arrivalMinTime}
+									onChange={(event) => {
+										field.onChange(event.target.value);
+										clearDuplicateIfNeeded();
+									}}
+									className="h-11"
+								/>
+							</FormControl>
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
+			</div>
+		</div>
+	);
+}
+
+function FlightPricingSection({
+	form,
+	setDuplicateInfo,
+}: {
+	form: UseFormReturn<FlightFormData>;
+	setDuplicateInfo: (info: DuplicateInfo | null) => void;
+}) {
+	const formatNumberPtBR = (n: number) =>
+		new Intl.NumberFormat("pt-BR", {
+			minimumFractionDigits: 2,
+			maximumFractionDigits: 2,
+		}).format(n);
+
+	const formatDecimalStringPtBR = (value: string) => {
+		if (!value) return "";
+		const n = Number(value);
+		if (!Number.isFinite(n)) return "";
+		return formatNumberPtBR(n);
+	};
+
+	return (
+		<div className="space-y-6">
+			<h4 className="font-semibold text-base text-foreground flex items-center gap-2">
+				<DollarSign className="h-4 w-4 text-emerald-600" />
+				Custos
+			</h4>
+			<div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+				<div className="md:col-span-2">
+					<FormField
+						control={form.control}
+						name="totalAmount"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>
+									Total (valor)
+									{form.watch("currency") === "BRL" ? " (R$)" : null}
+								</FormLabel>
+								<FormControl>
+									<div className="relative">
+										{form.watch("currency") === "BRL" ? (
+											<span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+												R$
+											</span>
+										) : null}
+										<Input
+											value={formatDecimalStringPtBR(field.value || "")}
+											type="text"
+											inputMode="numeric"
+											placeholder="0,00"
+											className={
+												form.watch("currency") === "BRL" ? "h-11 pl-8" : "h-11"
+											}
+											onChange={(event) => {
+												const raw = event.target.value;
+												const digits = raw.replace(/\D/g, "");
+												if (!digits) {
+													field.onChange("");
+													setDuplicateInfo(null);
+													return;
+												}
+												const cents = Number.parseInt(digits, 10);
+												const decimal = (cents / 100).toFixed(2);
+												field.onChange(decimal);
+												setDuplicateInfo(null);
+											}}
+										/>
+									</div>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+				</div>
+
+				<FormField
+					control={form.control}
+					name="currency"
+					render={({ field }) => (
+						<FormItem>
+							<FormLabel>Moeda</FormLabel>
+							<Select
+								defaultValue={field.value}
+								onValueChange={(value) => {
+									field.onChange(value);
+									setDuplicateInfo(null);
+								}}
+							>
+								<FormControl>
+									<SelectTrigger className="h-11">
+										<SelectValue placeholder="Selecione" />
+									</SelectTrigger>
+								</FormControl>
+								<SelectContent>
+									<SelectItem value="BRL">BRL</SelectItem>
+									<SelectItem value="USD">USD</SelectItem>
+									<SelectItem value="EUR">EUR</SelectItem>
+								</SelectContent>
+							</Select>
+							<FormMessage />
+						</FormItem>
+					)}
+				/>
+			</div>
+		</div>
+	);
+}
 
 function FlightParticipantsSection({
 	form,
@@ -375,7 +1074,7 @@ function FlightParticipantsSection({
 							{members.map((member) => (
 								<div
 									key={member.id}
-									className="flex items-center space-x-3 p-3 rounded-lg border border-border/50 hover:border-border transition-colors"
+									className="flex items-center space-x-3 rounded-lg border border-border/50 p-3 transition-colors hover:border-border"
 								>
 									<Checkbox
 										id={member.id}
@@ -394,7 +1093,7 @@ function FlightParticipantsSection({
 									<div className="flex items-center gap-3">
 										<Avatar className="h-8 w-8">
 											<AvatarImage src={member.image || undefined} />
-											<AvatarFallback className="text-xs bg-gradient-to-br from-primary/10 to-accent/10 text-primary font-semibold">
+											<AvatarFallback className="bg-gradient-to-br from-primary/10 to-accent/10 text-xs font-semibold text-primary">
 												{member.name
 													.split(" ")
 													.map((n) => n[0])
@@ -403,7 +1102,7 @@ function FlightParticipantsSection({
 										</Avatar>
 										<Label
 											htmlFor={member.id}
-											className="font-medium cursor-pointer flex-1"
+											className="flex-1 cursor-pointer font-medium"
 										>
 											{member.name}
 										</Label>
@@ -419,323 +1118,73 @@ function FlightParticipantsSection({
 	);
 }
 
-function FlightDetailsSection({
-	form,
-	setDuplicateInfo,
-	recommendedDestinationOptions,
-}: {
-	form: UseFormReturn<FlightFormData>;
-	setDuplicateInfo: (info: DuplicateInfo | null) => void;
-	recommendedDestinationOptions: LocationOption[];
-}) {
-	const [originSearch, setOriginSearch] = useState("");
-	const [destinationSearch, setDestinationSearch] = useState("");
-	const [isOriginOpen, setIsOriginOpen] = useState(false);
-	const [isDestinationOpen, setIsDestinationOpen] = useState(false);
+function parseCurrencyInput(value?: string) {
+	if (!value) return null;
+	const normalized = value.replace(/\./g, "").replace(",", ".");
+	const parsed = Number.parseFloat(normalized);
+	return Number.isNaN(parsed) ? null : parsed;
+}
 
-	// Recommended options based on last home selections
-	const { data: originResults = [] } = useAirportsSearch(
-		originSearch,
-		10,
-		true,
-	);
-	const { data: destinationResults = [] } = useAirportsSearch(
-		destinationSearch,
-		10,
-		true,
-	);
+function toOptionalInteger(value?: string) {
+	if (value === undefined || value === null || value.trim() === "") {
+		return null;
+	}
+	const parsed = Number.parseInt(value, 10);
+	return Number.isNaN(parsed) ? null : parsed;
+}
 
-	const originOptions = useMemo(() => {
-		const results = originResults.map((airport) => ({
-			value: airport.code,
-			label: renderAirportName(airport),
-		}));
-		const map = new Map<string, LocationOption>();
-		for (const o of results) {
-			if (!map.has(o.value)) map.set(o.value, o);
-		}
-		return Array.from(map.values());
-	}, [originResults]);
+function emptyToNull(value?: string | undefined) {
+	if (!value) {
+		return undefined;
+	}
+	const trimmed = value.trim();
+	return trimmed.length === 0 ? undefined : trimmed;
+}
 
-	const destinationOptions = useMemo(() => {
-		const results = destinationResults.map((airport) => ({
-			value: airport.code,
-			label: renderAirportName(airport),
-		}));
-		const map = new Map<string, LocationOption>();
-		const combined = destinationSearch.trim().length > 0
-			? [...results, ...recommendedDestinationOptions]
-			: [...recommendedDestinationOptions, ...results];
-		for (const o of combined) {
-			if (!map.has(o.value)) map.set(o.value, o);
-		}
-		return Array.from(map.values());
-	}, [destinationResults, recommendedDestinationOptions, destinationSearch]);
+function calculateSegmentDurationMinutes(
+	departureDate: string,
+	departureTime: string,
+	arrivalDate: string,
+	arrivalTime: string,
+) {
+	const departure = new Date(`${departureDate}T${departureTime}:00`);
+	const arrival = new Date(`${arrivalDate}T${arrivalTime}:00`);
 
-	return (
-		<div className="space-y-6">
-			<h4 className="font-semibold text-base text-foreground">
-				Detalhes do Voo
-			</h4>
+	if (
+		Number.isNaN(departure.getTime()) ||
+		Number.isNaN(arrival.getTime()) ||
+		arrival.getTime() <= departure.getTime()
+	) {
+		return null;
+	}
 
-			<div className="space-y-4">
-				<div className="grid grid-cols-1 gap-6">
-					<FormField
-						control={form.control}
-						name="originAirport"
-						render={({ field }) => {
-							const selectedOrigin = field.value
-								? [{ value: field.value, label: field.value }]
-								: [];
+	return Math.round((arrival.getTime() - departure.getTime()) / 60000);
+}
 
-							return (
-								<FormItem>
-									<FormControl>
-										<LocationSelector
-											label="Aeroporto de Origem *"
-											placeholder="Selecione o aeroporto de partida"
-											searchPlaceholder="Buscar aeroporto..."
-											selectedLabel="Origem selecionada"
-											icon={<Plane className="h-4 w-4" />}
-											options={originOptions}
-											selected={selectedOrigin}
-											onSelectionChange={(selected) => {
-												field.onChange(selected[0]?.value || "");
-												setDuplicateInfo(null);
-											}}
-											multiple={false}
-											searchValue={originSearch}
-											onSearchChange={setOriginSearch}
-											isOpen={isOriginOpen}
-											onOpenChange={setIsOriginOpen}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							);
-						}}
-					/>
-
-					<FormField
-						control={form.control}
-						name="destinationAirport"
-						render={({ field }) => {
-							const selectedDestination = field.value
-								? [{ value: field.value, label: field.value }]
-								: [];
-
-							return (
-								<FormItem>
-									<FormControl>
-										<LocationSelector
-											label="Aeroporto de Destino *"
-											placeholder="Selecione o aeroporto de chegada"
-											searchPlaceholder="Buscar aeroporto..."
-											selectedLabel="Destino selecionado"
-											icon={<Plane className="h-4 w-4" />}
-											options={destinationOptions}
-											selected={selectedDestination}
-											onSelectionChange={(selected) => {
-												field.onChange(selected[0]?.value || "");
-												setDuplicateInfo(null);
-											}}
-											multiple={false}
-											searchValue={destinationSearch}
-											onSearchChange={setDestinationSearch}
-											isOpen={isDestinationOpen}
-											onOpenChange={setIsDestinationOpen}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							);
-						}}
-					/>
-				</div>
-			</div>
-		</div>
+function calculateSliceDurationMinutes(
+	segments: FlightFormData["slices"][number]["segments"],
+) {
+	const first = segments[0];
+	const last = segments[segments.length - 1] ?? first;
+	if (!first || !last) {
+		return null;
+	}
+	return calculateSegmentDurationMinutes(
+		first.departureDate,
+		first.departureTime,
+		last.arrivalDate,
+		last.arrivalTime,
 	);
 }
 
-function FlightTimesSection({
-	form,
-	minDate,
-	maxDate,
-}: {
-	form: UseFormReturn<FlightFormData>;
-	minDate: string;
-	maxDate: string;
-}) {
-	const departureDate = form.watch("departureDate");
-	const departureTime = form.watch("departureTime");
-	const arrivalDate = form.watch("arrivalDate");
-
-	const arrivalMinDate = departureDate || minDate;
-	const arrivalTimeMin =
-		arrivalDate && departureDate && arrivalDate === departureDate
-			? departureTime || undefined
-			: undefined;
-
-	return (
-		<div className="space-y-6">
-			<div className="space-y-4">
-				<h4 className="font-semibold text-base text-foreground flex items-center gap-2">
-					<Calendar className="w-4 h-4 text-primary" />
-					Partida
-				</h4>
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-					<FormField
-						control={form.control}
-						name="departureDate"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>Data *</FormLabel>
-								<FormControl>
-									<Input
-										{...field}
-										type="date"
-										min={minDate}
-										max={maxDate}
-										className="h-11"
-									/>
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-					<FormField
-						control={form.control}
-						name="departureTime"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>Horário *</FormLabel>
-								<FormControl>
-									<Input {...field} type="time" className="h-11" />
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-				</div>
-			</div>
-
-			<div className="space-y-4">
-				<h4 className="font-semibold text-base text-foreground flex items-center gap-2">
-					<Calendar className="w-4 h-4 text-accent" />
-					Chegada
-				</h4>
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-					<FormField
-						control={form.control}
-						name="arrivalDate"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>Data *</FormLabel>
-								<FormControl>
-									<Input
-										{...field}
-										type="date"
-										min={arrivalMinDate}
-										max={maxDate}
-										className="h-11"
-									/>
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-					<FormField
-						control={form.control}
-						name="arrivalTime"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>Horário *</FormLabel>
-								<FormControl>
-									<Input
-										{...field}
-										type="time"
-										min={arrivalTimeMin}
-										className="h-11"
-									/>
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-				</div>
-			</div>
-		</div>
-	);
+function formatDateForInput(date: Date) {
+	return date.toISOString().split("T")[0];
 }
 
-function FlightCostSection({
-	form,
-	setDuplicateInfo,
-}: {
-	form: UseFormReturn<FlightFormData>;
-	setDuplicateInfo: (info: DuplicateInfo | null) => void;
-}) {
-	// Helpers to mirror the home budget mask (pt-BR)
-	const formatNumberPtBR = (n: number) =>
-		new Intl.NumberFormat("pt-BR", {
-			minimumFractionDigits: 2,
-			maximumFractionDigits: 2,
-		}).format(n);
-
-	const formatDecimalStringPtBR = (value: string) => {
-		if (!value) return "";
-		const n = Number(value);
-		if (!Number.isFinite(n)) return "";
-		return formatNumberPtBR(n);
-	};
-
-	return (
-		<div className="space-y-4">
-			<h4 className="font-semibold text-base text-foreground flex items-center gap-2">
-				<DollarSign className="w-4 h-4 text-emerald-600" />
-				Valor da Passagem
-			</h4>
-			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-				<FormField
-					control={form.control}
-					name="cost"
-					render={({ field }) => (
-						<FormItem>
-							<FormLabel>Preço (R$)</FormLabel>
-							<FormControl>
-								<div className="relative">
-									<span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-										R$
-									</span>
-									<Input
-										value={formatDecimalStringPtBR(field.value || "")}
-										type="text"
-										inputMode="numeric"
-										placeholder="0,00"
-										className="h-11 pl-8"
-										onChange={(e) => {
-											const raw = e.target.value;
-											const digits = raw.replace(/\D/g, "");
-											if (!digits) {
-												field.onChange("");
-												setDuplicateInfo(null);
-												return;
-											}
-											const cents = Number.parseInt(digits, 10);
-											const decimal = (cents / 100).toFixed(2); // normalized with dot
-											field.onChange(decimal);
-											setDuplicateInfo(null);
-										}}
-									/>
-								</div>
-							</FormControl>
-							<FormMessage />
-						</FormItem>
-					)}
-				/>
-			</div>
-		</div>
-	);
+function addDaysToDate(date: Date, days: number) {
+	const result = new Date(date);
+	result.setDate(result.getDate() + days);
+	return result;
 }
 
 const renderAirportName = (airport: Airport) => {

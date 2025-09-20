@@ -1,10 +1,9 @@
-import { eq, sql } from "drizzle-orm";
+import { asc, eq, sql } from "drizzle-orm";
 import type { DB } from "@/lib/db/types";
 import {
 	Accommodation,
 	AppEvent,
 	Flight,
-	FlightParticipant,
 	Travel,
 	TravelMember,
 } from "@/lib/db/schema";
@@ -52,21 +51,25 @@ export class FinancialDao {
 			.where(eq(Accommodation.travelId, travelId));
 
 		// Get flights
-		const flights = await this.db
-			.select({
-				id: Flight.id,
-				originAirport: Flight.originAirport,
-				destinationAirport: Flight.destinationAirport,
-				cost: Flight.cost,
-				participantCount: sql<number>`cast(count(${FlightParticipant.id}) as integer)`,
-			})
-			.from(Flight)
-			.leftJoin(
-				FlightParticipant,
-				eq(FlightParticipant.flightId, Flight.id),
-			)
-			.where(eq(Flight.travelId, travelId))
-			.groupBy(Flight.id);
+		const flights = await this.db.query.Flight.findMany({
+			where: eq(Flight.travelId, travelId),
+			with: {
+				participants: {
+					columns: {
+						id: true,
+					},
+				},
+				slices: {
+					orderBy: (fields, { asc: orderAsc }) => [orderAsc(fields.sliceIndex)],
+					with: {
+						segments: {
+							orderBy: (fields, { asc: orderAsc }) => [orderAsc(fields.segmentIndex)],
+						},
+					},
+				},
+			},
+			orderBy: [asc(Flight.createdAt)],
+		});
 
 		// Get events
 		const events = await this.db
@@ -89,12 +92,21 @@ export class FinancialDao {
 				name: acc.name,
 				price: acc.price ?? 0,
 			})),
-			flights: flights.map((flight) => ({
-				id: flight.id,
-				airline: `${flight.originAirport} → ${flight.destinationAirport}`,
-				cost: flight.cost ?? 0,
-				participantCount: flight.participantCount ?? 0,
-			})),
+			flights: flights.map((flight) => {
+				const firstSegment = flight.slices[0]?.segments[0];
+				const lastSlice = flight.slices[flight.slices.length - 1];
+				const lastSegment =
+					lastSlice?.segments[lastSlice.segments.length - 1] ?? firstSegment;
+				const origin = firstSegment?.originAirport ?? flight.originAirport;
+				const destination =
+					lastSegment?.destinationAirport ?? flight.destinationAirport;
+				return {
+					id: flight.id,
+					airline: `${origin} → ${destination}`,
+					cost: flight.totalAmount ?? flight.cost ?? 0,
+					participantCount: flight.participants.length,
+				};
+			}),
 			events: events.map((event) => ({
 				id: event.id,
 				name: event.title,
