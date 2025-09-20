@@ -37,6 +37,7 @@ import { format } from "date-fns";
 import { formatCurrencyBRL } from "@/lib/currency";
 import { ptBR } from "date-fns/locale";
 import {
+	CalendarDays,
 	CalendarIcon,
 	Clock,
 	DollarSign,
@@ -621,9 +622,6 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 													{countdownLabel ? (
 														<Badge variant="default">{countdownLabel}</Badge>
 													) : null}
-													<Badge variant="secondary">
-														{getDurationInDays(trip.startDate, trip.endDate)} dias
-													</Badge>
 												</div>
 											</div>
 										</CardHeader>
@@ -631,10 +629,17 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 										<div className="space-y-3">
 											<div className="flex items-center text-sm text-muted-foreground">
 												<Clock className="h-4 w-4 mr-2" />
-													<span>
-														{format(startDateForDisplay, "dd/MM", { locale: ptBR })} -{" "}
-														{format(endDateForDisplay, "dd/MM/yyyy", { locale: ptBR })}
-													</span>
+												<span>
+													{format(startDateForDisplay, "dd/MM", { locale: ptBR })} -{" "}
+													{format(endDateForDisplay, "dd/MM/yyyy", { locale: ptBR })}
+												</span>
+											</div>
+
+											<div className="flex items-center text-sm text-muted-foreground">
+												<CalendarDays className="h-4 w-4 mr-2" />
+												<span>
+													{getDurationInDays(trip.startDate, trip.endDate)} dias de viagem
+												</span>
 											</div>
 
 											{typeof trip.peopleEstimate === "number" && Number.isFinite(trip.peopleEstimate) ? (
