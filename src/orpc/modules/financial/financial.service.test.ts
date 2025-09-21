@@ -17,6 +17,8 @@ import { createTravelDAO } from "../travel/travel.dao";
 import { FinancialDao } from "./financial.dao";
 import { getFinancialSummaryService } from "./financial.service";
 
+type FlightInsert = typeof Flight.$inferInsert;
+
 const OWNER_ID = "usr_owner";
 const MEMBER_ID = "usr_member";
 const TRAVEL_ID = "trv_financial_test";
@@ -64,8 +66,8 @@ describe("getFinancialSummaryService", () => {
 		const db = await getFakeDb();
 		await seedBaseTravel(db);
 
-		await db.insert(Flight).values(
-			testStub.flight({
+		const flight: FlightInsert = {
+			...testStub.flight({
 				id: "flt_salvador_lima",
 				travelId: TRAVEL_ID,
 				metadata: {},
@@ -87,7 +89,10 @@ describe("getFinancialSummaryService", () => {
 				dataSource: "manual",
 				legacyMigratedAt: null,
 			}),
-		);
+			metadata: {},
+		};
+
+		await db.insert(Flight).values(flight);
 
 		await db.insert(FlightSlice).values({
 			id: "fls_salvador_lima",

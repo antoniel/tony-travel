@@ -777,7 +777,7 @@ function FlightSegmentFields({
 				) : null}
 			</div>
 
-			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+			<div className="grid grid-cols-1 gap-4 md:[grid-template-columns:repeat(auto-fit,minmax(240px,1fr))]">
 				<FormField
 					control={form.control}
 					name={`${baseName}.originAirport` as const}
@@ -849,7 +849,7 @@ function FlightSegmentFields({
 				/>
 			</div>
 
-			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+			<div className="grid grid-cols-1 gap-4 md:[grid-template-columns:repeat(auto-fit,minmax(240px,1fr))]">
 				<FormField
 					control={form.control}
 					name={`${baseName}.departureDate` as const}
@@ -897,7 +897,7 @@ function FlightSegmentFields({
 				/>
 			</div>
 
-			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+			<div className="grid grid-cols-1 gap-4 md:[grid-template-columns:repeat(auto-fit,minmax(240px,1fr))]">
 				<FormField
 					control={form.control}
 					name={`${baseName}.arrivalDate` as const}
