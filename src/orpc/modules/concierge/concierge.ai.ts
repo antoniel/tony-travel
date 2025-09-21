@@ -18,10 +18,14 @@ import {
 	GetAccomodationsTool,
 	GetTravelParticipantsTool,
 	ListEventsTool,
+	ListFlightsTool,
 	RequestToCreateAccommodationTool,
 	RequestToCreateEventTool,
+	RequestToCreateFlightTool,
 	RequestToDeleteAccommodationTool,
+	RequestToDeleteFlightTool,
 	RequestToUpdateAccommodationTool,
+	RequestToUpdateFlightTool,
 } from "./concierge.tools";
 
 /**
@@ -74,6 +78,10 @@ function createConciergeTools(db: DB, tripContext: TripContext) {
 		listEvents: tool(new ListEventsTool(db, tripContext)),
 		getTravelParticipants: tool(new GetTravelParticipantsTool(db, tripContext)),
 		getAccomodations: tool(new GetAccomodationsTool(db, tripContext)),
+		requestToCreateFlight: tool(new RequestToCreateFlightTool(db, tripContext)),
+		requestToUpdateFlight: tool(new RequestToUpdateFlightTool(db, tripContext)),
+		requestToDeleteFlight: tool(new RequestToDeleteFlightTool(db, tripContext)),
+		listFlights: tool(new ListFlightsTool(db, tripContext)),
 	} as const;
 }
 

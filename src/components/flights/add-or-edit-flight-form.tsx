@@ -39,7 +39,7 @@ import { z } from "zod";
 type FlightForForm = {
 	id: string;
 	totalAmount: number | null;
-	currency: string;
+	currency: string | null;
 	slices: {
 		id: string;
 		originAirport: string;

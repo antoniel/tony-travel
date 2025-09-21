@@ -123,7 +123,6 @@ const getPrimarySegmentFromFlight = (flight: FlightWithParticipants) => {
 		departureTime: flight.departureTime,
 		arrivalDate: flight.arrivalDate,
 		arrivalTime: flight.arrivalTime,
-		marketingCarrierCode: null,
 		marketingFlightNumber: null,
 		operatingCarrierCode: null,
 		aircraftName: null,
