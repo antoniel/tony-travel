@@ -573,7 +573,7 @@ function FlightsList({
 							onToggle={() => toggleGroup(group.originAirport)}
 						/>
 
-						<CollapsibleContent className="space-y-4 pl-4">
+						<CollapsibleContent className="space-y-4">
 							{group.flights.map((flight) => (
 								<FlightCard
 									key={flight.id}

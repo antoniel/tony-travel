@@ -224,7 +224,7 @@ function TripLayout() {
 						</div>
 
 						{/* Navigation Tabs */}
-						<div className="sticky top-16 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/50 sm:static">
+						<div className="sticky top-16 z-30 bg-transparent border-b border-border/50 sm:static">
 							<nav
 								ref={navRef}
 								className="flex overflow-x-auto scrollbar-hide -mb-px"
