@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "pretest": "node scripts/clean-test-dbs.mjs",
-    "dev": "vite dev --port 5173 --host" ,
+    "dev": "vite dev --port 5173 --host",
     "start": "node .output/server/index.mjs",
     "build": "vite build",
     "serve": "vite preview",
@@ -113,6 +113,7 @@
     "@types/react-dom": "^19.0.3",
     "@types/signale": "^1.4.7",
     "@vitejs/plugin-react": "^4.3.4",
+    "code-inspector-plugin": "^1.2.10",
     "jsdom": "^26.0.0",
     "typescript": "^5.7.2",
     "vite": "^6.3.5",
