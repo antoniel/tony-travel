@@ -42,13 +42,13 @@ If reflection is required, follow this exact sequence:
    - Prioritize changes to prevent confusion or improve alignment with user preferences.
    - Consider both immediate enhancements and broader patterns.
    - Apply improvements to the correct specialist files (e.g., frontend-/backend-specific files as required).
-4. **Propose and Immediately Implement**: Present your improvement suggestions with clear rationale, then IMMEDIATELY implement them in the appropriate files (main CLAUDE.md or specialist agent files) without awaiting user approval. Never ask for implementation permission—always proceed automatically.
-5. **MANDATORY AUTO-IMPLEMENTATION**: Instantly apply ALL proposed changes to the corresponding instruction files using available tools (Edit, MultiEdit, or Write):
-   - Frontend: `/path/to/.claude/agents/frontend-specialist.md`
-   - Backend: `/path/to/.claude/agents/backend-specialist.md`
-   - Testing: `/path/to/.claude/agents/backend-test-specialist.md`
-   - Orchestration/general: Main `CLAUDE.md`
-     Do not seek permission—implement changes directly according to task analysis.
+4. **Propose and Immediately Implement**: Present your improvement suggestions with clear rationale, then IMMEDIATELY implement them in the APPROPRIATE SPECIALIST FILES, not the main CLAUDE.md. Never ask for implementation permission—always proceed automatically.
+5. **MANDATORY AUTO-IMPLEMENTATION**: Instantly apply ALL proposed changes to the corresponding SPECIALIST instruction files using available tools (Edit, MultiEdit, or Write):
+   - Frontend policies, component structure, UI patterns: `/path/to/.claude/agents/frontend-specialist.md`
+   - Backend policies, API structure, database patterns: `/path/to/.claude/agents/backend-specialist.md`
+   - Testing policies and patterns: `/path/to/.claude/agents/backend-test-specialist.md`
+   - **CRITICAL**: Main `CLAUDE.md` should ONLY be updated for orchestration rules, agent coordination, and delegation policies - NOT for domain-specific technical policies
+     Do not seek permission—implement changes directly in the specialist files according to task analysis.
 
 </execution_process>
 
@@ -57,9 +57,10 @@ If reflection is required, follow this exact sequence:
 When invoked by @agent-claude-reflection-enforcer:
 
 - Analyze the completed task for improvement opportunities.
-- Identify which instruction files require updates (main or specialist).
-- Propose specific enhancements to the appropriate files.
-- IMMEDIATELY apply those changes to the correct instruction files using modification tools.
+- Identify which SPECIALIST instruction files require updates (prioritize specialist files over main CLAUDE.md).
+- Propose specific enhancements to the appropriate SPECIALIST files.
+- **CRITICAL RULE**: Apply changes to specialist files for domain-specific policies, NOT to main CLAUDE.md
+- IMMEDIATELY apply those changes to the correct specialist instruction files using modification tools.
 - Confirm that these updates have been successfully applied before considering the reflection complete.
   </critical_auto_implementation_rule>
 
@@ -99,9 +100,15 @@ Always confirm that all relevant instruction files have been updated successfull
 <specialist_file_mapping>
 **Specialist File Mapping**
 
-- Navigation, UI/UX, components, styling, forms: `/path/to/.claude/agents/frontend-specialist.md`
-- APIs, services, DAOs, database, validation: `/path/to/.claude/agents/backend-specialist.md`
+- Navigation, UI/UX, components, styling, forms, frontend structure policies: `/path/to/.claude/agents/frontend-specialist.md`
+- APIs, services, DAOs, database, validation, backend structure policies: `/path/to/.claude/agents/backend-specialist.md`
 - Backend testing patterns: `/path/to/.claude/agents/backend-test-specialist.md`
-- Task orchestration, agent coordination, workflow: Main `CLAUDE.md`
+- **ONLY** task orchestration, agent coordination, delegation workflow: Main `CLAUDE.md`
+
+**CRITICAL POLICY ROUTING**:
+- Frontend component structure (like -components folders) → frontend-specialist.md
+- Backend API structure → backend-specialist.md  
+- Testing approaches → backend-test-specialist.md
+- Agent coordination rules → Main CLAUDE.md
 
 </specialist_file_mapping>

@@ -34,7 +34,11 @@ import type { Airport, InsertFullTravel, FeaturedTravel } from "@/orpc/modules/t
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { format } from "date-fns";
-import { formatCurrencyBRL } from "@/lib/currency";
+import {
+	formatCurrencyBRL,
+	formatDecimalStringPtBR,
+	normalizeCurrencyInputPtBR,
+} from "@/lib/currency";
 import { ptBR } from "date-fns/locale";
 import {
 	CalendarDays,
@@ -79,20 +83,6 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 		customPeople: "",
 		departureAirports: [],
 	});
-
-	// Helpers for currency mask (pt-BR)
-	const formatNumberPtBR = (n: number) =>
-		new Intl.NumberFormat("pt-BR", {
-			minimumFractionDigits: 2,
-			maximumFractionDigits: 2,
-		}).format(n);
-
-	const formatDecimalStringPtBR = (value: string) => {
-		if (!value) return "";
-		const n = Number(value);
-		if (!Number.isFinite(n)) return "";
-		return formatNumberPtBR(n);
-	};
 
 	// Airport selector state
 	const [airportSearch, setAirportSearch] = useState("");
@@ -342,24 +332,16 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 														type="text"
 														inputMode="numeric"
 														placeholder="0,00"
-														value={formatDecimalStringPtBR(form.customBudget)}
-														onChange={(e) => {
-															const raw = e.target.value;
-															const digits = raw.replace(/\D/g, "");
-															if (!digits) {
-																setForm((prev) => ({
-																	...prev,
-																	customBudget: "",
-																}));
-																return;
-															}
-															const cents = Number.parseInt(digits, 10);
-															const decimal = (cents / 100).toFixed(2); // normalized with dot
-															setForm((prev) => ({
-																...prev,
-																customBudget: decimal,
-															}));
-														}}
+											value={formatDecimalStringPtBR(form.customBudget)}
+											onChange={(e) => {
+												const { decimal } = normalizeCurrencyInputPtBR(
+													e.target.value,
+												);
+												setForm((prev) => ({
+													...prev,
+													customBudget: decimal,
+												}));
+											}}
 														className="h-12 text-base pl-8"
 													/>
 												</div>

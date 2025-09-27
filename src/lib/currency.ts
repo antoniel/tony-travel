@@ -16,20 +16,46 @@ export function formatNumberPtBR(n: number): string {
 	}).format(Number.isFinite(n) ? n : 0);
 }
 
+export function formatDecimalStringPtBR(
+	value: string | number | null | undefined,
+): string {
+	if (value === null || value === undefined || value === "") return "";
+	const numeric = typeof value === "number" ? value : Number(value);
+	if (!Number.isFinite(numeric)) return "";
+	return formatNumberPtBR(numeric);
+}
+
+export function normalizeCurrencyInputPtBR(raw: string): {
+	display: string;
+	decimal: string;
+	numeric: number | null;
+} {
+	if (!raw) {
+		return { display: "", decimal: "", numeric: null };
+	}
+	const digits = raw.replace(/\D/g, "");
+	if (!digits) {
+		return { display: "", decimal: "", numeric: null };
+	}
+	const cents = Number.parseInt(digits, 10);
+	if (!Number.isFinite(cents)) {
+		return { display: "", decimal: "", numeric: null };
+	}
+	const numeric = cents / 100;
+	return {
+		display: formatNumberPtBR(numeric),
+		decimal: numeric.toFixed(2),
+		numeric,
+	};
+}
+
 // Given raw user input, return display string (e.g. "1.234,56") and numeric value (e.g. 1234.56)
 export function maskCurrencyInputPtBR(raw: string): {
 	display: string;
 	numeric: number | null;
 } {
-	if (!raw) return { display: "", numeric: null };
-	// Keep only digits
-	const digits = raw.replace(/\D/g, "");
-	if (!digits) return { display: "", numeric: null };
-	// Interpret as cents
-	const cents = Number.parseInt(digits, 10);
-	if (!Number.isFinite(cents)) return { display: "", numeric: null };
-	const numeric = cents / 100;
-	return { display: formatNumberPtBR(numeric), numeric };
+	const { display, numeric } = normalizeCurrencyInputPtBR(raw);
+	return { display, numeric };
 }
 
 export function parsePtBRCurrencyToNumber(raw: string): number | null {

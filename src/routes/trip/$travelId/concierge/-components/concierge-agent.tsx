@@ -13,9 +13,9 @@ import {
 	PromptInputSubmit,
 	PromptInputTextarea,
 } from "@/components/ai-elements/prompt-input";
-import { Messages } from "@/components/concierge/Messages";
 import { client } from "@/orpc/client";
 import type { MyUIMessage } from "@/orpc/modules/concierge/concierge.ai";
+import { Messages } from "@/routes/trip/$travelId/concierge/-components/Messages";
 import { useChat } from "@ai-sdk/react";
 import { eventIteratorToStream } from "@orpc/client";
 import { CalendarClock, MapPin, Plane } from "lucide-react";

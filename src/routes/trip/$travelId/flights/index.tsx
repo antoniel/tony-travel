@@ -45,7 +45,7 @@ interface FlightParticipant {
 		id: string;
 		name: string;
 		image?: string | null;
-	}
+	};
 }
 
 interface FlightWithParticipants {
@@ -129,7 +129,7 @@ const getPrimarySegmentFromFlight = (flight: FlightWithParticipants) => {
 		aircraftType: null,
 		distanceMeters: null,
 		durationMinutes: null,
-	}
+	};
 };
 
 const getFinalSegmentFromFlight = (flight: FlightWithParticipants) => {
@@ -189,7 +189,7 @@ function FlightWarnings({
 				</Alert>
 			)}
 		</div>
-	)
+	);
 }
 
 function FlightPageHeader({
@@ -239,7 +239,7 @@ function FlightPageHeader({
 				</ResponsiveModal>
 			) : null}
 		</div>
-	)
+	);
 }
 
 function FlightsPage() {
@@ -257,7 +257,7 @@ function FlightsPage() {
 	// Fetch flights grouped by airport
 	const flightsQuery = useQuery(
 		orpc.flightRoutes.getFlightsByTravel.queryOptions({ input: { travelId } }),
-	)
+	);
 
 	// Fetch travel members (only if member)
 	const membersQuery = useQuery({
@@ -265,12 +265,12 @@ function FlightsPage() {
 			input: { travelId },
 		}),
 		enabled: canWrite,
-	})
+	});
 
 	// Delete flight mutation
 	const deleteFlightMutation = useMutation(
 		orpc.flightRoutes.deleteFlight.mutationOptions(),
-	)
+	);
 
 	const isLoading = flightsQuery.isLoading || membersQuery.isLoading;
 	const flightGroups = flightsQuery.data || [];
@@ -287,10 +287,10 @@ function FlightsPage() {
 	const totalFlights = allFlights.length;
 	const flightsWithoutParticipants = allFlights.filter(
 		(f) => f.participants.length === 0,
-	)
+	);
 	const flightsWithoutCost = allFlights.filter(
 		(f) => getFlightCostValue(f) === null,
-	)
+	);
 
 	const formatDate = (date: Date) => {
 		// Datas de voo são "date-only" (sem horário); formatamos em UTC para
@@ -299,18 +299,18 @@ function FlightsPage() {
 			day: "2-digit",
 			month: "short",
 			timeZone: "UTC",
-		})
-	}
+		});
+	};
 
 	const formatTime = (time: string) => {
 		return time.slice(0, 5); // Remove seconds if present
-	}
+	};
 
 	// Handle edit flight
 	const handleEditFlight = (flight: FlightWithParticipants) => {
 		setEditingFlight(flight);
 		setIsEditFlightOpen(true);
-	}
+	};
 
 	// Handle delete flight
 	const handleDeleteFlight = async (flightId: string) => {
@@ -322,19 +322,19 @@ function FlightsPage() {
 					orpc.flightRoutes.getFlightsByTravel.queryOptions({
 						input: { travelId },
 					}),
-				)
+				);
 			} catch (error) {
 				console.error("Error deleting flight:", error);
 			}
 		}
-	}
+	};
 
 	if (isLoading) {
 		return (
 			<div className="flex items-center justify-center py-12">
 				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
 			</div>
-		)
+		);
 	}
 
 	return (
@@ -380,22 +380,20 @@ function FlightsPage() {
 						<DialogTitle className="text-left">Editar Voo</DialogTitle>
 					</DialogHeader>
 					{editingFlight ? (
-						<div className="flex flex-1 flex-col overflow-hidden">
-							<AddOrEditFlightForm
-								flight={editingFlight}
-								travelId={travelId}
-								members={members}
-								onClose={() => {
-									setIsEditFlightOpen(false)
-									setEditingFlight(null)
-								}}
-							/>
-						</div>
+						<AddOrEditFlightForm
+							flight={editingFlight}
+							travelId={travelId}
+							members={members}
+							onClose={() => {
+								setIsEditFlightOpen(false);
+								setEditingFlight(null);
+							}}
+						/>
 					) : null}
 				</ResponsiveModal>
 			) : null}
 		</div>
-	)
+	);
 }
 
 function EmptyFlightState({
@@ -441,7 +439,7 @@ function EmptyFlightState({
 				</div>
 			</CardContent>
 		</Card>
-	)
+	);
 }
 
 function FlightGroupHeader({
@@ -452,7 +450,7 @@ function FlightGroupHeader({
 	const totalPassengers = group.flights.reduce(
 		(total, flight) => total + flight.participants.length,
 		0,
-	)
+	);
 	const totalSegments = group.flights.reduce((segmentsCount, flight) => {
 		return (
 			segmentsCount +
@@ -460,7 +458,7 @@ function FlightGroupHeader({
 				(sliceTotal, slice) => sliceTotal + slice.segments.length,
 				0,
 			)
-		)
+		);
 	}, 0);
 
 	return (
@@ -503,7 +501,7 @@ function FlightGroupHeader({
 				</button>
 			</CollapsibleTrigger>
 		</div>
-	)
+	);
 }
 
 function FlightsList({
@@ -536,21 +534,21 @@ function FlightsList({
 					// Keep existing state if it exists, otherwise default to open
 					acc[group.originAirport] =
 						prevOpenGroups[group.originAirport] ?? true;
-					return acc
+					return acc;
 				},
 				{} as Record<string, boolean>,
-			)
+			);
 
 			return initialState;
-		})
+		});
 	}, [flightGroups]);
 
 	const toggleGroup = (originAirport: string) => {
 		setOpenGroups((prev) => ({
 			...prev,
 			[originAirport]: !prev[originAirport],
-		}))
-	}
+		}));
+	};
 
 	if (totalFlights === 0) {
 		return <EmptyFlightState onAddFlight={onAddFlight} canWrite={canWrite} />;
@@ -590,7 +588,7 @@ function FlightsList({
 				</Collapsible>
 			))}
 		</div>
-	)
+	);
 }
 
 function FlightCard({
@@ -618,7 +616,7 @@ function FlightCard({
 	const totalSegments = flight.slices.reduce(
 		(total, slice) => total + slice.segments.length,
 		0,
-	)
+	);
 
 	return (
 		<Card className="group relative overflow-hidden border-0 shadow-sm hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-background via-background to-muted/20">
@@ -815,7 +813,7 @@ function FlightCard({
 				</div>
 			</CardContent>
 		</Card>
-	)
+	);
 }
 
 function FlightSliceSegments({
@@ -861,13 +859,13 @@ function FlightSliceSegments({
 				{slice.segments.map((segment) => {
 					const marketingInfo = [segment.marketingFlightNumber]
 						.filter(Boolean)
-						.join(" ")
+						.join(" ");
 					const operatingInfo = segment.operatingCarrierCode
 						? `Operado por ${segment.operatingCarrierCode}`
-						: null
+						: null;
 					const segmentDurationLabel = formatDuration(
 						segment.durationMinutes ?? null,
-					)
+					);
 					return (
 						<div
 							key={segment.id}
@@ -900,9 +898,9 @@ function FlightSliceSegments({
 								) : null}
 							</div>
 						</div>
-					)
+					);
 				})}
 			</div>
 		</div>
-	)
+	);
 }

@@ -22,6 +22,10 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { useAirportsSearch } from "@/hooks/useAirportsSearch";
+import {
+	formatDecimalStringPtBR,
+	normalizeCurrencyInputPtBR,
+} from "@/lib/currency";
 import { orpc } from "@/orpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -949,26 +953,13 @@ function FlightSegmentFields({
 	);
 }
 
+
 function FlightPricingSection({
 	setDuplicateInfo,
 }: {
 	setDuplicateInfo: (info: DuplicateInfo | null) => void;
 }) {
 	const form = useFormContext<FlightFormData>();
-	const formatNumberPtBR = (n: number) =>
-		new Intl.NumberFormat("pt-BR", {
-			minimumFractionDigits: 2,
-			maximumFractionDigits: 2,
-		}).format(n);
-
-	const formatDecimalStringPtBR = (value: string) => {
-		if (!value) return "";
-		const n = Number(value);
-		if (!Number.isFinite(n)) return "";
-		return formatNumberPtBR(n);
-	};
-
-	console.log(form.watch("totalAmount"));
 	return (
 		<div className="space-y-6">
 			<h4 className="font-semibold text-base text-foreground flex items-center gap-2">
@@ -993,24 +984,23 @@ function FlightPricingSection({
 												R$
 											</span>
 										) : null}
-										<Input
-											value={formatDecimalStringPtBR(field.value || "")}
+											<Input
+												value={formatDecimalStringPtBR(field.value || "")}
 											type="text"
 											inputMode="numeric"
 											placeholder="0,00"
 											className={
 												form.watch("currency") === "BRL" ? "h-11 pl-8" : "h-11"
 											}
-											onChange={(event) => {
-												const raw = event.target.value;
-												const digits = raw.replace(/\D/g, "");
-												if (!digits) {
+												onChange={(event) => {
+												const { decimal } = normalizeCurrencyInputPtBR(
+													event.target.value,
+												);
+												if (!decimal) {
 													field.onChange("");
 													setDuplicateInfo(null);
 													return;
 												}
-												const cents = Number.parseInt(digits, 10);
-												const decimal = (cents / 100).toFixed(2);
 												field.onChange(decimal);
 												setDuplicateInfo(null);
 											}}
