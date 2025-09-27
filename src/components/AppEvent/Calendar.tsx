@@ -1083,11 +1083,14 @@ const EventBlock = ({
 }: EventBlockProps) => {
 	const leftPercent = layout ? layout.left * 100 : 0;
 	const widthPercent = layout ? layout.width * 100 : 100;
+	const isEditable = Boolean(onUpdateEvent);
 
 	return (
 		<div
 			key={event.id}
-			className={`absolute text-xs px-1 py-0.5 rounded text-white pointer-events-auto z-10 flex flex-col justify-start cursor-move hover:shadow-lg transition-shadow group ${
+			className={`absolute text-xs px-1 py-0.5 rounded text-white pointer-events-auto z-10 flex flex-col justify-start ${
+				isEditable ? "cursor-move" : "cursor-pointer"
+			} hover:shadow-lg transition-shadow group ${
 				isDragging ? "opacity-80 shadow-xl scale-105" : ""
 			}`}
 			style={{
@@ -1100,7 +1103,10 @@ const EventBlock = ({
 				right: layout ? "auto" : "4px",
 			}}
 			title={`${timeDisplay ? `${timeDisplay} ` : ""}${event.title}`}
-			onMouseDown={(e) => onMouseDown(event, dayIndex, e)}
+			onMouseDown={(e) => {
+				if (!isEditable) return;
+				onMouseDown(event, dayIndex, e);
+			}}
 			onClick={(e) => {
 				e.stopPropagation();
 				if (!isDragging && onEventClick) {
