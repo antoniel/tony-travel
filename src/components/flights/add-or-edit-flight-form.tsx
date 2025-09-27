@@ -32,6 +32,7 @@ import {
 	type UseFormReturn,
 	useFieldArray,
 	useForm,
+	useFormContext,
 } from "react-hook-form";
 import { match } from "ts-pattern";
 import { z } from "zod";
@@ -449,7 +450,6 @@ export function AddOrEditFlightForm({
 					/>
 
 					<FlightPricingSection
-						form={form}
 						setDuplicateInfo={isEditMode ? () => {} : setDuplicateInfo}
 					/>
 
@@ -950,12 +950,11 @@ function FlightSegmentFields({
 }
 
 function FlightPricingSection({
-	form,
 	setDuplicateInfo,
 }: {
-	form: UseFormReturn<FlightFormData>;
 	setDuplicateInfo: (info: DuplicateInfo | null) => void;
 }) {
+	const form = useFormContext<FlightFormData>();
 	const formatNumberPtBR = (n: number) =>
 		new Intl.NumberFormat("pt-BR", {
 			minimumFractionDigits: 2,
@@ -969,6 +968,7 @@ function FlightPricingSection({
 		return formatNumberPtBR(n);
 	};
 
+	console.log(form.watch("totalAmount"));
 	return (
 		<div className="space-y-6">
 			<h4 className="font-semibold text-base text-foreground flex items-center gap-2">
@@ -1120,7 +1120,7 @@ function FlightParticipantsSection({
 
 function parseCurrencyInput(value?: string) {
 	if (!value) return null;
-	const normalized = value.replace(/\./g, "").replace(",", ".");
+	const normalized = value.replace(",", ".");
 	const parsed = Number.parseFloat(normalized);
 	return Number.isNaN(parsed) ? null : parsed;
 }
