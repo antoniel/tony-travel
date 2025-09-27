@@ -14,9 +14,9 @@ import {
 	UtensilsCrossed,
 } from "lucide-react";
 import { useState } from "react";
-import { EventCreateModal } from "./EventCreateModal";
-import { EventEditModal } from "./EventEditModal";
-import { EventDetailsModal } from "./ui/event-details-modal";
+import { EventCreateModal } from "../../../../components/EventCreateModal";
+import { EventEditModal } from "../../../../components/EventEditModal";
+import { EventDetailsModal } from "./event-details-modal";
 
 interface TravelTimelineProps {
 	travel: TravelWithRelations;
@@ -35,7 +35,7 @@ type TimelineItem = {
 	icon: React.ComponentType<{ className?: string }>;
 };
 
-export function TravelTimeline({ travel, canWrite }: TravelTimelineProps) {
+export function ItineraryTimeline({ travel, canWrite }: TravelTimelineProps) {
 	const timelineItems = createTimelineItems(travel);
 	const groupedByDay = groupItemsByDay(timelineItems);
 
@@ -331,10 +331,9 @@ function TimelineItemComponent({
 								{item.title}
 							</h3>
 							<p className="text-sm text-muted-foreground">
-								{item.type === "event" && item.data ? 
-									`${format(item.date, "HH:mm")} - ${format((item.data as AppEvent).endDate, "HH:mm")}` :
-									format(item.date, "HH:mm")
-								}
+								{item.type === "event" && item.data
+									? `${format(item.date, "HH:mm")} - ${format((item.data as AppEvent).endDate, "HH:mm")}`
+									: format(item.date, "HH:mm")}
 							</p>
 						</div>
 						<div className="flex items-center gap-2">
@@ -347,9 +346,9 @@ function TimelineItemComponent({
 								<button
 									type="button"
 									onClick={(e) => {
-									e.stopPropagation();
-									onEditEvent?.(item.data as AppEvent);
-								}}
+										e.stopPropagation();
+										onEditEvent?.(item.data as AppEvent);
+									}}
 									className="opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity p-2 rounded-full hover:bg-accent/20 text-muted-foreground hover:text-foreground"
 									title="Editar evento"
 								>

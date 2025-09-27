@@ -23,10 +23,13 @@ import { Input } from "@/components/ui/input";
 import { LocationSelector } from "@/components/ui/location-selector";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import type { Travel } from "@/lib/db/schema";
 import { useAirportsSearch } from "@/hooks/useAirportsSearch";
+import type { Travel } from "@/lib/db/schema";
 import { orpc } from "@/orpc/client";
-import type { Airport, LocationOption } from "@/orpc/modules/travel/travel.model";
+import type {
+	Airport,
+	LocationOption,
+} from "@/orpc/modules/travel/travel.model";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -36,7 +39,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 
-export const Route = createFileRoute("/trip/$travelId/settings")({
+export const Route = createFileRoute("/trip/$travelId/settings/")({
 	component: TripSettingsPage,
 });
 
@@ -139,7 +142,13 @@ function TravelSettingsForm({
 }: {
 	travel: Pick<
 		Travel,
-		"id" | "name" | "startDate" | "endDate" | "description" | "destinationAirports" | "destination"
+		| "id"
+		| "name"
+		| "startDate"
+		| "endDate"
+		| "description"
+		| "destinationAirports"
+		| "destination"
 	>;
 }) {
 	const queryClient = useQueryClient();
@@ -171,19 +180,6 @@ function TravelSettingsForm({
 		staleTime: 5 * 60 * 1000,
 	});
 
-const formatAirportLabel = (airport: Airport) => {
-		if (airport.type === "city_group") {
-			return `${airport.city} - ${airport.stateCode}`;
-		}
-		if (airport.type === "state_group") {
-			return `${airport.state}`;
-		}
-		if (airport.type === "country_group") {
-			return `${airport.country}`;
-		}
-		return `${airport.city} - ${airport.code}`;
-	};
-
 	const form = useForm<TravelSettingsFormData>({
 		resolver: zodResolver(TravelSettingsSchema),
 		defaultValues: {
@@ -195,25 +191,21 @@ const formatAirportLabel = (airport: Airport) => {
 				travel.destinationAirports && travel.destinationAirports.length > 0
 					? travel.destinationAirports
 					: [
-						{
-							value: travel.destination,
-							label: travel.destination,
-						},
-					],
+							{
+								value: travel.destination,
+								label: travel.destination,
+							},
+						],
 		},
 	});
 
 	const currentDestinationAirports =
 		(form.watch("destinationAirports") as LocationOption[] | undefined) || [];
 
-	const recommendedOptions = useMemo(
-		() =>
-			recommendedDestinationAirports.map((airport) => ({
-				value: airport.code,
-				label: formatAirportLabel(airport),
-			})),
-		[recommendedDestinationAirports],
-	);
+	const recommendedOptions = recommendedDestinationAirports.map((airport) => ({
+		value: airport.code,
+		label: formatAirportLabel(airport),
+	}));
 
 	const destinationOptions = useMemo(() => {
 		const mappedResults = destinationResults.map((airport) => ({
@@ -260,7 +252,9 @@ const formatAirportLabel = (airport: Airport) => {
 			description: data.description || null,
 			startDate: data.startDate,
 			endDate: data.endDate,
-			destination: data.destinationAirports.map((airport) => airport.label).join(", "),
+			destination: data.destinationAirports
+				.map((airport) => airport.label)
+				.join(", "),
 			destinationAirports: data.destinationAirports,
 		};
 		updateTravelMutation.mutate({
@@ -298,10 +292,10 @@ const formatAirportLabel = (airport: Airport) => {
 							)}
 						/>
 
-			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-				<FormField
-					control={form.control}
-					name="startDate"
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+							<FormField
+								control={form.control}
+								name="startDate"
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel>Data de Início</FormLabel>
@@ -348,42 +342,43 @@ const formatAirportLabel = (airport: Airport) => {
 									</FormItem>
 								)}
 							/>
-				</div>
+						</div>
 
-				<FormField
-					control={form.control}
-					name="destinationAirports"
-					render={({ field }) => (
-						<FormItem>
-							<FormLabel>Aeroportos de Destino</FormLabel>
-							<FormDescription>
-								Selecione todos os aeroportos possíveis para a chegada desta viagem.
-							</FormDescription>
-							<FormControl>
-								<LocationSelector
-									label="Aeroportos de Destino"
-									placeholder="Selecione aeroporto(s) de destino"
-									searchPlaceholder="Buscar por cidade, aeroporto ou código..."
-									selectedLabel="Aeroportos selecionados"
-									icon={<Plane className="h-4 w-4" />}
-									options={destinationOptions}
-									selected={(field.value as LocationOption[]) ?? []}
-									onSelectionChange={(selected) => field.onChange(selected)}
-									multiple
-									searchValue={destinationSearch}
-									onSearchChange={setDestinationSearch}
-									isOpen={isDestinationOpen}
-									onOpenChange={setIsDestinationOpen}
-								/>
-							</FormControl>
-							<FormMessage />
-						</FormItem>
-					)}
-				/>
+						<FormField
+							control={form.control}
+							name="destinationAirports"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Aeroportos de Destino</FormLabel>
+									<FormDescription>
+										Selecione todos os aeroportos possíveis para a chegada desta
+										viagem.
+									</FormDescription>
+									<FormControl>
+										<LocationSelector
+											label="Aeroportos de Destino"
+											placeholder="Selecione aeroporto(s) de destino"
+											searchPlaceholder="Buscar por cidade, aeroporto ou código..."
+											selectedLabel="Aeroportos selecionados"
+											icon={<Plane className="h-4 w-4" />}
+											options={destinationOptions}
+											selected={(field.value as LocationOption[]) ?? []}
+											onSelectionChange={(selected) => field.onChange(selected)}
+											multiple
+											searchValue={destinationSearch}
+											onSearchChange={setDestinationSearch}
+											isOpen={isDestinationOpen}
+											onOpenChange={setIsDestinationOpen}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
 
-				<FormField
-					control={form.control}
-					name="description"
+						<FormField
+							control={form.control}
+							name="description"
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>Descrição (Opcional)</FormLabel>
@@ -417,6 +412,19 @@ const formatAirportLabel = (airport: Airport) => {
 		</div>
 	);
 }
+
+const formatAirportLabel = (airport: Airport) => {
+	if (airport.type === "city_group") {
+		return `${airport.city} - ${airport.stateCode}`;
+	}
+	if (airport.type === "state_group") {
+		return `${airport.state}`;
+	}
+	if (airport.type === "country_group") {
+		return `${airport.country}`;
+	}
+	return `${airport.city} - ${airport.code}`;
+};
 
 function DangerZone({ travel }: { travel: Pick<Travel, "id" | "name"> }) {
 	const navigate = useNavigate();

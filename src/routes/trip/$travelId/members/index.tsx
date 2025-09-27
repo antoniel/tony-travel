@@ -12,7 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Crown, Loader2, Shield, Users } from "lucide-react";
 
-export const Route = createFileRoute("/trip/$travelId/members")({
+export const Route = createFileRoute("/trip/$travelId/members/")({
 	component: MembersPage,
 });
 
@@ -26,7 +26,7 @@ function MembersPage() {
 			input: { travelId },
 		}),
 		enabled: !!travelMembershipQuery.data?.userMembership,
-	});
+	})
 
 	const members = membersQuery.data || [];
 	const isLoading = membersQuery.isLoading;
@@ -59,7 +59,7 @@ function MembersPage() {
 				/>
 			</div>
 		</TravelMemberOnly>
-	);
+	)
 }
 
 function MembersLoadingState() {
@@ -70,7 +70,7 @@ function MembersLoadingState() {
 				<p className="text-muted-foreground">Carregando membros...</p>
 			</div>
 		</div>
-	);
+	)
 }
 
 function MembersHeader({
@@ -116,7 +116,7 @@ function MembersHeader({
 				)}
 			</div>
 		</div>
-	);
+	)
 }
 
 function MembersList({
@@ -139,7 +139,7 @@ function MembersList({
 					</p>
 				</CardContent>
 			</Card>
-		);
+		)
 	}
 
 	return (
@@ -153,5 +153,5 @@ function MembersList({
 				/>
 			))}
 		</div>
-	);
+	)
 }

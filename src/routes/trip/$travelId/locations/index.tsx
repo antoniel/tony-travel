@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { ExternalLink, MapPin, Plus, Star } from "lucide-react";
 
-export const Route = createFileRoute("/trip/$travelId/locations")({
+export const Route = createFileRoute("/trip/$travelId/locations/")({
 	component: LocationsPage,
 });
 
@@ -15,7 +15,7 @@ function LocationsPage() {
 
 	const travelQuery = useQuery(
 		orpc.travelRoutes.getTravel.queryOptions({ input: { id: travelId } }),
-	);
+	)
 	const travel = travelQuery.data;
 	const isLoading = travelQuery.isLoading;
 
@@ -34,28 +34,28 @@ function LocationsPage() {
 			return acc;
 		},
 		{} as Record<string, typeof locationsFromEvents>,
-	);
+	)
 
 	const getLocationTypeIcon = (type: string) => {
 		switch (type?.toLowerCase()) {
 			case "restaurant":
 				return "🍽️";
 			case "hotel":
-				return "🏨";
+				return "🏨"
 			case "attraction":
-				return "🎭";
+				return "🎭"
 			case "museum":
 				return "🏛️";
 			case "park":
-				return "🌳";
+				return "🌳"
 			case "shopping":
 				return "🛍️";
 			case "nightlife":
-				return "🌙";
+				return "🌙"
 			default:
-				return "📍";
+				return "📍"
 		}
-	};
+	}
 
 	// Define proper types for all locations
 	type Location = {
@@ -69,7 +69,7 @@ function LocationsPage() {
 		address?: string | null;
 		description?: string;
 		imageUrl?: string | null;
-	};
+	}
 
 	const allLocations: Location[] = [
 		...locationsFromEvents.map((event) => ({
@@ -89,14 +89,14 @@ function LocationsPage() {
 			price: event.cost || event.estimatedCost || undefined,
 			imageUrl: event.imageUrl,
 		})),
-	];
+	]
 
 	if (isLoading) {
 		return (
 			<div className="flex items-center justify-center py-12">
 				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
 			</div>
-		);
+		)
 	}
 
 	return (
@@ -382,5 +382,5 @@ function LocationsPage() {
 				</Card>
 			)}
 		</div>
-	);
+	)
 }

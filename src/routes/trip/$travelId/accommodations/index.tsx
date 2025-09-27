@@ -15,7 +15,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Calendar, Edit, Home, MapPin, Plus } from "lucide-react";
 import { useState } from "react";
 
-export const Route = createFileRoute("/trip/$travelId/accommodations")({
+export const Route = createFileRoute("/trip/$travelId/accommodations/")({
 	component: AccommodationsPage,
 });
 

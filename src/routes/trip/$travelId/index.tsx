@@ -1,10 +1,10 @@
-import Calendar from "@/components/AppEvent/Calendar";
 import { EventCreateModal } from "@/components/EventCreateModal";
-import { TravelTimeline } from "@/components/TravelTimeline";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { AppEvent } from "@/lib/types";
 import { orpc } from "@/orpc/client";
+import ItineraryCalendar from "@/routes/trip/$travelId/-components/itinerary-calendar";
+import { ItineraryTimeline } from "@/routes/trip/$travelId/-components/itinerary-timeline";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Calendar as CalendarIcon, Clock, Plus } from "lucide-react";
@@ -161,13 +161,13 @@ function ItineraryPage() {
 
 				<TabsContent value="timeline" className="mt-0">
 					<div className="">
-						<TravelTimeline travel={travel} canWrite={canWrite} />
+						<ItineraryTimeline travel={travel} canWrite={canWrite} />
 					</div>
 				</TabsContent>
 
 				<TabsContent value="calendar" className="mt-0">
 					<div className="">
-						<Calendar
+						<ItineraryCalendar
 							travelId={travel.id}
 							events={events}
 							accommodations={travel.accommodations || []}

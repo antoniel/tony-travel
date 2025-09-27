@@ -4,7 +4,7 @@ import { orpc } from "@/orpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/trip/$travelId/concierge")({
+export const Route = createFileRoute("/trip/$travelId/concierge/")({
 	component: ConciergePage,
 });
 

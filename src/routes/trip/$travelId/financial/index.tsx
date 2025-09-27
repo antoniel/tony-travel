@@ -41,7 +41,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 
-export const Route = createFileRoute("/trip/$travelId/financial")({
+export const Route = createFileRoute("/trip/$travelId/financial/")({
 	component: FinancialPage,
 });
 
@@ -72,36 +72,36 @@ function BudgetSection({
 		defaultValues: {
 			budget: financialData.budgetPerPerson ?? 0,
 		},
-	});
+	})
 
 	const onSubmit = (data: BudgetUpdateFormData) => {
 		onBudgetUpdate(data.budget);
 		setIsEditing(false);
-	};
+	}
 
 	const handleModeChange = (value: string) => {
 		if (!value) return;
 		setViewMode(value as BudgetViewMode);
-	};
+	}
 
 	const getUtilizationColor = (percentage: number) => {
 		if (percentage <= 50) return "bg-green-500";
 		if (percentage <= 80) return "bg-yellow-500";
 		return "bg-red-500";
-	};
+	}
 
 	const getUtilizationStatus = (percentage: number) => {
 		if (percentage <= 50) return { text: "Excelente", color: "text-green-600" };
 		if (percentage <= 80) return { text: "Atenção", color: "text-yellow-600" };
 		return { text: "Limite", color: "text-red-600" };
-	};
+	}
 
 	const currentSummary =
 		viewMode === "perPerson" ? financialData.perPerson : financialData.group;
 	const hasBudget = currentSummary.budget !== null && currentSummary.budget > 0;
 	const budgetUtilization = hasBudget
 		? (currentSummary.budgetUtilization ?? 0)
-		: 0;
+		: 0
 	const status = getUtilizationStatus(budgetUtilization);
 
 	const participantsLabel =
@@ -113,7 +113,7 @@ function BudgetSection({
 	const baseBudgetLabel =
 		financialData.budgetPerPerson !== null
 			? `${formatCurrencyBRL(financialData.budgetPerPerson)} por pessoa`
-			: null;
+			: null
 	const modeLabel =
 		viewMode === "perPerson" ? "Modo por pessoa" : "Modo por grupo";
 
@@ -197,8 +197,8 @@ function BudgetSection({
 													onChange={(e) => {
 														const { numeric } = maskCurrencyInputPtBR(
 															e.target.value,
-														);
-														field.onChange(numeric ?? 0);
+														)
+														field.onChange(numeric ?? 0)
 													}}
 												/>
 											</div>
@@ -292,7 +292,7 @@ function BudgetSection({
 				)}
 			</CardContent>
 		</Card>
-	);
+	)
 }
 
 function ExpenseBreakdown({
@@ -303,7 +303,7 @@ function ExpenseBreakdown({
 			style: "currency",
 			currency: "BRL",
 		}).format(amount);
-	};
+	}
 
 	const getCategoryTitle = (category: string) => {
 		switch (category) {
@@ -316,20 +316,20 @@ function ExpenseBreakdown({
 			default:
 				return category;
 		}
-	};
+	}
 
 	const getCategoryIcon = (category: string) => {
 		switch (category) {
 			case "passagens":
 				return Plane;
 			case "acomodacoes":
-				return Home;
+				return Home
 			case "atracoes":
 				return MapPin;
 			default:
 				return MapPin;
 		}
-	};
+	}
 
 	const getCategoryStyle = (category: string) => {
 		switch (category) {
@@ -338,27 +338,27 @@ function ExpenseBreakdown({
 					color: "text-blue-600",
 					bg: "bg-blue-50",
 					border: "border-blue-200",
-				};
+				}
 			case "acomodacoes":
 				return {
 					color: "text-green-600",
 					bg: "bg-green-50",
 					border: "border-green-200",
-				};
+				}
 			case "atracoes":
 				return {
 					color: "text-purple-600",
 					bg: "bg-purple-50",
 					border: "border-purple-200",
-				};
+				}
 			default:
 				return {
 					color: "text-muted-foreground",
 					bg: "bg-muted/50",
 					border: "border-muted",
-				};
+				}
 		}
-	};
+	}
 
 	return (
 		<div className="space-y-6">
@@ -417,11 +417,11 @@ function ExpenseBreakdown({
 								</div>
 							</CardContent>
 						</Card>
-					);
+					)
 				})}
 			</div>
 		</div>
-	);
+	)
 }
 
 function AttractionsTree({
@@ -437,18 +437,18 @@ function AttractionsTree({
 			newExpanded.add(itemId);
 		}
 		setExpandedItems(newExpanded);
-	};
+	}
 
 	const formatCurrency = (amount: number) => {
 		return new Intl.NumberFormat("pt-BR", {
 			style: "currency",
 			currency: "BRL",
 		}).format(amount);
-	};
+	}
 
 	const attractionsCategory = financialData.categories.find(
 		(cat) => cat.category === "atracoes",
-	);
+	)
 
 	if (!attractionsCategory || attractionsCategory.items.length === 0) {
 		return (
@@ -465,7 +465,7 @@ function AttractionsTree({
 					</p>
 				</CardContent>
 			</Card>
-		);
+		)
 	}
 
 	return (
@@ -496,7 +496,7 @@ function AttractionsTree({
 						const isExpanded = expandedItems.has(activity.id);
 						const childItems = attractionsCategory.items.filter(
 							(item) => item.parentId === activity.id,
-						);
+						)
 						const hasDependencies = childItems.length > 0;
 
 						return (
@@ -578,11 +578,11 @@ function AttractionsTree({
 									</CardContent>
 								)}
 							</Card>
-						);
+						)
 					})}
 			</div>
 		</div>
-	);
+	)
 }
 
 function FinancialPage() {
@@ -592,19 +592,19 @@ function FinancialPage() {
 	// Fetch travel data for permissions check
 	const travelQuery = useQuery(
 		orpc.travelRoutes.getTravel.queryOptions({ input: { id: travelId } }),
-	);
+	)
 
 	// Fetch financial summary from the new endpoint
 	const financialQuery = useQuery(
 		orpc.financialRoutes.getFinancialSummary.queryOptions({
 			input: { travelId },
 		}),
-	);
+	)
 
 	// Budget update mutation
 	const updateBudgetMutation = useMutation(
 		orpc.financialRoutes.updateTravelBudget.mutationOptions(),
-	);
+	)
 
 	const isLoading = travelQuery.isLoading || financialQuery.isLoading;
 
@@ -625,7 +625,7 @@ function FinancialPage() {
 					<div className="h-64 bg-muted animate-pulse rounded-lg" />
 				</div>
 			</div>
-		);
+		)
 	}
 
 	if (financialQuery.error) {
@@ -657,7 +657,7 @@ function FinancialPage() {
 					</CardContent>
 				</Card>
 			</div>
-		);
+		)
 	}
 
 	const travel = travelQuery.data;
@@ -675,22 +675,22 @@ function FinancialPage() {
 			await updateBudgetMutation.mutateAsync({
 				travelId,
 				budget,
-			});
+			})
 
 			// Invalidate financial query to refetch updated data
 			queryClient.invalidateQueries(
 				orpc.financialRoutes.getFinancialSummary.queryOptions({
 					input: { travelId },
 				}),
-			);
+			)
 
 			toast.success("Orçamento atualizado com sucesso!");
 		} catch (error) {
 			toast.error("Erro ao atualizar orçamento", {
 				description: error instanceof Error ? error.message : undefined,
-			});
+			})
 		}
-	};
+	}
 
 	return (
 		<div className="space-y-8">
@@ -719,5 +719,5 @@ function FinancialPage() {
 
 			<AttractionsTree financialData={financialData} />
 		</div>
-	);
+	)
 }
