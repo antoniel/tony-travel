@@ -83,14 +83,14 @@ export const ConciergeAgent = ({
 		<div className="relative h-full w-full">
 			<div className="flex h-full w-full flex-col overflow-hidden">
 				<Conversation className="flex-1 min-h-0">
-					<ConversationContent className="p-0">
+					<ConversationContent className="p-4">
 						<InChatHeader travelName={effectiveTravelName} />
 						{showIntro ? (
-							<div className="mb-4 rounded-lg border bg-muted/40 p-4 mt-4">
+							<div className="mb-4 mt-4 rounded-lg border bg-muted/40 p-4">
 								<h3 className="mb-2 text-sm font-medium">
 									O que o Concierge pode fazer
 								</h3>
-								<div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+								<div className="flex flex-col gap-3">
 									<div className="rounded-md border bg-background p-3 text-sm">
 										<div className="mb-1 flex items-center gap-2 font-medium">
 											<Plane className="h-4 w-4 text-muted-foreground" />
@@ -134,8 +134,8 @@ export const ConciergeAgent = ({
 							<Alert className="mx-4 mt-4 border-amber-200 bg-amber-50 text-amber-900">
 								<Clock className="h-4 w-4" />
 								<AlertDescription>
-									O concierge está analisando sua mensagem. A resposta pode levar
-									alguns instantes, mas seu pedido já está na fila.
+									O concierge está analisando sua mensagem. A resposta pode
+									levar alguns instantes, mas seu pedido já está na fila.
 								</AlertDescription>
 							</Alert>
 						) : null}

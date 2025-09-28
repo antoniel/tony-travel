@@ -5,9 +5,7 @@ import { useConciergeChatContext } from "@/routes/trip/$travelId/concierge/-comp
 import { ConciergeBell, MessageSquareText, X } from "lucide-react";
 import { useEffect, useRef } from "react";
 
-export function FloatingConciergeToggle({
-	className,
-}: { className?: string }) {
+export function FloatingConciergeToggle({ className }: { className?: string }) {
 	const {
 		travelName,
 		travelId,
@@ -86,10 +84,7 @@ export function FloatingConciergeToggle({
 						</Button>
 					</header>
 					<div className="flex min-h-0 flex-1">
-						<ConciergeAgent
-							travelName={travelName}
-							travelId={travelId}
-						/>
+						<ConciergeAgent travelName={travelName} travelId={travelId} />
 					</div>
 				</div>
 			) : (
