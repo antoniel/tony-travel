@@ -920,123 +920,6 @@ const createEmptyEventDraft = (): CalendarCreationEvent => ({
 	description: "",
 	link: "",
 });
-
-interface EventBlockProps {
-	event: AppEvent;
-	topPosition: number;
-	eventHeight: number;
-	isDragging: boolean;
-	onMouseDown: (
-		event: AppEvent,
-		dayIndex: number,
-		e: React.MouseEvent,
-		resizeHandle?: "top" | "bottom",
-	) => void;
-	onEventClick?: (event: AppEvent) => void;
-	onUpdateEvent?: (eventId: string, updatedEvent: Partial<AppEvent>) => void;
-	dayIndex: number;
-	timeDisplay: string | null;
-	layout?: {
-		column: number;
-		totalColumns: number;
-		width: number;
-		left: number;
-	};
-}
-
-const EventBlock = ({
-	event,
-	topPosition,
-	eventHeight,
-	isDragging,
-	onMouseDown,
-	onEventClick,
-	onUpdateEvent,
-	dayIndex,
-	timeDisplay,
-	layout,
-}: EventBlockProps) => {
-	const leftPercent = layout ? layout.left * 100 : 0;
-	const widthPercent = layout ? layout.width * 100 : 100;
-	const isEditable = Boolean(onUpdateEvent);
-
-	return (
-		<div
-			key={event.id}
-			className={`absolute text-xs px-1 py-0.5 rounded text-white pointer-events-auto z-10 flex flex-col justify-start ${
-				isEditable ? "cursor-move" : "cursor-pointer"
-			} hover:shadow-lg transition-shadow group ${
-				isDragging ? "opacity-80 shadow-xl scale-105" : ""
-			}`}
-			style={{
-				backgroundColor: getEventColor(event),
-				top: `${topPosition}px`,
-				height: `${eventHeight}px`,
-				minHeight: "18px",
-				left: layout ? `${leftPercent}%` : "4px",
-				width: layout ? `${widthPercent}%` : "calc(100% - 8px)",
-				right: layout ? "auto" : "4px",
-			}}
-			title={`${timeDisplay ? `${timeDisplay} ` : ""}${event.title}`}
-			onMouseDown={(e) => {
-				if (!isEditable) return;
-				onMouseDown(event, dayIndex, e);
-			}}
-			onClick={(e) => {
-				e.stopPropagation();
-				if (!isDragging && onEventClick) {
-					onEventClick(event);
-				}
-			}}
-			onKeyDown={(e) => {
-				if (e.key === "Enter" || e.key === " ") {
-					e.preventDefault();
-					e.stopPropagation();
-					if (onEventClick) {
-						onEventClick(event);
-					}
-				}
-			}}
-		>
-			{/* Resize handle - top */}
-			{eventHeight >= 30 && onUpdateEvent && (
-				<div
-					className="absolute -top-1 left-0 right-0 h-2 cursor-n-resize opacity-0 group-hover:opacity-100 bg-white/20 rounded-t"
-					onMouseDown={(e) => {
-						e.stopPropagation();
-						onMouseDown(event, dayIndex, e, "top");
-					}}
-				/>
-			)}
-
-			{/* Event content */}
-			<div className="flex-1 flex flex-col justify-start pointer-events-none">
-				{/* Title first - always the main focus */}
-				<div className="truncate font-semibold leading-tight">
-					{event.title}
-				</div>
-				{/* Time below, only if event has sufficient height */}
-				{timeDisplay && (
-					<div className="text-xs opacity-75 leading-tight mt-0.5">
-						{timeDisplay}
-					</div>
-				)}
-			</div>
-
-			{/* Resize handle - bottom */}
-			{eventHeight >= 30 && onUpdateEvent && (
-				<div
-					className="absolute -bottom-1 left-0 right-0 h-2 cursor-s-resize opacity-0 group-hover:opacity-100 bg-white/20 rounded-b"
-					onMouseDown={(e) => {
-						e.stopPropagation();
-						onMouseDown(event, dayIndex, e, "bottom");
-					}}
-				/>
-			)}
-		</div>
-	);
-};
-
 interface DayCellProps {
 	date: Date;
 	dayIndex: number;
@@ -1162,15 +1045,15 @@ const DayCollumn = ({
 					: null}
 				{(() => {
 					const eventLayouts = getEventLayout(dayEvents);
-					return dayEvents.map((event) => {
+					return dayEvents.map((eventBlockItem) => {
 						// For multi-day events, calculate display positions for this specific day
 						const currentDayStart = new Date(date);
 						currentDayStart.setHours(0, 0, 0, 0);
 						const currentDayEnd = new Date(currentDayStart);
 						currentDayEnd.setDate(currentDayEnd.getDate() + 1);
 
-						const eventStart = new Date(event.startDate);
-						const eventEnd = new Date(event.endDate);
+						const eventStart = new Date(eventBlockItem.startDate);
+						const eventEnd = new Date(eventBlockItem.endDate);
 
 						// Determine actual display times for this day
 						const displayStart =
@@ -1212,14 +1095,14 @@ const DayCollumn = ({
 									? startTimeStr
 									: null;
 
-						const isDragging = draggingEvent?.event.id === event.id;
+						const isDragging = draggingEvent?.event.id === eventBlockItem.id;
 
-						const layout = eventLayouts.get(event.id);
+						const layout = eventLayouts.get(eventBlockItem.id);
 
 						return (
 							<EventBlock
-								key={event.id}
-								event={event}
+								key={eventBlockItem.id}
+								eventBlockItem={eventBlockItem}
 								topPosition={topPosition}
 								eventHeight={eventHeight}
 								isDragging={isDragging}
@@ -1234,6 +1117,122 @@ const DayCollumn = ({
 					});
 				})()}
 			</div>
+		</div>
+	);
+};
+
+interface EventBlockProps {
+	eventBlockItem: AppEvent;
+	topPosition: number;
+	eventHeight: number;
+	isDragging: boolean;
+	onMouseDown: (
+		event: AppEvent,
+		dayIndex: number,
+		e: React.MouseEvent,
+		resizeHandle?: "top" | "bottom",
+	) => void;
+	onEventClick?: (event: AppEvent) => void;
+	onUpdateEvent?: (eventId: string, updatedEvent: Partial<AppEvent>) => void;
+	dayIndex: number;
+	timeDisplay: string | null;
+	layout?: {
+		column: number;
+		totalColumns: number;
+		width: number;
+		left: number;
+	};
+}
+
+const EventBlock = ({
+	eventBlockItem,
+	topPosition,
+	eventHeight,
+	isDragging,
+	onMouseDown,
+	onEventClick,
+	onUpdateEvent,
+	dayIndex,
+	timeDisplay,
+	layout,
+}: EventBlockProps) => {
+	const leftPercent = layout ? layout.left * 100 : 0;
+	const widthPercent = layout ? layout.width * 100 : 100;
+	const isEditable = Boolean(onUpdateEvent);
+
+	return (
+		<div
+			key={eventBlockItem.id}
+			className={`absolute text-xs px-1 py-0.5 rounded text-white pointer-events-auto z-10 flex flex-col justify-start ${
+				isEditable ? "cursor-move" : "cursor-pointer"
+			} hover:shadow-lg transition-shadow group ${
+				isDragging ? "opacity-80 shadow-xl scale-105" : ""
+			}`}
+			style={{
+				backgroundColor: getEventColor(eventBlockItem),
+				top: `${topPosition}px`,
+				height: `${eventHeight}px`,
+				minHeight: "18px",
+				left: layout ? `${leftPercent}%` : "4px",
+				width: layout ? `${widthPercent}%` : "calc(100% - 8px)",
+				right: layout ? "auto" : "4px",
+			}}
+			title={`${timeDisplay ? `${timeDisplay} ` : ""}${eventBlockItem.title}`}
+			onMouseDown={(e) => {
+				if (!isEditable) return;
+				onMouseDown(eventBlockItem, dayIndex, e);
+			}}
+			onClick={(e) => {
+				e.stopPropagation();
+				if (!isDragging && onEventClick) {
+					onEventClick(eventBlockItem);
+				}
+			}}
+			onKeyDown={(e) => {
+				if (e.key === "Enter" || e.key === " ") {
+					e.preventDefault();
+					e.stopPropagation();
+					if (onEventClick) {
+						onEventClick(eventBlockItem);
+					}
+				}
+			}}
+		>
+			{/* Resize handle - top */}
+			{eventHeight >= 30 && onUpdateEvent && (
+				<div
+					className="absolute -top-1 left-0 right-0 h-2 cursor-n-resize opacity-0 group-hover:opacity-100 bg-white/20 rounded-t"
+					onMouseDown={(e) => {
+						e.stopPropagation();
+						onMouseDown(eventBlockItem, dayIndex, e, "top");
+					}}
+				/>
+			)}
+
+			{/* Event content */}
+			<div className="flex-1 flex flex-col justify-start pointer-events-none">
+				{/* Title first - always the main focus */}
+				<div className="truncate font-semibold leading-tight">
+					{eventBlockItem.title}
+				</div>
+				{/* Time below, only if event has sufficient height */}
+				{timeDisplay && (
+					<div className="text-xs opacity-75 leading-tight mt-0.5">
+						{timeDisplay}
+					</div>
+				)}
+			</div>
+
+			{/* Resize handle - bottom */}
+			{eventHeight >= 30 && onUpdateEvent && (
+				<div
+					className="absolute -bottom-1 left-0 right-0 h-2 cursor-s-resize opacity-0 group-hover:opacity-100 bg-white/20 rounded-b"
+					onMouseDown={(e) => {
+						e.stopPropagation();
+						onMouseDown(eventBlockItem, dayIndex, e, "bottom");
+					}}
+				/>
+			)}
 		</div>
 	);
 };

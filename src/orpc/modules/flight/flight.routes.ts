@@ -15,6 +15,8 @@ import {
 	DuplicateFlightResultSchema,
 	FlightGroupSchema,
 	FlightWithParticipantsSchema,
+	HierarchicalFlightGroupSchema,
+	SliceFlightGroupSchema,
 	UpdateFlightWithParticipantsSchema,
 } from "./flight.model";
 import {
@@ -24,6 +26,8 @@ import {
 	deleteFlightService,
 	getFlightService,
 	getFlightsByTravelService,
+	getHierarchicalFlightsByTravelService,
+	getSliceFlightsByTravelService,
 	removeFlightParticipantService,
 	updateFlightService,
 } from "./flight.service";
@@ -67,6 +71,50 @@ export const getFlightsByTravel = baseProcedure
 		const flightDAO = createFlightDAO(context.db);
 
 		const result = await getFlightsByTravelService(flightDAO, input.travelId);
+
+		if (AppResult.isFailure(result)) {
+			throw new ORPCError(result.error.type, {
+				message: result.error.message,
+				data: result.error.data,
+			});
+		}
+
+		return result.data;
+	});
+
+export const getSliceFlightsByTravel = baseProcedure
+	.errors(flightErrors)
+	.input(z.object({ travelId: z.string() }))
+	.output(z.array(SliceFlightGroupSchema))
+	.handler(async ({ input, context }) => {
+		const flightDAO = createFlightDAO(context.db);
+
+		const result = await getSliceFlightsByTravelService(
+			flightDAO,
+			input.travelId,
+		);
+
+		if (AppResult.isFailure(result)) {
+			throw new ORPCError(result.error.type, {
+				message: result.error.message,
+				data: result.error.data,
+			});
+		}
+
+		return result.data;
+	});
+
+export const getHierarchicalFlightsByTravel = baseProcedure
+	.errors(flightErrors)
+	.input(z.object({ travelId: z.string() }))
+	.output(z.array(HierarchicalFlightGroupSchema))
+	.handler(async ({ input, context }) => {
+		const flightDAO = createFlightDAO(context.db);
+
+		const result = await getHierarchicalFlightsByTravelService(
+			flightDAO,
+			input.travelId,
+		);
 
 		if (AppResult.isFailure(result)) {
 			throw new ORPCError(result.error.type, {

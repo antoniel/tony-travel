@@ -52,19 +52,21 @@ export function ResponsiveModal({
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			{trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
 
-			<ScrollArea
-				className={cn("h-full overflow-auto", contentWrapperClassName)}
-			>
-				<DialogContent
-					showCloseButton={showCloseButton}
-					className={cn(
-						"flex max-h-[85vh] w-full max-w-xl flex-col overflow-hidden border bg-background p-0 shadow-2xl",
-						desktopClassName,
-					)}
+			{open && (
+				<ScrollArea
+					className={cn("h-full overflow-auto", contentWrapperClassName)}
 				>
-					{children}
-				</DialogContent>
-			</ScrollArea>
+					<DialogContent
+						showCloseButton={showCloseButton}
+						className={cn(
+							"flex max-h-[85vh] w-full max-w-xl flex-col overflow-hidden border bg-background p-0 shadow-2xl",
+							desktopClassName,
+						)}
+					>
+						{children}
+					</DialogContent>
+				</ScrollArea>
+			)}
 		</Dialog>
 	);
 }

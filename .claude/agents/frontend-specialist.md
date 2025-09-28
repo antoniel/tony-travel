@@ -223,6 +223,30 @@ Notas:
 - Componentes em PascalCase (`src/components`); UI primitives em kebab-case (`src/components/ui`).
 - Não adicionar comentários redundantes
 
+## Component State Management Patterns
+
+**CRITICAL REQUIREMENT**: When modifying component state behavior, follow these mandatory patterns:
+
+**Individual Component State**:
+
+```tsx
+// ✅ CORRECT: Individual state management with defaults
+const [isExpanded, setIsExpanded] = useState(defaultOpen)
+
+// ✅ CORRECT: Smart conditional rendering
+{
+  hasConnections && (
+    <Button onClick={() => setIsExpanded(!isExpanded)}>{isExpanded ? <ChevronUp /> : <ChevronDown />}</Button>
+  )
+}
+```
+
+**State Colocation Pattern**:
+
+- Move state to lowest possible component level
+- Use individual state for independent component behavior
+- Avoid prop drilling for component-specific UI state
+
 ### **MANDATORY FILE ORGANIZATION: .tsx Dependency Hierarchy**
 
 **CRITICAL RULE**: Components and functions in .tsx files MUST be ordered by dependency hierarchy - ROOT to LEAF pattern.
@@ -307,6 +331,9 @@ Estrutura e Organização
 - [ ] **Dependency hierarchy ordering**: Main/exported component first, ROOT components next, LEAF functions last.
 - [ ] **Anti-pattern detection**: No comment-based sections requiring component decomposition.
 - [ ] Proper component boundaries and state colocation.
+- [ ] **Component state management**: Individual state for independent behaviors, smart conditional logic.
+- [ ] **Delegation compliance**: All UI/component work handled by frontend specialist, not orchestrator.
+- [ ] **Interface cleanup**: Remove unnecessary props, clean function signatures, simplify component APIs.
 
 ## Formato de Entrega do Agente
 

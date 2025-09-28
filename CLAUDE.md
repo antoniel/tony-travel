@@ -156,6 +156,10 @@ Nota (PT-BR): Sempre que o pedido envolver frontend (UI/UX, componentes React, T
 - Task involves "loading states", "confirmation cards", "tool calling UI"
 - Any mention of React, JSX, TypeScript interfaces for UI components
 - Changes to user interaction patterns or workflow
+- **UI ADJUSTMENTS**: Any mention of "visual", "expansion", "toggle", "state management"
+- **COMPONENT BEHAVIOR**: References to "useState", "component state", "prop modifications"
+- **UI LOGIC CHANGES**: Discussions about "smart toggle", "visibility logic", "interface cleanup"
+- **VISUAL SYSTEM MODIFICATIONS**: Terms like "visual linking", "chain detection", "UI improvements"
 
 ### Self-Check Protocol
 
@@ -163,8 +167,16 @@ Before EVERY code modification, ask these questions:
 1. **File Extension Check**: Am I about to modify a .tsx, .jsx, or UI-related file?
 2. **Domain Check**: Does this change affect what users see or how they interact?
 3. **Technology Check**: Does this involve React components, hooks, or UI state?
+4. **COMPONENT STATE CHECK**: Does this involve useState, component behavior, or state management?
+5. **UI LOGIC CHECK**: Does this modify how components render, expand, toggle, or behave?
+6. **INTERFACE MODIFICATION CHECK**: Am I changing TypeScript interfaces for UI components?
 
 **IF ANY ANSWER IS YES**: STOP IMMEDIATELY and delegate to the appropriate specialist.
+
+**MANDATORY VIOLATION PREVENTION PROTOCOL**:
+- **BEFORE any file edit**: Re-read the task description for frontend keywords
+- **DURING implementation planning**: Check if changes affect user-visible behavior
+- **IF CAUGHT MID-VIOLATION**: Immediately stop, acknowledge error, and properly delegate
 
 ### Violation Recovery Protocol
 
@@ -174,7 +186,20 @@ If you catch yourself implementing specialist work:
 3. **Delegate Properly**: Invoke the appropriate specialist with full context
 4. **Flag for Reflection**: Mark this interaction for CLAUDE.md improvement
 
+**POST-VIOLATION MANDATORY ACTIONS**:
+- **DOCUMENT THE FAILURE**: Record what keywords/signals were missed
+- **STRENGTHEN DETECTION**: Add missed patterns to the RED FLAGS list
+- **IMMEDIATE REFLECTION TRIGGER**: Violations AUTOMATICALLY trigger reflection process
+- **PATTERN ANALYSIS**: Identify why pre-implementation checks failed
+
 **ACCOUNTABILITY MEASURE**: Every violation of delegation rules must trigger immediate reflection and CLAUDE.md updates to prevent recurrence.
+
+**ENHANCED WARNING SYSTEM**: If the task description contains ANY of the following frontend indicators, delegation is MANDATORY:
+- Component names (SliceCard, FlightCard, etc.)
+- State management terms (useState, state, expansion, toggle)
+- UI behavior descriptions (smart toggle, visibility, expansion state)
+- Interface modifications (prop changes, function signatures)
+- Visual system changes (visual linking, UI adjustments, component behavior)
 
 ### Key Configuration Files
 

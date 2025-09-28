@@ -119,3 +119,95 @@ export const FlightGroupSchema = z.object({
 });
 
 export type FlightGroup = z.infer<typeof FlightGroupSchema>;
+
+// New type for slice-based flight representation
+export const SliceFlightSchema = z.object({
+	id: z.string(),
+	flightId: z.string(),
+	sliceIndex: z.number(),
+	originAirport: z.string(),
+	destinationAirport: z.string(),
+	departureDate: z.date(),
+	departureTime: z.string(),
+	arrivalDate: z.date(),
+	arrivalTime: z.string(),
+	durationMinutes: z.number().nullable(),
+	cabinClass: z.string().nullable(),
+	totalAmount: z.number().nullable(),
+	currency: z.string().nullable(),
+	travelId: z.string(),
+	createdAt: z.date(),
+	updatedAt: z.date(),
+	segments: z.array(FlightSegmentDtoSchema),
+	participants: z.array(
+		z.object({
+			id: z.string(),
+			user: UserSchema.omit({ email: true }),
+		}),
+	),
+	// Metadata from original flight
+	originalFlight: z.object({
+		id: z.string(),
+		totalSlices: z.number(),
+	}),
+});
+
+export type SliceFlight = z.infer<typeof SliceFlightSchema>;
+
+export const SliceFlightGroupSchema = z.object({
+	originAirport: z.string(),
+	sliceFlights: z.array(SliceFlightSchema),
+});
+
+export type SliceFlightGroup = z.infer<typeof SliceFlightGroupSchema>;
+
+// Flight chain information for visual linking
+export const FlightChainInfoSchema = z.object({
+	chainId: z.string(),
+	chainPosition: z.number(),
+	totalInChain: z.number(),
+	chainType: z.enum(["round_trip", "multi_city", "one_way"]),
+	relatedFlightIds: z.array(z.string()),
+});
+
+export type FlightChainInfo = z.infer<typeof FlightChainInfoSchema>;
+
+// New hierarchical flight structure for better UX
+export const FlightWithSlicesSchema = z.object({
+	id: z.string(),
+	originAirport: z.string(),
+	destinationAirport: z.string(),
+	departureDate: z.date(),
+	departureTime: z.string(),
+	arrivalDate: z.date(),
+	arrivalTime: z.string(),
+	totalAmount: z.number().nullable(),
+	currency: z.string().nullable(),
+	travelId: z.string(),
+	createdAt: z.date(),
+	updatedAt: z.date(),
+	participants: z.array(
+		z.object({
+			id: z.string(),
+			user: UserSchema.omit({ email: true }),
+		}),
+	),
+	slices: z.array(FlightSliceDtoSchema),
+	// Computed properties for display
+	isMultiSlice: z.boolean(),
+	totalDuration: z.number().nullable(),
+	totalSegments: z.number(),
+	// Flight chain information for visual linking
+	chainInfo: FlightChainInfoSchema.nullable(),
+});
+
+export type FlightWithSlices = z.infer<typeof FlightWithSlicesSchema>;
+
+export const HierarchicalFlightGroupSchema = z.object({
+	originAirport: z.string(),
+	flights: z.array(FlightWithSlicesSchema),
+});
+
+export type HierarchicalFlightGroup = z.infer<
+	typeof HierarchicalFlightGroupSchema
+>;

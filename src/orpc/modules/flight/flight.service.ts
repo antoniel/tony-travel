@@ -6,8 +6,13 @@ import type { FlightDAO } from "./flight.dao";
 import { flightErrors } from "./flight.errors";
 import type {
 	CreateFlightWithParticipantsSchema,
+	FlightChainInfo,
 	FlightGroup,
 	FlightWithParticipants,
+	FlightWithSlices,
+	HierarchicalFlightGroup,
+	SliceFlight,
+	SliceFlightGroup,
 	UpdateFlightWithParticipantsSchema,
 	UpsertFlightPayload,
 } from "./flight.model";
@@ -84,7 +89,10 @@ export async function createFlightService(
 		legacyMigratedAt: null,
 		travelId: input.travelId,
 	};
-	const flightId = await flightDAO.createFlight(flightData, input.flight.slices);
+	const flightId = await flightDAO.createFlight(
+		flightData,
+		input.flight.slices,
+	);
 
 	// Add participants to new flight
 	const participantIds = input.participantIds || [];
@@ -124,6 +132,151 @@ export async function getFlightsByTravelService(
 
 		return acc;
 	}, [] as FlightGroup[]);
+
+	return AppResult.success(grouped);
+}
+
+/**
+ * Get flights by slice - each slice becomes its own flight card
+ */
+export async function getSliceFlightsByTravelService(
+	flightDAO: FlightDAO,
+	travelId: string,
+): Promise<AppResult<SliceFlightGroup[]>> {
+	const flights = await flightDAO.getFlightsByTravel(travelId);
+
+	// Flatten flights into slice-based representations
+	const sliceFlights: SliceFlight[] = [];
+
+	for (const flight of flights) {
+		for (const [sliceIndex, slice] of flight.slices.entries()) {
+			// Get first and last segments for this slice
+			const firstSegment = slice.segments[0];
+			const lastSegment = slice.segments[slice.segments.length - 1];
+
+			if (!firstSegment || !lastSegment) continue;
+
+			sliceFlights.push({
+				id: slice.id,
+				flightId: flight.id,
+				sliceIndex,
+				originAirport: slice.originAirport,
+				destinationAirport: slice.destinationAirport,
+				departureDate: firstSegment.departureDate,
+				departureTime: firstSegment.departureTime,
+				arrivalDate: lastSegment.arrivalDate,
+				arrivalTime: lastSegment.arrivalTime,
+				durationMinutes: slice.durationMinutes,
+				cabinClass: slice.cabinClass,
+				// For cost, show full cost only on first slice to avoid duplication
+				totalAmount: sliceIndex === 0 ? flight.totalAmount : null,
+				currency: flight.currency,
+				travelId: flight.travelId,
+				createdAt: flight.createdAt,
+				updatedAt: flight.updatedAt,
+				segments: slice.segments,
+				participants: flight.participants, // All participants for all slices
+				originalFlight: {
+					id: flight.id,
+					totalSlices: flight.slices.length,
+				},
+			});
+		}
+	}
+
+	// Sort slice flights by departure date and time (earliest first)
+	sliceFlights.sort((a, b) => {
+		const dateA = new Date(
+			`${a.departureDate.toISOString().split("T")[0]}T${a.departureTime}`,
+		);
+		const dateB = new Date(
+			`${b.departureDate.toISOString().split("T")[0]}T${b.departureTime}`,
+		);
+		return dateA.getTime() - dateB.getTime();
+	});
+
+	// Group slice flights by origin airport
+	const grouped = sliceFlights.reduce((acc, sliceFlight) => {
+		const originAirport = sliceFlight.originAirport;
+		const existing = acc.find((g) => g.originAirport === originAirport);
+
+		if (existing) {
+			existing.sliceFlights.push(sliceFlight);
+		} else {
+			acc.push({
+				originAirport,
+				sliceFlights: [sliceFlight],
+			});
+		}
+
+		return acc;
+	}, [] as SliceFlightGroup[]);
+
+	return AppResult.success(grouped);
+}
+
+/**
+ * Get flights in hierarchical structure for improved UX
+ */
+export async function getHierarchicalFlightsByTravelService(
+	flightDAO: FlightDAO,
+	travelId: string,
+): Promise<AppResult<HierarchicalFlightGroup[]>> {
+	const flights = await flightDAO.getFlightsByTravel(travelId);
+
+	// Detect flight chains for visual linking
+	const chainInfoMap = detectFlightChains(flights);
+
+	// Transform flights into hierarchical structure with computed properties
+	const flightsWithSlices: FlightWithSlices[] = flights.map((flight) => {
+		const totalSegments = flight.slices.reduce(
+			(total, slice) => total + slice.segments.length,
+			0,
+		);
+
+		const totalDuration =
+			flight.slices.reduce(
+				(total, slice) => total + (slice.durationMinutes || 0),
+				0,
+			) || null;
+
+		return {
+			...flight,
+			isMultiSlice: flight.slices.length > 1,
+			totalDuration,
+			totalSegments,
+			chainInfo: chainInfoMap.get(flight.id) || null,
+		};
+	});
+
+	// Sort flights by departure date and time (earliest first)
+	flightsWithSlices.sort((a, b) => {
+		const dateA = new Date(
+			`${a.departureDate.toISOString().split("T")[0]}T${a.departureTime}`,
+		);
+		const dateB = new Date(
+			`${b.departureDate.toISOString().split("T")[0]}T${b.departureTime}`,
+		);
+		return dateA.getTime() - dateB.getTime();
+	});
+
+	// Group flights by origin airport
+	const grouped = flightsWithSlices.reduce((acc, flight) => {
+		const originAirport =
+			flight.slices[0]?.segments[0]?.originAirport ?? flight.originAirport;
+		const existing = acc.find((g) => g.originAirport === originAirport);
+
+		if (existing) {
+			existing.flights.push(flight);
+		} else {
+			acc.push({
+				originAirport,
+				flights: [flight],
+			});
+		}
+
+		return acc;
+	}, [] as HierarchicalFlightGroup[]);
 
 	return AppResult.success(grouped);
 }
@@ -278,6 +431,84 @@ function getFlightSummary(flight: UpsertFlightPayload) {
 		arrivalDate: lastSegment.arrivalDate,
 		arrivalTime: lastSegment.arrivalTime,
 	};
+}
+
+/**
+ * Detect flight chains (round trips, multi-city) and generate chain information
+ */
+function detectFlightChains(flights: FlightWithParticipants[]): Map<string, FlightChainInfo> {
+	const chainInfoMap = new Map<string, FlightChainInfo>();
+	const processedFlights = new Set<string>();
+
+	for (const flight of flights) {
+		if (processedFlights.has(flight.id)) continue;
+
+		const originAirport = flight.originAirport;
+		const destinationAirport = flight.destinationAirport;
+		
+		// Find potential related flights
+		const relatedFlights = flights.filter(f => 
+			f.id !== flight.id &&
+			!processedFlights.has(f.id) &&
+			// Check for round trip or connecting flights
+			(
+				// Round trip: A->B and B->A
+				(f.originAirport === destinationAirport && f.destinationAirport === originAirport) ||
+				// Multi-city: A->B and B->C
+				(f.originAirport === destinationAirport) ||
+				// Multi-city: C->A and A->B (return to origin)
+				(f.destinationAirport === originAirport)
+			)
+		);
+
+		if (relatedFlights.length > 0) {
+			// Create chain
+			const chainFlights = [flight, ...relatedFlights];
+			
+			// Sort by departure date for proper chain order
+			chainFlights.sort((a, b) => {
+				const dateA = new Date(`${a.departureDate.toISOString().split("T")[0]}T${a.departureTime}`);
+				const dateB = new Date(`${b.departureDate.toISOString().split("T")[0]}T${b.departureTime}`);
+				return dateA.getTime() - dateB.getTime();
+			});
+
+			// Determine chain type
+			const isRoundTrip = chainFlights.length === 2 && 
+				chainFlights[0].originAirport === chainFlights[1].destinationAirport &&
+				chainFlights[0].destinationAirport === chainFlights[1].originAirport;
+			
+			const chainType = isRoundTrip ? "round_trip" : 
+				chainFlights.length > 2 ? "multi_city" : "one_way";
+
+			// Generate unique chain ID
+			const chainId = `chain_${chainFlights.map(f => f.id).sort().join("_")}`;
+			const relatedFlightIds = chainFlights.map(f => f.id);
+
+			// Create chain info for each flight
+			chainFlights.forEach((chainFlight, index) => {
+				chainInfoMap.set(chainFlight.id, {
+					chainId,
+					chainPosition: index + 1,
+					totalInChain: chainFlights.length,
+					chainType,
+					relatedFlightIds,
+				});
+				processedFlights.add(chainFlight.id);
+			});
+		} else {
+			// Single flight - still create chain info for consistency
+			chainInfoMap.set(flight.id, {
+				chainId: `single_${flight.id}`,
+				chainPosition: 1,
+				totalInChain: 1,
+				chainType: "one_way",
+				relatedFlightIds: [flight.id],
+			});
+			processedFlights.add(flight.id);
+		}
+	}
+
+	return chainInfoMap;
 }
 
 /**
