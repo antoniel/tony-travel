@@ -8,6 +8,11 @@ import viteTsConfigPaths from "vite-tsconfig-paths"
 const config = defineConfig({
   plugins: [
     // this is the plugin that enables path aliases
+    codeInspectorPlugin({
+      bundler: 'vite',
+      hotKeys: ['altKey'],
+      editor: 'cursor',
+    }),
     viteTsConfigPaths({
       projects: ["./tsconfig.json"],
     }),
@@ -16,10 +21,6 @@ const config = defineConfig({
       customViteReactPlugin: true,
     }),
     viteReact(),
-    codeInspectorPlugin({
-      bundler: 'vite',
-      hotKeys: ['altKey']
-    })
   ],
 })
 

@@ -35,16 +35,15 @@ interface UseEventDragDropProps {
 let mutDraggingEvent: DragState | null = null;
 
 export function useEventDragDrop({
-  dayWidth,
-  weekDays,
-  onUpdateEvent,
-  restrictNonTravelDays,
-  isDayWithin,
+	dayWidth,
+	weekDays,
+	onUpdateEvent,
+	restrictNonTravelDays,
+	isDayWithin,
 }: UseEventDragDropProps) {
 	const [draggingEvent, setDraggingEvent] = useState<DragState | null>(null);
 
 	if (JSON.stringify(draggingEvent) !== JSON.stringify(mutDraggingEvent)) {
-		console.log("DRAGGING_EVENT", draggingEvent);
 		mutDraggingEvent = draggingEvent;
 	}
 
@@ -184,47 +183,47 @@ export function useEventDragDrop({
 		}
 	};
 
-  const handleEventResize = (yPosition: number) => {
-    if (!draggingEvent || !onUpdateEvent) return;
+	const handleEventResize = (yPosition: number) => {
+		if (!draggingEvent || !onUpdateEvent) return;
 
 		// Handle resizing
 		const newHour = Math.max(0, Math.floor(yPosition / 48));
 		const newMinute = Math.floor(((yPosition % 48) / 48) * 60);
 
-    const targetDay = weekDays[draggingEvent.dayIndex];
-    if (targetDay) {
-      // Prevent resizing on disabled days when restricting
-      if (restrictNonTravelDays && isDayWithin && !isDayWithin(targetDay)) {
-        return;
-      }
-      const newTime = new Date(targetDay);
-      newTime.setHours(newHour, newMinute, 0, 0);
+		const targetDay = weekDays[draggingEvent.dayIndex];
+		if (targetDay) {
+			// Prevent resizing on disabled days when restricting
+			if (restrictNonTravelDays && isDayWithin && !isDayWithin(targetDay)) {
+				return;
+			}
+			const newTime = new Date(targetDay);
+			newTime.setHours(newHour, newMinute, 0, 0);
 
-      const originalEvent = draggingEvent.event;
-      const originalStart =
-        originalEvent.originalStartDate || originalEvent.startDate;
-      const originalEnd =
-        originalEvent.originalEndDate || originalEvent.endDate;
+			const originalEvent = draggingEvent.event;
+			const originalStart =
+				originalEvent.originalStartDate || originalEvent.startDate;
+			const originalEnd =
+				originalEvent.originalEndDate || originalEvent.endDate;
 
-      if (draggingEvent.resizeDirection === "top") {
-        // Resizing from top (changing start time)
-        if (newTime.getTime() < originalEnd.getTime()) {
-          onUpdateEvent(draggingEvent.event.id, {
-            startDate: newTime,
-            endDate: originalEnd,
-          });
-        }
-      } else {
-        // Resizing from bottom (changing end time)
-        if (newTime.getTime() > originalStart.getTime()) {
-          onUpdateEvent(draggingEvent.event.id, {
-            startDate: originalStart,
-            endDate: newTime,
-          });
-        }
-      }
-    }
-  };
+			if (draggingEvent.resizeDirection === "top") {
+				// Resizing from top (changing start time)
+				if (newTime.getTime() < originalEnd.getTime()) {
+					onUpdateEvent(draggingEvent.event.id, {
+						startDate: newTime,
+						endDate: originalEnd,
+					});
+				}
+			} else {
+				// Resizing from bottom (changing end time)
+				if (newTime.getTime() > originalStart.getTime()) {
+					onUpdateEvent(draggingEvent.event.id, {
+						startDate: originalStart,
+						endDate: newTime,
+					});
+				}
+			}
+		}
+	};
 
 	const handleMouseUp = () => {
 		// If we were dragging, wait a bit before clearing to prevent immediate click
