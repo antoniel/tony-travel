@@ -13,13 +13,11 @@ import {
 	PromptInputSubmit,
 	PromptInputTextarea,
 } from "@/components/ai-elements/prompt-input";
-import { client } from "@/orpc/client";
-import type { MyUIMessage } from "@/orpc/modules/concierge/concierge.ai";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Messages } from "@/routes/trip/$travelId/concierge/-components/Messages";
-import { useChat } from "@ai-sdk/react";
-import { eventIteratorToStream } from "@orpc/client";
-import { CalendarClock, MapPin, Plane } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useConciergeChatContext } from "@/routes/trip/$travelId/concierge/-components/concierge-chat-context";
+import { CalendarClock, Clock, MapPin, Plane } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 function InChatHeader({ travelName }: { travelName?: string }) {
 	return (
@@ -37,26 +35,29 @@ function InChatHeader({ travelName }: { travelName?: string }) {
 export const ConciergeAgent = ({
 	travelName,
 	travelId,
-}: { travelName?: string; travelId: string }) => {
+}: { travelName?: string; travelId?: string }) => {
 	const [input, setInput] = useState("");
-	const { messages, sendMessage, status, stop, addToolResult } =
-		useChat<MyUIMessage>({
-			transport: {
-				async sendMessages(options) {
-					const iterator = await client.conciergeRoutes.chat(
-						{
-							messages: options.messages,
-							travelId: travelId,
-						},
-						{ signal: options.abortSignal },
-					);
-					return eventIteratorToStream(iterator);
-				},
-				reconnectToStream() {
-					throw new Error("Unsupported");
-				},
-			},
-		});
+	const {
+		chat,
+		travelName: contextTravelName,
+		travelId: contextTravelId,
+		isDelayedResponse,
+		markConversationSeen,
+	} = useConciergeChatContext();
+
+	const effectiveTravelName = travelName ?? contextTravelName;
+	const effectiveTravelId = travelId ?? contextTravelId;
+
+	if (!effectiveTravelId) {
+		throw new Error(
+			"ConciergeAgent requires a travelId. Ensure it is wrapped in ConciergeChatProvider.",
+		);
+	}
+	const { messages, sendMessage, status, stop, addToolResult } = chat;
+
+	useEffect(() => {
+		markConversationSeen();
+	}, [markConversationSeen]);
 
 	const handleSubmit = (message: PromptInputMessage) => {
 		const hasText = Boolean(message.text);
@@ -83,7 +84,7 @@ export const ConciergeAgent = ({
 			<div className="flex h-full w-full flex-col overflow-hidden">
 				<Conversation className="flex-1 min-h-0">
 					<ConversationContent className="p-0">
-						<InChatHeader travelName={travelName} />
+						<InChatHeader travelName={effectiveTravelName} />
 						{showIntro ? (
 							<div className="mb-4 rounded-lg border bg-muted/40 p-4 mt-4">
 								<h3 className="mb-2 text-sm font-medium">
@@ -126,9 +127,18 @@ export const ConciergeAgent = ({
 						<Messages
 							messages={messages}
 							status={status}
-							travelId={travelId}
+							travelId={effectiveTravelId}
 							addToolResult={addToolResult}
 						/>
+						{isDelayedResponse ? (
+							<Alert className="mx-4 mt-4 border-amber-200 bg-amber-50 text-amber-900">
+								<Clock className="h-4 w-4" />
+								<AlertDescription>
+									O concierge está analisando sua mensagem. A resposta pode levar
+									alguns instantes, mas seu pedido já está na fila.
+								</AlertDescription>
+							</Alert>
+						) : null}
 						{status === "submitted" && <Loader />}
 					</ConversationContent>
 					<ConversationScrollButton />

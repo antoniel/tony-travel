@@ -1,3 +1,5 @@
+import { FloatingConciergeToggle } from "@/routes/trip/$travelId/-components/FloatingConciergeToggle";
+import { ConciergeChatProvider } from "@/routes/trip/$travelId/concierge/-components/concierge-chat-context";
 import { orpc } from "@/orpc/client";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -182,8 +184,12 @@ function TripLayout() {
 		return true;
 	});
 
+	const isConciergePath = pathname.startsWith(`/trip/${travelId}/concierge`);
+	const canAccessConcierge = !!travel?.userMembership;
+
 	return (
-		<div className="bg-background">
+		<ConciergeChatProvider travelId={travelId} travelName={travel?.name ?? undefined}>
+			<div className="bg-background">
 			{/* Travel Header */}
 			<header className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/50 sm:sticky sm:top-16 z-30">
 				<div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -266,6 +272,10 @@ function TripLayout() {
 					</div>
 				</div>
 			</main>
+			{canAccessConcierge && !isConciergePath ? (
+				<FloatingConciergeToggle />
+			) : null}
 		</div>
+		</ConciergeChatProvider>
 	);
 }
