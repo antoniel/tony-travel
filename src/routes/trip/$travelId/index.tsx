@@ -97,76 +97,76 @@ function ItineraryPage() {
 	const canWrite = !!travel?.userMembership;
 
 	return (
-		<div className="space-y-8 overflow-x-hidden">
-			<Tabs defaultValue="timeline" className="w-full">
-				<div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
-					<TabsList className="grid w-full sm:w-auto grid-cols-2 sm:flex">
-						<TabsTrigger
-							value="timeline"
-							className="flex items-center gap-2 px-6 "
-						>
-							<Clock className="w-4 h-4" />
-							<span>Cronograma</span>
-						</TabsTrigger>
-						<TabsTrigger
-							value="calendar"
-							className="flex items-center gap-2 px-6 "
-						>
-							<CalendarIcon className="w-4 h-4" />
-							<span>Calendário</span>
-						</TabsTrigger>
-					</TabsList>
+		<>
+			<div className="space-y-8 overflow-x-hidden">
+				<Tabs defaultValue="timeline" className="w-full">
+					<div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
+						<TabsList className="grid w-full sm:w-auto grid-cols-2 sm:flex">
+							<TabsTrigger
+								value="timeline"
+								className="flex items-center gap-2 px-6 "
+							>
+								<Clock className="w-4 h-4" />
+								<span>Cronograma</span>
+							</TabsTrigger>
+							<TabsTrigger
+								value="calendar"
+								className="flex items-center gap-2 px-6 "
+							>
+								<CalendarIcon className="w-4 h-4" />
+								<span>Calendário</span>
+							</TabsTrigger>
+						</TabsList>
 
-					{/* Quick stats + add action (mobile + desktop) */}
-					<div className="flex flex-wrap items-center gap-3 text-sm">
-						<div className="flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-lg">
-							<Clock className="w-4 h-4 text-muted-foreground" />
-							<span className="font-medium">
-								{travel.events?.length || 0} eventos
-							</span>
+						{/* Quick stats + add action (mobile + desktop) */}
+						<div className="flex flex-wrap items-center gap-3 text-sm">
+							<div className="flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-lg">
+								<Clock className="w-4 h-4 text-muted-foreground" />
+								<span className="font-medium">
+									{travel.events?.length || 0} eventos
+								</span>
+							</div>
+							{canWrite ? (
+								<>
+									{/* Mobile add button */}
+									<Button
+										variant="secondary"
+										size="sm"
+										className="h-8 gap-2 sm:hidden"
+										onClick={() => {
+											setNewEvent(defaultEvent);
+											setIsAddEventOpen(true);
+										}}
+										title="Adicionar evento"
+									>
+										<Plus className="w-4 h-4" /> Adicionar
+									</Button>
+
+									{/* Desktop add button aligned with stats */}
+									<Button
+										variant="default"
+										size="sm"
+										className="h-8 gap-2 hidden sm:inline-flex"
+										onClick={() => {
+											setNewEvent(defaultEvent);
+											setIsAddEventOpen(true);
+										}}
+										title="Adicionar evento"
+									>
+										<Plus className="w-4 h-4" /> Adicionar Evento
+									</Button>
+								</>
+							) : null}
 						</div>
-						{canWrite ? (
-							<>
-								{/* Mobile add button */}
-								<Button
-									variant="secondary"
-									size="sm"
-									className="h-8 gap-2 sm:hidden"
-									onClick={() => {
-										setNewEvent(defaultEvent);
-										setIsAddEventOpen(true);
-									}}
-									title="Adicionar evento"
-								>
-									<Plus className="w-4 h-4" /> Adicionar
-								</Button>
-
-								{/* Desktop add button aligned with stats */}
-								<Button
-									variant="default"
-									size="sm"
-									className="h-8 gap-2 hidden sm:inline-flex"
-									onClick={() => {
-										setNewEvent(defaultEvent);
-										setIsAddEventOpen(true);
-									}}
-									title="Adicionar evento"
-								>
-									<Plus className="w-4 h-4" /> Adicionar Evento
-								</Button>
-							</>
-						) : null}
 					</div>
-				</div>
 
-				<TabsContent value="timeline" className="mt-0">
-					<div className="">
-						<ItineraryTimeline travel={travel} canWrite={canWrite} />
-					</div>
-				</TabsContent>
+					<TabsContent value="timeline" className="mt-0">
+						<div className="">
+							<ItineraryTimeline travel={travel} canWrite={canWrite} />
+						</div>
+					</TabsContent>
 
-				<TabsContent value="calendar" className="mt-0">
-					<div className="">
+					<TabsContent value="calendar" className="mt-0">
 						<ItineraryCalendar
 							travelId={travel.id}
 							events={events}
@@ -176,11 +176,9 @@ function ItineraryPage() {
 							onUpdateEvent={handleUpdateEvent}
 							canWrite={canWrite}
 						/>
-					</div>
-				</TabsContent>
-			</Tabs>
-
-			{/* Event Create Modal (mobile/action in header) */}
+					</TabsContent>
+				</Tabs>
+			</div>
 			{canWrite ? (
 				<EventCreateModal
 					isOpen={isAddEventOpen}
@@ -207,6 +205,6 @@ function ItineraryPage() {
 					travelEndDate={travel.endDate}
 				/>
 			) : null}
-		</div>
+		</>
 	);
 }

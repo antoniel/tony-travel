@@ -8,11 +8,17 @@ import type { Accommodation, AppEvent } from "@/lib/types";
 import { orpc } from "@/orpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+	useCallback,
+	useEffect,
+	useLayoutEffect,
+	useRef,
+	useState,
+} from "react";
 import { EventCreateModal } from "../../../../components/EventCreateModal";
 import { EventEditModal } from "../../../../components/EventEditModal";
-import { EventDetailsModal } from "./event-details-modal";
 import {
+	PX_PER_HOUR,
 	addDaysUtc,
 	getAccommodationsLayoutWithRows,
 	getEventColor,
@@ -22,11 +28,11 @@ import {
 	getTimePositionFromDate,
 	getWeekDays,
 	isSameUTCDate,
-	PX_PER_HOUR,
 	toLocalStartOfDay,
 	toUtcEndOfDay,
 	toUtcMidnight,
 } from "./app-events.utils";
+import { EventDetailsModal } from "./event-details-modal";
 
 interface CalendarProps {
 	travelId: string;
@@ -253,30 +259,6 @@ const RenderWeekViews = (props: {
 
 	const visibleDays = isMobile ? 3 : 7;
 
-	// Event creation modal state
-	const [isModalOpen, setIsModalOpen] = useState(false);
-	const [newEvent, setNewEvent] = useState({
-		title: "",
-		startDate: new Date(),
-		endDate: new Date(),
-		type: "activity" as AppEvent["type"],
-		location: "",
-		cost: null as number | null,
-		description: "",
-		link: "",
-	});
-
-	// Prevent click handler from overriding a just-committed drag selection
-	const suppressNextClickRef = useRef(false);
-
-	// Selection state for click+drag creation (15-min granularity)
-	const [isSelecting, setIsSelecting] = useState(false);
-	const [selectionDayIndex, setSelectionDayIndex] = useState<number | null>(
-		null,
-	);
-	const [selectionStart, setSelectionStart] = useState<Date | null>(null);
-	const [selectionCurrent, setSelectionCurrent] = useState<Date | null>(null);
-
 	// Drag and drop functionality
 	const {
 		draggingEvent,
@@ -300,6 +282,33 @@ const RenderWeekViews = (props: {
 		},
 		restrictNonTravelDays: restrictNonTravelDays,
 		isDayWithin: isWithinTravel,
+	});
+
+	const {
+		modal: {
+			isOpen: isModalOpen,
+			newEvent,
+			setNewEvent,
+			closeModal,
+			handleCreateEvent,
+		},
+		selection: {
+			isSelecting,
+			selectionDayIndex,
+			selectionStart,
+			selectionCurrent,
+		},
+		interactions: {
+			handleCellClick,
+			handleDayMouseDown,
+			handleDayMouseMove,
+			handleDayMouseUp,
+		},
+	} = useCalendarEventCreation({
+		canWrite: props.canWrite,
+		travelId: props.travelId,
+		weekDays,
+		draggingEvent,
 	});
 
 	// Scroll synchronization
@@ -427,182 +436,6 @@ const RenderWeekViews = (props: {
 			// Horizontal swipe
 			scrollByDays(dx < 0 ? 1 : -1);
 		}
-	};
-
-	const getDateTimeFromClick = (dayIndex: number, yPosition: number) => {
-		const clickedDate = weekDays[dayIndex];
-		if (!clickedDate) return new Date();
-
-		const hourFromClick = Math.floor(yPosition / PX_PER_HOUR);
-		const minuteFromClick = Math.floor(
-			((yPosition % PX_PER_HOUR) / PX_PER_HOUR) * 60,
-		);
-
-		const resultDate = new Date(clickedDate);
-		resultDate.setHours(hourFromClick, minuteFromClick, 0, 0);
-
-		return resultDate;
-	};
-
-	const roundDateTo15 = (date: Date, mode: "floor" | "ceil") => {
-		const d = new Date(date);
-		const minutes = d.getMinutes();
-		const remainder = minutes % 15;
-		if (remainder === 0) return d;
-		if (mode === "floor") {
-			d.setMinutes(minutes - remainder, 0, 0);
-		} else {
-			d.setMinutes(minutes + (15 - remainder), 0, 0);
-		}
-		return d;
-	};
-
-	const clampToDay = (baseDay: Date, date: Date) => {
-		const start = new Date(baseDay);
-		start.setHours(0, 0, 0, 0);
-		const end = new Date(baseDay);
-		end.setHours(23, 59, 59, 999);
-		return new Date(
-			Math.min(Math.max(date.getTime(), start.getTime()), end.getTime()),
-		);
-	};
-
-	const createEventMutation = useMutation(
-		orpc.eventRoutes.createEvent.mutationOptions(),
-	);
-	const MINUTES_15_MS = 15 * 60 * 1000;
-
-	const handleCellClick = (dayIndex: number, event: React.MouseEvent) => {
-		if (!props.canWrite) return;
-		// Don't create event if we just finished dragging
-		if (draggingEvent?.hasMoved || isSelecting) {
-			return;
-		}
-		// Skip the immediate click right after a drag selection
-		if (suppressNextClickRef.current) {
-			suppressNextClickRef.current = false;
-			return;
-		}
-
-		const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-		const yPosition = event.clientY - rect.top;
-
-		const clickTime = getDateTimeFromClick(dayIndex, yPosition);
-		const endTime = new Date(clickTime);
-		endTime.setHours(clickTime.getHours() + 1); // Default 1 hour duration
-
-		setNewEvent({
-			title: "",
-			startDate: clickTime,
-			endDate: endTime,
-			type: "activity",
-			location: "",
-			cost: null,
-			description: "",
-			link: "",
-		});
-
-		setIsModalOpen(true);
-	};
-
-	const handleDayMouseDown = (
-		dayIndex: number,
-		event: React.MouseEvent,
-		isDisabled?: boolean,
-	) => {
-		if (!props.canWrite || isDisabled) return;
-		if (draggingEvent?.hasMoved) return;
-		const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-		const yPosition = event.clientY - rect.top;
-		const clickTime = getDateTimeFromClick(dayIndex, yPosition);
-		const start = roundDateTo15(clickTime, "floor");
-		setIsSelecting(true);
-		setSelectionDayIndex(dayIndex);
-		setSelectionStart(start);
-		setSelectionCurrent(start);
-		event.preventDefault();
-	};
-
-	const handleDayMouseMove = (
-		dayIndex: number,
-		event: React.MouseEvent,
-		isDisabled?: boolean,
-	) => {
-		if (!isSelecting || selectionDayIndex !== dayIndex || isDisabled) return;
-		const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-		const yPosition = event.clientY - rect.top;
-		const moveTimeRaw = getDateTimeFromClick(dayIndex, yPosition);
-		const moveTime = roundDateTo15(moveTimeRaw, "ceil");
-		const baseDay = weekDays[dayIndex];
-		setSelectionCurrent(clampToDay(baseDay, moveTime));
-	};
-
-	const handleDayMouseUp = (
-		dayIndex: number,
-		_event: React.MouseEvent,
-		isDisabled?: boolean,
-	) => {
-		if (!isSelecting || selectionDayIndex !== dayIndex || isDisabled) return;
-		setIsSelecting(false);
-		if (!selectionStart || !selectionCurrent) {
-			setSelectionDayIndex(null);
-			setSelectionStart(null);
-			setSelectionCurrent(null);
-			return;
-		}
-		let start = selectionStart;
-		let end = selectionCurrent;
-		if (end.getTime() < start.getTime()) {
-			const tmp = start;
-			start = end;
-			end = tmp;
-		}
-		if (end.getTime() - start.getTime() < MINUTES_15_MS) {
-			end = new Date(start.getTime() + MINUTES_15_MS);
-		}
-		// clamp end to same day just in case
-		end = clampToDay(start, end);
-
-		setNewEvent({
-			title: "",
-			startDate: start,
-			endDate: end,
-			type: "activity",
-			location: "",
-			cost: null,
-			description: "",
-			link: "",
-		});
-		setIsModalOpen(true);
-		// Ensure subsequent click from this mouse interaction doesn't override the selection
-		suppressNextClickRef.current = true;
-		// reset selection state
-		setSelectionDayIndex(null);
-		setSelectionStart(null);
-		setSelectionCurrent(null);
-	};
-
-	const handleCreateEvent = () => {
-		if (!newEvent.title.trim()) return;
-
-		createEventMutation.mutate({
-			...newEvent,
-			cost: newEvent.cost ?? undefined,
-			travelId: props.travelId,
-		});
-
-		setNewEvent({
-			title: "",
-			startDate: new Date(),
-			endDate: new Date(),
-			type: "activity",
-			location: "",
-			cost: null,
-			description: "",
-			link: "",
-		});
-
-		setIsModalOpen(false);
 	};
 
 	const handleSaveEvent = (changes: Partial<AppEvent>) => {
@@ -820,7 +653,7 @@ const RenderWeekViews = (props: {
 					<EventCreateModal
 						isOpen={isModalOpen}
 						newEvent={newEvent}
-						onClose={() => setIsModalOpen(false)}
+						onClose={closeModal}
 						onCreate={handleCreateEvent}
 						onEventChange={setNewEvent}
 						travelStartDate={props.travelStartDate}
@@ -840,7 +673,254 @@ const RenderWeekViews = (props: {
 	);
 };
 
-// Components
+interface UseCalendarEventCreationArgs {
+	canWrite?: boolean;
+	travelId: string;
+	weekDays: Date[];
+	draggingEvent: { hasMoved?: boolean } | null;
+}
+const useCalendarEventCreation = ({
+	canWrite,
+	travelId,
+	weekDays,
+	draggingEvent,
+}: UseCalendarEventCreationArgs) => {
+	const DEFAULT_EVENT_DURATION_HOURS = 1;
+	const MINUTES_15_MS = 15 * 60 * 1000;
+	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [newEvent, setNewEvent] = useState<CalendarCreationEvent>(
+		createEmptyEventDraft,
+	);
+	const suppressNextClickRef = useRef(false);
+	const [isSelecting, setIsSelecting] = useState(false);
+	const [selectionDayIndex, setSelectionDayIndex] = useState<number | null>(
+		null,
+	);
+	const [selectionStart, setSelectionStart] = useState<Date | null>(null);
+	const [selectionCurrent, setSelectionCurrent] = useState<Date | null>(null);
+
+	const createEventMutation = useMutation(
+		orpc.eventRoutes.createEvent.mutationOptions(),
+	);
+
+	const resetDraft = useCallback(() => {
+		setNewEvent(createEmptyEventDraft());
+	}, []);
+
+	const getDateTimeFromClick = useCallback(
+		(dayIndex: number, yPosition: number) => {
+			const clickedDate = weekDays[dayIndex];
+			if (!clickedDate) return new Date();
+
+			const hourFromClick = Math.floor(yPosition / PX_PER_HOUR);
+			const minuteFromClick = Math.floor(
+				((yPosition % PX_PER_HOUR) / PX_PER_HOUR) * 60,
+			);
+
+			const resultDate = new Date(clickedDate);
+			resultDate.setHours(hourFromClick, minuteFromClick, 0, 0);
+
+			return resultDate;
+		},
+		[weekDays],
+	);
+
+	const roundDateTo15 = useCallback((date: Date, mode: "floor" | "ceil") => {
+		const d = new Date(date);
+		const minutes = d.getMinutes();
+		const remainder = minutes % 15;
+		if (remainder === 0) return d;
+		if (mode === "floor") {
+			d.setMinutes(minutes - remainder, 0, 0);
+		} else {
+			d.setMinutes(minutes + (15 - remainder), 0, 0);
+		}
+		return d;
+	}, []);
+
+	const clampToDay = useCallback((baseDay: Date, date: Date) => {
+		const start = new Date(baseDay);
+		start.setHours(0, 0, 0, 0);
+		const end = new Date(baseDay);
+		end.setHours(23, 59, 59, 999);
+		return new Date(
+			Math.min(Math.max(date.getTime(), start.getTime()), end.getTime()),
+		);
+	}, []);
+
+	const handleCellClick = useCallback(
+		(dayIndex: number, event: React.MouseEvent) => {
+			if (!canWrite) return;
+			if (draggingEvent?.hasMoved || isSelecting) return;
+			if (suppressNextClickRef.current) {
+				suppressNextClickRef.current = false;
+				return;
+			}
+
+			const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+			const yPosition = event.clientY - rect.top;
+			const clickTime = getDateTimeFromClick(dayIndex, yPosition);
+			const endTime = new Date(clickTime);
+			endTime.setHours(clickTime.getHours() + DEFAULT_EVENT_DURATION_HOURS);
+
+			setNewEvent({
+				title: "",
+				startDate: clickTime,
+				endDate: endTime,
+				type: "activity",
+				location: "",
+				cost: null,
+				description: "",
+				link: "",
+			});
+
+			setIsModalOpen(true);
+		},
+		[canWrite, draggingEvent?.hasMoved, getDateTimeFromClick, isSelecting],
+	);
+
+	const handleDayMouseDown = useCallback(
+		(dayIndex: number, event: React.MouseEvent, isDisabled?: boolean) => {
+			if (!canWrite || isDisabled) return;
+			if (draggingEvent?.hasMoved) return;
+			const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+			const yPosition = event.clientY - rect.top;
+			const clickTime = getDateTimeFromClick(dayIndex, yPosition);
+			const start = roundDateTo15(clickTime, "floor");
+			setIsSelecting(true);
+			setSelectionDayIndex(dayIndex);
+			setSelectionStart(start);
+			setSelectionCurrent(start);
+			event.preventDefault();
+		},
+		[canWrite, draggingEvent?.hasMoved, getDateTimeFromClick, roundDateTo15],
+	);
+
+	const handleDayMouseMove = useCallback(
+		(dayIndex: number, event: React.MouseEvent, isDisabled?: boolean) => {
+			if (!isSelecting || selectionDayIndex !== dayIndex || isDisabled) return;
+			const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+			const yPosition = event.clientY - rect.top;
+			const moveTimeRaw = getDateTimeFromClick(dayIndex, yPosition);
+			const moveTime = roundDateTo15(moveTimeRaw, "ceil");
+			const baseDay = weekDays[dayIndex];
+			setSelectionCurrent(clampToDay(baseDay, moveTime));
+		},
+		[
+			clampToDay,
+			getDateTimeFromClick,
+			isSelecting,
+			roundDateTo15,
+			selectionDayIndex,
+			weekDays,
+		],
+	);
+
+	const handleDayMouseUp = useCallback(
+		(dayIndex: number, _event: React.MouseEvent, isDisabled?: boolean) => {
+			if (!isSelecting || selectionDayIndex !== dayIndex || isDisabled) return;
+			setIsSelecting(false);
+			if (!selectionStart || !selectionCurrent) {
+				setSelectionDayIndex(null);
+				setSelectionStart(null);
+				setSelectionCurrent(null);
+				return;
+			}
+			let start = selectionStart;
+			let end = selectionCurrent;
+			if (end.getTime() < start.getTime()) {
+				const tmp = start;
+				start = end;
+				end = tmp;
+			}
+			if (end.getTime() - start.getTime() < MINUTES_15_MS) {
+				end = new Date(start.getTime() + MINUTES_15_MS);
+			}
+			end = clampToDay(start, end);
+
+			setNewEvent({
+				title: "",
+				startDate: start,
+				endDate: end,
+				type: "activity",
+				location: "",
+				cost: null,
+				description: "",
+				link: "",
+			});
+			setIsModalOpen(true);
+			suppressNextClickRef.current = true;
+			setSelectionDayIndex(null);
+			setSelectionStart(null);
+			setSelectionCurrent(null);
+		},
+		[
+			clampToDay,
+			isSelecting,
+			selectionCurrent,
+			selectionDayIndex,
+			selectionStart,
+		],
+	);
+
+	const handleCreateEvent = useCallback(() => {
+		if (!newEvent.title.trim()) return;
+		createEventMutation.mutate({
+			...newEvent,
+			cost: newEvent.cost ?? undefined,
+			travelId,
+		});
+		resetDraft();
+		setIsModalOpen(false);
+	}, [createEventMutation, newEvent, resetDraft, travelId]);
+
+	const closeModal = useCallback(() => {
+		setIsModalOpen(false);
+	}, []);
+
+	return {
+		modal: {
+			isOpen: isModalOpen,
+			newEvent,
+			setNewEvent,
+			closeModal,
+			handleCreateEvent,
+		},
+		selection: {
+			isSelecting,
+			selectionDayIndex,
+			selectionStart,
+			selectionCurrent,
+		},
+		interactions: {
+			handleCellClick,
+			handleDayMouseDown,
+			handleDayMouseMove,
+			handleDayMouseUp,
+		},
+	};
+};
+type CalendarCreationEvent = {
+	title: string;
+	startDate: Date;
+	endDate: Date;
+	type: AppEvent["type"];
+	location: string;
+	cost: number | null;
+	description: string;
+	link: string;
+};
+const createEmptyEventDraft = (): CalendarCreationEvent => ({
+	title: "",
+	startDate: new Date(),
+	endDate: new Date(),
+	type: "activity",
+	location: "",
+	cost: null,
+	description: "",
+	link: "",
+});
+
 interface EventBlockProps {
 	event: AppEvent;
 	topPosition: number;
