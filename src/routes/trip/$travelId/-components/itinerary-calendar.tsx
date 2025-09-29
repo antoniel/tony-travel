@@ -6,12 +6,13 @@ import { DAYS_OF_WEEK, MONTHS, TIME_SLOTS } from "@/lib/constants";
 import type { InsertAppEvent } from "@/lib/db/schema";
 import type { Accommodation, AppEvent } from "@/lib/types";
 import { orpc } from "@/orpc/client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
 	useCallback,
 	useEffect,
 	useLayoutEffect,
+	useMemo,
 	useRef,
 	useState,
 } from "react";
@@ -26,6 +27,7 @@ import {
 	getEventsForDate,
 	getTimeFromDate,
 	getTimePositionFromDate,
+	getUnifiedEventLayout,
 	getWeekDays,
 	isSameUTCDate,
 	toLocalStartOfDay,
@@ -33,6 +35,29 @@ import {
 	toUtcMidnight,
 } from "./app-events.utils";
 import { EventDetailsModal } from "./event-details-modal";
+import { FlightDetailsModal, FlightEventBlock } from "./flight-event-block";
+import {
+	type FlightSegmentEvent,
+	consolidateFlightSegments,
+} from "./flight-segments.utils";
+
+// Helper function to get flight events for a specific date
+function getFlightEventsForDate(
+	flightEvents: FlightSegmentEvent[],
+	date: Date,
+): FlightSegmentEvent[] {
+	const targetDay = new Date(date);
+	targetDay.setHours(0, 0, 0, 0);
+	const nextDay = new Date(targetDay);
+	nextDay.setDate(targetDay.getDate() + 1);
+
+	return flightEvents.filter((flightEvent) => {
+		const eventStart = new Date(flightEvent.startDate);
+		const eventEnd = new Date(flightEvent.endDate);
+
+		return eventStart < nextDay && eventEnd > targetDay;
+	});
+}
 
 interface CalendarProps {
 	travelId: string;
@@ -48,9 +73,25 @@ interface CalendarProps {
 export default function ItineraryCalendar(props: CalendarProps) {
 	const [index, setIndex] = useState(0);
 	const [selectedEvent, setSelectedEvent] = useState<AppEvent | null>(null);
+	const [selectedFlightEvent, setSelectedFlightEvent] =
+		useState<FlightSegmentEvent | null>(null);
 	const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+	const [isFlightDetailsOpen, setIsFlightDetailsOpen] = useState(false);
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [editingEvent, setEditingEvent] = useState<AppEvent | null>(null);
+
+	// Fetch flight data for this travel
+	const { data: flights = [] } = useQuery(
+		orpc.flightRoutes.getFlightsByTravel.queryOptions({
+			input: { travelId: props.travelId },
+		}),
+	);
+
+	// Convert flights to calendar events
+	const flightEvents = useMemo(() => {
+		const allFlights = flights.flatMap((group) => group.flights);
+		return consolidateFlightSegments(allFlights);
+	}, [flights]);
 	const controlsRef = useRef<{ scrollByDays: (delta: number) => void } | null>(
 		null,
 	);
@@ -78,6 +119,16 @@ export default function ItineraryCalendar(props: CalendarProps) {
 		setEditingEvent(event);
 		setIsEditModalOpen(true);
 		setIsDetailsOpen(false); // Close details modal when opening edit modal
+	};
+
+	const handleFlightEventClick = (flightEvent: FlightSegmentEvent) => {
+		setSelectedFlightEvent(flightEvent);
+		setIsFlightDetailsOpen(true);
+	};
+
+	const handleCloseFlightDetails = () => {
+		setIsFlightDetailsOpen(false);
+		setSelectedFlightEvent(null);
 	};
 
 	return (
@@ -113,11 +164,13 @@ export default function ItineraryCalendar(props: CalendarProps) {
 						<RenderWeekViews
 							travelId={props.travelId}
 							events={props.events}
+							flightEvents={flightEvents}
 							travelStartDate={props.travelStartDate}
 							travelEndDate={props.travelEndDate}
 							accommodations={props.accommodations}
 							onUpdateEvent={props.canWrite ? props.onUpdateEvent : undefined}
 							onEventClick={handleEventClick}
+							onFlightEventClick={handleFlightEventClick}
 							canWrite={props.canWrite}
 							controlsRef={controlsRef}
 							setIndex={setIndex}
@@ -140,6 +193,12 @@ export default function ItineraryCalendar(props: CalendarProps) {
 				onEditEvent={handleEditEvent}
 				canWrite={props.canWrite}
 			/>
+
+			<FlightDetailsModal
+				flightEvent={selectedFlightEvent}
+				isOpen={isFlightDetailsOpen}
+				onClose={handleCloseFlightDetails}
+			/>
 		</>
 	);
 }
@@ -147,10 +206,12 @@ export default function ItineraryCalendar(props: CalendarProps) {
 const RenderWeekViews = (props: {
 	travelId: string;
 	events: AppEvent[];
+	flightEvents: FlightSegmentEvent[];
 	accommodations?: Accommodation[];
 	// currentDate: Date;
 	onUpdateEvent?: (eventId: string, updatedEvent: Partial<AppEvent>) => void;
 	onEventClick?: (event: AppEvent) => void;
+	onFlightEventClick?: (event: FlightSegmentEvent) => void;
 	travelStartDate?: Date;
 	travelEndDate?: Date;
 	canWrite?: boolean;
@@ -602,6 +663,10 @@ const RenderWeekViews = (props: {
 						>
 							{weekDays.map((date, dayIndex) => {
 								const dayEvents = getEventsForDate(props.events, date);
+								const dayFlightEvents = getFlightEventsForDate(
+									props.flightEvents,
+									date,
+								);
 								const isWeekend = date.getDay() === 0 || date.getDay() === 6;
 								const disabled = restrictNonTravelDays && !isWithinTravel(date);
 								const selectionForThisDay =
@@ -617,6 +682,7 @@ const RenderWeekViews = (props: {
 										date={date}
 										dayIndex={dayIndex}
 										events={dayEvents}
+										flightEvents={dayFlightEvents}
 										isWeekend={isWeekend}
 										isDisabled={disabled}
 										isSelecting={isSelecting}
@@ -637,6 +703,7 @@ const RenderWeekViews = (props: {
 											props.canWrite ? handleEventMouseDown : () => {}
 										}
 										onEventClick={props.onEventClick}
+										onFlightEventClick={props.onFlightEventClick}
 										onUpdateEvent={
 											props.canWrite ? props.onUpdateEvent : undefined
 										}
@@ -754,6 +821,14 @@ const useCalendarEventCreation = ({
 			if (draggingEvent?.hasMoved || isSelecting) return;
 			if (suppressNextClickRef.current) {
 				suppressNextClickRef.current = false;
+				return;
+			}
+
+			// Check if the click originated from a flight event or regular event
+			const target = event.target as HTMLElement;
+			const isFlightEvent = target.closest('[data-flight-event="true"]');
+			const isRegularEvent = target.closest('[data-event-block="true"]');
+			if (isFlightEvent || isRegularEvent) {
 				return;
 			}
 
@@ -924,6 +999,7 @@ interface DayCellProps {
 	date: Date;
 	dayIndex: number;
 	events: AppEvent[];
+	flightEvents: FlightSegmentEvent[];
 	isWeekend: boolean;
 	isDisabled?: boolean;
 	isSelecting?: boolean;
@@ -955,6 +1031,7 @@ interface DayCellProps {
 		resizeHandle?: "top" | "bottom",
 	) => void;
 	onEventClick?: (event: AppEvent) => void;
+	onFlightEventClick?: (event: FlightSegmentEvent) => void;
 	onUpdateEvent?: (eventId: string, updatedEvent: Partial<AppEvent>) => void;
 }
 
@@ -962,6 +1039,7 @@ const DayCollumn = ({
 	date,
 	dayIndex,
 	events: dayEvents,
+	flightEvents: dayFlightEvents,
 	isWeekend,
 	isDisabled,
 	isSelecting: _isSelecting,
@@ -973,6 +1051,7 @@ const DayCollumn = ({
 	draggingEvent,
 	onEventMouseDown,
 	onEventClick,
+	onFlightEventClick,
 	onUpdateEvent,
 }: DayCellProps) => {
 	return (
@@ -1044,8 +1123,23 @@ const DayCollumn = ({
 						})()
 					: null}
 				{(() => {
-					const eventLayouts = getEventLayout(dayEvents);
-					return dayEvents.map((eventBlockItem) => {
+					// Create unified layout that includes both regular events and flight events
+					const allEventsForLayout = [
+						...dayEvents.map(event => ({
+							id: event.id,
+							startDate: event.startDate,
+							endDate: event.endDate,
+						})),
+						...dayFlightEvents.map(flightEvent => ({
+							id: flightEvent.id,
+							startDate: flightEvent.startDate,
+							endDate: flightEvent.endDate,
+						}))
+					];
+					const unifiedLayouts = getUnifiedEventLayout(allEventsForLayout);
+					
+					// Render regular events
+					const regularEventBlocks = dayEvents.map((eventBlockItem) => {
 						// For multi-day events, calculate display positions for this specific day
 						const currentDayStart = new Date(date);
 						currentDayStart.setHours(0, 0, 0, 0);
@@ -1097,7 +1191,7 @@ const DayCollumn = ({
 
 						const isDragging = draggingEvent?.event.id === eventBlockItem.id;
 
-						const layout = eventLayouts.get(eventBlockItem.id);
+						const layout = unifiedLayouts.get(eventBlockItem.id);
 
 						return (
 							<EventBlock
@@ -1115,6 +1209,76 @@ const DayCollumn = ({
 							/>
 						);
 					});
+
+					// Render flight events
+					const flightEventBlocks = dayFlightEvents.map((flightEvent) => {
+					// Calculate display times for this day (same logic as regular events)
+					const currentDayStart = new Date(date);
+					currentDayStart.setHours(0, 0, 0, 0);
+					const currentDayEnd = new Date(currentDayStart);
+					currentDayEnd.setDate(currentDayEnd.getDate() + 1);
+
+					const eventStart = new Date(flightEvent.startDate);
+					const eventEnd = new Date(flightEvent.endDate);
+
+					// Determine actual display times for this day
+					const displayStart =
+						eventStart < currentDayStart ? currentDayStart : eventStart;
+					const endOfDay = new Date(currentDayEnd);
+					endOfDay.setMilliseconds(-1); // This sets it to 23:59:59.999
+					const displayEnd = eventEnd >= currentDayEnd ? endOfDay : eventEnd;
+
+					const topPosition = getTimePositionFromDate(displayStart);
+
+					// Calculate event height based on display times for this day
+					const displayStartTime = displayStart.getTime();
+					const displayEndTime = displayEnd.getTime();
+					const durationMs = displayEndTime - displayStartTime;
+					const durationMinutes = durationMs / (1000 * 60);
+
+					let eventHeight = 20; // Default minimum height for flights
+					if (durationMinutes > 0) {
+						// Convert duration to pixels (48px per hour = 0.8px per minute)
+						const calculatedHeight = Math.max(
+							20, // Minimum height for flight events
+							(durationMinutes * PX_PER_HOUR) / 60,
+						);
+						eventHeight = calculatedHeight;
+					}
+
+					// Only show time if event has sufficient height (>= 32px)
+					const showTime = eventHeight >= 32;
+					const startTimeStr = getTimeFromDate(displayStart);
+					const endTimeStr = getTimeFromDate(displayEnd);
+					const timeDisplay =
+						showTime &&
+						startTimeStr &&
+						endTimeStr &&
+						startTimeStr !== endTimeStr
+							? `${startTimeStr} - ${endTimeStr}`
+							: showTime
+								? startTimeStr
+								: null;
+
+					// Get layout for this flight event from unified layout calculation
+					const layout = unifiedLayouts.get(flightEvent.id);
+
+					return (
+						<FlightEventBlock
+							key={flightEvent.id}
+							flightEvent={flightEvent}
+							topPosition={topPosition}
+							eventHeight={eventHeight}
+							onEventClick={onFlightEventClick}
+							dayIndex={dayIndex}
+							timeDisplay={timeDisplay}
+							layout={layout}
+						/>
+					);
+					});
+
+					// Return both regular events and flight events
+					return [...regularEventBlocks, ...flightEventBlocks];
 				})()}
 			</div>
 		</div>
@@ -1163,6 +1327,7 @@ const EventBlock = ({
 	return (
 		<div
 			key={eventBlockItem.id}
+			data-event-block="true"
 			className={`absolute text-xs px-1 py-0.5 rounded text-white pointer-events-auto z-10 flex flex-col justify-start ${
 				isEditable ? "cursor-move" : "cursor-pointer"
 			} hover:shadow-lg transition-shadow group ${

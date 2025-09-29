@@ -1093,7 +1093,7 @@ function SliceCard({
 	formatDate: (date: Date) => string;
 	formatTime: (time: string) => string;
 }) {
-	const [isExpanded, setIsExpanded] = useState(true); // Default to open
+	const [isExpanded, setIsExpanded] = useState(false);
 	const hasConnections = slice.segments.length > 1;
 	const firstSegment = slice.segments[0];
 	const lastSegment = slice.segments[slice.segments.length - 1];

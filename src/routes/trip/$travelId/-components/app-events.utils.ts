@@ -110,7 +110,29 @@ export const getTimeFromDate = (date: Date) => {
 	return `${displayHour}${minuteStr}${amPm}`;
 };
 
+// Generic event interface for layout calculations
+interface LayoutEvent {
+	id: string;
+	startDate: Date;
+	endDate: Date;
+}
+
 export const getEventLayout = (events: AppEvent[]) => {
+	// Convert AppEvents to LayoutEvents and use unified layout function
+	const layoutEvents: LayoutEvent[] = events.map(event => ({
+		id: event.id,
+		startDate: event.startDate,
+		endDate: event.endDate,
+	}));
+	
+	return getUnifiedEventLayout(layoutEvents);
+};
+
+/**
+ * Unified layout function that handles collision detection for any event type
+ * (regular events, flight events, or mixed)
+ */
+export const getUnifiedEventLayout = (events: LayoutEvent[]) => {
 	const sortedEvents = [...events].sort((a, b) => {
 		const startDiff = a.startDate.getTime() - b.startDate.getTime();
 		if (startDiff !== 0) return startDiff;
@@ -121,7 +143,7 @@ export const getEventLayout = (events: AppEvent[]) => {
 		string,
 		{ column: number; totalColumns: number; width: number; left: number }
 	>();
-	const columns: AppEvent[][] = [];
+	const columns: LayoutEvent[][] = [];
 
 	for (const event of sortedEvents) {
 		let assignedColumn = -1;
