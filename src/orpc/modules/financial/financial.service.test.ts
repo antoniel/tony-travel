@@ -87,7 +87,6 @@ describe("getFinancialSummaryService", () => {
 				provider: "manual",
 				offerReference: "manual",
 				dataSource: "manual",
-				legacyMigratedAt: null,
 			}),
 			metadata: {},
 		};

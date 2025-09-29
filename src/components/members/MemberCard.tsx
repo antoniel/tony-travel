@@ -128,9 +128,9 @@ export function MemberCard({
 	return (
 		<Card className="transition-all hover:shadow-lg">
 			<CardContent className="p-0">
-				<div className="flex flex-col sm:flex-row sm:items-center justify-between p-6 gap-4">
+				<div className="flex flex-col gap-4 p-6">
 					<div className="flex items-center gap-4">
-						<Avatar className="h-12 w-12 ring-2 ring-background shadow-sm">
+						<Avatar className="h-12 w-12 ring-2 ring-background shadow-sm flex-shrink-0">
 							<AvatarImage src={member.user.image || undefined} />
 							<AvatarFallback className="bg-primary/10 text-primary font-semibold">
 								{member.user.name
@@ -144,7 +144,7 @@ export function MemberCard({
 
 						<div className="min-w-0 flex-1">
 							<div className="flex items-center gap-2">
-								<h3 className="font-medium text-foreground">
+								<h3 className="font-medium text-foreground truncate">
 									{member.user.name}
 									{isCurrentUser && (
 										<span className="ml-2 text-xs text-muted-foreground">
@@ -162,7 +162,7 @@ export function MemberCard({
 						</div>
 					</div>
 
-					<div className="flex items-center gap-3 flex-shrink-0">
+					<div className="flex items-center justify-between gap-3">
 						<Badge variant={getRoleVariant(member.role)} className="gap-1">
 							{getRoleIcon(member.role)}
 							{getRoleLabel(member.role)}
@@ -176,10 +176,10 @@ export function MemberCard({
 									<Button
 										variant="ghost"
 										size="sm"
-										className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300"
+										className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300 flex-shrink-0"
 									>
 										<UserMinus className="w-4 h-4" />
-										<span className="ml-2 hidden sm:inline">Remover</span>
+										<span className="ml-2">Remover</span>
 									</Button>
 								}
 								desktopClassName="sm:max-w-md"

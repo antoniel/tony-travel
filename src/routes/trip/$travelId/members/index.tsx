@@ -199,7 +199,7 @@ function MembersList({
 	}
 
 	return (
-		<div className="space-y-4">
+		<div className="space-y-4 md:grid md:grid-cols-2 md:gap-4 md:space-y-0 lg:grid-cols-3">
 			{members.map((member) => (
 				<MemberCard
 					key={member.id}

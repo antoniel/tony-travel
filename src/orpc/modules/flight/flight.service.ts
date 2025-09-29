@@ -86,7 +86,6 @@ export async function createFlightService(
 		offerReference: input.flight.offerReference ?? null,
 		dataSource: input.flight.dataSource ?? null,
 		metadata: input.flight.metadata ?? null,
-		legacyMigratedAt: null,
 		travelId: input.travelId,
 	};
 	const flightId = await flightDAO.createFlight(
@@ -327,7 +326,6 @@ export async function updateFlightService(
 		offerReference: input.flight.offerReference ?? null,
 		dataSource: input.flight.dataSource ?? null,
 		metadata: input.flight.metadata ?? null,
-		legacyMigratedAt: existingFlight.legacyMigratedAt ?? null,
 	};
 
 	await flightDAO.updateFlight(input.id, updatePayload, input.flight.slices);
@@ -436,7 +434,9 @@ function getFlightSummary(flight: UpsertFlightPayload) {
 /**
  * Detect flight chains (round trips, multi-city) and generate chain information
  */
-function detectFlightChains(flights: FlightWithParticipants[]): Map<string, FlightChainInfo> {
+function detectFlightChains(
+	flights: FlightWithParticipants[],
+): Map<string, FlightChainInfo> {
 	const chainInfoMap = new Map<string, FlightChainInfo>();
 	const processedFlights = new Set<string>();
 
@@ -445,44 +445,56 @@ function detectFlightChains(flights: FlightWithParticipants[]): Map<string, Flig
 
 		const originAirport = flight.originAirport;
 		const destinationAirport = flight.destinationAirport;
-		
+
 		// Find potential related flights
-		const relatedFlights = flights.filter(f => 
-			f.id !== flight.id &&
-			!processedFlights.has(f.id) &&
-			// Check for round trip or connecting flights
-			(
+		const relatedFlights = flights.filter(
+			(f) =>
+				f.id !== flight.id &&
+				!processedFlights.has(f.id) &&
+				// Check for round trip or connecting flights
+
 				// Round trip: A->B and B->A
-				(f.originAirport === destinationAirport && f.destinationAirport === originAirport) ||
-				// Multi-city: A->B and B->C
-				(f.originAirport === destinationAirport) ||
-				// Multi-city: C->A and A->B (return to origin)
-				(f.destinationAirport === originAirport)
-			)
+				((f.originAirport === destinationAirport &&
+					f.destinationAirport === originAirport) ||
+					// Multi-city: A->B and B->C
+					f.originAirport === destinationAirport ||
+					// Multi-city: C->A and A->B (return to origin)
+					f.destinationAirport === originAirport),
 		);
 
 		if (relatedFlights.length > 0) {
 			// Create chain
 			const chainFlights = [flight, ...relatedFlights];
-			
+
 			// Sort by departure date for proper chain order
 			chainFlights.sort((a, b) => {
-				const dateA = new Date(`${a.departureDate.toISOString().split("T")[0]}T${a.departureTime}`);
-				const dateB = new Date(`${b.departureDate.toISOString().split("T")[0]}T${b.departureTime}`);
+				const dateA = new Date(
+					`${a.departureDate.toISOString().split("T")[0]}T${a.departureTime}`,
+				);
+				const dateB = new Date(
+					`${b.departureDate.toISOString().split("T")[0]}T${b.departureTime}`,
+				);
 				return dateA.getTime() - dateB.getTime();
 			});
 
 			// Determine chain type
-			const isRoundTrip = chainFlights.length === 2 && 
+			const isRoundTrip =
+				chainFlights.length === 2 &&
 				chainFlights[0].originAirport === chainFlights[1].destinationAirport &&
 				chainFlights[0].destinationAirport === chainFlights[1].originAirport;
-			
-			const chainType = isRoundTrip ? "round_trip" : 
-				chainFlights.length > 2 ? "multi_city" : "one_way";
+
+			const chainType = isRoundTrip
+				? "round_trip"
+				: chainFlights.length > 2
+					? "multi_city"
+					: "one_way";
 
 			// Generate unique chain ID
-			const chainId = `chain_${chainFlights.map(f => f.id).sort().join("_")}`;
-			const relatedFlightIds = chainFlights.map(f => f.id);
+			const chainId = `chain_${chainFlights
+				.map((f) => f.id)
+				.sort()
+				.join("_")}`;
+			const relatedFlightIds = chainFlights.map((f) => f.id);
 
 			// Create chain info for each flight
 			chainFlights.forEach((chainFlight, index) => {

@@ -224,7 +224,6 @@ export const Flight = sqliteTable("flight", {
 	metadata: text("metadata", { mode: "json" })
 		.$type<Record<string, unknown> | null>()
 		.default(null),
-	legacyMigratedAt: integer("legacy_migrated_at", { mode: "timestamp" }),
 	travelId: text("travel_id")
 		.notNull()
 		.references(() => Travel.id, { onDelete: "cascade" }),

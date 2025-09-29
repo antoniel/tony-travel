@@ -103,8 +103,9 @@ Execution protocol when backend is requested:
 
 1. Announce invocation: "Invoking @backend-specialist for backend tasks".
 2. Hand off backend design/implementation to `@backend-specialist`
-3. After completion, resume with the base assistant only for non-backend follow-ups (e.g., UI wiring), preserving the backend contracts.
-4. If the task qualifies, offer Self-Improving CLAUDE Reflection as usual.
+3. **SPECIALIST EXECUTION ENFORCEMENT**: The specialist MUST execute the work directly - NO further delegation is permitted for work within their domain
+4. After completion, resume with the base assistant only for non-backend follow-ups (e.g., UI wiring), preserving the backend contracts.
+5. If the task qualifies, offer Self-Improving CLAUDE Reflection as usual.
 
 Nota (PT-BR): Sempre que o pedido envolver backend (oRPC, services, DAOs, Drizzle, validação/erros, testes de backend), acione obrigatoriamente o `@backend-specialist` para garantir a separação de camadas e o cumprimento estrito das regras deste arquivo.
 
@@ -133,8 +134,9 @@ Execution protocol when frontend is requested:
 1. **MANDATORY EARLY DETECTION**: The moment you identify ANY frontend work, IMMEDIATELY announce: "This requires frontend work. Invoking @frontend-specialist for frontend tasks."
 2. **ZERO IMPLEMENTATION RULE**: Do NOT attempt any code changes yourself - hand off immediately to `@frontend-specialist`
 3. **COMPLETE HANDOFF**: Provide full context about the requirements and any architectural analysis, then let the specialist handle ALL implementation
-4. After completion, resume with the base assistant only for non-frontend follow-ups (e.g., backend integration), preserving the frontend contracts.
-5. If the task qualifies, offer Self-Improving CLAUDE Reflection as usual.
+4. **SPECIALIST EXECUTION ENFORCEMENT**: The specialist MUST execute the work directly - NO further delegation is permitted for work within their domain
+5. After completion, resume with the base assistant only for non-frontend follow-ups (e.g., backend integration), preserving the frontend contracts.
+6. If the task qualifies, offer Self-Improving CLAUDE Reflection as usual.
 
 **VIOLATION PREVENTION CHECKLIST**:
 - [ ] Did I identify this as frontend work before starting implementation?
@@ -147,6 +149,21 @@ Nota (PT-BR): Sempre que o pedido envolver frontend (UI/UX, componentes React, T
 ## Delegation Violation Prevention
 
 **CRITICAL ENFORCEMENT PROTOCOL**: To prevent violations of the ZERO TOLERANCE RULE, implement these mandatory safeguards:
+
+### Critical Self-Invocation Prevention
+
+**ABSOLUTE PROHIBITION**: Specialist agents MUST NEVER invoke themselves or attempt further delegation for work within their designated domain.
+
+**SPECIALIST EXECUTION MANDATE**:
+- When work is delegated to a specialist, that specialist MUST execute the implementation directly
+- NO exceptions for "complex" work - if it falls within the specialist's domain, they execute it
+- Self-invocation creates infinite loops and violates the delegation protocol
+- Cross-specialist delegation is only permitted for work genuinely outside the specialist's domain
+
+**VIOLATION DETECTION**: If a specialist attempts to invoke itself or delegate work within its domain:
+1. **IMMEDIATE STOP**: The violation must be caught and corrected
+2. **PROTOCOL ENFORCEMENT**: The specialist must be redirected to execute the work directly
+3. **REFLECTION TRIGGER**: All self-invocation attempts automatically trigger reflection process
 
 ### Pre-Implementation Detection Patterns
 
