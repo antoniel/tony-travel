@@ -23,7 +23,7 @@ export function Provider({
 				ui_host: "https://us.posthog.com",
 				defaults: "2025-05-24",
 				capture_exceptions: true,
-				debug: import.meta.env.MODE === "development",
+				debug: !import.meta.env.PROD,
 			}}
 		>
 			<QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
