@@ -796,7 +796,7 @@ function FlightSegmentFields({
 										isOpen={isOriginOpen}
 										onOpenChange={setIsOriginOpen}
 										label="Origem *"
-										placeholder="Selecione o aeroporto de partida"
+										placeholder="Aeroporto de partida"
 										searchPlaceholder="Buscar aeroporto..."
 										selectedLabel="Origem selecionada"
 										icon={<Plane className="h-4 w-4" />}
@@ -831,7 +831,7 @@ function FlightSegmentFields({
 										isOpen={isDestinationOpen}
 										onOpenChange={setIsDestinationOpen}
 										label="Destino *"
-										placeholder="Selecione o aeroporto de chegada"
+										placeholder="Aeroporto de chegada"
 										searchPlaceholder="Buscar aeroporto..."
 										selectedLabel="Destino selecionado"
 										icon={<Plane className="h-4 w-4" />}
