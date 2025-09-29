@@ -2,8 +2,12 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
-      "source": "/tony-ta-de-olho/(.*)",
-      "destination": "https://us.i.posthog.com"
+      "source": "/tony-ta-de-olho/static/:path*",
+      "destination": "https://us-assets.i.posthog.com/static/:path*"
+    },
+    {
+      "source": "/tony-ta-de-olho/:path*",
+      "destination": "https://us.i.posthog.com/:path*"
     }
   ]
 }
