@@ -9,6 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **ZERO TOLERANCE RULE**: Do NOT start implementing any code that requires specialist agents. The moment you identify work that falls under specialist domains, IMMEDIATELY delegate without attempting implementation yourself.
 
 **MANDATORY PRE-IMPLEMENTATION CHECK**: Before writing ANY code, ask yourself:
+
 1. "Does this involve React components, UI logic, or styling?" → DELEGATE to @frontend-specialist
 2. "Does this involve oRPC, databases, or backend logic?" → DELEGATE to @backend-specialist
 3. "Does this modify component behavior or add UI features?" → DELEGATE to @frontend-specialist
@@ -40,6 +41,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **CRITICAL**: Form creation, component modifications, and UI implementations are ALWAYS frontend work requiring delegation.
 
 **ABSOLUTE FRONTEND DELEGATION TRIGGERS**:
+
 - ANY modification to .tsx or .jsx files
 - ANY addition of React components or hooks
 - ANY UI state management changes
@@ -139,6 +141,7 @@ Execution protocol when frontend is requested:
 6. If the task qualifies, offer Self-Improving CLAUDE Reflection as usual.
 
 **VIOLATION PREVENTION CHECKLIST**:
+
 - [ ] Did I identify this as frontend work before starting implementation?
 - [ ] Did I delegate immediately without writing any component code?
 - [ ] Am I about to edit a .tsx/.jsx file? → STOP and delegate
@@ -155,12 +158,14 @@ Nota (PT-BR): Sempre que o pedido envolver frontend (UI/UX, componentes React, T
 **ABSOLUTE PROHIBITION**: Specialist agents MUST NEVER invoke themselves or attempt further delegation for work within their designated domain.
 
 **SPECIALIST EXECUTION MANDATE**:
+
 - When work is delegated to a specialist, that specialist MUST execute the implementation directly
 - NO exceptions for "complex" work - if it falls within the specialist's domain, they execute it
 - Self-invocation creates infinite loops and violates the delegation protocol
 - Cross-specialist delegation is only permitted for work genuinely outside the specialist's domain
 
 **VIOLATION DETECTION**: If a specialist attempts to invoke itself or delegate work within its domain:
+
 1. **IMMEDIATE STOP**: The violation must be caught and corrected
 2. **PROTOCOL ENFORCEMENT**: The specialist must be redirected to execute the work directly
 3. **REFLECTION TRIGGER**: All self-invocation attempts automatically trigger reflection process
@@ -168,6 +173,7 @@ Nota (PT-BR): Sempre que o pedido envolver frontend (UI/UX, componentes React, T
 ### Pre-Implementation Detection Patterns
 
 **RED FLAGS - IMMEDIATE DELEGATION REQUIRED**:
+
 - Task mentions "component", "UI", "interface", "styling", "form", "modal", "button"
 - User requests changes to how something "looks" or "behaves" in the interface
 - Task involves "loading states", "confirmation cards", "tool calling UI"
@@ -181,6 +187,7 @@ Nota (PT-BR): Sempre que o pedido envolver frontend (UI/UX, componentes React, T
 ### Self-Check Protocol
 
 Before EVERY code modification, ask these questions:
+
 1. **File Extension Check**: Am I about to modify a .tsx, .jsx, or UI-related file?
 2. **Domain Check**: Does this change affect what users see or how they interact?
 3. **Technology Check**: Does this involve React components, hooks, or UI state?
@@ -191,6 +198,7 @@ Before EVERY code modification, ask these questions:
 **IF ANY ANSWER IS YES**: STOP IMMEDIATELY and delegate to the appropriate specialist.
 
 **MANDATORY VIOLATION PREVENTION PROTOCOL**:
+
 - **BEFORE any file edit**: Re-read the task description for frontend keywords
 - **DURING implementation planning**: Check if changes affect user-visible behavior
 - **IF CAUGHT MID-VIOLATION**: Immediately stop, acknowledge error, and properly delegate
@@ -198,12 +206,14 @@ Before EVERY code modification, ask these questions:
 ### Violation Recovery Protocol
 
 If you catch yourself implementing specialist work:
+
 1. **Immediate Stop**: Cease all implementation
 2. **Acknowledge Error**: Explicitly state "I should have delegated this frontend work"
 3. **Delegate Properly**: Invoke the appropriate specialist with full context
 4. **Flag for Reflection**: Mark this interaction for CLAUDE.md improvement
 
 **POST-VIOLATION MANDATORY ACTIONS**:
+
 - **DOCUMENT THE FAILURE**: Record what keywords/signals were missed
 - **STRENGTHEN DETECTION**: Add missed patterns to the RED FLAGS list
 - **IMMEDIATE REFLECTION TRIGGER**: Violations AUTOMATICALLY trigger reflection process
@@ -212,6 +222,7 @@ If you catch yourself implementing specialist work:
 **ACCOUNTABILITY MEASURE**: Every violation of delegation rules must trigger immediate reflection and CLAUDE.md updates to prevent recurrence.
 
 **ENHANCED WARNING SYSTEM**: If the task description contains ANY of the following frontend indicators, delegation is MANDATORY:
+
 - Component names (SliceCard, FlightCard, etc.)
 - State management terms (useState, state, expansion, toggle)
 - UI behavior descriptions (smart toggle, visibility, expansion state)
@@ -259,6 +270,7 @@ If you catch yourself implementing specialist work:
 4. **Validation Framework**: Implement examples and validation patterns for any new organizational structures
 
 **Delegation Boundaries**:
+
 - **Handle Directly**: Agent prompt modifications, documentation templates, organizational restructuring, process improvements
 - **Delegate**: Any code implementation, component creation, or technical development work
 
@@ -274,6 +286,7 @@ If you catch yourself implementing specialist work:
 4. **Validation Examples**: Include practical examples to demonstrate proper usage patterns
 
 **Quality Standards**:
+
 - All organizational changes must include comprehensive documentation
 - Templates must be immediately usable and well-documented
 - Migration guides must be step-by-step and actionable
@@ -283,166 +296,13 @@ If you catch yourself implementing specialist work:
 
 **User Feedback Integration**: This pattern addresses the need for systematic approaches to complex organizational tasks that require multiple coordinated changes across documentation and process files. Users prefer immediate usability over academic documentation - templates must be ready-to-use with practical examples rather than theoretical frameworks.
 
-### Environment Variables
+# IMPORTANT (Single Source of Truth):
 
-Environment variables are managed through T3 Env in `src/env.ts`:
-
-- Client variables must have `VITE_` prefix
-- Server variables: `SERVER_URL` (optional)
-- Client variables: `VITE_APP_TITLE` (optional)
-
-### State Management
-
-- **Server State**: TanStack Query for API data fetching and caching
-- **Client State**: TanStack Store for local application state
-- Query client is configured in TanStack integrations
-
-#### TanStack Query Mutation Patterns
-
-**CRITICAL RULE**: NEVER use `mutateAsync` with try/catch blocks. ALWAYS use `mutate` with side effects in mutation hooks.
-
-**MANDATORY Pattern**:
-
-```typescript
-// ✅ CORRECT: Use mutate with hooks
-const createItemMutation = useMutation({
-  ...orpc.routes.createItem.mutationOptions(),
-  onSuccess: (result) => {
-    toast.success("Item created successfully!");
-    queryClient.invalidateQueries({ queryKey: [...] });
-    // Handle success side effects
-  },
-  onError: (error) => {
-    toast.error("Failed to create item");
-    console.error("Creation error:", error);
-    // Handle error side effects
-  },
-  onSettled: () => {
-    // Optional: cleanup or final actions
-  },
-});
-
-const handleCreate = () => {
-  createItemMutation.mutate(formData);
-};
-```
-
-**FORBIDDEN Pattern**:
-
-```typescript
-// ❌ WRONG: Don't use mutateAsync with try/catch
-const handleCreate = async () => {
-  try {
-    const result = await createItemMutation.mutateAsync(formData);
-    toast.success("Success!");
-    queryClient.invalidateQueries({...});
-  } catch (error) {
-    toast.error("Error!");
-  }
-};
-```
-
-**Benefits of Hook-Based Pattern**:
-
-- Cleaner separation of concerns
-- Better error handling at the mutation level
-- Consistent pattern across all mutations
-- Easier testing and debugging
-- Automatic loading state management
-- No async/await complexity in event handlers
-
-### Styling
-
-- Tailwind CSS v4 with Vite plugin
-- Shadcn components for UI primitives
-- Global styles in `src/styles.css`
-- Class utilities via `clsx` and `tailwind-merge`
-
-## AI Agentic Patterns
-
-### Vercel AI SDK Tool Calling
-
-**CRITICAL RULE**: AI tool calls NEVER execute automatically. Always implement human-in-the-loop confirmation patterns.
-
-**MANDATORY Pattern for Tool Implementation**:
-
-```typescript
-// ✅ CORRECT: Tool definition with Zod schemas
-import { z } from 'zod';
-import { tool } from 'ai';
-
-const createEventTool = tool({
-  description: 'Create a new event in the travel timeline',
-  parameters: z.object({
-    title: z.string().describe('Event title'),
-    type: z.enum(['travel', 'food', 'activity']).describe('Event type'),
-    startDate: z.string().describe('Event start date (ISO string)'),
-    // ... other parameters
-  }),
-  execute: async (params) => {
-    // Tool execution logic here
-    return { success: true, eventId: 'evt_...' };
-  },
-});
-```
-
-**MANDATORY UX Pattern for Tool Calls**:
-
-```typescript
-// ✅ CORRECT: Render tool calls as confirmation cards
-{message.toolInvocations?.map((toolInvocation) => (
-  <div key={toolInvocation.toolCallId} className="border rounded-lg p-4">
-    <h3>AI suggests: {toolInvocation.toolName}</h3>
-    <p>Parameters: {JSON.stringify(toolInvocation.args)}</p>
-    <div className="flex gap-2 mt-2">
-      <Button onClick={() => confirmTool(toolInvocation)}>Confirm</Button>
-      <Button variant="outline" onClick={() => rejectTool(toolInvocation)}>Reject</Button>
-    </div>
-  </div>
-))}
-```
-
-**FORBIDDEN Patterns**:
-
-```typescript
-// ❌ WRONG: Auto-executing tools without confirmation
-const tools = {
-  createEvent: tool({
-    execute: async (params) => {
-      await createEventDirectly(params); // NO - never auto-execute
-      return result;
-    }
-  })
-};
-
-// ❌ WRONG: Direct tool execution in chat stream
-if (toolCall.toolName === 'createEvent') {
-  await executeImmediately(toolCall.args); // NO - always require confirmation
-}
-```
-
-**Benefits of Human-in-the-Loop Pattern**:
-
-- User maintains full control over actions
-- Prevents unintended side effects
-- Better trust and transparency
-- Easier debugging and rollback
-- Compliance with user intent verification
-
-### Tool Integration with oRPC
-
-**MANDATORY Pattern**: Separate tool definition from oRPC execution:
-
-```typescript
-// ✅ CORRECT: Tool suggests, oRPC executes after confirmation
-const confirmCreateEvent = async (toolArgs: CreateEventArgs) => {
-  const result = await orpc.event.create.mutate(toolArgs);
-  // Handle result...
-};
-```
-
-**Requirements**:
-- All tool parameters must use Zod schemas for validation
-- Tool execution must integrate with existing oRPC routes
-- UI must render tool calls as interactive confirmation cards
-- Never bypass existing validation or business logic
+- Never speculate about code you have not opened. If the user references a specific file/path (e.g., message-content-builder.ts), you MUST open and inspect it before explaining or proposing fixes.
+- Re-evaluate intent on EVERY new user message. Any action that edits/creates/deletes files or opens a PR means you are in IMPLEMENTATION mode.
+- Do not stop until the user's request is fully fulfilled for the current intent.
+- Proceed step-by-step; skip a step only when certain it is unnecessary.
+- Implementation tasks REQUIRE environment setup. These steps are mandatory and blocking before ANY code change, commit, push, or PR.
+- Diagnostic-only tasks: Keep it lightweight—do NOT install or update dependencies unless the user explicitly authorizes it for deeper investigation.
+- Detect the package manager ONLY from repository files (lockfiles/manifests/config). Do not infer from environment or user agent.
+- Never edit lockfiles by hand.
