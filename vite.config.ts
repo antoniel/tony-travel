@@ -6,6 +6,15 @@ import { defineConfig } from "vite"
 import viteTsConfigPaths from "vite-tsconfig-paths"
 
 const config = defineConfig({
+  server: {
+    proxy: {
+      "/tony-ta-de-olho": {
+        target: "https://us.i.posthog.com",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/tony-ta-de-olho/, ""),
+      },
+    }
+  },
   plugins: [
     // this is the plugin that enables path aliases
     codeInspectorPlugin({
