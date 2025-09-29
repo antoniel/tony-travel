@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
 	formatCurrencyBRL,
@@ -22,7 +23,11 @@ import {
 import { orpc } from "@/orpc/client";
 import type { FinancialSummary } from "@/orpc/modules/financial/financial.model";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	useMutation,
+	useQueryClient,
+	useSuspenseQuery,
+} from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
 	BarChart3,
@@ -36,13 +41,17 @@ import {
 	TrendingUp,
 	Wallet,
 } from "lucide-react";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 
 export const Route = createFileRoute("/trip/$travelId/financial/")({
-	component: FinancialPage,
+	component: () => (
+		<Suspense fallback={<FinancialPageSkeleton />}>
+			<FinancialPage />
+		</Suspense>
+	),
 });
 
 const BudgetUpdateSchema = z.object({
@@ -72,36 +81,36 @@ function BudgetSection({
 		defaultValues: {
 			budget: financialData.budgetPerPerson ?? 0,
 		},
-	})
+	});
 
 	const onSubmit = (data: BudgetUpdateFormData) => {
 		onBudgetUpdate(data.budget);
 		setIsEditing(false);
-	}
+	};
 
 	const handleModeChange = (value: string) => {
 		if (!value) return;
 		setViewMode(value as BudgetViewMode);
-	}
+	};
 
 	const getUtilizationColor = (percentage: number) => {
 		if (percentage <= 50) return "bg-green-500";
 		if (percentage <= 80) return "bg-yellow-500";
 		return "bg-red-500";
-	}
+	};
 
 	const getUtilizationStatus = (percentage: number) => {
 		if (percentage <= 50) return { text: "Excelente", color: "text-green-600" };
 		if (percentage <= 80) return { text: "Atenção", color: "text-yellow-600" };
 		return { text: "Limite", color: "text-red-600" };
-	}
+	};
 
 	const currentSummary =
 		viewMode === "perPerson" ? financialData.perPerson : financialData.group;
 	const hasBudget = currentSummary.budget !== null && currentSummary.budget > 0;
 	const budgetUtilization = hasBudget
 		? (currentSummary.budgetUtilization ?? 0)
-		: 0
+		: 0;
 	const status = getUtilizationStatus(budgetUtilization);
 
 	const participantsLabel =
@@ -113,7 +122,7 @@ function BudgetSection({
 	const baseBudgetLabel =
 		financialData.budgetPerPerson !== null
 			? `${formatCurrencyBRL(financialData.budgetPerPerson)} por pessoa`
-			: null
+			: null;
 	const modeLabel =
 		viewMode === "perPerson" ? "Modo por pessoa" : "Modo por grupo";
 
@@ -197,8 +206,8 @@ function BudgetSection({
 													onChange={(e) => {
 														const { numeric } = maskCurrencyInputPtBR(
 															e.target.value,
-														)
-														field.onChange(numeric ?? 0)
+														);
+														field.onChange(numeric ?? 0);
 													}}
 												/>
 											</div>
@@ -292,7 +301,7 @@ function BudgetSection({
 				)}
 			</CardContent>
 		</Card>
-	)
+	);
 }
 
 function ExpenseBreakdown({
@@ -303,7 +312,7 @@ function ExpenseBreakdown({
 			style: "currency",
 			currency: "BRL",
 		}).format(amount);
-	}
+	};
 
 	const getCategoryTitle = (category: string) => {
 		switch (category) {
@@ -316,20 +325,20 @@ function ExpenseBreakdown({
 			default:
 				return category;
 		}
-	}
+	};
 
 	const getCategoryIcon = (category: string) => {
 		switch (category) {
 			case "passagens":
 				return Plane;
 			case "acomodacoes":
-				return Home
+				return Home;
 			case "atracoes":
 				return MapPin;
 			default:
 				return MapPin;
 		}
-	}
+	};
 
 	const getCategoryStyle = (category: string) => {
 		switch (category) {
@@ -338,27 +347,27 @@ function ExpenseBreakdown({
 					color: "text-blue-600",
 					bg: "bg-blue-50",
 					border: "border-blue-200",
-				}
+				};
 			case "acomodacoes":
 				return {
 					color: "text-green-600",
 					bg: "bg-green-50",
 					border: "border-green-200",
-				}
+				};
 			case "atracoes":
 				return {
 					color: "text-purple-600",
 					bg: "bg-purple-50",
 					border: "border-purple-200",
-				}
+				};
 			default:
 				return {
 					color: "text-muted-foreground",
 					bg: "bg-muted/50",
 					border: "border-muted",
-				}
+				};
 		}
-	}
+	};
 
 	return (
 		<div className="space-y-6">
@@ -417,11 +426,11 @@ function ExpenseBreakdown({
 								</div>
 							</CardContent>
 						</Card>
-					)
+					);
 				})}
 			</div>
 		</div>
-	)
+	);
 }
 
 function AttractionsTree({
@@ -437,18 +446,18 @@ function AttractionsTree({
 			newExpanded.add(itemId);
 		}
 		setExpandedItems(newExpanded);
-	}
+	};
 
 	const formatCurrency = (amount: number) => {
 		return new Intl.NumberFormat("pt-BR", {
 			style: "currency",
 			currency: "BRL",
 		}).format(amount);
-	}
+	};
 
 	const attractionsCategory = financialData.categories.find(
 		(cat) => cat.category === "atracoes",
-	)
+	);
 
 	if (!attractionsCategory || attractionsCategory.items.length === 0) {
 		return (
@@ -465,7 +474,7 @@ function AttractionsTree({
 					</p>
 				</CardContent>
 			</Card>
-		)
+		);
 	}
 
 	return (
@@ -496,7 +505,7 @@ function AttractionsTree({
 						const isExpanded = expandedItems.has(activity.id);
 						const childItems = attractionsCategory.items.filter(
 							(item) => item.parentId === activity.id,
-						)
+						);
 						const hasDependencies = childItems.length > 0;
 
 						return (
@@ -578,11 +587,11 @@ function AttractionsTree({
 									</CardContent>
 								)}
 							</Card>
-						)
+						);
 					})}
 			</div>
 		</div>
-	)
+	);
 }
 
 function FinancialPage() {
@@ -590,43 +599,21 @@ function FinancialPage() {
 	const queryClient = useQueryClient();
 
 	// Fetch travel data for permissions check
-	const travelQuery = useQuery(
+	const { data: travel } = useSuspenseQuery(
 		orpc.travelRoutes.getTravel.queryOptions({ input: { id: travelId } }),
-	)
+	);
 
 	// Fetch financial summary from the new endpoint
-	const financialQuery = useQuery(
-		orpc.financialRoutes.getFinancialSummary.queryOptions({
+	const financialQuery = useSuspenseQuery({
+		...orpc.financialRoutes.getFinancialSummary.queryOptions({
 			input: { travelId },
 		}),
-	)
+	});
 
 	// Budget update mutation
 	const updateBudgetMutation = useMutation(
 		orpc.financialRoutes.updateTravelBudget.mutationOptions(),
-	)
-
-	const isLoading = travelQuery.isLoading || financialQuery.isLoading;
-
-	if (isLoading) {
-		return (
-			<div className="space-y-8">
-				<div className="space-y-2">
-					<div className="h-8 w-64 bg-muted animate-pulse rounded" />
-					<div className="h-4 w-96 bg-muted animate-pulse rounded" />
-				</div>
-				<div className="space-y-6">
-					<div className="h-48 bg-muted animate-pulse rounded-lg" />
-					<div className="grid gap-4 md:grid-cols-3">
-						{[1, 2, 3].map((i) => (
-							<div key={i} className="h-32 bg-muted animate-pulse rounded-lg" />
-						))}
-					</div>
-					<div className="h-64 bg-muted animate-pulse rounded-lg" />
-				</div>
-			</div>
-		)
-	}
+	);
 
 	if (financialQuery.error) {
 		return (
@@ -657,10 +644,9 @@ function FinancialPage() {
 					</CardContent>
 				</Card>
 			</div>
-		)
+		);
 	}
 
-	const travel = travelQuery.data;
 	const financialData = financialQuery.data;
 
 	if (!financialData) {
@@ -675,22 +661,22 @@ function FinancialPage() {
 			await updateBudgetMutation.mutateAsync({
 				travelId,
 				budget,
-			})
+			});
 
 			// Invalidate financial query to refetch updated data
 			queryClient.invalidateQueries(
 				orpc.financialRoutes.getFinancialSummary.queryOptions({
 					input: { travelId },
 				}),
-			)
+			);
 
 			toast.success("Orçamento atualizado com sucesso!");
 		} catch (error) {
 			toast.error("Erro ao atualizar orçamento", {
 				description: error instanceof Error ? error.message : undefined,
-			})
+			});
 		}
-	}
+	};
 
 	return (
 		<div className="space-y-8">
@@ -719,5 +705,78 @@ function FinancialPage() {
 
 			<AttractionsTree financialData={financialData} />
 		</div>
-	)
+	);
+}
+
+function FinancialPageSkeleton() {
+	return (
+		<div className="space-y-10">
+			<div className="space-y-2">
+				<Skeleton className="h-8 w-64" />
+				<Skeleton className="h-4 w-96" />
+			</div>
+			<div className="space-y-6">
+				<div className="border rounded-xl p-6 space-y-6">
+					<div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+						<div className="flex items-center gap-3">
+							<Skeleton className="h-12 w-12 rounded-full" />
+							<div className="space-y-2">
+								<Skeleton className="h-5 w-40" />
+								<Skeleton className="h-4 w-56" />
+							</div>
+						</div>
+						<div className="flex flex-col items-end gap-3">
+							<Skeleton className="h-9 w-40 rounded-full" />
+							<Skeleton className="h-9 w-32 rounded-md" />
+						</div>
+					</div>
+					<div className="space-y-4">
+						<Skeleton className="h-3 w-3/4" />
+						<Skeleton className="h-3 w-2/3" />
+						<div className="space-y-2">
+							{Array.from({ length: 4 }).map((_, index) => (
+								<Skeleton
+									key={`budget-row-${
+										// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+										index
+									}`}
+									className="h-5 w-full"
+								/>
+							))}
+						</div>
+						<Skeleton className="h-2 w-full" />
+					</div>
+				</div>
+				<div className="grid gap-4 md:grid-cols-3">
+					{Array.from({ length: 3 }).map((_, index) => (
+						<div
+							key={`financial-metric-${
+								// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+								index
+							}`}
+							className="border rounded-xl p-4 space-y-3"
+						>
+							<Skeleton className="h-4 w-24" />
+							<Skeleton className="h-5 w-20" />
+							<Skeleton className="h-2 w-full" />
+						</div>
+					))}
+				</div>
+				<div className="border rounded-xl p-6 space-y-4">
+					<Skeleton className="h-5 w-64" />
+					<div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+						{Array.from({ length: 6 }).map((_, index) => (
+							<Skeleton
+								key={`expense-segment-${
+									// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+									index
+								}`}
+								className="h-24 rounded-lg"
+							/>
+						))}
+					</div>
+				</div>
+			</div>
+		</div>
+	);
 }

@@ -4,16 +4,22 @@ import { InviteLinkManager } from "@/components/members/InviteLinkManager";
 import { MemberCard } from "@/components/members/MemberCard";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useTravelMembership } from "@/hooks/useTravelMembership";
 import { useUser } from "@/hooks/useUser";
 import { orpc } from "@/orpc/client";
 import type { TravelMemberWithUser } from "@/orpc/modules/invitation/invitation.model";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Crown, Loader2, Shield, Users } from "lucide-react";
+import { Crown, Shield, Users } from "lucide-react";
+import { Suspense } from "react";
 
 export const Route = createFileRoute("/trip/$travelId/members/")({
-	component: MembersPage,
+	component: () => (
+		<Suspense fallback={<MembersPageSkeleton />}>
+			<MembersPage />
+		</Suspense>
+	),
 });
 
 function MembersPage() {
@@ -21,56 +27,59 @@ function MembersPage() {
 	const { user } = useUser();
 	const travelMembershipQuery = useTravelMembership(travelId);
 
-	const membersQuery = useQuery({
-		...orpc.invitationRoutes.getTravelMembers.queryOptions({
+	if (travelMembershipQuery.isLoading) {
+		return <MembersPageSkeleton />;
+	}
+
+	return (
+		<TravelMemberOnly travelId={travelId}>
+			<MembersContent
+				travelId={travelId}
+				currentUserRole={travelMembershipQuery.data?.userMembership?.role}
+				currentUserId={user?.id}
+			/>
+		</TravelMemberOnly>
+	);
+}
+
+function MembersContent({
+	travelId,
+	currentUserRole,
+	currentUserId,
+}: {
+	travelId: string;
+	currentUserRole?: "owner" | "member";
+	currentUserId?: string;
+}) {
+	const { data: members } = useSuspenseQuery(
+		orpc.invitationRoutes.getTravelMembers.queryOptions({
 			input: { travelId },
 		}),
-		enabled: !!travelMembershipQuery.data?.userMembership,
-	})
-
-	const members = membersQuery.data || [];
-	const isLoading = membersQuery.isLoading;
+	);
 
 	const activeMembersCount = members.length;
 	const ownerCount = members.filter((m) => m.role === "owner").length;
 	const regularMembersCount = members.filter((m) => m.role === "member").length;
 
-	if (isLoading) {
-		return <MembersLoadingState />;
-	}
-
 	return (
-		<TravelMemberOnly travelId={travelId}>
-			<div className="space-y-10">
-				<MembersHeader
-					activeMembersCount={activeMembersCount}
-					ownerCount={ownerCount}
-					regularMembersCount={regularMembersCount}
-				/>
+		<div className="space-y-10">
+			<MembersHeader
+				activeMembersCount={activeMembersCount}
+				ownerCount={ownerCount}
+				regularMembersCount={regularMembersCount}
+			/>
 
-				<TravelOwnerOnly travelId={travelId} fallback={null}>
-					<InviteLinkManager travelId={travelId} />
-				</TravelOwnerOnly>
+			<TravelOwnerOnly travelId={travelId} fallback={null}>
+				<InviteLinkManager travelId={travelId} />
+			</TravelOwnerOnly>
 
-				<MembersList
-					members={members}
-					currentUserRole={travelMembershipQuery.data?.userMembership?.role}
-					currentUserId={user?.id}
-				/>
-			</div>
-		</TravelMemberOnly>
-	)
-}
-
-function MembersLoadingState() {
-	return (
-		<div className="flex items-center justify-center py-12">
-			<div className="flex flex-col items-center gap-3">
-				<Loader2 className="w-8 h-8 animate-spin text-primary" />
-				<p className="text-muted-foreground">Carregando membros...</p>
-			</div>
+			<MembersList
+				members={members}
+				currentUserRole={currentUserRole}
+				currentUserId={currentUserId}
+			/>
 		</div>
-	)
+	);
 }
 
 function MembersHeader({
@@ -116,7 +125,54 @@ function MembersHeader({
 				)}
 			</div>
 		</div>
-	)
+	);
+}
+
+function MembersPageSkeleton() {
+	return (
+		<div className="space-y-10">
+			<div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-6">
+				<div className="space-y-3">
+					<Skeleton className="h-8 w-60" />
+					<Skeleton className="h-4 w-72" />
+				</div>
+				<div className="flex gap-3">
+					<Skeleton className="h-7 w-32 rounded-full" />
+					<Skeleton className="h-7 w-28 rounded-full" />
+					<Skeleton className="h-7 w-28 rounded-full" />
+				</div>
+			</div>
+			<div className="border rounded-xl p-6 space-y-4">
+				<Skeleton className="h-5 w-40" />
+				<div className="grid gap-3 sm:grid-cols-2">
+					<Skeleton className="h-10 w-full" />
+					<Skeleton className="h-10 w-full" />
+				</div>
+				<div className="flex flex-col sm:flex-row gap-3">
+					<Skeleton className="h-11 w-full sm:w-48 rounded-md" />
+					<Skeleton className="h-11 w-full sm:w-40 rounded-md" />
+				</div>
+			</div>
+			<div className="space-y-4">
+				{Array.from({ length: 4 }).map((_, index) => (
+					<div
+						key={`member-skeleton-${
+							// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+							index
+						}`}
+						className="border rounded-xl p-4 flex items-center gap-4"
+					>
+						<Skeleton className="h-12 w-12 rounded-full" />
+						<div className="flex-1 space-y-2">
+							<Skeleton className="h-5 w-40" />
+							<Skeleton className="h-4 w-32" />
+						</div>
+						<Skeleton className="h-9 w-24 rounded-md" />
+					</div>
+				))}
+			</div>
+		</div>
+	);
 }
 
 function MembersList({
@@ -139,7 +195,7 @@ function MembersList({
 					</p>
 				</CardContent>
 			</Card>
-		)
+		);
 	}
 
 	return (
@@ -153,5 +209,5 @@ function MembersList({
 				/>
 			))}
 		</div>
-	)
+	);
 }

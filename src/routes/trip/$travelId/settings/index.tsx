@@ -22,6 +22,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { LocationSelector } from "@/components/ui/location-selector";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useAirportsSearch } from "@/hooks/useAirportsSearch";
 import type { Travel } from "@/lib/db/schema";
@@ -31,16 +32,24 @@ import type {
 	LocationOption,
 } from "@/orpc/modules/travel/travel.model";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	useMutation,
+	useQueryClient,
+	useSuspenseQuery,
+} from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Plane, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 
 export const Route = createFileRoute("/trip/$travelId/settings/")({
-	component: TripSettingsPage,
+	component: () => (
+		<Suspense fallback={<TripSettingsSkeleton />}>
+			<TripSettingsPage />
+		</Suspense>
+	),
 });
 
 // Form validation schema
@@ -80,10 +89,9 @@ function TripSettingsPage() {
 	const { travelId } = Route.useParams();
 
 	// Check if user is owner
-	const travelQuery = useQuery(
+	const { data: travel } = useSuspenseQuery(
 		orpc.travelRoutes.getTravel.queryOptions({ input: { id: travelId } }),
 	);
-	const travel = travelQuery.data;
 
 	// Redirect if not owner
 	const navigate = useNavigate();
@@ -92,21 +100,6 @@ function TripSettingsPage() {
 			navigate({ to: `/trip/${travelId}` });
 		}
 	}, [travel, travelId, navigate]);
-
-	if (travelQuery.isLoading) {
-		return (
-			<div className="space-y-8">
-				<div className="space-y-2">
-					<div className="h-8 w-64 bg-muted animate-pulse rounded" />
-					<div className="h-4 w-96 bg-muted animate-pulse rounded" />
-				</div>
-				<div className="space-y-6">
-					<div className="h-32 bg-muted animate-pulse rounded-lg" />
-					<div className="h-32 bg-muted animate-pulse rounded-lg" />
-				</div>
-			</div>
-		);
-	}
 
 	if (!travel || travel.userMembership?.role !== "owner") {
 		return (
@@ -168,7 +161,7 @@ function TravelSettingsForm({
 		return raw.replace(/\s+-\s+Todos os aeroportos$/i, "").trim();
 	}, [travel.destination]);
 
-	const { data: recommendedDestinationAirports = [] } = useQuery({
+	const { data: recommendedDestinationAirports = [] } = useSuspenseQuery({
 		...orpc.travelRoutes.searchAirports.queryOptions({
 			input: {
 				query: destinationQueryString,
@@ -176,7 +169,6 @@ function TravelSettingsForm({
 				expandGroups: true,
 			},
 		}),
-		enabled: destinationQueryString.length > 0,
 		staleTime: 5 * 60 * 1000,
 	});
 
@@ -548,6 +540,58 @@ function DangerZone({ travel }: { travel: Pick<Travel, "id" | "name"> }) {
 						</AlertDialogFooter>
 					</AlertDialogContent>
 				</AlertDialog>
+			</div>
+		</div>
+	);
+}
+
+function TripSettingsSkeleton() {
+	return (
+		<div className="space-y-8">
+			<div className="space-y-2">
+				<Skeleton className="h-8 w-64" />
+				<Skeleton className="h-4 w-96" />
+			</div>
+			<div className="border rounded-xl p-6 space-y-6">
+				<div className="grid gap-4 md:grid-cols-2">
+					<div className="space-y-2">
+						<Skeleton className="h-4 w-28" />
+						<Skeleton className="h-10 w-full rounded-md" />
+					</div>
+					<div className="space-y-2">
+						<Skeleton className="h-4 w-32" />
+						<Skeleton className="h-10 w-full rounded-md" />
+					</div>
+					<div className="space-y-2">
+						<Skeleton className="h-4 w-32" />
+						<Skeleton className="h-10 w-full rounded-md" />
+					</div>
+					<div className="space-y-2">
+						<Skeleton className="h-4 w-40" />
+						<Skeleton className="h-10 w-full rounded-md" />
+					</div>
+				</div>
+				<div className="space-y-2">
+					<Skeleton className="h-4 w-36" />
+					<Skeleton className="h-24 w-full rounded-md" />
+				</div>
+				<div className="space-y-4">
+					<Skeleton className="h-4 w-44" />
+					<div className="grid gap-3 md:grid-cols-2">
+						<Skeleton className="h-10 w-full rounded-md" />
+						<Skeleton className="h-10 w-full rounded-md" />
+					</div>
+				</div>
+				<div className="flex justify-end">
+					<Skeleton className="h-10 w-32 rounded-md" />
+				</div>
+			</div>
+			<div className="border rounded-xl p-6 space-y-4">
+				<Skeleton className="h-5 w-48" />
+				<Skeleton className="h-4 w-72" />
+				<div className="flex justify-end">
+					<Skeleton className="h-10 w-40 rounded-md" />
+				</div>
 			</div>
 		</div>
 	);

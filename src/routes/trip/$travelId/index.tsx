@@ -1,27 +1,33 @@
 import { EventCreateModal } from "@/components/EventCreateModal";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { AppEvent } from "@/lib/types";
 import { orpc } from "@/orpc/client";
 import ItineraryCalendar from "@/routes/trip/$travelId/-components/itinerary-calendar";
 import { ItineraryTimeline } from "@/routes/trip/$travelId/-components/itinerary-timeline";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	useMutation,
+	useQueryClient,
+	useSuspenseQuery,
+} from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Calendar as CalendarIcon, Clock, Plus } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 
 export const Route = createFileRoute("/trip/$travelId/")({
-	component: ItineraryPage,
+	component: () => (
+		<Suspense fallback={<ItineraryPageSkeleton />}>
+			<ItineraryPage />
+		</Suspense>
+	),
 });
 
 function ItineraryPage() {
 	const { travelId } = Route.useParams();
-
-	const travelQuery = useQuery(
+	const { data: travel } = useSuspenseQuery(
 		orpc.travelRoutes.getTravel.queryOptions({ input: { id: travelId } }),
 	);
-	const travel = travelQuery.data;
-	const isLoading = travelQuery.isLoading;
 
 	const [events, setEvents] = useState<AppEvent[]>([]);
 	const queryClient = useQueryClient();
@@ -73,14 +79,6 @@ function ItineraryPage() {
 			),
 		);
 	};
-
-	if (isLoading) {
-		return (
-			<div className="flex items-center justify-center py-12">
-				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-			</div>
-		);
-	}
 
 	if (!travel) {
 		return (
@@ -206,5 +204,75 @@ function ItineraryPage() {
 				/>
 			) : null}
 		</>
+	);
+}
+
+function ItineraryPageSkeleton() {
+	return (
+		<div className="space-y-8 overflow-x-hidden">
+			<div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
+				<div className="space-y-3">
+					<Skeleton className="h-8 w-48" />
+					<Skeleton className="h-4 w-64" />
+				</div>
+				<div className="flex flex-wrap items-center gap-3 text-sm">
+					<Skeleton className="h-8 w-32 rounded-full" />
+					<Skeleton className="h-8 w-28 rounded-full" />
+					<Skeleton className="h-8 w-36 rounded-md" />
+				</div>
+			</div>
+			<div className="flex flex-col sm:flex-row sm:items-center gap-4">
+				<div className="grid w-full sm:w-auto grid-cols-2 sm:flex gap-2">
+					<Skeleton className="h-10 w-full sm:w-40 rounded-md" />
+					<Skeleton className="h-10 w-full sm:w-40 rounded-md" />
+				</div>
+				<div className="hidden sm:flex items-center gap-2">
+					<Skeleton className="h-8 w-24 rounded-md" />
+					<Skeleton className="h-8 w-28 rounded-md" />
+				</div>
+			</div>
+			<div className="space-y-8">
+				<div className="border rounded-xl p-6 space-y-6">
+					<div className="flex items-center justify-between">
+						<Skeleton className="h-6 w-40" />
+						<Skeleton className="h-8 w-24 rounded-md" />
+					</div>
+					<div className="space-y-4">
+						{Array.from({ length: 3 }).map((_, index) => (
+							<div
+								key={`skeleton-${
+									// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+									index
+								}`}
+								className="flex gap-4"
+							>
+								<Skeleton className="h-12 w-12 rounded-full" />
+								<div className="flex-1 space-y-2">
+									<Skeleton className="h-5 w-2/3" />
+									<Skeleton className="h-4 w-1/2" />
+								</div>
+							</div>
+						))}
+					</div>
+				</div>
+				<div className="border rounded-xl p-6 space-y-6">
+					<div className="flex items-center justify-between">
+						<Skeleton className="h-6 w-48" />
+						<Skeleton className="h-8 w-24 rounded-md" />
+					</div>
+					<div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+						{Array.from({ length: 8 }).map((_, index) => (
+							<Skeleton
+								key={`skeleton-${
+									// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+									index
+								}`}
+								className="h-24 rounded-lg"
+							/>
+						))}
+					</div>
+				</div>
+			</div>
+		</div>
 	);
 }

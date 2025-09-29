@@ -8,15 +8,20 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Accommodation } from "@/lib/db/schema";
 import { orpc } from "@/orpc/client";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Calendar, Edit, Home, MapPin, Plus } from "lucide-react";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 
 export const Route = createFileRoute("/trip/$travelId/accommodations/")({
-	component: AccommodationsPage,
+	component: () => (
+		<Suspense fallback={<AccommodationsPageSkeleton />}>
+			<AccommodationsPage />
+		</Suspense>
+	),
 });
 
 interface AccommodationCardProps {
@@ -377,18 +382,15 @@ function AccommodationsPage() {
 	const [editingAccommodation, setEditingAccommodation] =
 		useState<Accommodation | null>(null);
 
-	const travelQuery = useQuery(
+	const { data: travel } = useSuspenseQuery(
 		orpc.travelRoutes.getTravel.queryOptions({ input: { id: travelId } }),
 	);
 
-	const accommodationsQuery = useQuery(
+	const { data: accommodations = [] } = useSuspenseQuery(
 		orpc.accommodationRoutes.getAccommodationsByTravel.queryOptions({
 			input: { travelId },
 		}),
 	);
-	const accommodations = accommodationsQuery.data || [];
-
-	const isLoading = travelQuery.isLoading || accommodationsQuery.isLoading;
 	const totalNights = accommodations.reduce((total, acc) => {
 		if (acc.startDate && acc.endDate) {
 			const nights = Math.ceil(
@@ -415,15 +417,19 @@ function AccommodationsPage() {
 		setIsModalOpen(true);
 	};
 
-	if (isLoading) {
+	if (!travel) {
 		return (
-			<div className="flex items-center justify-center py-12">
-				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+			<div className="text-center py-12">
+				<Home className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+				<h3 className="text-lg font-medium mb-2">Viagem não encontrada</h3>
+				<p className="text-muted-foreground">
+					A viagem selecionada não está disponível.
+				</p>
 			</div>
 		);
 	}
 
-	const canWrite = !!travelQuery.data?.userMembership;
+	const canWrite = !!travel.userMembership;
 
 	return (
 		<div className="space-y-10">
@@ -457,10 +463,61 @@ function AccommodationsPage() {
 					open={isModalOpen}
 					onOpenChange={handleModalClose}
 					travelId={travelId}
-					travelData={travelQuery.data}
+					travelData={travel}
 					editingAccommodation={editingAccommodation}
 				/>
 			) : null}
+		</div>
+	);
+}
+
+function AccommodationsPageSkeleton() {
+	return (
+		<div className="space-y-10">
+			<div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-6">
+				<div className="space-y-3">
+					<Skeleton className="h-8 w-56" />
+					<Skeleton className="h-4 w-72" />
+				</div>
+				<div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+					<div className="flex gap-2">
+						<Skeleton className="h-7 w-28 rounded-full" />
+						<Skeleton className="h-7 w-28 rounded-full" />
+					</div>
+					<Skeleton className="h-10 w-48 rounded-md" />
+				</div>
+			</div>
+			<div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+				{Array.from({ length: 6 }).map((_, index) => (
+					<div
+						key={`accommodation-card-${
+							// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+							index
+						}`}
+						className="border rounded-xl p-6 space-y-4"
+					>
+						<div className="flex items-start justify-between gap-3">
+							<div className="space-y-2 flex-1">
+								<Skeleton className="h-5 w-40" />
+								<Skeleton className="h-4 w-24" />
+							</div>
+							<Skeleton className="h-8 w-16 rounded-md" />
+						</div>
+						<div className="space-y-2">
+							<Skeleton className="h-4 w-48" />
+							<Skeleton className="h-4 w-32" />
+						</div>
+						<div className="grid gap-2">
+							<Skeleton className="h-4 w-full" />
+							<Skeleton className="h-4 w-2/3" />
+						</div>
+						<div className="flex gap-2">
+							<Skeleton className="h-9 w-full rounded-md" />
+							<Skeleton className="h-9 w-10 rounded-md" />
+						</div>
+					</div>
+				))}
+			</div>
 		</div>
 	);
 }

@@ -10,15 +10,20 @@ import {
 	CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
 	Tooltip,
 	TooltipContent,
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useTravelMembership } from "@/hooks/useTravelMembership";
 import { orpc } from "@/orpc/client";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	useMutation,
+	useQuery,
+	useQueryClient,
+	useSuspenseQuery,
+} from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
 	AlertTriangle,
@@ -33,10 +38,14 @@ import {
 	Trash2,
 	Users,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 export const Route = createFileRoute("/trip/$travelId/flights/")({
-	component: FlightsPage,
+	component: () => (
+		<Suspense fallback={<FlightsPageSkeleton />}>
+			<FlightsPage />
+		</Suspense>
+	),
 });
 
 interface FlightParticipant {
@@ -323,12 +332,13 @@ function FlightsPage() {
 		useState<FlightWithParticipants | null>(null);
 	const queryClient = useQueryClient();
 
-	// Check membership for write permissions
-	const travelMembershipQuery = useTravelMembership(travelId);
-	const canWrite = !!travelMembershipQuery.data?.userMembership;
+	const { data: travel } = useSuspenseQuery(
+		orpc.travelRoutes.getTravel.queryOptions({ input: { id: travelId } }),
+	);
 
-	// Fetch hierarchical flights for better UX
-	const hierarchicalFlightsQuery = useQuery(
+	const canWrite = !!travel?.userMembership;
+
+	const { data: hierarchicalFlightGroups = [] } = useSuspenseQuery(
 		orpc.flightRoutes.getHierarchicalFlightsByTravel.queryOptions({
 			input: { travelId },
 		}),
@@ -342,14 +352,10 @@ function FlightsPage() {
 		enabled: canWrite,
 	});
 
-	// Delete flight mutation
 	const deleteFlightMutation = useMutation(
 		orpc.flightRoutes.deleteFlight.mutationOptions(),
 	);
 
-	const isLoading =
-		hierarchicalFlightsQuery.isLoading || membersQuery.isLoading;
-	const hierarchicalFlightGroups = hierarchicalFlightsQuery.data || [];
 	const members =
 		membersQuery.data?.map((member) => ({
 			id: member.user.id,
@@ -421,14 +427,6 @@ function FlightsPage() {
 		}
 	};
 
-	if (isLoading) {
-		return (
-			<div className="flex items-center justify-center py-12">
-				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-			</div>
-		);
-	}
-
 	return (
 		<div className="space-y-10">
 			<FlightPageHeader
@@ -484,6 +482,66 @@ function FlightsPage() {
 					) : null}
 				</ResponsiveModal>
 			) : null}
+		</div>
+	);
+}
+
+function FlightsPageSkeleton() {
+	return (
+		<div className="space-y-10">
+			<div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-6">
+				<div className="space-y-3">
+					<Skeleton className="h-8 w-48" />
+					<Skeleton className="h-4 w-72" />
+				</div>
+				<div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+					<Skeleton className="h-10 w-40 rounded-md" />
+					<Skeleton className="h-10 w-44 rounded-md" />
+				</div>
+			</div>
+			<div className="grid gap-4 md:grid-cols-3">
+				{Array.from({ length: 3 }).map((_, metricIndex) => (
+					<div
+						key={`flight-metric-${
+							// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+							metricIndex
+						}`}
+						className="border rounded-lg p-4 space-y-3"
+					>
+						<Skeleton className="h-3 w-16" />
+						<Skeleton className="h-5 w-32" />
+						<Skeleton className="h-2 w-full" />
+					</div>
+				))}
+			</div>
+			<div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+				{Array.from({ length: 3 }).map((_, cardIndex) => (
+					<div
+						key={`flight-card-${
+							// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+							cardIndex
+						}`}
+						className="border rounded-xl p-6 space-y-5"
+					>
+						<div className="flex items-start justify-between gap-4">
+							<div className="space-y-2 flex-1">
+								<Skeleton className="h-5 w-48" />
+								<Skeleton className="h-4 w-36" />
+							</div>
+							<Skeleton className="h-9 w-28 rounded-md" />
+						</div>
+						<div className="grid gap-3 md:grid-cols-2">
+							<Skeleton className="h-32 rounded-lg" />
+							<Skeleton className="h-32 rounded-lg" />
+						</div>
+						<div className="flex flex-wrap gap-2">
+							<Skeleton className="h-8 w-20 rounded-full" />
+							<Skeleton className="h-8 w-24 rounded-full" />
+							<Skeleton className="h-8 w-24 rounded-full" />
+						</div>
+					</div>
+				))}
+			</div>
 		</div>
 	);
 }
@@ -547,7 +605,6 @@ function HierarchicalFlightGroupHeader({
 		(total, flight) => total + flight.slices.length,
 		0,
 	);
-	const multiSliceFlights = group.flights.filter((f) => f.isMultiSlice).length;
 
 	return (
 		<div className="relative">
@@ -645,7 +702,7 @@ function HierarchicalFlightsList({
 	}
 
 	return (
-		<div className="space-y-8">
+		<div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
 			{hierarchicalFlightGroups.map((group) => (
 				<Collapsible
 					key={group.originAirport}
