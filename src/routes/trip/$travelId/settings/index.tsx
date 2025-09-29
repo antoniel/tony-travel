@@ -530,7 +530,7 @@ function DangerZone({ travel }: { travel: Pick<Travel, "id" | "name"> }) {
 							<AlertDialogAction
 								disabled={
 									isDeleting ||
-									deleteForm.getValues().confirmationName !== travel.name
+									deleteForm.watch("confirmationName") !== travel.name
 								}
 								onClick={onDelete}
 								className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
