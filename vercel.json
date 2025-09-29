@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    {
+      "source": "/tony-ta-de-olho",
+      "destination": "https://us.i.posthog.com"
+    }
+  ]
+}
