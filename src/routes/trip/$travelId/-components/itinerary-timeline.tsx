@@ -18,7 +18,10 @@ import { EventCreateModal } from "../../../../components/EventCreateModal";
 import { EventEditModal } from "../../../../components/EventEditModal";
 import { EventDetailsModal } from "./event-details-modal";
 import { FlightDetailsModal } from "./flight-event-block";
-import { consolidateFlightSegments, type FlightSegmentEvent } from "./flight-segments.utils";
+import {
+	type FlightSegmentEvent,
+	consolidateFlightSegments,
+} from "./flight-segments.utils";
 
 interface TravelTimelineProps {
 	travel: TravelWithRelations;
@@ -123,7 +126,8 @@ export function ItineraryTimeline({ travel, canWrite }: TravelTimelineProps) {
 	const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
 	// Flight details modal state
-	const [selectedFlightEvent, setSelectedFlightEvent] = useState<FlightSegmentEvent | null>(null);
+	const [selectedFlightEvent, setSelectedFlightEvent] =
+		useState<FlightSegmentEvent | null>(null);
 	const [isFlightDetailsOpen, setIsFlightDetailsOpen] = useState(false);
 
 	// Removed unused openGeneralAdd helper to satisfy strict TS
@@ -377,7 +381,11 @@ function TimelineItemComponent({
 			<div className="flex-1 min-w-0 pt-2">
 				<div
 					className="travel-card rounded-lg p-6 hover:shadow-md transition-all duration-300 group cursor-pointer"
-					role={item.type === "event" || item.type === "flight" ? "button" : undefined}
+					role={
+						item.type === "event" || item.type === "flight"
+							? "button"
+							: undefined
+					}
 					tabIndex={item.type === "event" || item.type === "flight" ? 0 : -1}
 					onClick={() => {
 						if (item.type === "event" && item.data) {
@@ -415,7 +423,7 @@ function TimelineItemComponent({
 							</p>
 						</div>
 						<div className="flex items-center gap-2">
-							{item.cost && (
+							{!!item.cost && (
 								<div className="bg-chart-3/10 text-chart-3 px-3 py-1 rounded-full text-sm font-medium">
 									R$ {item.cost.toLocaleString()}
 								</div>
@@ -492,7 +500,10 @@ function getEventColor(type: TimelineItem["type"]): string {
 	}
 }
 
-function createTimelineItems(travel: TravelWithRelations, flightEvents: FlightSegmentEvent[] = []): TimelineItem[] {
+function createTimelineItems(
+	travel: TravelWithRelations,
+	flightEvents: FlightSegmentEvent[] = [],
+): TimelineItem[] {
 	const items: TimelineItem[] = [];
 
 	const utcDaysInclusive = (start: Date, end: Date) => {
@@ -509,10 +520,19 @@ function createTimelineItems(travel: TravelWithRelations, flightEvents: FlightSe
 		return Math.floor((e - s) / (1000 * 60 * 60 * 24)) + 1;
 	};
 
+	// If travel start has no specific time (00:00), set default morning time (06:00)
+	const travelStartDate = new Date(travel.startDate);
+	if (
+		travelStartDate.getUTCHours() === 0 &&
+		travelStartDate.getUTCMinutes() === 0
+	) {
+		travelStartDate.setUTCHours(6, 0, 0, 0);
+	}
+
 	items.push({
 		id: "travel-start",
 		type: "travel-start",
-		date: travel.startDate,
+		date: travelStartDate,
 		data: null,
 		title: "Início da Viagem",
 		description: `Sua aventura para ${travel.destination} começa! Prepare-se para uma experiência incrível de ${utcDaysInclusive(travel.startDate, travel.endDate)} dias.`,
@@ -520,10 +540,16 @@ function createTimelineItems(travel: TravelWithRelations, flightEvents: FlightSe
 	});
 
 	for (const acc of travel.accommodations) {
+		// If accommodation check-in has no specific time (00:00), set default check-in time (21:00)
+		const checkInDate = new Date(acc.startDate);
+		if (checkInDate.getUTCHours() === 0 && checkInDate.getUTCMinutes() === 0) {
+			checkInDate.setUTCHours(21, 0, 0, 0);
+		}
+
 		items.push({
 			id: acc.id,
 			type: "accommodation",
-			date: acc.startDate,
+			date: checkInDate,
 			data: acc,
 			title: `Check-in: ${acc.name}`,
 			description: `Hospedagem em ${acc.type}. ${acc.address ? `Localizado em ${acc.address}.` : ""} Sua estadia vai até ${new Date(acc.endDate).toLocaleDateString("pt-BR", { day: "numeric", month: "long", timeZone: "UTC" })}.`,
@@ -537,10 +563,26 @@ function createTimelineItems(travel: TravelWithRelations, flightEvents: FlightSe
 		const icon = getEventIcon(event.type);
 		const description = getEventDescription(event);
 
+		// If event has no specific time (00:00), set default activity time based on type
+		const eventDate = new Date(event.startDate);
+		if (eventDate.getUTCHours() === 0 && eventDate.getUTCMinutes() === 0) {
+			switch (event.type) {
+				case "food":
+					eventDate.setUTCHours(12, 0, 0, 0); // Default lunch time
+					break;
+				case "travel":
+					eventDate.setUTCHours(14, 0, 0, 0); // Default afternoon travel time
+					break;
+				case "activity":
+					eventDate.setUTCHours(10, 0, 0, 0); // Default morning activity time
+					break;
+			}
+		}
+
 		items.push({
 			id: event.id,
 			type: "event",
-			date: event.startDate,
+			date: eventDate,
 			data: event,
 			title: event.title,
 			description,
@@ -553,8 +595,8 @@ function createTimelineItems(travel: TravelWithRelations, flightEvents: FlightSe
 	// Add flight events to timeline
 	for (const flightEvent of flightEvents) {
 		const description = flightEvent.metadata.isConsolidated
-			? `Voo de ${flightEvent.originAirport} para ${flightEvent.destinationAirport} com ${flightEvent.metadata.originalSegments.length} conexões. ${flightEvent.flightNumber ? `Voo ${flightEvent.flightNumber}.` : ""} ${flightEvent.participants.length > 0 ? `Passageiros: ${flightEvent.participants.map(p => p.user.name).join(", ")}.` : ""}`
-			: `Voo direto de ${flightEvent.originAirport} para ${flightEvent.destinationAirport}. ${flightEvent.flightNumber ? `Voo ${flightEvent.flightNumber}.` : ""} ${flightEvent.participants.length > 0 ? `Passageiros: ${flightEvent.participants.map(p => p.user.name).join(", ")}.` : ""}`;
+			? `Voo de ${flightEvent.originAirport} para ${flightEvent.destinationAirport} com ${flightEvent.metadata.originalSegments.length} conexões. ${flightEvent.flightNumber ? `Voo ${flightEvent.flightNumber}.` : ""} ${flightEvent.participants.length > 0 ? `Passageiros: ${flightEvent.participants.map((p) => p.user.name).join(", ")}.` : ""}`
+			: `Voo direto de ${flightEvent.originAirport} para ${flightEvent.destinationAirport}. ${flightEvent.flightNumber ? `Voo ${flightEvent.flightNumber}.` : ""} ${flightEvent.participants.length > 0 ? `Passageiros: ${flightEvent.participants.map((p) => p.user.name).join(", ")}.` : ""}`;
 
 		items.push({
 			id: flightEvent.id,
@@ -568,10 +610,19 @@ function createTimelineItems(travel: TravelWithRelations, flightEvents: FlightSe
 		});
 	}
 
+	// If travel end has no specific time (00:00), set default evening time (22:00)
+	const travelEndDate = new Date(travel.endDate);
+	if (
+		travelEndDate.getUTCHours() === 0 &&
+		travelEndDate.getUTCMinutes() === 0
+	) {
+		travelEndDate.setUTCHours(22, 0, 0, 0);
+	}
+
 	items.push({
 		id: "travel-end",
 		type: "travel-end",
-		date: travel.endDate,
+		date: travelEndDate,
 		data: null,
 		title: "Fim da Viagem",
 		description: `Chegou ao fim sua incrível jornada por ${travel.destination}. Leve consigo todas as memórias e experiências vividas!`,
