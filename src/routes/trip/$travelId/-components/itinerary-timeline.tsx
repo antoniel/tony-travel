@@ -1,7 +1,7 @@
 import type { InsertAppEvent } from "@/lib/db/schema";
 import type { Accommodation, AppEvent, TravelWithRelations } from "@/lib/types";
 import { orpc } from "@/orpc/client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { differenceInDays, format, isSameDay } from "date-fns";
 import {
 	Calendar,
@@ -13,10 +13,12 @@ import {
 	Plus,
 	UtensilsCrossed,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { EventCreateModal } from "../../../../components/EventCreateModal";
 import { EventEditModal } from "../../../../components/EventEditModal";
 import { EventDetailsModal } from "./event-details-modal";
+import { FlightDetailsModal } from "./flight-event-block";
+import { consolidateFlightSegments, type FlightSegmentEvent } from "./flight-segments.utils";
 
 interface TravelTimelineProps {
 	travel: TravelWithRelations;
@@ -25,9 +27,9 @@ interface TravelTimelineProps {
 
 type TimelineItem = {
 	id: string;
-	type: "accommodation" | "event" | "travel-start" | "travel-end";
+	type: "accommodation" | "event" | "travel-start" | "travel-end" | "flight";
 	date: Date;
-	data: AppEvent | Accommodation | null;
+	data: AppEvent | Accommodation | FlightSegmentEvent | null;
 	title: string;
 	description: string;
 	location?: string;
@@ -36,7 +38,20 @@ type TimelineItem = {
 };
 
 export function ItineraryTimeline({ travel, canWrite }: TravelTimelineProps) {
-	const timelineItems = createTimelineItems(travel);
+	// Fetch flight data for this travel
+	const { data: flights = [] } = useQuery(
+		orpc.flightRoutes.getFlightsByTravel.queryOptions({
+			input: { travelId: travel.id },
+		}),
+	);
+
+	// Convert flights to timeline events
+	const flightEvents = useMemo(() => {
+		const allFlights = flights.flatMap((group) => group.flights);
+		return consolidateFlightSegments(allFlights);
+	}, [flights]);
+
+	const timelineItems = createTimelineItems(travel, flightEvents);
 	const groupedByDay = groupItemsByDay(timelineItems);
 
 	const queryClient = useQueryClient();
@@ -80,6 +95,10 @@ export function ItineraryTimeline({ travel, canWrite }: TravelTimelineProps) {
 	const [selectedEvent, setSelectedEvent] = useState<AppEvent | null>(null);
 	const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
+	// Flight details modal state
+	const [selectedFlightEvent, setSelectedFlightEvent] = useState<FlightSegmentEvent | null>(null);
+	const [isFlightDetailsOpen, setIsFlightDetailsOpen] = useState(false);
+
 	// Removed unused openGeneralAdd helper to satisfy strict TS
 
 	const handleCreateEvent = () => {
@@ -118,9 +137,19 @@ export function ItineraryTimeline({ travel, canWrite }: TravelTimelineProps) {
 		setIsDetailsOpen(true);
 	};
 
+	const handleFlightEventClick = (flightEvent: FlightSegmentEvent) => {
+		setSelectedFlightEvent(flightEvent);
+		setIsFlightDetailsOpen(true);
+	};
+
 	const handleCloseDetails = () => {
 		setIsDetailsOpen(false);
 		setSelectedEvent(null);
+	};
+
+	const handleCloseFlightDetails = () => {
+		setIsFlightDetailsOpen(false);
+		setSelectedFlightEvent(null);
 	};
 
 	const handleSaveEvent = (changes: Partial<AppEvent>) => {
@@ -170,6 +199,7 @@ export function ItineraryTimeline({ travel, canWrite }: TravelTimelineProps) {
 							}}
 							onEditEvent={handleEditEvent}
 							onEventClick={handleEventClick}
+							onFlightEventClick={handleFlightEventClick}
 							canWrite={canWrite}
 						/>
 					))}
@@ -183,6 +213,13 @@ export function ItineraryTimeline({ travel, canWrite }: TravelTimelineProps) {
 				onClose={handleCloseDetails}
 				onEditEvent={canWrite ? handleEditEvent : undefined}
 				canWrite={canWrite}
+			/>
+
+			{/* Flight details modal */}
+			<FlightDetailsModal
+				flightEvent={selectedFlightEvent}
+				isOpen={isFlightDetailsOpen}
+				onClose={handleCloseFlightDetails}
 			/>
 
 			{canWrite ? (
@@ -219,6 +256,7 @@ function DaySection({
 	onAddEvent,
 	onEditEvent,
 	onEventClick,
+	onFlightEventClick,
 	canWrite,
 }: {
 	date: string;
@@ -226,6 +264,7 @@ function DaySection({
 	onAddEvent?: (date: string) => void;
 	onEditEvent?: (event: AppEvent) => void;
 	onEventClick?: (event: AppEvent) => void;
+	onFlightEventClick?: (flightEvent: FlightSegmentEvent) => void;
 	canWrite?: boolean;
 }) {
 	const formatDayUTC = (d: Date) =>
@@ -271,6 +310,7 @@ function DaySection({
 					isLast={index === items.length - 1}
 					onEditEvent={onEditEvent}
 					onEventClick={onEventClick}
+					onFlightEventClick={onFlightEventClick}
 					canWrite={canWrite}
 				/>
 			))}
@@ -282,6 +322,7 @@ function TimelineItemComponent({
 	item,
 	onEditEvent,
 	onEventClick,
+	onFlightEventClick,
 	canWrite,
 }: {
 	item: TimelineItem;
@@ -289,6 +330,7 @@ function TimelineItemComponent({
 	isLast: boolean;
 	onEditEvent?: (event: AppEvent) => void;
 	onEventClick?: (event: AppEvent) => void;
+	onFlightEventClick?: (flightEvent: FlightSegmentEvent) => void;
 	canWrite?: boolean;
 }) {
 	const Icon = item.icon;
@@ -307,21 +349,27 @@ function TimelineItemComponent({
 			<div className="flex-1 min-w-0 pt-2">
 				<div
 					className="travel-card rounded-lg p-6 hover:shadow-md transition-all duration-300 group cursor-pointer"
-					role={item.type === "event" ? "button" : undefined}
-					tabIndex={item.type === "event" ? 0 : -1}
+					role={item.type === "event" || item.type === "flight" ? "button" : undefined}
+					tabIndex={item.type === "event" || item.type === "flight" ? 0 : -1}
 					onClick={() => {
 						if (item.type === "event" && item.data) {
 							onEventClick?.(item.data as AppEvent);
+						} else if (item.type === "flight" && item.data) {
+							onFlightEventClick?.(item.data as FlightSegmentEvent);
 						}
 					}}
 					onKeyDown={(e) => {
 						if (
-							item.type === "event" &&
+							(item.type === "event" || item.type === "flight") &&
 							item.data &&
 							(e.key === "Enter" || e.key === " ")
 						) {
 							e.preventDefault();
-							onEventClick?.(item.data as AppEvent);
+							if (item.type === "event") {
+								onEventClick?.(item.data as AppEvent);
+							} else if (item.type === "flight") {
+								onFlightEventClick?.(item.data as FlightSegmentEvent);
+							}
 						}
 					}}
 				>
@@ -333,7 +381,9 @@ function TimelineItemComponent({
 							<p className="text-sm text-muted-foreground">
 								{item.type === "event" && item.data
 									? `${format(item.date, "HH:mm")} - ${format((item.data as AppEvent).endDate, "HH:mm")}`
-									: format(item.date, "HH:mm")}
+									: item.type === "flight" && item.data
+										? `${format(item.date, "HH:mm")} - ${format((item.data as FlightSegmentEvent).endDate, "HH:mm")}`
+										: format(item.date, "HH:mm")}
 							</p>
 						</div>
 						<div className="flex items-center gap-2">
@@ -407,12 +457,14 @@ function getEventColor(type: TimelineItem["type"]): string {
 			return "text-white border-chart-4/20 bg-chart-4";
 		case "event":
 			return "text-white border-accent/20 bg-accent";
+		case "flight":
+			return "text-white border-chart-5/20 bg-chart-5";
 		default:
 			return "text-white border-primary/20 bg-primary";
 	}
 }
 
-function createTimelineItems(travel: TravelWithRelations): TimelineItem[] {
+function createTimelineItems(travel: TravelWithRelations, flightEvents: FlightSegmentEvent[] = []): TimelineItem[] {
 	const items: TimelineItem[] = [];
 
 	const utcDaysInclusive = (start: Date, end: Date) => {
@@ -467,6 +519,24 @@ function createTimelineItems(travel: TravelWithRelations): TimelineItem[] {
 			location: event.location ?? undefined,
 			cost: event.cost ?? event.estimatedCost ?? undefined,
 			icon,
+		});
+	}
+
+	// Add flight events to timeline
+	for (const flightEvent of flightEvents) {
+		const description = flightEvent.metadata.isConsolidated
+			? `Voo de ${flightEvent.originAirport} para ${flightEvent.destinationAirport} com ${flightEvent.metadata.originalSegments.length} conexões. ${flightEvent.flightNumber ? `Voo ${flightEvent.flightNumber}.` : ""} ${flightEvent.participants.length > 0 ? `Passageiros: ${flightEvent.participants.map(p => p.user.name).join(", ")}.` : ""}`
+			: `Voo direto de ${flightEvent.originAirport} para ${flightEvent.destinationAirport}. ${flightEvent.flightNumber ? `Voo ${flightEvent.flightNumber}.` : ""} ${flightEvent.participants.length > 0 ? `Passageiros: ${flightEvent.participants.map(p => p.user.name).join(", ")}.` : ""}`;
+
+		items.push({
+			id: flightEvent.id,
+			type: "flight",
+			date: flightEvent.startDate,
+			data: flightEvent,
+			title: flightEvent.title,
+			description,
+			location: `${flightEvent.originAirport} → ${flightEvent.destinationAirport}`,
+			icon: Plane,
 		});
 	}
 
