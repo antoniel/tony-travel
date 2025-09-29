@@ -25,6 +25,7 @@ import {
 	useSuspenseQuery,
 } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { z } from "zod";
 import {
 	AlertTriangle,
 	Calendar,
@@ -41,6 +42,9 @@ import {
 import { Suspense, useEffect, useState } from "react";
 
 export const Route = createFileRoute("/trip/$travelId/flights/")({
+	validateSearch: z.object({
+		highlightFlightId: z.string().optional(),
+	}),
 	component: () => (
 		<Suspense fallback={<FlightsPageSkeleton />}>
 			<FlightsPage />
@@ -326,10 +330,37 @@ function FlightPageHeader({
 
 function FlightsPage() {
 	const { travelId } = Route.useParams();
+	const { highlightFlightId } = Route.useSearch();
 	const [isAddFlightOpen, setIsAddFlightOpen] = useState(false);
 	const [isEditFlightOpen, setIsEditFlightOpen] = useState(false);
 	const [editingFlight, setEditingFlight] =
 		useState<FlightWithParticipants | null>(null);
+	const [highlightedFlightId, setHighlightedFlightId] = useState<string | null>(
+		highlightFlightId ?? null,
+	);
+
+	useEffect(() => {
+		if (typeof window === "undefined") {
+			return;
+		}
+		if (!highlightFlightId) {
+			setHighlightedFlightId(null);
+			return;
+		}
+		setHighlightedFlightId(highlightFlightId);
+		const element = document.querySelector<HTMLElement>(
+			`[data-flight-card="${highlightFlightId}"]`,
+		);
+		if (element) {
+			element.scrollIntoView({ behavior: "smooth", block: "center" });
+		}
+		const timeout = window.setTimeout(() => {
+			setHighlightedFlightId(null);
+		}, 4000);
+		return () => {
+			window.clearTimeout(timeout);
+		};
+	}, [highlightFlightId]);
 	const queryClient = useQueryClient();
 
 	const { data: travel } = useSuspenseQuery(
@@ -421,6 +452,11 @@ function FlightsPage() {
 						input: { travelId },
 					}),
 				);
+				queryClient.invalidateQueries(
+					orpc.conciergeRoutes.getPendingIssues.queryOptions({
+						input: { travelId },
+					}),
+				);
 			} catch (error) {
 				console.error("Error deleting flight:", error);
 			}
@@ -451,6 +487,7 @@ function FlightsPage() {
 				onEditFlight={handleEditFlight}
 				onDeleteFlight={handleDeleteFlight}
 				canWrite={canWrite}
+				highlightedFlightId={highlightedFlightId}
 			/>
 
 			{/* Edit Flight Dialog (members only) */}
@@ -660,6 +697,7 @@ function HierarchicalFlightsList({
 	onEditFlight,
 	onDeleteFlight,
 	canWrite,
+	highlightedFlightId,
 }: {
 	totalFlights: number;
 	hierarchicalFlightGroups: HierarchicalFlightGroup[];
@@ -669,6 +707,7 @@ function HierarchicalFlightsList({
 	onEditFlight: (flight: FlightWithSlices) => void;
 	onDeleteFlight: (flightId: string) => void;
 	canWrite: boolean;
+	highlightedFlightId: string | null;
 }) {
 	// State to track which groups are open (all open by default)
 	const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
@@ -728,6 +767,7 @@ function HierarchicalFlightsList({
 									onEdit={onEditFlight}
 									onDelete={onDeleteFlight}
 									canWrite={canWrite}
+									highlightedFlightId={highlightedFlightId}
 								/>
 							))}
 						</CollapsibleContent>
@@ -745,6 +785,7 @@ function FlightContainer({
 	onEdit,
 	onDelete,
 	canWrite,
+	highlightedFlightId,
 }: {
 	flight: FlightWithSlices;
 	formatDate: (date: Date) => string;
@@ -752,9 +793,11 @@ function FlightContainer({
 	onEdit: (flight: FlightWithSlices) => void;
 	onDelete: (flightId: string) => void;
 	canWrite: boolean;
+	highlightedFlightId?: string | null;
 }) {
 	const hasParticipants = flight.participants.length > 0;
 	const flightRoute = getFlightRoute(flight);
+	const isHighlighted = highlightedFlightId === flight.id;
 
 	// Chain information
 	const chainInfo = flight.chainInfo;
@@ -765,7 +808,12 @@ function FlightContainer({
 	const costDisplay = getSmartCostDisplay(flight);
 
 	return (
-		<Card className="group relative overflow-hidden border shadow-sm hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-background via-background to-muted/10">
+		<Card
+			data-flight-card={flight.id}
+			className={`group relative overflow-hidden border shadow-sm hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-background via-background to-muted/10 ${
+				isHighlighted ? "ring-2 ring-primary shadow-xl animate-pulse" : ""
+			}`}
+		>
 			{/* Status indicator bar with chain colors */}
 			<div
 				className={`absolute top-0 left-0 right-0 h-1 ${

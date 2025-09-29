@@ -55,15 +55,42 @@ export function ItineraryTimeline({ travel, canWrite }: TravelTimelineProps) {
 	const groupedByDay = groupItemsByDay(timelineItems);
 
 	const queryClient = useQueryClient();
-	const createEventMutation = useMutation(
-		orpc.eventRoutes.createEvent.mutationOptions(),
-	);
+	const createEventMutation = useMutation({
+		...orpc.eventRoutes.createEvent.mutationOptions(),
+		onSuccess: () => {
+			queryClient.invalidateQueries(
+				orpc.eventRoutes.getEventsByTravel.queryOptions({
+					input: { travelId: travel.id },
+				}),
+			);
+			queryClient.invalidateQueries(
+				orpc.travelRoutes.getTravel.queryOptions({
+					input: { id: travel.id },
+				}),
+			);
+			queryClient.invalidateQueries(
+				orpc.conciergeRoutes.getPendingIssues.queryOptions({
+					input: { travelId: travel.id },
+				}),
+			);
+		},
+	});
 	const updateEventMutation = useMutation(
 		orpc.eventRoutes.updateEvent.mutationOptions({
 			onSuccess: () => {
 				queryClient.invalidateQueries(
 					orpc.travelRoutes.getTravel.queryOptions({
 						input: { id: travel.id },
+					}),
+				);
+				queryClient.invalidateQueries(
+					orpc.eventRoutes.getEventsByTravel.queryOptions({
+						input: { travelId: travel.id },
+					}),
+				);
+				queryClient.invalidateQueries(
+					orpc.conciergeRoutes.getPendingIssues.queryOptions({
+						input: { travelId: travel.id },
 					}),
 				);
 			},
@@ -220,6 +247,7 @@ export function ItineraryTimeline({ travel, canWrite }: TravelTimelineProps) {
 				flightEvent={selectedFlightEvent}
 				isOpen={isFlightDetailsOpen}
 				onClose={handleCloseFlightDetails}
+				travelId={travel.id}
 			/>
 
 			{canWrite ? (

@@ -43,6 +43,11 @@ export function ToolAccommodationDeleteRequestCard({
 						input: { travelId },
 					}),
 				});
+				await queryClient.invalidateQueries({
+					queryKey: orpc.conciergeRoutes.getPendingIssues.queryKey({
+						input: { travelId },
+					}),
+				});
 				await addToolResult({
 					tool: "requestToDeleteAccommodation",
 					toolCallId,

@@ -23,7 +23,6 @@ import {
 	addDaysUtc,
 	getAccommodationsLayoutWithRows,
 	getEventColor,
-	getEventLayout,
 	getEventsForDate,
 	getTimeFromDate,
 	getTimePositionFromDate,
@@ -198,6 +197,7 @@ export default function ItineraryCalendar(props: CalendarProps) {
 				flightEvent={selectedFlightEvent}
 				isOpen={isFlightDetailsOpen}
 				onClose={handleCloseFlightDetails}
+				travelId={props.travelId}
 			/>
 		</>
 	);
@@ -232,6 +232,16 @@ const RenderWeekViews = (props: {
 				await queryClient.invalidateQueries({
 					queryKey: orpc.travelRoutes.getTravel.queryKey({
 						input: { id: props.travelId },
+					}),
+				});
+				await queryClient.invalidateQueries({
+					queryKey: orpc.eventRoutes.getEventsByTravel.queryKey({
+						input: { travelId: props.travelId },
+					}),
+				});
+				await queryClient.invalidateQueries({
+					queryKey: orpc.conciergeRoutes.getPendingIssues.queryKey({
+						input: { travelId: props.travelId },
 					}),
 				});
 			},
@@ -752,6 +762,7 @@ const useCalendarEventCreation = ({
 	weekDays,
 	draggingEvent,
 }: UseCalendarEventCreationArgs) => {
+	const queryClient = useQueryClient();
 	const DEFAULT_EVENT_DURATION_HOURS = 1;
 	const MINUTES_15_MS = 15 * 60 * 1000;
 	const [isModalOpen, setIsModalOpen] = useState(false);
@@ -766,9 +777,26 @@ const useCalendarEventCreation = ({
 	const [selectionStart, setSelectionStart] = useState<Date | null>(null);
 	const [selectionCurrent, setSelectionCurrent] = useState<Date | null>(null);
 
-	const createEventMutation = useMutation(
-		orpc.eventRoutes.createEvent.mutationOptions(),
-	);
+	const createEventMutation = useMutation({
+		...orpc.eventRoutes.createEvent.mutationOptions(),
+		onSuccess: async () => {
+			await queryClient.invalidateQueries({
+				queryKey: orpc.eventRoutes.getEventsByTravel.queryKey({
+					input: { travelId },
+				}),
+			});
+			await queryClient.invalidateQueries({
+				queryKey: orpc.travelRoutes.getTravel.queryKey({
+					input: { id: travelId },
+				}),
+			});
+			await queryClient.invalidateQueries({
+				queryKey: orpc.conciergeRoutes.getPendingIssues.queryKey({
+					input: { travelId },
+				}),
+			});
+		},
+	});
 
 	const resetDraft = useCallback(() => {
 		setNewEvent(createEmptyEventDraft());
@@ -1125,19 +1153,19 @@ const DayCollumn = ({
 				{(() => {
 					// Create unified layout that includes both regular events and flight events
 					const allEventsForLayout = [
-						...dayEvents.map(event => ({
+						...dayEvents.map((event) => ({
 							id: event.id,
 							startDate: event.startDate,
 							endDate: event.endDate,
 						})),
-						...dayFlightEvents.map(flightEvent => ({
+						...dayFlightEvents.map((flightEvent) => ({
 							id: flightEvent.id,
 							startDate: flightEvent.startDate,
 							endDate: flightEvent.endDate,
-						}))
+						})),
 					];
 					const unifiedLayouts = getUnifiedEventLayout(allEventsForLayout);
-					
+
 					// Render regular events
 					const regularEventBlocks = dayEvents.map((eventBlockItem) => {
 						// For multi-day events, calculate display positions for this specific day
@@ -1212,69 +1240,69 @@ const DayCollumn = ({
 
 					// Render flight events
 					const flightEventBlocks = dayFlightEvents.map((flightEvent) => {
-					// Calculate display times for this day (same logic as regular events)
-					const currentDayStart = new Date(date);
-					currentDayStart.setHours(0, 0, 0, 0);
-					const currentDayEnd = new Date(currentDayStart);
-					currentDayEnd.setDate(currentDayEnd.getDate() + 1);
+						// Calculate display times for this day (same logic as regular events)
+						const currentDayStart = new Date(date);
+						currentDayStart.setHours(0, 0, 0, 0);
+						const currentDayEnd = new Date(currentDayStart);
+						currentDayEnd.setDate(currentDayEnd.getDate() + 1);
 
-					const eventStart = new Date(flightEvent.startDate);
-					const eventEnd = new Date(flightEvent.endDate);
+						const eventStart = new Date(flightEvent.startDate);
+						const eventEnd = new Date(flightEvent.endDate);
 
-					// Determine actual display times for this day
-					const displayStart =
-						eventStart < currentDayStart ? currentDayStart : eventStart;
-					const endOfDay = new Date(currentDayEnd);
-					endOfDay.setMilliseconds(-1); // This sets it to 23:59:59.999
-					const displayEnd = eventEnd >= currentDayEnd ? endOfDay : eventEnd;
+						// Determine actual display times for this day
+						const displayStart =
+							eventStart < currentDayStart ? currentDayStart : eventStart;
+						const endOfDay = new Date(currentDayEnd);
+						endOfDay.setMilliseconds(-1); // This sets it to 23:59:59.999
+						const displayEnd = eventEnd >= currentDayEnd ? endOfDay : eventEnd;
 
-					const topPosition = getTimePositionFromDate(displayStart);
+						const topPosition = getTimePositionFromDate(displayStart);
 
-					// Calculate event height based on display times for this day
-					const displayStartTime = displayStart.getTime();
-					const displayEndTime = displayEnd.getTime();
-					const durationMs = displayEndTime - displayStartTime;
-					const durationMinutes = durationMs / (1000 * 60);
+						// Calculate event height based on display times for this day
+						const displayStartTime = displayStart.getTime();
+						const displayEndTime = displayEnd.getTime();
+						const durationMs = displayEndTime - displayStartTime;
+						const durationMinutes = durationMs / (1000 * 60);
 
-					let eventHeight = 20; // Default minimum height for flights
-					if (durationMinutes > 0) {
-						// Convert duration to pixels (48px per hour = 0.8px per minute)
-						const calculatedHeight = Math.max(
-							20, // Minimum height for flight events
-							(durationMinutes * PX_PER_HOUR) / 60,
+						let eventHeight = 20; // Default minimum height for flights
+						if (durationMinutes > 0) {
+							// Convert duration to pixels (48px per hour = 0.8px per minute)
+							const calculatedHeight = Math.max(
+								20, // Minimum height for flight events
+								(durationMinutes * PX_PER_HOUR) / 60,
+							);
+							eventHeight = calculatedHeight;
+						}
+
+						// Only show time if event has sufficient height (>= 32px)
+						const showTime = eventHeight >= 32;
+						const startTimeStr = getTimeFromDate(displayStart);
+						const endTimeStr = getTimeFromDate(displayEnd);
+						const timeDisplay =
+							showTime &&
+							startTimeStr &&
+							endTimeStr &&
+							startTimeStr !== endTimeStr
+								? `${startTimeStr} - ${endTimeStr}`
+								: showTime
+									? startTimeStr
+									: null;
+
+						// Get layout for this flight event from unified layout calculation
+						const layout = unifiedLayouts.get(flightEvent.id);
+
+						return (
+							<FlightEventBlock
+								key={flightEvent.id}
+								flightEvent={flightEvent}
+								topPosition={topPosition}
+								eventHeight={eventHeight}
+								onEventClick={onFlightEventClick}
+								dayIndex={dayIndex}
+								timeDisplay={timeDisplay}
+								layout={layout}
+							/>
 						);
-						eventHeight = calculatedHeight;
-					}
-
-					// Only show time if event has sufficient height (>= 32px)
-					const showTime = eventHeight >= 32;
-					const startTimeStr = getTimeFromDate(displayStart);
-					const endTimeStr = getTimeFromDate(displayEnd);
-					const timeDisplay =
-						showTime &&
-						startTimeStr &&
-						endTimeStr &&
-						startTimeStr !== endTimeStr
-							? `${startTimeStr} - ${endTimeStr}`
-							: showTime
-								? startTimeStr
-								: null;
-
-					// Get layout for this flight event from unified layout calculation
-					const layout = unifiedLayouts.get(flightEvent.id);
-
-					return (
-						<FlightEventBlock
-							key={flightEvent.id}
-							flightEvent={flightEvent}
-							topPosition={topPosition}
-							eventHeight={eventHeight}
-							onEventClick={onFlightEventClick}
-							dayIndex={dayIndex}
-							timeDisplay={timeDisplay}
-							layout={layout}
-						/>
-					);
 					});
 
 					// Return both regular events and flight events

@@ -4,6 +4,7 @@ import {
 	TravelMemberSchema,
 	TravelSchema,
 	UpdateTravelSchema,
+	UserSchema,
 } from "@/lib/db/schema";
 import { startPlanTravel } from "@/lib/planTravel.prompt";
 import { AppResult } from "@/orpc/appResult";
@@ -15,16 +16,24 @@ import {
 import { ORPCError } from "@orpc/client";
 import { os } from "@orpc/server";
 import * as z from "zod";
+import { createFlightDAO } from "../flight/flight.dao";
 import enhancedAirports from "./enhanced-airports.json";
 import { createTravelDAO } from "./travel.dao";
-import { createFlightDAO } from "../flight/flight.dao";
 import { travelErrors } from "./travel.errors";
 import {
-    type Airport,
-    AirportSchema,
-    InsertFullTravel,
-    FeaturedTravelSchema,
+	type Airport,
+	AirportSchema,
+	FeaturedTravelSchema,
+	InsertFullTravel,
 } from "./travel.model";
+import {
+	createTravelService,
+	getFeaturedTravelsService,
+	getTravelMembersService,
+	getTravelService,
+	softDeleteTravelService,
+	updateTravelService,
+} from "./travel.service";
 
 type EnhancedAirport = (typeof enhancedAirports)[number];
 
@@ -73,14 +82,6 @@ const expandStateGroupedAirports = (airports: Airport[]): Airport[] => {
 
 	return expanded;
 };
-import {
-    createTravelService,
-    getTravelMembersService,
-    getTravelService,
-    softDeleteTravelService,
-    updateTravelService,
-    getFeaturedTravelsService,
-} from "./travel.service";
 
 export const generatePrompt = os
 	.input(
@@ -140,6 +141,7 @@ export const getTravel = optionalAuthProcedure
 					dependencies: z.array(AppEventSchema),
 				}),
 			),
+			members: z.array(TravelMemberSchema.extend({ user: UserSchema })),
 		}),
 	)
 	.handler(async ({ input, context }) => {
@@ -320,34 +322,34 @@ export const searchAirports = os
 
 // Featured travels: ranked by completeness with user's zero-event trips prioritized
 export const featuredTravels = optionalAuthProcedure
-    .errors(travelErrors)
-    .input(
-        z
-            .object({ limit: z.number().int().min(1).max(10).optional().default(3) })
-            .optional(),
-    )
-    .output(z.array(FeaturedTravelSchema))
-    .handler(async ({ input, context }) => {
-        const travelDAO = createTravelDAO(context.db);
-        const flightDAO = createFlightDAO(context.db);
-        const limit = input?.limit ?? 3;
+	.errors(travelErrors)
+	.input(
+		z
+			.object({ limit: z.number().int().min(1).max(10).optional().default(3) })
+			.optional(),
+	)
+	.output(z.array(FeaturedTravelSchema))
+	.handler(async ({ input, context }) => {
+		const travelDAO = createTravelDAO(context.db);
+		const flightDAO = createFlightDAO(context.db);
+		const limit = input?.limit ?? 3;
 
-        const result = await getFeaturedTravelsService(
-            travelDAO,
-            flightDAO,
-            context.user?.id,
-            limit,
-        );
+		const result = await getFeaturedTravelsService(
+			travelDAO,
+			flightDAO,
+			context.user?.id,
+			limit,
+		);
 
-        if (AppResult.isFailure(result)) {
-            throw new ORPCError(result.error.type, {
-                message: result.error.message,
-                data: result.error.data,
-            });
-        }
+		if (AppResult.isFailure(result)) {
+			throw new ORPCError(result.error.type, {
+				message: result.error.message,
+				data: result.error.data,
+			});
+		}
 
-        return result.data;
-    });
+		return result.data;
+	});
 
 export const searchDestinations = os
 	.input(
@@ -404,14 +406,24 @@ export const searchDestinations = os
 export const updateTravel = authProcedure
 	.errors(travelErrors)
 	.input(
-    z.object({
-        travelId: z.string(),
-        // Accepts either timestamps (Date) per schema or ISO strings from clients and coerces to Date
-        updateData: UpdateTravelSchema.extend({
-            startDate: z.union([z.date(), z.string().datetime()]).optional().transform((v) => (typeof v === "string" ? new Date(v) : v as Date)),
-            endDate: z.union([z.date(), z.string().datetime()]).optional().transform((v) => (typeof v === "string" ? new Date(v) : v as Date)),
-        }),
-    }),
+		z.object({
+			travelId: z.string(),
+			// Accepts either timestamps (Date) per schema or ISO strings from clients and coerces to Date
+			updateData: UpdateTravelSchema.extend({
+				startDate: z
+					.union([z.date(), z.string().datetime()])
+					.optional()
+					.transform((v) =>
+						typeof v === "string" ? new Date(v) : (v as Date),
+					),
+				endDate: z
+					.union([z.date(), z.string().datetime()])
+					.optional()
+					.transform((v) =>
+						typeof v === "string" ? new Date(v) : (v as Date),
+					),
+			}),
+		}),
 	)
 	.output(TravelSchema)
 	.handler(async ({ input, context }) => {

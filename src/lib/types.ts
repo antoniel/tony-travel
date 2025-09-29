@@ -13,6 +13,11 @@ export type TravelWithRelations = InferResultType<
 				dependencies: true;
 			};
 		};
+		members: {
+			with: {
+				user: true;
+			};
+		};
 	}
 >;
 

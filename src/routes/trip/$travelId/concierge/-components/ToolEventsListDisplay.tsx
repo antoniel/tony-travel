@@ -121,6 +121,16 @@ export function ToolEventsListDisplay({ eventsData, travelId }: ToolEventsListDi
 					input: { travelId },
 				}),
 			});
+			await queryClient.invalidateQueries({
+				queryKey: orpc.travelRoutes.getTravel.queryKey({
+					input: { id: travelId },
+				}),
+			});
+			await queryClient.invalidateQueries({
+				queryKey: orpc.conciergeRoutes.getPendingIssues.queryKey({
+					input: { travelId },
+				}),
+			});
 			toast.success(
 				ids.length === 1
 					? "Evento removido com sucesso"

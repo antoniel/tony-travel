@@ -1,5 +1,8 @@
 import { FloatingConciergeToggle } from "@/routes/trip/$travelId/-components/FloatingConciergeToggle";
-import { ConciergeChatProvider } from "@/routes/trip/$travelId/concierge/-components/concierge-chat-context";
+import {
+	ConciergeChatProvider,
+	useConciergeChatContext,
+} from "@/routes/trip/$travelId/concierge/-components/concierge-chat-context";
 import { orpc } from "@/orpc/client";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -25,6 +28,48 @@ export const Route = createFileRoute("/trip/$travelId")({
 	component: TripLayout,
 });
 
+function formatTravelDates(startDate?: Date, endDate?: Date) {
+	if (!startDate || !endDate) return null;
+
+	const start = startDate.toLocaleDateString("pt-BR", {
+		day: "2-digit",
+		month: "short",
+		timeZone: "UTC",
+	});
+	const end = endDate.toLocaleDateString("pt-BR", {
+		day: "2-digit",
+		month: "short",
+		year: "numeric",
+		timeZone: "UTC",
+	});
+
+	return `${start} - ${end}`;
+}
+
+function calculateTripDaysUTC(startDate: Date, endDate: Date) {
+	const startUTC = Date.UTC(
+		startDate.getUTCFullYear(),
+		startDate.getUTCMonth(),
+		startDate.getUTCDate(),
+	);
+	const endUTC = Date.UTC(
+		endDate.getUTCFullYear(),
+		endDate.getUTCMonth(),
+		endDate.getUTCDate(),
+	);
+	return Math.ceil((endUTC - startUTC) / (1000 * 60 * 60 * 24));
+}
+
+interface TripLayoutMinimalTravel {
+	name?: string | null;
+	destination?: string | null;
+	startDate?: Date;
+	endDate?: Date;
+	userMembership?: {
+		role: "owner" | "member";
+	} | null;
+}
+
 function TripLayout() {
 	const { travelId } = Route.useParams();
 	const { pathname } = useLocation();
@@ -32,8 +77,33 @@ function TripLayout() {
 	const travelQuery = useQuery(
 		orpc.travelRoutes.getTravel.queryOptions({ input: { id: travelId } }),
 	);
-	const travel = travelQuery.data;
+	const travel = travelQuery.data as TripLayoutMinimalTravel | undefined;
 
+	return (
+		<ConciergeChatProvider
+			travelId={travelId}
+			travelName={travel?.name ?? undefined}
+		>
+			<TripLayoutContent
+				travelId={travelId}
+				travel={travel}
+				pathname={pathname}
+			/>
+		</ConciergeChatProvider>
+	);
+}
+
+interface TripLayoutContentProps {
+	travelId: string;
+	travel: TripLayoutMinimalTravel | undefined;
+	pathname: string;
+}
+
+function TripLayoutContent({
+	travelId,
+	travel,
+	pathname,
+}: TripLayoutContentProps) {
 	const tabRoutes = [
 		{
 			value: "concierge",
@@ -85,43 +155,18 @@ function TripLayout() {
 		},
 	];
 
-	const formatTravelDates = (startDate?: Date, endDate?: Date) => {
-		if (!startDate || !endDate) return null;
-
-		// startDate/endDate são "date-only"; formatar em UTC evita off-by-one
-		// quando o horário interno estiver em 00:00:00Z.
-		const start = startDate.toLocaleDateString("pt-BR", {
-			day: "2-digit",
-			month: "short",
-			timeZone: "UTC",
-		});
-		const end = endDate.toLocaleDateString("pt-BR", {
-			day: "2-digit",
-			month: "short",
-			year: "numeric",
-			timeZone: "UTC",
-		});
-
-		return `${start} - ${end}`;
-	};
-
-	const calculateTripDaysUTC = (startDate: Date, endDate: Date) => {
-		// Calcula diferença em dias de calendário usando componentes UTC.
-		const startUTC = Date.UTC(
-			startDate.getUTCFullYear(),
-			startDate.getUTCMonth(),
-			startDate.getUTCDate(),
-		);
-		const endUTC = Date.UTC(
-			endDate.getUTCFullYear(),
-			endDate.getUTCMonth(),
-			endDate.getUTCDate(),
-		);
-		return Math.ceil((endUTC - startUTC) / (1000 * 60 * 60 * 24));
-	};
-
 	const navRef = useRef<HTMLElement | null>(null);
 	const [showRightFade, setShowRightFade] = useState(false);
+	const { pendingSummary, isPendingIssuesLoading } = useConciergeChatContext();
+	const hasPendingIssues = pendingSummary?.hasIssues ?? false;
+	const hasCriticalPending = pendingSummary?.hasCritical ?? false;
+	const showPendingIndicator = !isPendingIssuesLoading && hasPendingIssues;
+	const indicatorPulseClass = hasCriticalPending
+		? "bg-destructive/60"
+		: "bg-amber-400/70";
+	const indicatorDotClass = hasCriticalPending
+		? "bg-destructive"
+		: "bg-amber-500";
 
 	useEffect(() => {
 		const el = navRef.current;
@@ -156,7 +201,6 @@ function TripLayout() {
 		const maxLeft = Math.max(0, el.scrollWidth - el.clientWidth);
 		const nextLeft = Math.max(0, Math.min(desiredLeft, maxLeft));
 		el.scrollTo({ left: nextLeft, behavior: "auto" });
-		// Recompute fade state
 		const { scrollWidth, clientWidth, scrollLeft } = el;
 		const hasOverflow = scrollWidth > clientWidth + 1;
 		const atEnd = scrollLeft + clientWidth >= scrollWidth - 1;
@@ -164,23 +208,18 @@ function TripLayout() {
 	}, []);
 
 	const visibleTabs = tabRoutes.filter((tab) => {
-		// Concierge tab - only for members/owners
 		if (tab.value === "concierge") {
 			return !!travel?.userMembership;
 		}
-		// Members tab - only show if user is a member
 		if (tab.value === "members") {
 			return !!travel?.userMembership;
 		}
-		// Settings tab - only show if user is the owner
 		if (tab.value === "settings") {
 			return travel?.userMembership?.role === "owner";
 		}
-		// Financial tab - hide if user is not logged in (no userMembership info)
 		if (tab.value === "financial") {
 			return travel?.userMembership !== null;
 		}
-		// All other tabs are visible to all users
 		return true;
 	});
 
@@ -188,94 +227,100 @@ function TripLayout() {
 	const canAccessConcierge = !!travel?.userMembership;
 
 	return (
-		<ConciergeChatProvider travelId={travelId} travelName={travel?.name ?? undefined}>
-			<div className="bg-background">
-			{/* Travel Header */}
-			<header className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/50 sm:sticky sm:top-16 z-30">
-				<div className="container mx-auto px-4 sm:px-6 lg:px-8">
-					<div className="space-y-4">
-						{/* Travel Title and Info */}
-						<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-							<div className="space-y-2">
-								<h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-									{travel?.name || "Carregando..."}
-								</h1>
-								{travel && (
-									<div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+		<div className="bg-background">
+		{/* Travel Header */}
+		<header className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/50 sm:sticky sm:top-16 z-30">
+			<div className="container mx-auto px-4 sm:px-6 lg:px-8">
+				<div className="space-y-4">
+					<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+						<div className="space-y-2">
+							<h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+								{travel?.name || "Carregando..."}
+							</h1>
+							{travel && (
+								<div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+									<div className="flex items-center gap-2">
+										<MapPin className="w-4 h-4" />
+										<span>{travel.destination}</span>
+									</div>
+									{travel.startDate && travel.endDate && (
 										<div className="flex items-center gap-2">
-											<MapPin className="w-4 h-4" />
-											<span>{travel.destination}</span>
-										</div>
-										{travel.startDate && travel.endDate && (
-											<div className="flex items-center gap-2">
-												<Calendar className="w-4 h-4" />
-												<span>
-													{formatTravelDates(travel.startDate, travel.endDate)}
-												</span>
-											</div>
-										)}
-										<div className="flex items-center gap-2">
-											<Plane className="w-4 h-4" />
+											<Calendar className="w-4 h-4" />
 											<span>
-												{calculateTripDaysUTC(
-													new Date(travel.startDate),
-													new Date(travel.endDate),
-												)}{" "}
-												dias
+												{formatTravelDates(travel.startDate, travel.endDate)}
 											</span>
 										</div>
+									)}
+									<div className="flex items-center gap-2">
+										<Plane className="w-4 h-4" />
+										<span>
+											{travel.startDate && travel.endDate
+												? `${calculateTripDaysUTC(new Date(travel.startDate), new Date(travel.endDate))} dias`
+												: ""}
+										</span>
 									</div>
-								)}
-							</div>
-						</div>
-
-						{/* Navigation Tabs */}
-						<div className="sticky top-16 z-30 bg-transparent border-b border-border/50 sm:static">
-							<nav
-								ref={navRef}
-								className="flex overflow-x-auto scrollbar-hide -mb-px"
-							>
-								{visibleTabs.map((tab) => {
-									const Icon = tab.icon;
-									const isActive = pathname === tab.path;
-									return (
-										<Link
-											key={tab.value}
-											to={tab.path}
-											data-active={isActive ? "true" : undefined}
-											className={`flex items-center gap-3 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap min-w-fit ${
-												isActive
-													? "border-primary text-primary"
-													: "border-transparent hover:border-primary/50 text-muted-foreground hover:text-foreground"
-											}`}
-										>
-											<Icon className="w-4 h-4 flex-shrink-0" />
-											<span>{tab.label}</span>
-										</Link>
-									);
-								})}
-							</nav>
-							{/* Right fade indicator on mobile when scrollable */}
-							{showRightFade ? (
-								<div className="pointer-events-none absolute inset-y-0 right-0 w-10 sm:hidden bg-gradient-to-l from-background to-transparent" />
-							) : null}
+								</div>
+							)}
 						</div>
 					</div>
-				</div>
-			</header>
 
-			{/* Main Content */}
-			<main className="container mx-auto px-4 sm:px-6 lg:px-8">
-				<div className="pb-8 pt-4 lg:pb-12 lg:pt-8">
-					<div className="mx-auto">
-						<Outlet />
+					<div className="sticky top-16 z-30 bg-transparent border-b border-border/50 sm:static">
+						<nav
+							ref={navRef}
+							className="flex overflow-x-auto scrollbar-hide -mb-px"
+						>
+							{visibleTabs.map((tab) => {
+								const Icon = tab.icon;
+								const isActive = pathname === tab.path;
+								const renderIndicator = tab.value === "concierge" && showPendingIndicator;
+								return (
+									<Link
+										key={tab.value}
+										to={tab.path}
+										data-active={isActive ? "true" : undefined}
+										className={`flex items-center gap-3 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap min-w-fit ${
+											isActive
+												? "border-primary text-primary"
+												: "border-transparent hover:border-primary/50 text-muted-foreground hover:text-foreground"
+										}`}
+									>
+										<Icon className="w-4 h-4 flex-shrink-0" />
+										<span className="flex items-center gap-2">
+											{tab.label}
+											{renderIndicator ? (
+												<span className="relative inline-flex h-2 w-2 items-center justify-center">
+													<span
+														aria-hidden="true"
+														className={`absolute inline-flex h-full w-full rounded-full ${indicatorPulseClass} animate-ping`}
+													/>
+													<span
+														aria-hidden="true"
+														className={`relative inline-flex h-2 w-2 rounded-full ${indicatorDotClass}`}
+													/>
+													<span className="sr-only">Pendências ativas</span>
+												</span>
+											) : null}
+										</span>
+									</Link>
+								);
+							})}
+						</nav>
+						{showRightFade ? (
+							<div className="pointer-events-none absolute inset-y-0 right-0 w-10 sm:hidden bg-gradient-to-l from-background to-transparent" />
+						) : null}
 					</div>
 				</div>
-			</main>
-			{canAccessConcierge && !isConciergePath ? (
-				<FloatingConciergeToggle />
-			) : null}
-		</div>
-		</ConciergeChatProvider>
+			</div>
+		</header>
+
+		<main className="container mx-auto px-4 sm:px-6 lg:px-8">
+			<div className="pb-8 pt-4 lg:pb-12 lg:pt-8">
+				<div className="mx-auto">
+					<Outlet />
+				</div>
+			</div>
+		</main>
+		{canAccessConcierge && !isConciergePath ? <FloatingConciergeToggle /> : null}
+	</div>
 	);
 }

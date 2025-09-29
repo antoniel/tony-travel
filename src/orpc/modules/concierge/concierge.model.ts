@@ -35,3 +35,54 @@ export const ConciergeChatResponseSchema = z.object({
 });
 
 export type ConciergeChatResponse = z.infer<typeof ConciergeChatResponseSchema>;
+
+export const PendingIssueTypeSchema = z.enum(["flight", "accommodation", "event"]);
+
+export const PendingIssueSeveritySchema = z.enum(["critical", "advisory"]);
+
+export const PendingIssueActionSchema = z.object({
+	type: z.enum(["navigate"]),
+	label: z.string().min(1),
+	path: z.string().min(1),
+	params: z
+		.record(z.string(), z.string())
+		.default({})
+		.optional(),
+});
+
+export const PendingIssueSchema = z.object({
+	id: z.string().min(1),
+	type: PendingIssueTypeSchema,
+	severity: PendingIssueSeveritySchema,
+	title: z.string().min(1),
+	description: z.string().min(1),
+	affectedTravelers: z
+		.array(
+			z.object({
+				id: z.string(),
+				name: z.string(),
+			}),
+		)
+		.default([]),
+	missingCount: z.number().int().min(0).default(0),
+	action: PendingIssueActionSchema.optional(),
+	gapRanges: z
+		.array(
+			z.object({
+				start: z.string(),
+				end: z.string(),
+			}),
+		)
+		.default([]),
+});
+
+export const PendingIssuesSummarySchema = z.object({
+	issues: z.array(PendingIssueSchema),
+	criticalCount: z.number().int().min(0),
+	advisoryCount: z.number().int().min(0),
+	hasCritical: z.boolean(),
+	hasIssues: z.boolean(),
+});
+
+export type PendingIssue = z.infer<typeof PendingIssueSchema>;
+export type PendingIssuesSummary = z.infer<typeof PendingIssuesSummarySchema>;

@@ -80,6 +80,16 @@ export function ToolEventConfirmationCard({
 					input: { travelId },
 				}),
 			});
+			queryClient.invalidateQueries({
+				queryKey: orpc.travelRoutes.getTravel.queryKey({
+					input: { id: travelId },
+				}),
+			});
+			queryClient.invalidateQueries({
+				queryKey: orpc.conciergeRoutes.getPendingIssues.queryKey({
+					input: { travelId },
+				}),
+			});
 			addToolResult({
 				tool: "requestToCreateEvent",
 				toolCallId,

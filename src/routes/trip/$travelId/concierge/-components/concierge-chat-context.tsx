@@ -1,9 +1,11 @@
-import { client } from "@/orpc/client";
+import { client, orpc } from "@/orpc/client";
+import type { PendingIssuesSummary } from "@/orpc/modules/concierge/concierge.model";
 import type { MyUIMessage } from "@/orpc/modules/concierge/concierge.ai";
 import { eventIteratorToStream } from "@orpc/client";
 import type { ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useChat, type UseChatHelpers } from "@ai-sdk/react";
+import { useQuery } from "@tanstack/react-query";
 
 type ConciergeChatHelpers = UseChatHelpers<MyUIMessage>;
 
@@ -18,6 +20,9 @@ interface ConciergeChatContextValue {
 	setFloatingOpen: (open: boolean) => void;
 	setFullViewActive: (active: boolean) => void;
 	markConversationSeen: () => void;
+	pendingSummary?: PendingIssuesSummary;
+	isPendingIssuesLoading: boolean;
+	refetchPendingIssues: () => Promise<void>;
 }
 
 const ConciergeChatContext = createContext<ConciergeChatContextValue | null>(null);
@@ -50,6 +55,22 @@ export function ConciergeChatProvider({
 			},
 		},
 	});
+
+	const {
+		data: pendingSummary,
+		isLoading: isPendingIssuesLoading,
+		refetch: refetchPendingIssuesRaw,
+	} = useQuery({
+		...orpc.conciergeRoutes.getPendingIssues.queryOptions({
+			input: { travelId },
+		}),
+		refetchOnWindowFocus: true,
+		staleTime: 0,
+	});
+
+	const refetchPendingIssues = useCallback(async () => {
+		await refetchPendingIssuesRaw();
+	}, [refetchPendingIssuesRaw]);
 
 	const [isFloatingOpen, setIsFloatingOpen] = useState(false);
 	const [isFullViewActive, setIsFullViewActive] = useState(false);
@@ -144,6 +165,9 @@ export function ConciergeChatProvider({
 		setFloatingOpen: setIsFloatingOpen,
 		setFullViewActive: setIsFullViewActive,
 		markConversationSeen,
+		pendingSummary,
+		isPendingIssuesLoading,
+		refetchPendingIssues,
 	}), [
 		chat,
 		hasUnread,
@@ -151,6 +175,9 @@ export function ConciergeChatProvider({
 		isFloatingOpen,
 		isFullViewActive,
 		markConversationSeen,
+		pendingSummary,
+		refetchPendingIssues,
+		isPendingIssuesLoading,
 		travelId,
 		travelName,
 	]);

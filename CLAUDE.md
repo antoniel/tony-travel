@@ -1,7 +1,5 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## Primary Role: Orchestrator
 
 **CRITICAL**: Your primary role is to act as an **ORCHESTRATOR** for specialized agents and handle only small, simple tasks directly. For any substantial work, delegate to the appropriate specialist agents.

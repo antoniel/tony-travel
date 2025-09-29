@@ -1,4 +1,6 @@
-import { Plane } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "@tanstack/react-router";
+import { ArrowRight, Plane } from "lucide-react";
 import type { FlightSegmentEvent } from "./flight-segments.utils";
 
 interface FlightEventBlockProps {
@@ -198,12 +200,14 @@ interface FlightDetailsModalProps {
 	flightEvent: FlightSegmentEvent | null;
 	isOpen: boolean;
 	onClose: () => void;
+	travelId: string;
 }
 
 export function FlightDetailsModal({
 	flightEvent,
 	isOpen,
 	onClose,
+	travelId,
 }: FlightDetailsModalProps) {
 	if (!isOpen || !flightEvent) return null;
 
@@ -306,15 +310,22 @@ export function FlightDetailsModal({
 						</div>
 					)}
 
-					{/* Close button */}
-					<div className="flex justify-end pt-4 border-t">
-						<button
-							type="button"
-							onClick={onClose}
-							className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-						>
+					{/* Actions */}
+					<div className="flex flex-wrap justify-between gap-2 pt-4 border-t">
+						<Button variant="outline" size="sm" asChild>
+							<Link
+								to={"/trip/$travelId/flights"}
+								params={{ travelId }}
+								search={{ highlightFlightId: flightEvent.metadata.flightId }}
+								onClick={() => onClose()}
+							>
+								Ver na aba de voos
+								<ArrowRight className="ml-2 h-3.5 w-3.5" />
+							</Link>
+						</Button>
+						<Button variant="default" onClick={onClose} size="sm">
 							Fechar
-						</button>
+						</Button>
 					</div>
 				</div>
 			</div>

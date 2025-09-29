@@ -15,6 +15,7 @@ import {
 } from "@/components/ai-elements/prompt-input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Messages } from "@/routes/trip/$travelId/concierge/-components/Messages";
+import { PendingIssuesPanel } from "@/routes/trip/$travelId/concierge/-components/PendingIssuesPanel";
 import { useConciergeChatContext } from "@/routes/trip/$travelId/concierge/-components/concierge-chat-context";
 import { CalendarClock, Clock, MapPin, Plane } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -43,6 +44,8 @@ export const ConciergeAgent = ({
 		travelId: contextTravelId,
 		isDelayedResponse,
 		markConversationSeen,
+		pendingSummary,
+		isPendingIssuesLoading,
 	} = useConciergeChatContext();
 
 	const effectiveTravelName = travelName ?? contextTravelName;
@@ -85,6 +88,10 @@ export const ConciergeAgent = ({
 				<Conversation className="flex-1 min-h-0">
 					<ConversationContent className="p-4">
 						<InChatHeader travelName={effectiveTravelName} />
+						<PendingIssuesPanel
+							summary={pendingSummary}
+							isLoading={isPendingIssuesLoading}
+						/>
 						{showIntro ? (
 							<div className="mb-4 mt-4 rounded-lg border bg-muted/40 p-4">
 								<h3 className="mb-2 text-sm font-medium">

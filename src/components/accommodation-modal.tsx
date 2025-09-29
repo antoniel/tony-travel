@@ -160,6 +160,11 @@ export function AccommodationModal({
 								input: { travelId },
 							}),
 					});
+					await queryClient.invalidateQueries({
+						queryKey: orpc.conciergeRoutes.getPendingIssues.queryKey({
+							input: { travelId },
+						}),
+					});
 				}
 			} else {
 				// Create new accommodation
@@ -191,6 +196,11 @@ export function AccommodationModal({
 							orpc.accommodationRoutes.getAccommodationsByTravel.queryKey({
 								input: { travelId },
 							}),
+					});
+					await queryClient.invalidateQueries({
+						queryKey: orpc.conciergeRoutes.getPendingIssues.queryKey({
+							input: { travelId },
+						}),
 					});
 				}
 			}

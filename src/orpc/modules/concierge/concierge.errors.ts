@@ -13,6 +13,14 @@ export const conciergeErrors = {
 			})
 			.optional(),
 	},
+	TRAVEL_NOT_FOUND: {
+		message: "Viagem não encontrada",
+		data: z.object({ travelId: z.string() }),
+	},
+	PENDING_ANALYSIS_FAILED: {
+		message: "Não foi possível analisar pendências da viagem",
+		data: z.object({ travelId: z.string() }).optional(),
+	},
 } as const;
 
 export type ConciergeErrorCode = keyof typeof conciergeErrors;

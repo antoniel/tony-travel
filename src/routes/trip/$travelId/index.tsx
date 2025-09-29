@@ -31,9 +31,26 @@ function ItineraryPage() {
 
 	const [events, setEvents] = useState<AppEvent[]>([]);
 	const queryClient = useQueryClient();
-	const createEventMutation = useMutation(
-		orpc.eventRoutes.createEvent.mutationOptions(),
-	);
+	const createEventMutation = useMutation({
+		...orpc.eventRoutes.createEvent.mutationOptions(),
+		onSuccess: () => {
+			queryClient.invalidateQueries(
+				orpc.eventRoutes.getEventsByTravel.queryOptions({
+					input: { travelId },
+				}),
+			);
+			queryClient.invalidateQueries(
+				orpc.travelRoutes.getTravel.queryOptions({
+					input: { id: travelId },
+				}),
+			);
+			queryClient.invalidateQueries(
+				orpc.conciergeRoutes.getPendingIssues.queryOptions({
+					input: { travelId },
+				}),
+			);
+		},
+	});
 
 	// Add Event modal state (mobile header action)
 	const [isAddEventOpen, setIsAddEventOpen] = useState(false);

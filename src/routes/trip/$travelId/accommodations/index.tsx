@@ -118,7 +118,7 @@ function AccommodationCard({
 								</div>
 							</div>
 						</div>
-						{accommodation.price && (
+						{!!accommodation.price && (
 							<div className="flex items-center gap-4 mt-2">
 								{accommodation.price && (
 									<div className="text-lg font-bold text-primary">

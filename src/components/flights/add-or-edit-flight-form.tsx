@@ -415,6 +415,11 @@ export function AddOrEditFlightForm({
 					input: { travelId },
 				}),
 			);
+			queryClient.invalidateQueries(
+				orpc.conciergeRoutes.getPendingIssues.queryOptions({
+					input: { travelId },
+				}),
+			);
 
 			onClose();
 		} catch (error) {

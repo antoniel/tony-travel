@@ -88,6 +88,11 @@ export function ToolAccommodationUpdateRequestCard({
 								input: { travelId },
 							}),
 					});
+					await queryClient.invalidateQueries({
+						queryKey: orpc.conciergeRoutes.getPendingIssues.queryKey({
+							input: { travelId },
+						}),
+					});
 					const updatedFields = Object.keys(variables.accommodation ?? {});
 					await addToolResult({
 						tool: "requestToUpdateAccommodation",

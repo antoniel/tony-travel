@@ -80,6 +80,11 @@ export function ToolAccommodationCreateRequestCard({
 								input: { travelId },
 							}),
 					});
+					await queryClient.invalidateQueries({
+						queryKey: orpc.conciergeRoutes.getPendingIssues.queryKey({
+							input: { travelId },
+						}),
+					});
 					await addToolResult({
 						tool: "requestToCreateAccommodation",
 						toolCallId,
