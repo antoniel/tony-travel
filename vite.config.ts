@@ -1,3 +1,4 @@
+import { paraglide } from "@inlang/paraglide-js-adapter-vite"
 import tailwindcss from "@tailwindcss/vite"
 import { tanstackStart } from "@tanstack/react-start/plugin/vite"
 import viteReact from "@vitejs/plugin-react"
@@ -24,6 +25,10 @@ const config = defineConfig({
     }),
     viteTsConfigPaths({
       projects: ["./tsconfig.json"],
+    }),
+    paraglide({
+      project: "./project.inlang",
+      outdir: "./src/paraglide",
     }),
     tailwindcss(),
     tanstackStart({

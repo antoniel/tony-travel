@@ -15,6 +15,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "./dropdown-menu";
+import { LanguageSwitcher } from "./language-switcher";
 
 export const TopbarMenu: React.FC = () => {
 	const { user, isAuthenticated, isLoading } = useUser();
@@ -143,8 +144,8 @@ export const TopbarMenu: React.FC = () => {
 								alt="Tony Viagens logo"
 								className="h-8 w-8 object-contain"
 							/>
-						<span className="font-semibold text-lg hidden sm:inline">
-							Tony Viagens
+							<span className="font-semibold text-lg hidden sm:inline">
+								Tony Viagens
 							</span>
 						</Link>
 
@@ -170,8 +171,9 @@ export const TopbarMenu: React.FC = () => {
 						</nav>
 					</div>
 
-					{/* Right section - User menu */}
-					<div>
+					{/* Right section - Language switcher and User menu */}
+					<div className="flex items-center gap-2">
+						<LanguageSwitcher />
 						{isAuthenticated && user ? (
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>

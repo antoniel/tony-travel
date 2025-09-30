@@ -1,8 +1,8 @@
+import { ResponsiveModal } from "@/components/ui/ResponsiveModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ResponsiveModal } from "@/components/ui/ResponsiveModal";
 import {
 	DialogDescription,
 	DialogHeader,
@@ -26,19 +26,24 @@ import {
 import { useAirportsSearch } from "@/hooks/useAirportsSearch";
 import { useUser } from "@/hooks/useUser";
 import { signIn } from "@/lib/auth-client";
-import type { InsertAppEvent } from "@/lib/db/schema";
-import type { TravelWithRelations } from "@/lib/types";
-import { cn } from "@/lib/utils";
-import { orpc } from "@/orpc/client";
-import type { Airport, InsertFullTravel, FeaturedTravel } from "@/orpc/modules/travel/travel.model";
-import { useMutation } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
-import { format } from "date-fns";
 import {
 	formatCurrencyBRL,
 	formatDecimalStringPtBR,
 	normalizeCurrencyInputPtBR,
 } from "@/lib/currency";
+import type { InsertAppEvent } from "@/lib/db/schema";
+import type { TravelWithRelations } from "@/lib/types";
+import { cn } from "@/lib/utils";
+import { orpc } from "@/orpc/client";
+import type {
+	Airport,
+	FeaturedTravel,
+	InsertFullTravel,
+} from "@/orpc/modules/travel/travel.model";
+import * as m from "@/paraglide/messages";
+import { useMutation } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
 	CalendarDays,
@@ -56,7 +61,7 @@ import { toast } from "sonner";
 import { match } from "ts-pattern";
 
 interface TripSelectionProps {
-    predefinedTrips: FeaturedTravel[];
+	predefinedTrips: FeaturedTravel[];
 }
 
 interface TripSearchForm {
@@ -120,19 +125,25 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 	};
 
 	const getPeopleLabel = (tripPeopleEstimate?: number | null) => {
-		if (typeof tripPeopleEstimate === "number" && Number.isFinite(tripPeopleEstimate)) {
+		if (
+			typeof tripPeopleEstimate === "number" &&
+			Number.isFinite(tripPeopleEstimate)
+		) {
 			const count = Math.max(1, Math.floor(tripPeopleEstimate));
-			return `${count} ${count === 1 ? "pessoa" : "pessoas"}`;
+			return count === 1
+				? m["trip.people_count"]({ count: count.toString() })
+				: m["trip.people_count_plural"]({ count: count.toString() });
 		}
-		if (form.people === "5") return "5+ pessoas";
+		if (form.people === "5") return m["trip.people_5_plus"]();
 		const count = getSelectedPeopleCount();
-		return `${count} ${count === 1 ? "pessoa" : "pessoas"}`;
+		return count === 1
+			? m["trip.people_count"]({ count: count.toString() })
+			: m["trip.people_count_plural"]({ count: count.toString() });
 	};
 
-
-    const handleSelectPredefinedTrip = (trip: FeaturedTravel) => {
-        navigate({ to: `/trip/${trip.id}` });
-    };
+	const handleSelectPredefinedTrip = (trip: FeaturedTravel) => {
+		navigate({ to: `/trip/${trip.id}` });
+	};
 
 	const handleGoogleLogin = async () => {
 		try {
@@ -175,10 +186,10 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 				<div className="container relative isolate mx-auto px-4 pt-12">
 					<div className="text-center mb-12">
 						<h1 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight mb-4">
-							Planeje sua próxima aventura
+							{m["trip.plan_next_adventure"]()}
 						</h1>
 						<p className="text-lg md:text-xl text-muted-foreground">
-							Crie o roteiro do seu jeito de forma rápida e fácil
+							{m["trip.create_itinerary_easy"]()}
 						</p>
 					</div>
 
@@ -193,10 +204,10 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 										<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
 											{/* Departure Airport */}
 											<LocationSelector
-												label="De onde você vai partir?"
-												placeholder="Selecione aeroporto(s) de partida"
-												searchPlaceholder="Buscar por cidade, aeroporto ou código..."
-												selectedLabel="Aeroportos selecionados"
+												label={m["trip.where_from"]()}
+												placeholder={m["trip.select_departure_airport"]()}
+												searchPlaceholder={m["trip.search_city_airport"]()}
+												selectedLabel={m["trip.selected_airports"]()}
 												icon={<Plane className="h-4 w-4" />}
 												options={searchDestionationOption}
 												selected={form.departureAirports.map((airport) => ({
@@ -233,10 +244,10 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 
 											{/* Destination */}
 											<LocationSelector
-												label="Para onde você quer ir?"
-												placeholder="Selecione destino(s)"
-												searchPlaceholder="Buscar destino..."
-												selectedLabel="Destinos selecionados"
+												label={m["trip.where_to"]()}
+												placeholder={m["trip.select_destination"]()}
+												searchPlaceholder={m["trip.search_destination"]()}
+												selectedLabel={m["trip.selected_destinations"]()}
 												icon={<MapPin className="h-4 w-4" />}
 												options={searchDestionationOption}
 												selected={form.destinations}
@@ -261,7 +272,7 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 													htmlFor="people"
 													className="text-base font-medium"
 												>
-													Quantas pessoas?
+													{m["trip.how_many_people"]()}
 												</Label>
 												{form.people === "custom" ? (
 													<div className="flex gap-2">
@@ -321,7 +332,7 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 													htmlFor="budget"
 													className="text-base font-medium"
 												>
-													Qual seu orçamento? (BRL)
+													{m["trip.whats_budget"]()}
 												</Label>
 												<div className="relative">
 													<span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -332,16 +343,16 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 														type="text"
 														inputMode="numeric"
 														placeholder="0,00"
-											value={formatDecimalStringPtBR(form.customBudget)}
-											onChange={(e) => {
-												const { decimal } = normalizeCurrencyInputPtBR(
-													e.target.value,
-												);
-												setForm((prev) => ({
-													...prev,
-													customBudget: decimal,
-												}));
-											}}
+														value={formatDecimalStringPtBR(form.customBudget)}
+														onChange={(e) => {
+															const { decimal } = normalizeCurrencyInputPtBR(
+																e.target.value,
+															);
+															setForm((prev) => ({
+																...prev,
+																customBudget: decimal,
+															}));
+														}}
 														className="h-12 text-base pl-8"
 													/>
 												</div>
@@ -385,7 +396,7 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 															})
 														)
 													) : (
-														<span>Selecione as datas da sua viagem</span>
+														<span>{m["trip.select_travel_dates"]()}</span>
 													)}
 												</Button>
 											</PopoverTrigger>
@@ -434,9 +445,10 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 											) {
 												let msg = "Preencha os campos obrigatórios: ";
 												const parts: string[] = [];
-												if (missingDeparture) parts.push("partida");
-												if (missingDestination) parts.push("destino");
-												if (missingDates) parts.push("datas");
+												if (missingDeparture) parts.push(m["trip.departure"]());
+												if (missingDestination)
+													parts.push(m["trip.destination"]());
+												if (missingDates) parts.push(m["trip.dates"]());
 												msg += parts.join(", ");
 												toast.error(msg);
 												if (missingDeparture) {
@@ -490,7 +502,7 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 										className="w-full h-14 travel-button-primary rounded-xl relative overflow-hidden text-base font-semibold"
 									>
 										<span className="relative z-10">
-											Criar meu roteiro personalizado
+											{m["trip.create_custom_itinerary"]()}
 										</span>
 									</Button>
 								</div>
@@ -569,7 +581,9 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 									trip.startDate,
 									now,
 								);
-								const startDateForDisplay = getUtcDateForDisplay(trip.startDate);
+								const startDateForDisplay = getUtcDateForDisplay(
+									trip.startDate,
+								);
 								const endDateForDisplay = getUtcDateForDisplay(trip.endDate);
 								const countdownLabel =
 									trip.userMembership && daysUntilStart >= 0
@@ -585,21 +599,23 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 										key={trip.id}
 										className="cursor-pointer travel-card rounded-xl hover:-translate-y-0.5 hover:shadow-xl transition-all bg-gradient-to-br from-primary/5 via-card to-card"
 										onClick={() => handleSelectPredefinedTrip(trip)}
-								>
+									>
 										<CardHeader>
 											<div className="flex items-start justify-between">
 												<div>
-												<CardTitle className="text-lg mb-2">
-													{trip.name}
-												</CardTitle>
-												<div className="flex items-center text-muted-foreground mb-2">
-													<MapPin className="h-4 w-4 mr-1" />
-													<span className="text-sm">{trip.destination}</span>
-												</div>
+													<CardTitle className="text-lg mb-2">
+														{trip.name}
+													</CardTitle>
+													<div className="flex items-center text-muted-foreground mb-2">
+														<MapPin className="h-4 w-4 mr-1" />
+														<span className="text-sm">{trip.destination}</span>
+													</div>
 												</div>
 												<div className="flex flex-col items-end gap-1">
 													{trip.userMembership ? (
-														<Badge variant="outline">Sua viagem</Badge>
+														<Badge variant="outline">
+															{m["trip.your_trip"]()}
+														</Badge>
 													) : null}
 													{countdownLabel ? (
 														<Badge variant="default">{countdownLabel}</Badge>
@@ -608,38 +624,54 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 											</div>
 										</CardHeader>
 										<CardContent>
-										<div className="space-y-3">
-											<div className="flex items-center text-sm text-muted-foreground">
-												<Clock className="h-4 w-4 mr-2" />
-												<span>
-													{format(startDateForDisplay, "dd/MM", { locale: ptBR })} -{" "}
-													{format(endDateForDisplay, "dd/MM/yyyy", { locale: ptBR })}
-												</span>
-											</div>
-
-											<div className="flex items-center text-sm text-muted-foreground">
-												<CalendarDays className="h-4 w-4 mr-2" />
-												<span>
-													{getDurationInDays(trip.startDate, trip.endDate)} dias de viagem
-												</span>
-											</div>
-
-											{typeof trip.peopleEstimate === "number" && Number.isFinite(trip.peopleEstimate) ? (
+											<div className="space-y-3">
 												<div className="flex items-center text-sm text-muted-foreground">
-													<Users className="h-4 w-4 mr-2" />
-													<span>{getPeopleLabel(trip.peopleEstimate)}</span>
+													<Clock className="h-4 w-4 mr-2" />
+													<span>
+														{format(startDateForDisplay, "dd/MM", {
+															locale: ptBR,
+														})}{" "}
+														-{" "}
+														{format(endDateForDisplay, "dd/MM/yyyy", {
+															locale: ptBR,
+														})}
+													</span>
 												</div>
-											) : null}
 
-											{typeof trip.budget === "number" && Number.isFinite(trip.budget) ? (
 												<div className="flex items-center text-sm text-muted-foreground">
-													<DollarSign className="h-4 w-4 mr-2" />
-													<span>{`A partir de ${formatCurrencyBRL(trip.budget)}`}</span>
+													<CalendarDays className="h-4 w-4 mr-2" />
+													<span>
+														{m["trip.days_of_trip"]({
+															days: getDurationInDays(
+																trip.startDate,
+																trip.endDate,
+															).toString(),
+														})}
+													</span>
 												</div>
-											) : null}
-										</div>
-									</CardContent>
-								</Card>
+
+												{typeof trip.peopleEstimate === "number" &&
+												Number.isFinite(trip.peopleEstimate) ? (
+													<div className="flex items-center text-sm text-muted-foreground">
+														<Users className="h-4 w-4 mr-2" />
+														<span>{getPeopleLabel(trip.peopleEstimate)}</span>
+													</div>
+												) : null}
+
+												{typeof trip.budget === "number" &&
+												Number.isFinite(trip.budget) ? (
+													<div className="flex items-center text-sm text-muted-foreground">
+														<DollarSign className="h-4 w-4 mr-2" />
+														<span>
+															{m["trip.starts_from"]({
+																amount: formatCurrencyBRL(trip.budget),
+															})}
+														</span>
+													</div>
+												) : null}
+											</div>
+										</CardContent>
+									</Card>
 								);
 							})}
 						</div>
@@ -719,7 +751,10 @@ function DialogCreateTravel(props: {
 					.map(normalizeDestinationOption)
 					.filter(Boolean) as { value: string; label: string }[];
 			}
-			if (typeof raw.destination === "string" && raw.destination.trim().length > 0) {
+			if (
+				typeof raw.destination === "string" &&
+				raw.destination.trim().length > 0
+			) {
 				return [{ value: raw.destination, label: raw.destination }];
 			}
 			return [];
@@ -782,7 +817,7 @@ function DialogCreateTravel(props: {
 			saveTravelMutation.mutate({ travel: normalized });
 			props.setPromptOpen(false);
 		} catch (err) {
-			setImportError("Falha ao salvar o roteiro no backend.");
+			setImportError(m["trip.import_error"]());
 		}
 	}
 	return (
@@ -793,7 +828,9 @@ function DialogCreateTravel(props: {
 			contentClassName="gap-0"
 		>
 			<DialogHeader className="border-b px-6 py-4">
-				<DialogTitle className="text-left">Gerar e importar roteiro</DialogTitle>
+				<DialogTitle className="text-left">
+					{m["trip.generate_import_itinerary"]()}
+				</DialogTitle>
 				<DialogDescription>
 					1) Copie o prompt abaixo e cole no ChatGPT. 2) Cole aqui APENAS um
 					bloco <code>```json</code> com o objeto Travel (nenhum texto fora do
@@ -824,7 +861,7 @@ function DialogCreateTravel(props: {
 					</div>
 					<textarea
 						className="h-40 w-full rounded-md border p-3 text-sm"
-						placeholder="Cole a resposta do ChatGPT aqui"
+						placeholder={m["trip.paste_chatgpt_response"]()}
 						value={props.chatgptResponse}
 						onChange={(e) => props.setChatgptResponse(e.target.value)}
 					/>
@@ -832,7 +869,9 @@ function DialogCreateTravel(props: {
 						<div className="text-sm text-destructive">{importError}</div>
 					)}
 					<div className="mt-2 flex justify-end gap-2">
-						<Button onClick={tryImportTravel}>Importar roteiro</Button>
+						<Button onClick={tryImportTravel}>
+							{m["trip.import_itinerary"]()}
+						</Button>
 					</div>
 				</div>
 			</div>

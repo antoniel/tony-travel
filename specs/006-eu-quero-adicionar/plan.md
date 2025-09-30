@@ -1,0 +1,387 @@
+# Implementation Plan: Internationalization (i18n) Support
+
+**Branch**: `006-eu-quero-adicionar` | **Date**: 2025-09-30 | **Spec**: [spec.md](./spec.md)
+**Input**: Feature specification from `/specs/006-eu-quero-adicionar/spec.md`
+
+## Execution Flow (/plan command scope)
+
+```
+1. Load feature spec from Input path ✓
+   → Loaded spec with clarifications
+2. Fill Technical Context ✓
+   → TypeScript/React project with TanStack Start, Paraglide JS
+3. Fill the Constitution Check section ✓
+4. Evaluate Constitution Check section ✓
+   → No violations detected
+5. Execute Phase 0 → research.md ✓ (documented inline)
+6. Execute Phase 1 → contracts, data-model.md, quickstart.md ✓ (documented inline)
+7. Re-evaluate Constitution Check section ✓
+8. Plan Phase 2 → Describe task generation approach ✓
+9. STOP - Ready for /tasks command ✓
+```
+
+**IMPORTANT**: The /plan command STOPS at step 7. Phases 2-4 are executed by other commands:
+
+- Phase 2: /tasks command creates tasks.md
+- Phase 3-4: Implementation execution (manual or via tools)
+
+## Summary
+
+Add internationalization (i18n) support to the travel planning app using Paraglide JS, enabling users to view and interact with the app in Portuguese (pt-BR, default) and English (en). The implementation will integrate with TanStack Router for SEO-friendly language routing, provide a language switcher component, translate all UI strings, format dates/times/currency according to locale, and persist language preferences in browser storage.
+
+**Technical Approach**: Use Paraglide JS for compile-time i18n with zero-runtime overhead and tree-shaking support. Integrate with TanStack Router for optional language prefixes in URLs (/en/trip/123 or /trip/123 for default). Create a centralized translation system with fallback to Portuguese when translations are missing. Implement locale-aware formatting utilities for dates, times, and currency.
+
+## Technical Context
+
+**Language/Version**: TypeScript 5.x with React 19
+**Primary Dependencies**: TanStack Start, TanStack Router, Paraglide JS (@inlang/paraglide-js), date-fns for locale formatting
+**Storage**: Browser localStorage for language preference persistence
+**Testing**: Vitest for unit tests, React Testing Library for component tests
+**Target Platform**: Web (modern browsers, responsive design for mobile/desktop)
+**Project Type**: Web (monorepo with TanStack Start - frontend and backend in single structure)
+**Performance Goals**: Zero runtime overhead (compile-time i18n), tree-shaking of unused translations
+**Constraints**:
+
+- PT-BR as default language (no prefix in URL)
+- Only LTR languages (pt-BR, en)
+- User-generated content stays in original language (no translation)
+- Fallback to Portuguese for missing translations
+- SEO-friendly URLs with hreflang tags
+  **Scale/Scope**:
+- 2 languages initially (pt-BR, en)
+- ~200-300 UI strings to translate
+- Language switcher accessible from all pages
+- All routes support optional language prefix
+
+## Constitution Check
+
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
+
+### I. Type-Safe Architecture
+
+**Status**: ✅ COMPLIANT
+
+- Paraglide JS generates TypeScript functions for translations
+- Type-safe message keys and parameters
+- TanStack Router types preserved for routing
+- Locale-aware formatting with strict typing
+
+### II. Human-in-the-Loop AI
+
+**Status**: ✅ COMPLIANT (N/A for this feature)
+
+- No AI interactions in i18n implementation
+- Existing AI tool patterns preserved
+
+### III. Specialist Agent Delegation
+
+**Status**: ✅ COMPLIANT
+
+- Frontend specialist handles UI components, translation, routing
+- No backend changes required (client-side only feature)
+
+### IV. Test-Driven Development
+
+**Status**: ✅ COMPLIANT
+
+- Component tests for language switcher
+- Integration tests for routing with language prefixes
+- Tests for locale formatting utilities
+- Fallback behavior tests
+
+### V. Modern Design System Compliance
+
+**Status**: ✅ COMPLIANT
+
+- Language switcher uses Shadcn UI components
+- Design system tokens maintained
+- Accessible language selection (keyboard, screen readers)
+
+**Initial Constitution Check**: ✅ PASS
+
+## Project Structure
+
+### Documentation (this feature)
+
+```
+specs/006-eu-quero-adicionar/
+├── plan.md              # This file (/plan command output)
+├── spec.md              # Feature specification (completed)
+└── tasks.md             # Phase 2 output (/tasks command - NOT created by /plan)
+```
+
+### Source Code (repository root)
+
+```
+/
+├── project.inlang/                    # NEW: Inlang/Paraglide configuration
+│   └── settings.json                  # Language config, sourceLanguageTag, etc.
+│
+├── messages/                          # NEW: Translation files
+│   ├── en.json                        # English translations
+│   └── pt-BR.json                     # Portuguese translations (default)
+│
+├── src/
+│   ├── paraglide/                     # NEW: Generated by Paraglide (gitignored)
+│   │   ├── messages.ts                # Generated translation functions
+│   │   └── runtime.ts                 # Runtime helpers
+│   │
+│   ├── lib/
+│   │   └── i18n/                      # NEW: i18n utilities
+│   │       ├── language-utils.ts      # Language detection, persistence
+│   │       ├── locale-formatting.ts   # Date/time/currency formatting
+│   │       └── middleware.ts          # TanStack Router middleware for language
+│   │
+│   ├── components/
+│   │   └── ui/
+│   │       └── language-switcher.tsx  # NEW: Language switcher component
+│   │
+│   ├── routes/
+│   │   ├── __root.tsx                 # UPDATED: Add language context, html lang attr
+│   │   └── ([$lang])/                 # NEW: Optional language prefix routes
+│   │       └── ...existing routes...  # MIGRATED: All routes support lang prefix
+│   │
+│   └── router.tsx                     # UPDATED: Add i18n middleware
+│
+├── vite.config.ts                     # UPDATED: Add Paraglide Vite plugin
+└── package.json                       # UPDATED: Add Paraglide dependencies
+```
+
+**Structure Decision**: Web application structure with TanStack Start. Paraglide JS uses a compile-time approach with messages stored in JSON files. Generated translation functions are tree-shakable and type-safe. Optional language prefix routing achieved through TanStack Router's route structure with `([$lang])/` pattern for all routes.
+
+## Phase 0: Outline & Research
+
+**Research Findings** (inline documentation):
+
+### 1. Paraglide JS Integration Pattern
+
+**Decision**: Use @inlang/paraglide-js with Vite plugin
+
+- **Why**: Compile-time i18n with zero runtime overhead, perfect for TanStack Start
+- **How**: Paraglide Vite plugin watches message files, generates typed functions
+- **Tradeoffs**: Requires build step, but provides best DX and performance
+
+### 2. TanStack Router Language Routing
+
+**Decision**: Optional language prefix with catch-all route pattern
+
+- **Why**: Supports `/en/trip/123` and `/trip/123` (default) as required by FR-011
+- **How**: Use TanStack Router's optional param `([$lang])/` prefix on all routes
+- **Implementation**:
+  - Default language (pt-BR): no prefix, clean URLs
+  - English: `/en/` prefix required
+  - Invalid language codes: redirect to non-prefixed URL
+
+### 3. Language Detection & Persistence
+
+**Decision**: Browser language detection + localStorage persistence
+
+- **Why**: No user accounts required, works for all users (FR-009)
+- **How**:
+  1. Check localStorage for saved preference
+  2. Fallback to browser's `navigator.language`
+  3. Fallback to default (pt-BR) if unsupported
+- **Persistence**: Save to localStorage on language change
+
+### 4. Translation Organization
+
+**Decision**: Feature-based message organization with namespacing
+
+- **Why**: Scalable as app grows, easier to maintain
+- **Structure**:
+  ```json
+  {
+    "common": {
+      "submit": "Submit",
+      "cancel": "Cancel"
+    },
+    "trip": {
+      "create_title": "Create Trip",
+      "edit_title": "Edit Trip"
+    },
+    "calendar": {
+      "event_title": "Event"
+    }
+  }
+  ```
+
+### 5. Locale Formatting Strategy
+
+**Decision**: Use Intl API with date-fns for complex formatting
+
+- **Why**: Native browser support, no heavy dependencies
+- **Implementation**:
+  - Dates: `Intl.DateTimeFormat` + date-fns for relative dates
+  - Numbers/Currency: `Intl.NumberFormat`
+  - Already have formatCurrencyBRL in `src/lib/currency.ts` - extend for locale
+
+## Phase 1: Design & Contracts
+
+### Data Model
+
+**No database changes required** - i18n is client-side only
+
+**Core Abstractions**:
+
+- `Language`: Supported language configuration
+
+  ```typescript
+  type Language = "pt-BR" | "en"
+  const LANGUAGES = ["pt-BR", "en"] as const
+  const DEFAULT_LANGUAGE = "pt-BR"
+  ```
+
+- `LanguageContext`: React context for current language
+
+  ```typescript
+  interface LanguageContextValue {
+    currentLanguage: Language
+    setLanguage: (lang: Language) => void
+    t: typeof import("$paraglide/messages")
+  }
+  ```
+
+- `LocaleFormatters`: Locale-aware formatting utilities
+  ```typescript
+  interface LocaleFormatters {
+    formatDate(date: Date, format: string, locale: Language): string
+    formatCurrency(amount: number, locale: Language): string
+    formatRelativeTime(date: Date, locale: Language): string
+  }
+  ```
+
+### API Contracts
+
+**No backend API changes** - translations are compile-time generated
+
+**Key Interfaces**:
+
+```typescript
+// Language detection and persistence
+interface LanguageService {
+  detectLanguage(): Language
+  saveLanguage(lang: Language): void
+  getLanguageFromUrl(pathname: string): Language | null
+  buildUrlWithLanguage(path: string, lang: Language): string
+}
+
+// TanStack Router integration
+interface LanguageRouterConfig {
+  defaultLanguage: Language
+  supportedLanguages: readonly Language[]
+  languageParam: string // '$lang'
+}
+
+// Translation function (generated by Paraglide)
+type TranslationFunction = (key: string, params?: Record<string, string>) => string
+```
+
+### Quickstart Test Scenarios
+
+1. **Language Detection on First Visit**
+   - Verify browser language detection
+   - Fallback to default (pt-BR) for unsupported languages
+   - No localStorage value initially
+
+2. **Language Switcher Interaction**
+   - Click language switcher
+   - UI updates immediately
+   - Language saved to localStorage
+   - URL updates with language prefix (if not default)
+
+3. **URL Navigation with Language Prefix**
+   - Navigate to `/en/trip/123`
+   - Page displays in English
+   - Language switcher shows English selected
+   - Navigate to `/trip/123` (default, pt-BR)
+
+4. **Locale Formatting**
+   - Dates formatted according to locale (pt-BR: DD/MM/YYYY, en: MM/DD/YYYY)
+   - Currency formatted correctly (R$ for pt-BR, $ for en)
+   - Relative times in correct language ("há 2 dias" vs "2 days ago")
+
+5. **SEO Metadata**
+   - hreflang tags present in <head>
+   - Canonical URL set correctly
+   - Title and meta description translated
+
+6. **Fallback Behavior**
+   - Missing translation key shows Portuguese text
+   - Console warning in dev mode for missing translations
+   - No runtime errors
+
+## Phase 2: Task Planning Approach
+
+_This section describes what the /tasks command will do - DO NOT execute during /plan_
+
+**Task Generation Strategy**:
+
+1. Load `.specify/templates/tasks-template.md` as base (if exists)
+2. Generate i18n implementation tasks in logical order:
+   - **Setup tasks**: Install dependencies, configure Paraglide, create message files
+   - **Core i18n tasks**: Language detection, persistence, context provider
+   - **Routing tasks**: TanStack Router integration, optional language prefix
+   - **Component tasks**: Language switcher, translation utilities
+   - **Migration tasks**: Extract and translate all UI strings
+   - **Formatting tasks**: Locale-aware date/time/currency formatting
+   - **SEO tasks**: Meta tags, hreflang attributes
+   - **Validation tasks**: Run tests, verify all requirements met
+
+**Ordering Strategy**:
+
+- **Dependencies-first**: Setup → Core → Routing → Components → Migration → SEO
+- **Test-driven**: Each component test written before implementation where applicable
+- **Parallel opportunities**:
+  - [P] Message file creation (en.json, pt-BR.json) after setup
+  - [P] Utility implementations (language-utils.ts, locale-formatting.ts)
+  - [P] Component implementations after core infrastructure
+- **Constitutional compliance**: Frontend specialist handles all React/routing work
+
+**Estimated Output**: 25-30 numbered, ordered tasks in tasks.md
+
+- 4 setup tasks (dependencies, config, message files)
+- 6 core i18n tasks (detection, persistence, context)
+- 4 routing tasks (middleware, optional prefix, navigation)
+- 4 component tasks (language switcher, translation hooks)
+- 8 migration tasks (extract strings, translate UI, update components)
+- 3 formatting tasks (dates, times, currency)
+- 3 SEO tasks (meta tags, hreflang, canonical)
+- 2 validation tasks (tests, requirements check)
+
+**IMPORTANT**: This phase is executed by the /tasks command, NOT by /plan
+
+## Phase 3+: Future Implementation
+
+_These phases are beyond the scope of the /plan command_
+
+**Phase 3**: Task execution (/tasks command creates tasks.md)
+**Phase 4**: Implementation (frontend-specialist executes tasks.md)
+**Phase 5**: Validation (run tests, verify all FRs met)
+
+## Complexity Tracking
+
+_No constitutional violations - table left empty_
+
+## Progress Tracking
+
+_This checklist is updated during execution flow_
+
+**Phase Status**:
+
+- [x] Phase 0: Research complete (/plan command)
+- [x] Phase 1: Design complete (/plan command)
+- [x] Phase 2: Task planning complete (/plan command - describe approach only)
+- [ ] Phase 3: Tasks generated (/tasks command)
+- [ ] Phase 4: Implementation complete
+- [ ] Phase 5: Validation passed
+
+**Gate Status**:
+
+- [x] Initial Constitution Check: PASS
+- [x] Post-Design Constitution Check: PASS
+- [x] All NEEDS CLARIFICATION resolved (via spec.md)
+- [x] Complexity deviations documented (none required)
+
+---
+
+_Based on Constitution v1.0.0 - See `.specify/memory/constitution.md`_

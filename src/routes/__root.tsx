@@ -14,6 +14,11 @@ import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import appCss from "../styles.css?url";
 
 import { Toaster } from "@/components/ui/sonner";
+import { LanguageProvider, baseLocale } from "@/lib/i18n/LanguageProvider";
+import {
+	getCurrentLanguage,
+	getLanguageFromPath,
+} from "@/lib/i18n/language-utils";
 import type { QueryClient } from "@tanstack/react-query";
 import { Meta } from "@tanstack/react-start";
 
@@ -50,19 +55,27 @@ function RootComponent() {
 	const routerState = useRouterState();
 	const isAuthRoute = routerState.location.pathname.startsWith("/auth");
 
+	// Detect language from URL
+	const urlLang = getLanguageFromPath(routerState.location.pathname);
+	const initialLanguage = getCurrentLanguage(urlLang);
+
 	return (
-		<>
+		<LanguageProvider initialLanguage={initialLanguage}>
 			{!isAuthRoute && <TopbarMenu />}
 			<main className={isAuthRoute ? "" : "min-h-[calc(100vh-4rem)]"}>
 				<Outlet />
 			</main>
-		</>
+		</LanguageProvider>
 	);
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+	// Use base locale for html lang attribute (will be updated by client)
+	// For SSR, we use the default language
+	const lang = baseLocale;
+
 	return (
-		<html lang="pt-BR">
+		<html lang={lang}>
 			<head>
 				<HeadContent />
 				{/* favicon */}
