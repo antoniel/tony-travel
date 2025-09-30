@@ -222,6 +222,106 @@ Notas:
 - Armazenar como número (ex.: `1234.56`) no form state e backend.
 - Exibir no input como `1.234,56` e prefixo visual `R$` fora do valor.
 
+## Internacionalização (i18n): Paraglide JS (Obrigatório)
+
+**Sistema**: Paraglide JS com compile-time i18n (zero runtime overhead, tree-shakable, type-safe).
+
+**Idiomas suportados**: Português (pt-BR, padrão) e Inglês (en).
+
+### Padrão de uso (Obrigatório)
+
+```tsx
+// ✅ CORRETO: Importar namespace de mensagens
+import * as m from "@/paraglide/messages";
+
+// Usar mensagens com notação de colchetes (dots são preservados do JSON)
+<h1>{m["trip.plan_next_adventure"]()}</h1>
+<Button>{m["common.submit"]()}</Button>
+<Label>{m["trip.destination"]()}</Label>
+
+// Mensagens com parâmetros
+<span>{m["trip.people_count"]({ count: "1" })}</span>
+<span>{m["trip.days_of_trip"]({ days: daysCount.toString() })}</span>
+```
+
+### Regras de mensagens
+
+- **Estrutura**: Mensagens organizadas por namespace no JSON (`common.*`, `trip.*`, `auth.*`, `validation.*`, etc.).
+- **Nomenclatura**: snake_case para chaves (ex.: `plan_next_adventure`, `people_count`).
+- **Acesso**: Usar notação de colchetes `m["namespace.key"]()` pois Paraglide preserva dots do JSON.
+- **Parâmetros**: Passar objeto com strings (ex.: `{ count: value.toString() }`).
+- **Fallback**: Sistema automaticamente usa pt-BR quando tradução não existe; warnings em dev mode.
+
+### Arquivos de tradução
+
+- **Localização**: `messages/pt-BR.json` e `messages/en.json`
+- **Estrutura**:
+  ```json
+  {
+    "namespace": {
+      "message_key": "Texto traduzido",
+      "with_param": "Texto com {param}"
+    }
+  }
+  ```
+- **Compilação**: Paraglide gera funções TypeScript em `src/paraglide/` (gitignored).
+
+### Quando traduzir
+
+**SEMPRE traduzir**:
+- Títulos, headers, breadcrumbs
+- Labels de formulários e placeholders
+- Textos de botões e links
+- Mensagens de erro, sucesso, validação
+- Empty states e mensagens de status
+- Tooltips e helper texts
+
+**NÃO traduzir**:
+- Conteúdo gerado por usuário (nomes de viagens, notas, descrições)
+- Dados de domínio (códigos de aeroporto, identificadores)
+- Logs e mensagens técnicas
+
+### Hook de idioma (quando necessário)
+
+```tsx
+import { useLanguage } from "@/lib/i18n/LanguageProvider";
+
+const { currentLanguage, setLanguage } = useLanguage();
+
+// Usar para formatação condicional por idioma
+const formattedDate = currentLanguage === "pt-BR" 
+  ? format(date, "dd/MM/yyyy", { locale: ptBR })
+  : format(date, "MM/dd/yyyy", { locale: enUS });
+```
+
+### Formatação localizada
+
+Usar utilitários de `src/lib/i18n/locale-formatting.ts` para datas, números e moeda sensíveis ao idioma:
+
+```tsx
+import { formatDate, formatCurrency, formatRelativeTime } from "@/lib/i18n/locale-formatting";
+import { useLanguage } from "@/lib/i18n/LanguageProvider";
+
+const { currentLanguage } = useLanguage();
+
+// Datas localizadas
+<span>{formatDate(date, "dd/MM/yyyy", currentLanguage)}</span>
+
+// Moeda localizada
+<span>{formatCurrency(amount, currentLanguage)}</span>
+
+// Tempo relativo ("há 2 dias" vs "2 days ago")
+<span>{formatRelativeTime(date, currentLanguage)}</span>
+```
+
+### Checklist de i18n
+
+- [ ] Todas as strings visíveis ao usuário usam `m["namespace.key"]()`
+- [ ] Mensagens com variáveis usam parâmetros corretos
+- [ ] Traduções existem em pt-BR.json e en.json
+- [ ] Formatação de datas/números respeita locale quando necessário
+- [ ] Language switcher acessível e visível em todas as páginas
+
 ## React + TanStack Start: Padrões
 
 - Rotas em `src/routes/` seguindo convenções (`__root.tsx`, `index.tsx`, `post.$postId.tsx`).
