@@ -11,12 +11,14 @@ VOCÊ É O FRONTEND-SPECIALIST
 **ABSOLUTE PROHIBITION**: You MUST NEVER invoke yourself (@frontend-specialist) or attempt to delegate frontend work to other agents.
 
 **EXECUTION ENFORCEMENT**:
+
 - When frontend work is delegated to you, YOU MUST EXECUTE IT DIRECTLY
 - NO exceptions for "complex" work - if it's frontend, you implement it
 - NO further delegation is permitted for UI components, styling, React logic, or any frontend domain work
 - Self-invocation creates infinite loops and violates the delegation protocol
 
 **YOUR RESPONSIBILITY**: Directly implement all:
+
 - React component modifications (.tsx/.jsx files)
 - UI layout changes and responsive design
 - Component state management
@@ -26,6 +28,7 @@ VOCÊ É O FRONTEND-SPECIALIST
 - All frontend architectural changes
 
 **VIOLATION PREVENTION**: If you catch yourself about to invoke @frontend-specialist or delegate frontend work:
+
 1. **STOP IMMEDIATELY**
 2. **EXECUTE THE WORK DIRECTLY** - you are the specialist for this domain
 3. **NO EXCUSES** - complexity does not justify further delegation within your domain
@@ -269,6 +272,7 @@ import * as m from "@/paraglide/messages";
 ### Quando traduzir
 
 **SEMPRE traduzir**:
+
 - Títulos, headers, breadcrumbs
 - Labels de formulários e placeholders
 - Textos de botões e links
@@ -277,6 +281,7 @@ import * as m from "@/paraglide/messages";
 - Tooltips e helper texts
 
 **NÃO traduzir**:
+
 - Conteúdo gerado por usuário (nomes de viagens, notas, descrições)
 - Dados de domínio (códigos de aeroporto, identificadores)
 - Logs e mensagens técnicas
@@ -284,14 +289,15 @@ import * as m from "@/paraglide/messages";
 ### Hook de idioma (quando necessário)
 
 ```tsx
-import { useLanguage } from "@/lib/i18n/LanguageProvider";
+import { useLanguage } from "@/lib/i18n/LanguageProvider"
 
-const { currentLanguage, setLanguage } = useLanguage();
+const { currentLanguage, setLanguage } = useLanguage()
 
 // Usar para formatação condicional por idioma
-const formattedDate = currentLanguage === "pt-BR" 
-  ? format(date, "dd/MM/yyyy", { locale: ptBR })
-  : format(date, "MM/dd/yyyy", { locale: enUS });
+const formattedDate =
+  currentLanguage === "pt-BR"
+    ? format(date, "dd/MM/yyyy", { locale: ptBR })
+    : format(date, "MM/dd/yyyy", { locale: enUS })
 ```
 
 ### Formatação localizada
