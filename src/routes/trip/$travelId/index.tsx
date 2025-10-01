@@ -6,6 +6,7 @@ import type { AppEvent } from "@/lib/types";
 import { orpc } from "@/orpc/client";
 import ItineraryCalendar from "@/routes/trip/$travelId/-components/itinerary-calendar";
 import { ItineraryTimeline } from "@/routes/trip/$travelId/-components/itinerary-timeline";
+import * as m from "@/paraglide/messages";
 import {
 	useMutation,
 	useQueryClient,
@@ -101,15 +102,23 @@ function ItineraryPage() {
 		return (
 			<div className="text-center py-12">
 				<CalendarIcon className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-				<h3 className="text-lg font-medium mb-2">Viagem não encontrada</h3>
+				<h3 className="text-lg font-medium mb-2">
+					{m["trip.not_found_title"]()}
+				</h3>
 				<p className="text-muted-foreground">
-					A viagem que você está procurando não existe ou foi removida.
+					{m["trip.not_found_description"]()}
 				</p>
 			</div>
 		);
 	}
 
 	const canWrite = !!travel?.userMembership;
+
+	const totalEvents = travel.events?.length ?? 0;
+	const eventsLabel =
+		totalEvents === 1
+			? m["trip.events_count"]({ count: totalEvents.toString() })
+			: m["trip.events_count_plural"]({ count: totalEvents.toString() });
 
 	return (
 		<>
@@ -122,14 +131,14 @@ function ItineraryPage() {
 								className="flex items-center gap-2 px-6 "
 							>
 								<Clock className="w-4 h-4" />
-								<span>Cronograma</span>
+								<span>{m["trip.tabs.timeline"]()}</span>
 							</TabsTrigger>
 							<TabsTrigger
 								value="calendar"
 								className="flex items-center gap-2 px-6 "
 							>
 								<CalendarIcon className="w-4 h-4" />
-								<span>Calendário</span>
+								<span>{m["trip.tabs.calendar"]()}</span>
 							</TabsTrigger>
 						</TabsList>
 
@@ -137,9 +146,7 @@ function ItineraryPage() {
 						<div className="flex flex-wrap items-center gap-3 text-sm">
 							<div className="flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-lg">
 								<Clock className="w-4 h-4 text-muted-foreground" />
-								<span className="font-medium">
-									{travel.events?.length || 0} eventos
-								</span>
+								<span className="font-medium">{eventsLabel}</span>
 							</div>
 							{canWrite ? (
 								<>
@@ -152,9 +159,9 @@ function ItineraryPage() {
 											setNewEvent(defaultEvent);
 											setIsAddEventOpen(true);
 										}}
-										title="Adicionar evento"
+										title={m["calendar.add_event"]()}
 									>
-										<Plus className="w-4 h-4" /> Adicionar
+										<Plus className="w-4 h-4" /> {m["common.add"]()}
 									</Button>
 
 									{/* Desktop add button aligned with stats */}
@@ -166,9 +173,9 @@ function ItineraryPage() {
 											setNewEvent(defaultEvent);
 											setIsAddEventOpen(true);
 										}}
-										title="Adicionar evento"
+										title={m["calendar.add_event"]()}
 									>
-										<Plus className="w-4 h-4" /> Adicionar Evento
+										<Plus className="w-4 h-4" /> {m["calendar.add_event"]()}
 									</Button>
 								</>
 							) : null}

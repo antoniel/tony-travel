@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useUser } from "@/hooks/useUser";
 import { signIn } from "@/lib/auth-client";
+import * as m from "@/paraglide/messages";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
@@ -60,10 +61,10 @@ function LoginPage() {
 				<div className="md:w-96 w-80 flex flex-col items-center justify-center">
 					<div className="text-center mb-8">
 						<h2 className="text-4xl text-foreground font-medium mb-3">
-							Entrar
+							{m["auth.login"]()}
 						</h2>
 						<p className="text-sm text-muted-foreground">
-							Bem-vindo de volta! Faça login para continuar
+							{m["auth.welcome_back_subtitle"]()}
 						</p>
 					</div>
 
@@ -92,12 +93,11 @@ function LoginPage() {
 								d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
 							/>
 						</svg>
-						{isSigningIn ? "Entrando..." : "Entrar com Google"}
+						{isSigningIn ? m["auth.signing_in"]() : m["auth.login_with_google"]()}
 					</Button>
 
 					<div className="text-center text-sm text-muted-foreground mt-6">
-						Ao fazer login, você concorda com nossos termos de uso e política de
-						privacidade.
+						{m["auth.terms_agreement"]()}
 					</div>
 				</div>
 			</div>
@@ -110,7 +110,7 @@ function LoginLoadingState() {
 		<div className="flex h-screen w-full items-center justify-center bg-background">
 			<div className="flex flex-col items-center space-y-4">
 				<div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-				<p className="text-muted-foreground">Carregando...</p>
+				<p className="text-muted-foreground">{m["common.loading"]()}</p>
 			</div>
 		</div>
 	)

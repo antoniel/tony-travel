@@ -18,6 +18,7 @@ import type {
 	Airport,
 	InsertFullTravel,
 } from "@/orpc/modules/travel/travel.model";
+import * as m from "@/paraglide/messages";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
@@ -38,8 +39,8 @@ import * as z from "zod";
 
 // Types and schemas for the wizard
 const TripWizardSchema = z.object({
-	name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-	description: z.string().max(1000, "Descrição muito longa").optional(),
+	name: z.string().min(2, m["validation.min_length"]({ min: 2 })),
+	description: z.string().max(1000, m["trip.description_too_long"]()).optional(),
 	tripType: z.string().optional(),
 	destinations: z
 		.array(z.object({ value: z.string(), label: z.string() }))
@@ -68,15 +69,14 @@ interface WizardStep {
 const STEPS: WizardStep[] = [
 	{
 		id: "name",
-		title: "Como você quer chamar esta viagem?",
-		description:
-			"Escolha um nome que te inspire e identifique facilmente sua aventura",
+		title: m["trip.wizard_name_title"](),
+		description: m["trip.wizard_name_description"](),
 		isValid: (data) => Boolean(data.name && data.name.length >= 2),
 	},
 	{
 		id: "summary",
-		title: "Perfeito! Vamos criar sua viagem",
-		description: "Revise os detalhes da sua aventura antes de continuar",
+		title: m["trip.wizard_summary_title"](),
+		description: m["trip.wizard_summary_description"](),
 		isValid: () => true,
 	},
 ];
@@ -122,8 +122,8 @@ export default function TripWizard({ initialData }: TripWizardProps) {
 	const saveTravelMutation = useMutation(
 		orpc.travelRoutes.saveTravel.mutationOptions({
 			onSuccess: (data) => {
-				toast.success("Viagem criada com sucesso!", {
-					description: "Redirecionando para sua nova viagem...",
+				toast.success(m["trip.created_successfully"](), {
+					description: m["trip.created_redirect"](),
 				});
 				// Invalidate travels query to refresh list
 				queryClient.invalidateQueries({ queryKey: ["travels"] });
@@ -131,8 +131,8 @@ export default function TripWizard({ initialData }: TripWizardProps) {
 			},
 			onError: (error) => {
 				console.error("Failed to create travel:", error);
-				toast.error("Erro ao criar viagem", {
-					description: error.message || "Tente novamente em alguns instantes.",
+				toast.error(m["trip.create_error"](), {
+					description: error.message || m["trip.create_error_retry"](),
 				});
 			},
 		}),
@@ -157,15 +157,15 @@ export default function TripWizard({ initialData }: TripWizardProps) {
 
 	const handleFinish = form.handleSubmit(async (data) => {
 		if (!data.destinations || data.destinations.length === 0) {
-			toast.error("Erro nos dados", {
-				description: "Selecione ao menos um destino ou aeroporto.",
+			toast.error(m["trip.data_error"](), {
+				description: m["trip.select_destination_required"](),
 			});
 			return;
 		}
 
 		if (!data.dateRange?.from || !data.dateRange?.to) {
-			toast.error("Erro nos dados", {
-				description: "Verifique se todas as informações estão preenchidas.",
+			toast.error(m["trip.data_error"](), {
+				description: m["trip.check_all_fields"](),
 			});
 			return;
 		}
@@ -178,7 +178,7 @@ export default function TripWizard({ initialData }: TripWizardProps) {
 				: undefined,
 			destination:
 				data.destinations?.map((d) => d.label).join(", ") ||
-				"Destino não especificado",
+				m["trip.destination_unspecified"](),
 			destinationAirports: data.destinations.map((d) => ({
 				value: d.value,
 				label: d.label,
@@ -237,10 +237,10 @@ export default function TripWizard({ initialData }: TripWizardProps) {
 					<div className="mb-8">
 						<div className="flex items-center justify-between mb-4">
 							<span className="text-sm font-medium text-muted-foreground">
-								Etapa {currentStep + 1} de {STEPS.length}
+								{m["trip.wizard_step_of"]({ current: currentStep + 1, total: STEPS.length })}
 							</span>
 							<span className="text-sm font-medium text-muted-foreground">
-								{Math.round(progress)}% concluído
+								{m["trip.wizard_percent_complete"]({ percent: Math.round(progress) })}
 							</span>
 						</div>
 						<div className="w-full bg-secondary/50 rounded-full h-2">
@@ -282,7 +282,7 @@ export default function TripWizard({ initialData }: TripWizardProps) {
 							className="h-12 px-6"
 						>
 							<ArrowLeft className="h-4 w-4 mr-2" />
-							Anterior
+							{m["common.previous"]()}
 						</Button>
 
 						<div className="flex gap-2">
@@ -312,7 +312,7 @@ export default function TripWizard({ initialData }: TripWizardProps) {
 								) : (
 									<Check className="h-4 w-4 mr-2" />
 								)}
-								{saveTravelMutation.isPending ? "Criando..." : "Criar Viagem"}
+								{saveTravelMutation.isPending ? m["trip.creating"]() : m["trip.create_trip"]()}
 							</Button>
 						) : (
 							<Button
@@ -320,7 +320,7 @@ export default function TripWizard({ initialData }: TripWizardProps) {
 								disabled={!canGoNext()}
 								className="h-12 px-6"
 							>
-								Próxima
+								{m["common.next"]()}
 								<ArrowRight className="h-4 w-4 ml-2" />
 							</Button>
 						)}
@@ -341,20 +341,20 @@ function NameStep({ form }: StepProps) {
 				render={({ field, fieldState }) => (
 					<FormItem>
 						<FormLabel className="text-base font-medium">
-							Nome da viagem
+							{m["trip.trip_name"]()}
 						</FormLabel>
 						<FormControl>
 							<Input
 								{...field}
 								type="text"
-								placeholder="Ex: Aventura em Paris, Escapada no Rio..."
+								placeholder={m["trip.name_placeholder"]()}
 								className="h-12 text-base"
 								autoFocus
 								aria-invalid={!!fieldState.error}
 							/>
 						</FormControl>
 						<FormDescription>
-							Escolha um nome memorável para sua viagem
+							{m["trip.wizard_name_description"]()}
 						</FormDescription>
 						<FormMessage />
 					</FormItem>
@@ -367,17 +367,17 @@ function NameStep({ form }: StepProps) {
 				render={({ field, fieldState }) => (
 					<FormItem>
 						<FormLabel className="text-base font-medium">
-							Descrição da viagem
+							{m["trip.description"]()}
 						</FormLabel>
 						<FormControl>
 							<Textarea
 								{...field}
-								placeholder="Descreva objetivos, atividades planejadas, anotações para o grupo..."
+								placeholder={m["trip.description_placeholder"]()}
 								className="text-base"
 								aria-invalid={!!fieldState.error}
 							/>
 						</FormControl>
-						<FormDescription>Opcional, até 1000 caracteres</FormDescription>
+						<FormDescription>{m["common.optional"]()}, {m["validation.max_length"]({ max: 1000 })}</FormDescription>
 						<FormMessage />
 					</FormItem>
 				)}
@@ -395,14 +395,14 @@ function SummaryStep({
 			<div className="grid gap-6">
 				{/* Trip Name */}
 				<div className="flex items-center justify-between py-3 border-b border-border/50">
-					<span className="text-muted-foreground">Nome da viagem:</span>
+					<span className="text-muted-foreground">{m["trip.trip_name"]()}:</span>
 					<span className="font-medium">{data.name}</span>
 				</div>
 
 				{/* Description */}
 				{data.description && data.description.trim().length > 0 && (
 					<div className="py-3 border-b border-border/50">
-						<span className="text-muted-foreground block mb-1">Descrição:</span>
+						<span className="text-muted-foreground block mb-1">{m["trip.description"]()}:</span>
 						<span className="whitespace-pre-wrap">{data.description}</span>
 					</div>
 				)}
@@ -410,7 +410,7 @@ function SummaryStep({
 				{/* Trip Type */}
 				{data.tripType && (
 					<div className="flex items-center justify-between py-3 border-b border-border/50">
-						<span className="text-muted-foreground">Tipo de viagem:</span>
+						<span className="text-muted-foreground">{m["trip.title"]()}:</span>
 						<Badge variant="outline" className="capitalize">
 							{data.tripType.replace(/([a-z])([A-Z])/g, "$1 $2")}
 						</Badge>
@@ -420,7 +420,7 @@ function SummaryStep({
 				{/* Arrivals (Destinations) */}
 				{data.destinations && data.destinations.length > 0 && (
 					<div className="flex items-start justify-between py-3 border-b border-border/50">
-						<span className="text-muted-foreground">Chegada(s):</span>
+						<span className="text-muted-foreground">{m["trip.destination"]()}:</span>
 						<div className="text-right flex flex-wrap justify-end">
 							{data.destinations.map((dest) => (
 								<Badge
@@ -438,7 +438,7 @@ function SummaryStep({
 				{/* Dates */}
 				{data.dateRange?.from && data.dateRange?.to && (
 					<div className="flex items-center justify-between py-3 border-b border-border/50">
-						<span className="text-muted-foreground">Datas:</span>
+						<span className="text-muted-foreground">{m["trip.dates"]()}:</span>
 						<div className="text-right">
 							<div className="font-medium">
 								{format(data.dateRange.from, "dd/MM/yyyy", { locale: ptBR })}
@@ -446,7 +446,7 @@ function SummaryStep({
 								{format(data.dateRange.to, "dd/MM/yyyy", { locale: ptBR })}
 							</div>
 							<Badge variant="outline" className="mt-1">
-								{getDurationInDays()} dias
+								{m["trip.days_of_trip"]({ days: getDurationInDays() })}
 							</Badge>
 						</div>
 					</div>
@@ -455,10 +455,10 @@ function SummaryStep({
 				{/* People */}
 				{data.people && (
 					<div className="flex items-center justify-between py-3 border-b border-border/50">
-						<span className="text-muted-foreground">Viajantes:</span>
+						<span className="text-muted-foreground">{m["trip.travelers"]()}:</span>
 						<div className="flex items-center gap-2">
 							<Users className="h-4 w-4" />
-							<span className="font-medium">{data.people} pessoas</span>
+							<span className="font-medium">{m["trip.people_count_plural"]({ count: data.people })}</span>
 						</div>
 					</div>
 				)}
@@ -466,7 +466,7 @@ function SummaryStep({
 				{/* Budget */}
 				{data.budget && (
 					<div className="flex items-center justify-between py-3 border-b border-border/50">
-						<span className="text-muted-foreground">Orçamento:</span>
+						<span className="text-muted-foreground">{m["trip.budget"]()}:</span>
 						<div className="flex items-center gap-2">
 							<DollarSign className="h-4 w-4" />
 							<span className="font-medium">
@@ -483,7 +483,7 @@ function SummaryStep({
 				{/* Departures */}
 				{data.departureAirports && data.departureAirports.length > 0 && (
 					<div className="flex items-start justify-between py-3">
-						<span className="text-muted-foreground">Saída(s):</span>
+						<span className="text-muted-foreground">{m["trip.departure"]()}:</span>
 						<div className="text-right flex flex-wrap justify-end">
 							{data.departureAirports.map((airport: Airport) => (
 								<Badge

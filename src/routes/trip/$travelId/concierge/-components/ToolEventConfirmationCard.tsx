@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { formatCurrencyBRL } from "@/lib/currency";
 import { orpc } from "@/orpc/client";
 import type { MyConciergeTools } from "@/orpc/modules/concierge/concierge.ai";
+import * as m from "@/paraglide/messages";
+import { getLocale } from "@/paraglide/runtime";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { InferUITools } from "ai";
 import { CheckIcon, XIcon } from "lucide-react";
@@ -26,10 +28,10 @@ interface ToolEventConfirmationCardProps {
 	toolCallId: string;
 }
 
-const eventTypeLabels: Record<string, string> = {
-	travel: "Transporte",
-	food: "Alimentação",
-	activity: "Atividade",
+const eventTypeLabels: Record<string, () => string> = {
+	travel: () => m["event.type_transport"](),
+	food: () => m["event.type_food"](),
+	activity: () => m["event.type_activity"](),
 };
 
 const eventTypeVariants: Record<
@@ -42,8 +44,9 @@ const eventTypeVariants: Record<
 };
 
 const formatDate = (dateStr: string) => {
+	const locale = getLocale();
 	const date = new Date(dateStr);
-	return date.toLocaleDateString("pt-BR", {
+	return date.toLocaleString(locale, {
 		day: "2-digit",
 		month: "2-digit",
 		year: "numeric",
@@ -53,7 +56,7 @@ const formatDate = (dateStr: string) => {
 };
 
 const getEventTypeLabel = (type: string) => {
-	return eventTypeLabels[type] ?? type;
+	return eventTypeLabels[type]?.() ?? type;
 };
 
 const getEventTypeVariant = (
@@ -74,7 +77,7 @@ export function ToolEventConfirmationCard({
 	const createEventMutation = useMutation({
 		...orpc.eventRoutes.createEvent.mutationOptions(),
 		onSuccess: (result) => {
-			toast.success("Evento criado com sucesso!");
+			toast.success(m["concierge.tools.event_create.toast_success"]());
 			queryClient.invalidateQueries({
 				queryKey: orpc.eventRoutes.getEventsByTravel.queryKey({
 					input: { travelId },
@@ -101,7 +104,7 @@ export function ToolEventConfirmationCard({
 			setIsProcessed(true);
 		},
 		onError: (error) => {
-			toast.error("Erro ao criar evento");
+			toast.error(m["concierge.tools.event_create.toast_error"]());
 			console.error("Event creation error:", error);
 			addToolResult({
 				tool: "getAccomodations",
@@ -136,7 +139,7 @@ export function ToolEventConfirmationCard({
 	const handleReject = () => {
 		if (isProcessed) return;
 
-		toast.info("Sugestão de evento rejeitada");
+		toast.info(m["concierge.tools.event_create.toast_reject"]());
 		addToolResult({
 			tool: "requestToCreateEvent",
 			toolCallId,
@@ -157,30 +160,36 @@ export function ToolEventConfirmationCard({
 						{getEventTypeLabel(eventData.type)}
 					</Badge>
 				</div>
-				<CardDescription>
-					O assistente sugere criar este evento na sua viagem
-				</CardDescription>
+			<CardDescription>
+				{m["concierge.tools.event_create.card_description"]()}
+			</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-3">
 				<div className="grid grid-cols-1 gap-2 text-sm">
 					<div>
-						<span className="font-medium text-muted-foreground">Início:</span>{" "}
+						<span className="font-medium text-muted-foreground">
+							{m["concierge.tools.event_create.label_start"]()}:
+						</span>{" "}
 						{formatDate(eventData.startDate)}
 					</div>
 					<div>
-						<span className="font-medium text-muted-foreground">Fim:</span>{" "}
+						<span className="font-medium text-muted-foreground">
+							{m["concierge.tools.event_create.label_end"]()}:
+						</span>{" "}
 						{formatDate(eventData.endDate)}
 					</div>
 					{eventData.location && (
 						<div>
-							<span className="font-medium text-muted-foreground">Local:</span>{" "}
+							<span className="font-medium text-muted-foreground">
+								{m["concierge.tools.event_create.label_location"]()}:
+							</span>{" "}
 							{eventData.location}
 						</div>
 					)}
 					{eventData.estimatedCost && (
 						<div>
 							<span className="font-medium text-muted-foreground">
-								Custo estimado:
+								{m["concierge.tools.event_create.label_cost"]()}:
 							</span>{" "}
 							{formatCurrencyBRL(eventData.estimatedCost)}
 						</div>
@@ -188,14 +197,16 @@ export function ToolEventConfirmationCard({
 					{eventData.description && (
 						<div>
 							<span className="font-medium text-muted-foreground">
-								Descrição:
+								{m["concierge.tools.event_create.label_description"]()}:
 							</span>{" "}
 							{eventData.description}
 						</div>
 					)}
 					{eventData.link && (
 						<div>
-							<span className="font-medium text-muted-foreground">Link:</span>{" "}
+							<span className="font-medium text-muted-foreground">
+								{m["concierge.tools.event_create.label_link"]()}:
+							</span>{" "}
 							<a
 								href={eventData.link}
 								target="_blank"
@@ -219,7 +230,9 @@ export function ToolEventConfirmationCard({
 							className="flex-1"
 						>
 							<CheckIcon className="w-4 h-4 mr-2" />
-							{createEventMutation.isPending ? "Criando..." : "Aceitar"}
+							{createEventMutation.isPending
+								? m["common.creating"]()
+								: m["common.accept"]()}
 						</Button>
 						<Button
 							variant="outline"
@@ -228,14 +241,14 @@ export function ToolEventConfirmationCard({
 							className="flex-1"
 						>
 							<XIcon className="w-4 h-4 mr-2" />
-							Recusar
+							{m["common.reject"]()}
 						</Button>
 					</>
 				) : (
 					<div className="flex-1 text-center text-sm text-muted-foreground">
 						{createEventMutation.isSuccess
-							? "✅ Evento criado"
-							: "❌ Rejeitado"}
+							? m["concierge.tools.event_create.status_created"]()
+							: m["concierge.tools.event_create.status_rejected"]()}
 					</div>
 				)}
 			</CardFooter>

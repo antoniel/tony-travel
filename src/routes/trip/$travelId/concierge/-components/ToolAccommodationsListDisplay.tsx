@@ -9,6 +9,7 @@ import {
 import { formatCurrencyBRL } from "@/lib/currency";
 import type { MyConciergeTools } from "@/orpc/modules/concierge/concierge.ai";
 import type { InferUITools } from "ai";
+import * as m from "@/paraglide/messages";
 
 import { formatDateRange, getAccommodationTypeLabel } from "./accommodation-utils";
 
@@ -24,7 +25,7 @@ export function ToolAccommodationsListDisplay({
 			<Card className="w-full max-w-md mx-auto my-4">
 				<CardContent>
 					<p className="text-sm text-destructive">
-						{report.message ?? "Erro ao buscar acomodações"}
+						{report.message ?? m["concierge.tools.accommodation.list_error_fallback"]()}
 					</p>
 				</CardContent>
 			</Card>
@@ -36,7 +37,7 @@ export function ToolAccommodationsListDisplay({
 			<Card className="w-full max-w-md mx-auto my-4">
 				<CardContent>
 					<p className="text-sm text-muted-foreground">
-						Nenhuma acomodação cadastrada para esta viagem ainda.
+						{m["concierge.tools.accommodation.list_empty"]()}
 					</p>
 				</CardContent>
 			</Card>
@@ -46,7 +47,9 @@ export function ToolAccommodationsListDisplay({
 	return (
 		<Card className="w-full max-w-md mx-auto my-4">
 			<CardHeader>
-				<CardTitle className="text-lg">Acomodações encontradas</CardTitle>
+				<CardTitle className="text-lg">
+					{m["concierge.tools.accommodation.list_title"]()}
+				</CardTitle>
 				<CardDescription>{report.message}</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-4 text-sm">
@@ -63,13 +66,16 @@ export function ToolAccommodationsListDisplay({
 						</div>
 						<div className="mt-2 grid gap-1">
 							<span className="text-muted-foreground">
-								Período: {formatDateRange(acc.checkIn, acc.checkOut)}
+								{m["concierge.tools.accommodation_create.label_period"]()}:{" "}
+								{formatDateRange(acc.checkIn, acc.checkOut)}
 							</span>
 							<span className="text-muted-foreground">
-								Endereço: {acc.address}
+								{m["concierge.tools.accommodation_create.label_address"]()}:{" "}
+								{acc.address}
 							</span>
 							<span className="text-muted-foreground">
-								Preço estimado: {formatCurrencyBRL(acc.price)}
+								{m["concierge.tools.accommodation_create.label_estimated_value"]()}:{" "}
+								{formatCurrencyBRL(acc.price)}
 							</span>
 						</div>
 					</div>

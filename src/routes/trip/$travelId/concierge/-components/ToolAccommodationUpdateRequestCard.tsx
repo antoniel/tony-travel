@@ -22,6 +22,7 @@ import type {
 	AccommodationUpdatePayload,
 	AddToolResultType,
 } from "./component-tool-types";
+import * as m from "@/paraglide/messages";
 
 interface ToolAccommodationUpdateRequestCardProps {
 	input: InferUITools<MyConciergeTools>["requestToUpdateAccommodation"]["input"];
@@ -30,13 +31,13 @@ interface ToolAccommodationUpdateRequestCardProps {
 	addToolResult: AddToolResultType;
 }
 
-const fieldLabels: Record<string, string> = {
-	name: "Nome",
-	type: "Tipo",
-	address: "Endereço",
-	startDate: "Check-in",
-	endDate: "Check-out",
-	price: "Preço",
+const fieldLabelGetters: Record<string, () => string> = {
+	name: () => m["accommodation.name"](),
+	type: () => m["accommodation.type"](),
+	address: () => m["accommodation.address"](),
+	startDate: () => m["accommodation.check_in"](),
+	endDate: () => m["accommodation.check_out"](),
+	price: () => m["concierge.tools.accommodation_update.label_price"](),
 };
 
 export function ToolAccommodationUpdateRequestCard({
@@ -66,14 +67,18 @@ export function ToolAccommodationUpdateRequestCard({
 
 				if (result.conflictingAccommodation) {
 					toast.error(
-						`Existe conflito com a acomodação "${result.conflictingAccommodation.name}"`,
+						m["concierge.tools.accommodation_update.toast_conflict"]({
+							name: result.conflictingAccommodation.name,
+						}),
 					);
 					await addToolResult({
 						tool: "requestToUpdateAccommodation",
 						toolCallId,
 						output: {
 							success: false,
-							validationError: `Conflito com a acomodação "${result.conflictingAccommodation.name}"`,
+							validationError: m["concierge.tools.accommodation_update.result_conflict"]({
+								name: result.conflictingAccommodation.name,
+							}),
 						},
 					});
 					setIsProcessed(true);
@@ -81,7 +86,9 @@ export function ToolAccommodationUpdateRequestCard({
 				}
 
 				if (result.success) {
-					toast.success("Acomodação atualizada com sucesso!");
+					toast.success(
+						m["concierge.tools.accommodation_update.toast_success"](),
+					);
 					await queryClient.invalidateQueries({
 						queryKey:
 							orpc.accommodationRoutes.getAccommodationsByTravel.queryKey({
@@ -110,14 +117,14 @@ export function ToolAccommodationUpdateRequestCard({
 				setIsProcessed(true);
 			},
 			onError: async (error) => {
-				toast.error("Erro ao atualizar acomodação");
+				toast.error(m["concierge.tools.accommodation_update.toast_error"]());
 				console.error("Accommodation update error:", error);
 				await addToolResult({
 					tool: "requestToUpdateAccommodation",
 					toolCallId,
 					output: {
 						success: false,
-						validationError: "Falha ao atualizar acomodação",
+						validationError: m["concierge.tools.accommodation_update.result_error"](),
 					},
 				});
 				setIsProcessed(true);
@@ -150,12 +157,14 @@ export function ToolAccommodationUpdateRequestCard({
 	);
 
 	const handleAccept = () => {
-		if (isProcessed || proposedEntries.length === 0) {
-			if (proposedEntries.length === 0) {
-				toast.info("Nenhuma alteração foi proposta para aplicar");
-			}
-			return;
+	if (isProcessed || proposedEntries.length === 0) {
+		if (proposedEntries.length === 0) {
+			toast.info(
+				m["concierge.tools.accommodation_update.toast_no_changes"](),
+			);
 		}
+		return;
+	}
 
 		updateAccommodationMutation.mutate({
 			id: input.accommodationId,
@@ -166,15 +175,15 @@ export function ToolAccommodationUpdateRequestCard({
 	const handleReject = () => {
 		if (isProcessed) return;
 
-		toast.info("Solicitação de atualização rejeitada");
-		void addToolResult({
-			tool: "requestToUpdateAccommodation",
-			toolCallId,
-			output: {
-				success: false,
-				validationError: "Usuário rejeitou a atualização",
-			},
-		});
+	toast.info(m["concierge.tools.accommodation_update.toast_reject"]());
+	void addToolResult({
+		tool: "requestToUpdateAccommodation",
+		toolCallId,
+		output: {
+			success: false,
+			validationError: m["concierge.tools.accommodation_update.result_reject"](),
+		},
+	});
 		setIsProcessed(true);
 	};
 
@@ -185,19 +194,23 @@ export function ToolAccommodationUpdateRequestCard({
 			<CardHeader>
 				<div className="flex items-center justify-between gap-4">
 					<CardTitle className="text-lg">
-						Atualizar acomodação {input.accommodationId}
+						{m["concierge.tools.accommodation_update.title"]({
+							id: input.accommodationId,
+						})}
 					</CardTitle>
-					<Badge variant="outline">Atualização</Badge>
+					<Badge variant="outline">
+						{m["concierge.tools.accommodation_update.badge_label"]()}
+					</Badge>
 				</div>
 				<CardDescription>
-					Revise e confirme as alterações sugeridas antes de aplicar
+					{m["concierge.tools.accommodation_update.description"]()}
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-3 text-sm">
-				{proposedEntries.length === 0 ? (
-					<p className="text-muted-foreground">
-						Nenhuma alteração foi proposta para esta acomodação.
-					</p>
+	{proposedEntries.length === 0 ? (
+		<p className="text-muted-foreground">
+			{m["concierge.tools.accommodation_update.empty"]()}
+		</p>
 				) : (
 					<ul className="space-y-2">
 						{proposedEntries.map(([fieldKey, value]) => (
@@ -223,7 +236,9 @@ export function ToolAccommodationUpdateRequestCard({
 							className="flex-1"
 						>
 							<CheckIcon className="w-4 h-4 mr-2" />
-							{pending ? "Aplicando..." : "Aplicar alterações"}
+							{pending
+								? m["common.applying"]()
+								: m["concierge.tools.accommodation_update.button_apply"]()}
 						</Button>
 						<Button
 							variant="outline"
@@ -232,14 +247,14 @@ export function ToolAccommodationUpdateRequestCard({
 							className="flex-1"
 						>
 							<XIcon className="w-4 h-4 mr-2" />
-							Recusar
+							{m["common.reject"]()}
 						</Button>
 					</>
 				) : (
 					<div className="flex-1 text-center text-sm text-muted-foreground">
 						{updateAccommodationMutation.isSuccess
-							? "✅ Alterações aplicadas"
-							: "❌ Rejeitada ou cancelada"}
+							? m["concierge.tools.accommodation_update.status_applied"]()
+							: m["concierge.tools.accommodation_update.status_cancelled"]()}
 					</div>
 				)}
 			</CardFooter>
@@ -252,7 +267,7 @@ function renderAccommodationFieldValue(
 	value: AccommodationUpdatePayload[keyof AccommodationUpdatePayload],
 ) {
 	if (value === undefined) {
-		return "-";
+		return m["concierge.tools.accommodation_update.label_no_value"]();
 	}
 
 	if (value instanceof Date) {
@@ -267,5 +282,5 @@ function renderAccommodationFieldValue(
 }
 
 function getAccommodationFieldLabel(fieldKey: string) {
-	return fieldLabels[fieldKey] ?? fieldKey;
+	return fieldLabelGetters[fieldKey]?.() ?? fieldKey;
 }

@@ -1,3 +1,4 @@
+import * as m from "@/paraglide/messages";
 import { ResponsiveModal } from "@/components/ui/ResponsiveModal";
 import { Button } from "@/components/ui/button";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -143,13 +144,15 @@ export function AccommodationModal({
 
 				if (result.conflictingAccommodation) {
 					toast.error(
-						`Existe conflito com a acomodação "${result.conflictingAccommodation.name}"`,
+						m["accommodation.conflict_with"]({
+							name: result.conflictingAccommodation.name,
+						}),
 					);
 					return;
 				}
 
 				if (result.success) {
-					toast.success("Acomodação atualizada com sucesso!");
+					toast.success(m["accommodation.updated_success"]());
 					form.reset();
 					onOpenChange(false);
 
@@ -180,13 +183,15 @@ export function AccommodationModal({
 
 				if (result.conflictingAccommodation) {
 					toast.error(
-						`Existe conflito com a acomodação "${result.conflictingAccommodation.name}"`,
+						m["accommodation.conflict_with"]({
+							name: result.conflictingAccommodation.name,
+						}),
 					);
 					return;
 				}
 
 				if (result.id) {
-					toast.success("Acomodação criada com sucesso!");
+					toast.success(m["accommodation.created_success"]());
 					form.reset();
 					onOpenChange(false);
 
@@ -228,11 +233,11 @@ export function AccommodationModal({
 	const dateConstraints = getDateConstraints();
 
 	const accommodationTypes = [
-		{ value: "hotel", label: "Hotel" },
-		{ value: "hostel", label: "Hostel" },
-		{ value: "airbnb", label: "Airbnb" },
-		{ value: "resort", label: "Resort" },
-		{ value: "other", label: "Outro" },
+		{ value: "hotel", label: m["accommodation.type_hotel"]() },
+		{ value: "hostel", label: m["accommodation.type_hostel"]() },
+		{ value: "airbnb", label: m["accommodation.type_apartment"]() },
+		{ value: "resort", label: m["accommodation.type_hotel"]() },
+		{ value: "other", label: m["accommodation.type_other"]() },
 	];
 
 	return (
@@ -244,7 +249,9 @@ export function AccommodationModal({
 		>
 			<DialogHeader className="border-b px-6 py-4">
 				<DialogTitle className="text-left">
-					{editingAccommodation ? "Editar Acomodação" : "Adicionar Acomodação"}
+					{editingAccommodation
+						? m["accommodation.edit_accommodation"]()
+						: m["accommodation.add_accommodation"]()}
 				</DialogTitle>
 			</DialogHeader>
 
@@ -259,10 +266,10 @@ export function AccommodationModal({
 							name="name"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>Nome da Acomodação</FormLabel>
+									<FormLabel>{m["accommodation.name"]()}</FormLabel>
 									<FormControl>
 										<Input
-											placeholder="Ex: Hotel Copacabana Palace"
+											placeholder={m["accommodation.hotel_name"]()}
 											{...field}
 										/>
 									</FormControl>
@@ -276,14 +283,14 @@ export function AccommodationModal({
 							name="type"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>Tipo</FormLabel>
+									<FormLabel>{m["accommodation.type"]()}</FormLabel>
 									<Select
 										onValueChange={field.onChange}
 										defaultValue={field.value}
 									>
 										<FormControl>
 											<SelectTrigger>
-												<SelectValue placeholder="Selecione o tipo" />
+												<SelectValue placeholder={m["common.select"]()} />
 											</SelectTrigger>
 										</FormControl>
 										<SelectContent>
@@ -305,7 +312,7 @@ export function AccommodationModal({
 								name="startDate"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>Check-in</FormLabel>
+										<FormLabel>{m["accommodation.check_in"]()}</FormLabel>
 										<FormControl>
 											<Input
 												type="date"
@@ -332,7 +339,7 @@ export function AccommodationModal({
 								name="endDate"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>Check-out</FormLabel>
+										<FormLabel>{m["accommodation.check_out"]()}</FormLabel>
 										<FormControl>
 											<Input
 												type="date"
@@ -360,10 +367,10 @@ export function AccommodationModal({
 							name="address"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>Endereço</FormLabel>
+									<FormLabel>{m["accommodation.address_optional"]()}</FormLabel>
 									<FormControl>
 										<Textarea
-											placeholder="Endereço completo da acomodação"
+											placeholder={m["accommodation.address"]()}
 											{...field}
 											value={field.value || ""}
 										/>
@@ -379,7 +386,7 @@ export function AccommodationModal({
 								name="price"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>Preço (R$)</FormLabel>
+										<FormLabel>{m["accommodation.price_optional"]()}</FormLabel>
 										<FormControl>
 											<Input
 												type="text"
@@ -409,7 +416,7 @@ export function AccommodationModal({
 								onClick={() => onOpenChange(false)}
 								className="w-full sm:w-auto"
 							>
-								Cancelar
+								{m["common.cancel"]()}
 							</Button>
 							<Button
 								type="submit"
@@ -417,12 +424,10 @@ export function AccommodationModal({
 								className="w-full sm:w-auto"
 							>
 								{isSubmitting
-									? editingAccommodation
-										? "Salvando..."
-										: "Criando..."
+									? m["common.loading"]()
 									: editingAccommodation
-										? "Salvar Alterações"
-										: "Criar Acomodação"}
+										? m["common.save"]()
+										: m["accommodation.add_accommodation"]()}
 							</Button>
 						</div>
 					</div>

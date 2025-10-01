@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import { orpc } from "@/orpc/client";
 import type { MyConciergeTools } from "@/orpc/modules/concierge/concierge.ai";
+import * as m from "@/paraglide/messages";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { InferUITools } from "ai";
 import { Trash2, XIcon } from "lucide-react";
@@ -37,7 +38,7 @@ export function ToolAccommodationDeleteRequestCard({
 	const deleteAccommodationMutation = useMutation(
 		orpc.accommodationRoutes.deleteAccommodation.mutationOptions({
 			onSuccess: async () => {
-				toast.success("Acomodação removida com sucesso!");
+				toast.success(m["concierge.tools.accommodation_delete.toast_success"]());
 				await queryClient.invalidateQueries({
 					queryKey: orpc.accommodationRoutes.getAccommodationsByTravel.queryKey({
 						input: { travelId },
@@ -53,20 +54,20 @@ export function ToolAccommodationDeleteRequestCard({
 					toolCallId,
 					output: {
 						success: true,
-						message: "Acomodação excluída pelo usuário",
+						message: m["concierge.tools.accommodation_delete.result_success"](),
 					},
 				});
 				setIsProcessed(true);
 			},
 			onError: async (error) => {
-				toast.error("Erro ao excluir acomodação");
+				toast.error(m["concierge.tools.accommodation_delete.toast_error"]());
 				console.error("Accommodation delete error:", error);
 				await addToolResult({
 					tool: "requestToDeleteAccommodation",
 					toolCallId,
 					output: {
 						success: false,
-						message: "Falha ao excluir acomodação",
+						message: m["concierge.tools.accommodation_delete.result_error"](),
 					},
 				});
 				setIsProcessed(true);
@@ -79,7 +80,7 @@ export function ToolAccommodationDeleteRequestCard({
 
 		if (!input.confirm) {
 			toast.error(
-				"Confirmação ausente. Peça ao assistente para confirmar a remoção antes de prosseguir.",
+				m["concierge.tools.accommodation_delete.toast_missing_confirmation"](),
 			);
 			return;
 		}
@@ -90,13 +91,13 @@ export function ToolAccommodationDeleteRequestCard({
 	const handleReject = () => {
 		if (isProcessed) return;
 
-		toast.info("Solicitação de exclusão rejeitada");
+		toast.info(m["concierge.tools.accommodation_delete.toast_reject"]());
 		void addToolResult({
 			tool: "requestToDeleteAccommodation",
 			toolCallId,
 			output: {
 				success: false,
-				message: "Usuário rejeitou a exclusão",
+				message: m["concierge.tools.accommodation_delete.result_reject"](),
 			},
 		});
 		setIsProcessed(true);
@@ -108,22 +109,30 @@ export function ToolAccommodationDeleteRequestCard({
 				<div className="flex items-center justify-between gap-4">
 					<CardTitle className="text-lg flex items-center gap-2">
 						<Trash2 className="w-4 h-4 text-destructive" />
-						Remover acomodação {input.accommodationId}
+						{m["concierge.tools.accommodation_delete.title"]({
+							id: input.accommodationId,
+						})}
 					</CardTitle>
-					<Badge variant="destructive">Remoção</Badge>
+					<Badge variant="destructive">
+						{m["concierge.tools.accommodation_delete.badge_label"]()}
+					</Badge>
 				</div>
 				<CardDescription>
-					Confirme se deseja excluir esta acomodação permanentemente
+					{m["concierge.tools.accommodation_delete.description"]()}
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-3 text-sm">
 				{input.reason && (
-					<AccommodationInfoRow label="Motivo informado">
+					<AccommodationInfoRow
+						label={m["concierge.tools.accommodation_delete.label_reason"]()}
+					>
 						{input.reason}
 					</AccommodationInfoRow>
 				)}
-				<AccommodationInfoRow label="Confirmado pelo assistente">
-					{input.confirm ? "Sim" : "Não"}
+				<AccommodationInfoRow
+					label={m["concierge.tools.accommodation_delete.label_confirmed"]()}
+				>
+					{input.confirm ? m["common.yes"]() : m["common.no"]()}
 				</AccommodationInfoRow>
 			</CardContent>
 			<CardFooter className="flex gap-2">
@@ -137,8 +146,8 @@ export function ToolAccommodationDeleteRequestCard({
 						>
 							<Trash2 className="w-4 h-4 mr-2" />
 							{deleteAccommodationMutation.isPending
-								? "Excluindo..."
-								: "Excluir"}
+								? m["common.deleting"]()
+								: m["common.delete"]()}
 						</Button>
 						<Button
 							variant="outline"
@@ -147,14 +156,14 @@ export function ToolAccommodationDeleteRequestCard({
 							className="flex-1"
 						>
 							<XIcon className="w-4 h-4 mr-2" />
-							Cancelar
+							{m["common.cancel"]()}
 						</Button>
 					</>
 				) : (
 					<div className="flex-1 text-center text-sm text-muted-foreground">
 						{deleteAccommodationMutation.isSuccess
-							? "✅ Acomodação excluída"
-							: "❌ Rejeitada ou cancelada"}
+							? m["concierge.tools.accommodation_delete.status_deleted"]()
+							: m["concierge.tools.accommodation_delete.status_cancelled"]()}
 					</div>
 				)}
 			</CardFooter>

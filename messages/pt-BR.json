@@ -1,6 +1,12 @@
 {
 	"$schema": "https://inlang.com/schema/inlang-message-format",
 	"common": {
+		"add": "Adicionar",
+		"accept": "Aceitar",
+		"reject": "Recusar",
+		"creating": "Criando...",
+		"deleting": "Excluindo...",
+		"applying": "Aplicando...",
 		"submit": "Enviar",
 		"cancel": "Cancelar",
 		"save": "Salvar",
@@ -43,7 +49,10 @@
 		"login_with_google": "Entrar com Google",
 		"login_with_github": "Entrar com GitHub",
 		"welcome_back": "Bem-vindo de volta",
-		"create_account": "Criar conta"
+		"create_account": "Criar conta",
+		"signing_in": "Entrando...",
+		"welcome_back_subtitle": "Bem-vindo de volta! Faça login para continuar",
+		"terms_agreement": "Ao fazer login, você concorda com nossos termos de uso e política de privacidade."
 	},
 	"trip": {
 		"title": "Viagem",
@@ -77,6 +86,12 @@
 		"search_destination": "Buscar destino...",
 		"selected_airports": "Aeroportos selecionados",
 		"selected_destinations": "Destinos selecionados",
+		"events_count": "{count} evento",
+		"events_count_plural": "{count} eventos",
+		"days": "{count} dia",
+		"days_plural": "{count} dias",
+		"not_found_title": "Viagem não encontrada",
+		"not_found_description": "A viagem que você está procurando não existe ou foi removida.",
 		"number_of_travelers": "Número de viajantes",
 		"people_count": "{count} pessoa",
 		"people_count_plural": "{count} pessoas",
@@ -88,6 +103,18 @@
 		"create_custom_itinerary": "Criar meu roteiro personalizado",
 		"login_required": "Login necessário para criar viagens",
 		"login_required_message": "Você precisa estar logado para criar um roteiro personalizado.",
+		"tabs": {
+			"concierge": "Concierge",
+			"itinerary": "Itinerário",
+			"timeline": "Cronograma",
+			"calendar": "Calendário",
+			"flights": "Voos",
+			"accommodations": "Acomodações",
+			"locations": "Locais",
+			"members": "Membros",
+			"financial": "Financeiro",
+			"settings": "Configurações"
+		},
 		"your_trip": "Sua viagem",
 		"days_of_trip": "{days} dias de viagem",
 		"starts_from": "A partir de {amount}",
@@ -99,7 +126,176 @@
 		"departure": "partida",
 		"dates": "datas",
 		"today": "Hoje",
-		"tomorrow": "Amanhã"
+		"tomorrow": "Amanhã",
+		"wizard_name_title": "Como você quer chamar esta viagem?",
+		"wizard_name_description": "Escolha um nome que te inspire e identifique facilmente sua aventura",
+		"wizard_summary_title": "Perfeito! Vamos criar sua viagem",
+		"wizard_summary_description": "Revise os detalhes da sua aventura antes de continuar",
+		"wizard_step_of": "Etapa {current} de {total}",
+		"wizard_percent_complete": "{percent}% concluído",
+		"creating": "Criando...",
+		"created_successfully": "Viagem criada com sucesso!",
+		"created_redirect": "Redirecionando para sua nova viagem...",
+		"create_error": "Erro ao criar viagem",
+		"create_error_retry": "Tente novamente em alguns instantes.",
+		"data_error": "Erro nos dados",
+		"select_destination_required": "Selecione ao menos um destino ou aeroporto.",
+		"check_all_fields": "Verifique se todas as informações estão preenchidas.",
+		"destination_unspecified": "Destino não especificado",
+		"name_placeholder": "Ex: Aventura em Paris, Escapada no Rio...",
+		"description_placeholder": "Descreva objetivos, atividades planejadas, anotações para o grupo...",
+		"description_too_long": "Descrição muito longa"
+	},
+	"concierge": {
+		"panel_label": "Conversa com o concierge",
+		"toggle_button": "Falar com concierge",
+		"open_floating": "Abrir concierge flutuante",
+		"close_floating": "Fechar concierge flutuante",
+		"pending_indicator": "Pendências ativas",
+		"pending_loading": "Verificando pendências da viagem...",
+		"pending_section_label": "Pendências do concierge",
+		"pending_section_title": "Pendências identificadas",
+		"pending_section_description": "O concierge separou os pontos que precisam de atenção para seguir com a viagem.",
+		"pending_severity": {
+			"critical": "Pendente",
+			"advisory": "Sugestão"
+		},
+		"pending_affects": "Afeta: {names}",
+		"pending_dates_single": "Datas descobertas: {date}",
+		"pending_dates_range": "Datas descobertas: {start} até {end}",
+		"messages": {
+			"actions": {
+				"retry": "Tentar novamente",
+				"copy": "Copiar"
+			},
+			"loading": {
+				"events": "Buscando eventos da viagem...",
+				"participants": "Buscando participantes da viagem...",
+				"accommodations": "Buscando acomodações disponíveis..."
+			},
+			"success_prefix": "✅ {message}"
+		},
+		"agent": {
+			"header": "Seu assistente para organizar a viagem",
+			"header_with_name": "Seu assistente para organizar a viagem: {name}",
+			"intro": {
+				"title": "O que o Concierge pode fazer",
+				"flights_title": "Adicionar voos",
+				"flights_example": "\"Adicionar voo de GRU para JFK saindo 10/11 às 22:30 e chegando 11/11 às 07:10\".",
+				"events_title": "Eventos e horários",
+				"events_example": "\"Criar jantar 12/11 das 19:00 às 21:00\" ou \"Passeio 13/11 à tarde\".",
+				"activities_title": "Adicione atividades",
+				"activities_example": "\"Adicione atividade leve para começar a viagem\" ou \"Adicione no primeiro dia aclimatação\"."
+			},
+			"delayed_alert": "O concierge está analisando sua mensagem. A resposta pode levar alguns instantes, mas seu pedido já está na fila.",
+			"attachment_fallback": "Pedido com anexos"
+		},
+		"tools": {
+			"accommodation_create": {
+				"toast_conflict": "Existe conflito com a acomodação \"{name}\"",
+				"result_conflict": "Conflito com a acomodação \"{name}\"",
+				"toast_success": "Acomodação criada com sucesso!",
+				"result_success": "Acomodação criada pelo usuário",
+				"toast_error": "Erro ao criar acomodação",
+				"result_error": "Falha ao criar acomodação",
+				"toast_reject": "Solicitação de acomodação rejeitada",
+				"result_reject": "Usuário rejeitou a criação da acomodação",
+				"card_description": "O assistente sugere adicionar esta acomodação à viagem",
+				"label_period": "Período",
+				"label_address": "Endereço",
+				"label_estimated_value": "Valor estimado",
+				"status_completed": "✅ Acomodação criada",
+				"status_cancelled": "❌ Rejeitada ou cancelada"
+			},
+			"accommodation": {
+				"date_range": "{start} até {end}",
+				"list_title": "Acomodações encontradas",
+				"list_empty": "Nenhuma acomodação cadastrada para esta viagem ainda.",
+				"list_error_fallback": "Erro ao buscar acomodações"
+			},
+			"accommodation_delete": {
+				"toast_success": "Acomodação removida com sucesso!",
+				"result_success": "Acomodação excluída pelo usuário",
+				"toast_error": "Erro ao excluir acomodação",
+				"result_error": "Falha ao excluir acomodação",
+				"toast_missing_confirmation": "Confirmação ausente. Peça ao assistente para confirmar a remoção antes de prosseguir.",
+				"toast_reject": "Solicitação de exclusão rejeitada",
+				"result_reject": "Usuário rejeitou a exclusão",
+				"title": "Remover acomodação {id}",
+				"badge_label": "Remoção",
+				"description": "Confirme se deseja excluir esta acomodação permanentemente",
+				"label_reason": "Motivo informado",
+				"label_confirmed": "Confirmado pelo assistente",
+				"status_deleted": "✅ Acomodação excluída",
+				"status_cancelled": "❌ Rejeitada ou cancelada"
+			},
+			"accommodation_update": {
+				"toast_conflict": "Existe conflito com a acomodação \"{name}\"",
+				"result_conflict": "Conflito com a acomodação \"{name}\"",
+				"toast_success": "Acomodação atualizada com sucesso!",
+				"toast_error": "Erro ao atualizar acomodação",
+				"result_error": "Falha ao atualizar acomodação",
+				"toast_no_changes": "Nenhuma alteração foi proposta para aplicar",
+				"toast_reject": "Solicitação de atualização rejeitada",
+				"result_reject": "Usuário rejeitou a atualização",
+				"title": "Atualizar acomodação {id}",
+				"badge_label": "Atualização",
+				"description": "Revise e confirme as alterações sugeridas antes de aplicar",
+				"empty": "Nenhuma alteração foi proposta para esta acomodação.",
+				"button_apply": "Aplicar alterações",
+				"status_applied": "✅ Alterações aplicadas",
+				"status_cancelled": "❌ Rejeitada ou cancelada",
+				"label_no_value": "-",
+				"label_price": "Preço"
+			},
+			"events": {
+				"error_fetch": "Erro ao buscar eventos: {message}",
+				"error_unknown": "Erro desconhecido",
+				"empty": "Nenhum evento encontrado para esta viagem.",
+				"title": "Eventos da viagem",
+				"description_count": "{message} ({count} evento)",
+				"description_count_plural": "{message} ({count} eventos)",
+				"select_all": "Selecionar todos",
+				"select_all_aria": {
+					"select": "Selecionar todos os eventos",
+					"unselect": "Desmarcar todos os eventos"
+				},
+				"remove_selected": "Remover selecionados",
+				"aria_event": "Selecionar o evento {title}",
+				"details": {
+					"date": "📅 {date}",
+					"location": "📍 {location}",
+					"description": "💬 {description}",
+					"price": "💰 {price}",
+					"link": "🔗 Link"
+				},
+				"link_sr": "Abrir link do evento em nova aba",
+				"remove_single": "Remover",
+				"toast_removed": "Evento removido com sucesso",
+				"toast_removed_plural": "{count} eventos removidos com sucesso",
+				"toast_remove_error": "Não foi possível remover todos os eventos selecionados",
+				"dialog_title": "Confirmar remoção",
+				"dialog_single": "Você tem certeza que deseja remover o evento \"{title}\"?",
+				"dialog_multiple": "Você tem certeza que deseja remover {count} eventos selecionados?",
+				"dialog_cancel": "Cancelar",
+				"dialog_confirm": "Remover",
+				"dialog_confirm_pending": "Removendo..."
+			},
+			"event_create": {
+				"toast_success": "Evento criado com sucesso!",
+				"toast_error": "Erro ao criar evento",
+				"toast_reject": "Sugestão de evento rejeitada",
+				"card_description": "O assistente sugere criar este evento na sua viagem",
+				"label_start": "Início",
+				"label_end": "Fim",
+				"label_location": "Local",
+				"label_cost": "Custo estimado",
+				"label_description": "Descrição",
+				"label_link": "Link",
+				"status_created": "✅ Evento criado",
+				"status_rejected": "❌ Rejeitado"
+			}
+		}
 	},
 	"calendar": {
 		"title": "Calendário",
@@ -118,6 +314,28 @@
 		"end_time": "Horário de término",
 		"all_day": "Dia inteiro",
 		"no_events": "Nenhum evento"
+	},
+	"event": {
+		"create_new": "Criar novo evento",
+		"edit": "Editar evento",
+		"title": "Título",
+		"type": "Tipo",
+		"type_transport": "Transporte",
+		"type_food": "Alimentação",
+		"type_activity": "Atividade",
+		"select_type": "Selecione o tipo de evento",
+		"location": "Local",
+		"location_placeholder": "Local do evento (opcional)",
+		"price_optional": "Preço (R$) — opcional",
+		"description_optional": "Descrição — opcional",
+		"description_placeholder": "Adicione detalhes sobre este evento...",
+		"link_optional": "Link — opcional",
+		"link_placeholder": "https://exemplo.com",
+		"date_and_time": "Data e horário",
+		"start_time": "Horário de início",
+		"end_time": "Horário de término",
+		"create": "Criar evento",
+		"save_changes": "Salvar alterações"
 	},
 	"flight": {
 		"flight": "Voo",
@@ -146,7 +364,20 @@
 		"address": "Endereço",
 		"booking_reference": "Referência da reserva",
 		"price_per_night": "Preço por noite",
-		"total_price": "Preço total"
+		"total_price": "Preço total",
+		"name": "Nome",
+		"type": "Tipo",
+		"type_hotel": "Hotel",
+		"type_hostel": "Hostel",
+		"type_apartment": "Apartamento",
+		"type_other": "Outro",
+		"start_date": "Data de início",
+		"end_date": "Data de término",
+		"price_optional": "Preço (R$) — opcional",
+		"address_optional": "Endereço — opcional",
+		"conflict_with": "Existe conflito com a acomodação \"{name}\"",
+		"created_success": "Acomodação criada com sucesso!",
+		"updated_success": "Acomodação atualizada com sucesso!"
 	},
 	"activity": {
 		"activity": "Atividade",
@@ -174,5 +405,27 @@
 		"forbidden": "Acesso negado",
 		"server_error": "Erro no servidor",
 		"network_error": "Erro de conexão"
+	},
+	"invite": {
+		"verifying": "Verificando convite...",
+		"expired_title": "Convite Expirado",
+		"invalid_title": "Convite Inválido",
+		"expired_message": "Este link de convite expirou. Solicite um novo convite ao organizador da viagem.",
+		"invalid_message": "Este link de convite não é válido ou foi removido.",
+		"login_required_title": "Login Necessário",
+		"login_required_message": "Você precisa estar logado para aceitar este convite.",
+		"invited_title": "Você foi convidado!",
+		"invited_description": "Você recebeu um convite para participar desta viagem",
+		"accept_invite": "Aceitar Convite",
+		"accepting_invite": "Aceitando convite...",
+		"accept_terms": "Ao aceitar, você se tornará membro desta viagem e poderá visualizar todos os detalhes do planejamento.",
+		"trip_period": "Período da viagem",
+		"days": "{count} dia",
+		"days_plural": "{count} dias",
+		"accepted_success": "Convite aceito com sucesso!",
+		"accepted_message": "Você agora é membro desta viagem.",
+		"accept_error": "Erro ao aceitar convite",
+		"accept_error_retry": "Tente novamente mais tarde.",
+		"accept_error_unexpected": "Ocorreu um erro inesperado. Tente novamente."
 	}
 }

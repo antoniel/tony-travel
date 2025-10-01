@@ -21,11 +21,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { formatCurrencyBRL } from "@/lib/currency";
 import { orpc } from "@/orpc/client";
 import type { MyConciergeTools } from "@/orpc/modules/concierge/concierge.ai";
+import * as m from "@/paraglide/messages";
+import { getLocale } from "@/paraglide/runtime";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { InferUITools } from "ai";
-import {
-	Trash2,
-} from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -35,8 +35,9 @@ interface ToolEventsListDisplayProps {
 }
 
 const formatDate = (dateStr: string) => {
+	const locale = getLocale();
 	const date = new Date(dateStr);
-	return date.toLocaleDateString("pt-BR", {
+	return date.toLocaleString(locale, {
 		day: "2-digit",
 		month: "2-digit",
 		year: "numeric",
@@ -45,10 +46,10 @@ const formatDate = (dateStr: string) => {
 	});
 };
 
-const eventTypeLabels: Record<string, string> = {
-	travel: "Transporte",
-	food: "Alimentação",
-	activity: "Atividade",
+const eventTypeLabels: Record<string, () => string> = {
+	travel: () => m["event.type_transport"](),
+	food: () => m["event.type_food"](),
+	activity: () => m["event.type_activity"](),
 };
 
 const eventTypeVariants: Record<
@@ -60,7 +61,7 @@ const eventTypeVariants: Record<
 	activity: "outline",
 };
 
-const getEventTypeLabel = (type: string) => eventTypeLabels[type] ?? type;
+const getEventTypeLabel = (type: string) => eventTypeLabels[type]?.() ?? type;
 
 const getEventTypeVariant = (
 	type: string,
@@ -79,7 +80,9 @@ export function ToolEventsListDisplay({ eventsData, travelId }: ToolEventsListDi
 	const deleteEventMutation = useMutation({
 		...orpc.eventRoutes.deleteEvent.mutationOptions(),
 		onError: (error) => {
-			toast.error(error.message ?? "Erro ao remover evento");
+			toast.error(
+				error.message ?? m["concierge.tools.events.toast_remove_error"](),
+			);
 		},
 	});
 
@@ -131,13 +134,16 @@ export function ToolEventsListDisplay({ eventsData, travelId }: ToolEventsListDi
 					input: { travelId },
 				}),
 			});
+			const count = ids.length;
 			toast.success(
-				ids.length === 1
-					? "Evento removido com sucesso"
-					: `${ids.length} eventos removidos com sucesso`,
+				count === 1
+					? m["concierge.tools.events.toast_removed"]()
+					: m["concierge.tools.events.toast_removed_plural"]({
+						count: count.toString(),
+					}),
 			);
 		} catch (error) {
-			toast.error("Não foi possível remover todos os eventos selecionados");
+			toast.error(m["concierge.tools.events.toast_remove_error"]());
 			console.error("Failed to delete events:", error);
 		} finally {
 			setIsDeleting(false);
@@ -160,7 +166,11 @@ export function ToolEventsListDisplay({ eventsData, travelId }: ToolEventsListDi
 			<Card className="w-full max-w-2xl mx-auto my-4">
 				<CardContent className="p-4">
 					<p className="text-destructive">
-						Erro ao buscar eventos: {eventsData.message || "Erro desconhecido"}
+						{m["concierge.tools.events.error_fetch"]({
+							message:
+								eventsData.message ??
+								m["concierge.tools.events.error_unknown"](),
+						})}
 					</p>
 				</CardContent>
 			</Card>
@@ -172,7 +182,7 @@ export function ToolEventsListDisplay({ eventsData, travelId }: ToolEventsListDi
 			<Card className="w-full max-w-2xl mx-auto my-4">
 				<CardContent className="p-4 text-center">
 					<p className="text-muted-foreground">
-						Nenhum evento encontrado para esta viagem.
+						{m["concierge.tools.events.empty"]()}
 					</p>
 				</CardContent>
 			</Card>
@@ -189,10 +199,21 @@ export function ToolEventsListDisplay({ eventsData, travelId }: ToolEventsListDi
 			<CardHeader>
 				<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 					<div>
-						<CardTitle>Eventos da Viagem</CardTitle>
+						<CardTitle>{m["concierge.tools.events.title"]()}</CardTitle>
 						<CardDescription>
-							{eventsData.message} ({eventsData.count} evento
-							{eventsData.count !== 1 ? "s" : ""})
+							{eventsData.count === 1
+								? m["concierge.tools.events.description_count"]({
+									message:
+										eventsData.message ??
+										m["concierge.tools.events.title"](),
+									count: eventsData.count.toString(),
+								})
+								: m["concierge.tools.events.description_count_plural"]({
+									message:
+										eventsData.message ??
+										m["concierge.tools.events.title"](),
+									count: eventsData.count.toString(),
+								})}
 						</CardDescription>
 					</div>
 					<div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
@@ -204,12 +225,12 @@ export function ToolEventsListDisplay({ eventsData, travelId }: ToolEventsListDi
 								}}
 								aria-label={
 									allSelected
-										? "Desmarcar todos os eventos"
-										: "Selecionar todos os eventos"
+										? m["concierge.tools.events.select_all_aria.unselect"]()
+										: m["concierge.tools.events.select_all_aria.select"]()
 								}
 							/>
 							<span className="text-sm text-muted-foreground">
-								Selecionar todos
+								{m["concierge.tools.events.select_all"]()}
 							</span>
 						</div>
 						<Button
@@ -219,7 +240,7 @@ export function ToolEventsListDisplay({ eventsData, travelId }: ToolEventsListDi
 							disabled={!hasSelection}
 						>
 							<Trash2 className="mr-2 h-4 w-4" />
-							Remover selecionados
+							{m["concierge.tools.events.remove_selected"]()}
 						</Button>
 					</div>
 				</div>
@@ -238,30 +259,57 @@ export function ToolEventsListDisplay({ eventsData, travelId }: ToolEventsListDi
 										onCheckedChange={(checked) =>
 											toggleSelection(event.id, Boolean(checked))
 										}
-										aria-label={`Selecionar o evento ${event.title}`}
-									/>
-									<h4 className="font-medium">{event.title}</h4>
+									aria-label={m["concierge.tools.events.aria_event"]({
+										title: event.title,
+									})}
+								/>
+								<h4 className="font-medium">{event.title}</h4>
 								</div>
 								<Badge variant={getEventTypeVariant(event.type)}>
 									{getEventTypeLabel(event.type)}
 								</Badge>
 							</div>
 							<div className="text-sm text-muted-foreground">
-								<p>📅 {formatDate(event.startDate)}</p>
-								{event.location && <p>📍 {event.location}</p>}
-								{event.description && <p>💬 {event.description}</p>}
+								<p>
+									{m["concierge.tools.events.details.date"]({
+										date: formatDate(event.startDate),
+									})}
+								</p>
+								{event.location && (
+									<p>
+										{m["concierge.tools.events.details.location"]({
+											location: event.location,
+										})}
+									</p>
+								)}
+								{event.description && (
+									<p>
+										{m["concierge.tools.events.details.description"]({
+											description: event.description,
+										})}
+									</p>
+								)}
 								{event.estimatedCost && (
-									<p>💰 {formatCurrencyBRL(event.estimatedCost)}</p>
+									<p>
+										{m["concierge.tools.events.details.price"]({
+											price: formatCurrencyBRL(event.estimatedCost),
+										})}
+									</p>
 								)}
 								{event.link && (
 									<p>
-										🔗{" "}
 										<a
 											href={event.link}
 											target="_blank"
 											rel="noopener noreferrer"
 											className="text-primary hover:text-primary/80 underline underline-offset-4 transition-colors"
 										>
+											<span aria-hidden="true">
+												{m["concierge.tools.events.details.link"]()}
+											</span>{" "}
+											<span className="sr-only">
+												{m["concierge.tools.events.link_sr"]()}
+											</span>
 											{event.link.length > 40
 												? `${event.link.substring(0, 40)}...`
 												: event.link}
@@ -277,7 +325,7 @@ export function ToolEventsListDisplay({ eventsData, travelId }: ToolEventsListDi
 							onClick={() => openDeleteDialog([event.id])}
 						>
 							<Trash2 className="mr-2 h-4 w-4" />
-							Remover
+							{m["concierge.tools.events.remove_single"]()}
 						</Button>
 					</div>
 				))}
@@ -288,26 +336,33 @@ export function ToolEventsListDisplay({ eventsData, travelId }: ToolEventsListDi
 			>
 				<AlertDialogContent>
 					<AlertDialogHeader>
-						<AlertDialogTitle>Confirmar remoção</AlertDialogTitle>
+						<AlertDialogTitle>
+							{m["concierge.tools.events.dialog_title"]()}
+						</AlertDialogTitle>
 						<AlertDialogDescription>
 							{deleteDialogState.ids.length === 1
-								? `Você tem certeza que deseja remover o evento "${
+								? m["concierge.tools.events.dialog_single"]({
+									title:
 										eventMap.get(deleteDialogState.ids[0])?.title ??
-										deleteDialogState.ids[0]
-									}"?`
-								: `Você tem certeza que deseja remover ${deleteDialogState.ids.length} eventos selecionados?`}
+										deleteDialogState.ids[0],
+								})
+								: m["concierge.tools.events.dialog_multiple"]({
+									count: deleteDialogState.ids.length.toString(),
+								})}
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
 						<AlertDialogCancel disabled={isDeleting}>
-							Cancelar
+							{m["concierge.tools.events.dialog_cancel"]()}
 						</AlertDialogCancel>
 						<AlertDialogAction
 							onClick={() => deleteEvents(deleteDialogState.ids)}
 							disabled={isDeleting}
 							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 						>
-							{isDeleting ? "Removendo..." : "Remover"}
+							{isDeleting
+								? m["concierge.tools.events.dialog_confirm_pending"]()
+								: m["concierge.tools.events.dialog_confirm"]()}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</AlertDialogContent>

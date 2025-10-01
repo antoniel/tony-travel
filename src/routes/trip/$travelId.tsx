@@ -1,3 +1,4 @@
+import * as m from "@/paraglide/messages";
 import { orpc } from "@/orpc/client";
 import { FloatingConciergeToggle } from "@/routes/trip/$travelId/-components/FloatingConciergeToggle";
 import {
@@ -104,53 +105,65 @@ function TripLayoutContent({
 	travel,
 	pathname,
 }: TripLayoutContentProps) {
+	const startDate = travel?.startDate ? new Date(travel.startDate) : undefined;
+	const endDate = travel?.endDate ? new Date(travel.endDate) : undefined;
+	const totalTripDays =
+		startDate && endDate
+			? calculateTripDaysUTC(startDate, endDate)
+			: undefined;
+	const tripDaysLabel =
+		totalTripDays === undefined
+			? ""
+			: totalTripDays === 1
+				? m["trip.days"]({ count: totalTripDays.toString() })
+				: m["trip.days_plural"]({ count: totalTripDays.toString() });
 	const tabRoutes = [
 		{
 			value: "concierge",
 			path: `/trip/${travelId}/concierge`,
-			label: "Concierge",
+			label: m["trip.tabs.concierge"](),
 			icon: ConciergeBell,
 		},
 		{
 			value: "itinerary",
 			path: `/trip/${travelId}`,
-			label: "Itinerário",
+			label: m["trip.tabs.itinerary"](),
 			icon: Clock,
 		},
 		{
 			value: "flights",
 			path: `/trip/${travelId}/flights`,
-			label: "Voos",
+			label: m["trip.tabs.flights"](),
 			icon: Plane,
 		},
 		{
 			value: "accommodations",
 			path: `/trip/${travelId}/accommodations`,
-			label: "Acomodações",
+			label: m["trip.tabs.accommodations"](),
 			icon: Home,
 		},
 		{
 			value: "locations",
 			path: `/trip/${travelId}/locations`,
-			label: "Locais",
+			label: m["trip.tabs.locations"](),
 			icon: MapPin,
 		},
 		{
 			value: "members",
 			path: `/trip/${travelId}/members`,
-			label: "Membros",
+			label: m["trip.tabs.members"](),
 			icon: Users,
 		},
 		{
 			value: "financial",
 			path: `/trip/${travelId}/financial`,
-			label: "Financeiro",
+			label: m["trip.tabs.financial"](),
 			icon: DollarSign,
 		},
 		{
 			value: "settings",
 			path: `/trip/${travelId}/settings`,
-			label: "Configurações",
+			label: m["trip.tabs.settings"](),
 			icon: Settings,
 		},
 	];
@@ -235,7 +248,7 @@ function TripLayoutContent({
 						<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 							<div className="space-y-2">
 								<h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-									{travel?.name || "Carregando..."}
+									{travel?.name || m["common.loading"]()}
 								</h1>
 								{travel && (
 									<div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
@@ -253,11 +266,7 @@ function TripLayoutContent({
 										)}
 										<div className="flex items-center gap-2">
 											<Plane className="w-4 h-4" />
-											<span>
-												{travel.startDate && travel.endDate
-													? `${calculateTripDaysUTC(new Date(travel.startDate), new Date(travel.endDate))} dias`
-													: ""}
-											</span>
+											<span>{tripDaysLabel}</span>
 										</div>
 									</div>
 								)}
@@ -298,7 +307,9 @@ function TripLayoutContent({
 															aria-hidden="true"
 															className={`relative inline-flex h-2 w-2 rounded-full ${indicatorDotClass}`}
 														/>
-														<span className="sr-only">Pendências ativas</span>
+											<span className="sr-only">
+												{m["concierge.pending_indicator"]()}
+											</span>
 													</span>
 												) : null}
 											</span>

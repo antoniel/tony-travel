@@ -9,6 +9,7 @@ import {
 import { useUser } from "@/hooks/useUser";
 import { orpc } from "@/orpc/client";
 import type { InviteInfoResponse } from "@/orpc/modules/invitation/invitation.model";
+import * as m from "@/paraglide/messages";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import {
@@ -60,18 +61,18 @@ function InviteAcceptancePage() {
 			const result = await acceptInviteMutation.mutateAsync({ token });
 
 			if (result.success) {
-				toast.success("Convite aceito com sucesso!", {
-					description: result.message || "Você agora é membro desta viagem.",
+				toast.success(m["invite.accepted_success"](), {
+					description: result.message || m["invite.accepted_message"](),
 				})
 				router.navigate({ to: `/trip/${result.travelId}` });
 			} else {
-				toast.error("Erro ao aceitar convite", {
-					description: result.message || "Tente novamente mais tarde.",
+				toast.error(m["invite.accept_error"](), {
+					description: result.message || m["invite.accept_error_retry"](),
 				})
 			}
 		} catch (error) {
-			toast.error("Erro ao aceitar convite", {
-				description: "Ocorreu um erro inesperado. Tente novamente.",
+			toast.error(m["invite.accept_error"](), {
+				description: m["invite.accept_error_unexpected"](),
 			})
 		}
 	}
@@ -103,7 +104,7 @@ function LoadingState() {
 			<Card className="w-full max-w-md mx-4">
 				<CardContent className="flex flex-col items-center justify-center py-12">
 					<Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
-					<p className="text-muted-foreground">Verificando convite...</p>
+					<p className="text-muted-foreground">{m["invite.verifying"]()}</p>
 				</CardContent>
 			</Card>
 		</div>
@@ -121,13 +122,13 @@ function InvalidInviteState({
 						<AlertCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
 					</div>
 					<CardTitle className="text-red-700 dark:text-red-300">
-						{inviteInfo?.isExpired ? "Convite Expirado" : "Convite Inválido"}
+						{inviteInfo?.isExpired ? m["invite.expired_title"]() : m["invite.invalid_title"]()}
 					</CardTitle>
 					<CardDescription className="text-red-600 dark:text-red-400">
 						{inviteInfo?.message ||
 							(inviteInfo?.isExpired
-								? "Este link de convite expirou. Solicite um novo convite ao organizador da viagem."
-								: "Este link de convite não é válido ou foi removido.")}
+								? m["invite.expired_message"]()
+								: m["invite.invalid_message"]())}
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="text-center">
@@ -136,7 +137,7 @@ function InvalidInviteState({
 						onClick={() => window.history.back()}
 						className="border-red-200 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900/20"
 					>
-						Voltar
+						{m["common.back"]()}
 					</Button>
 				</CardContent>
 			</Card>
@@ -152,9 +153,9 @@ function LoginRequiredState() {
 					<div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
 						<UserCheck className="w-8 h-8 text-blue-600 dark:text-blue-400" />
 					</div>
-					<CardTitle>Login Necessário</CardTitle>
+					<CardTitle>{m["invite.login_required_title"]()}</CardTitle>
 					<CardDescription>
-						Você precisa estar logado para aceitar este convite.
+						{m["invite.login_required_message"]()}
 					</CardDescription>
 				</CardHeader>
 			</Card>
@@ -180,9 +181,9 @@ function ValidInviteState({
 					<div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
 						<Users className="w-8 h-8 text-green-600 dark:text-green-400" />
 					</div>
-					<CardTitle className="text-2xl">Você foi convidado!</CardTitle>
+					<CardTitle className="text-2xl">{m["invite.invited_title"]()}</CardTitle>
 					<CardDescription>
-						Você recebeu um convite para participar desta viagem
+						{m["invite.invited_description"]()}
 					</CardDescription>
 				</CardHeader>
 
@@ -199,19 +200,18 @@ function ValidInviteState({
 							{isAccepting ? (
 								<>
 									<Loader2 className="w-4 h-4 mr-2 animate-spin" />
-									Aceitando convite...
+									{m["invite.accepting_invite"]()}
 								</>
 							) : (
 								<>
 									<CheckCircle className="w-4 h-4 mr-2" />
-									Aceitar Convite
+									{m["invite.accept_invite"]()}
 								</>
 							)}
 						</Button>
 
 						<p className="text-xs text-center text-muted-foreground mt-3">
-							Ao aceitar, você se tornará membro desta viagem e poderá
-							visualizar todos os detalhes do planejamento.
+							{m["invite.accept_terms"]()}
 						</p>
 					</div>
 				</CardContent>
@@ -241,6 +241,8 @@ function TravelDetails({
 		return diffDays;
 	}
 
+	const duration = getDuration();
+
 	return (
 		<div className="space-y-4">
 			<div className="text-center">
@@ -257,12 +259,12 @@ function TravelDetails({
 				<div className="flex items-center gap-3">
 					<Calendar className="w-4 h-4 text-muted-foreground" />
 					<div className="flex-1">
-						<p className="text-sm font-medium">Período da viagem</p>
+						<p className="text-sm font-medium">{m["invite.trip_period"]()}</p>
 						<p className="text-xs text-muted-foreground">
 							{formatDate(travel.startDate)} - {formatDate(travel.endDate)}
 						</p>
 						<p className="text-xs text-muted-foreground">
-							{getDuration()} dia{getDuration() !== 1 ? "s" : ""}
+							{duration === 1 ? m["invite.days"]({ count: duration }) : m["invite.days_plural"]({ count: duration })}
 						</p>
 					</div>
 				</div>

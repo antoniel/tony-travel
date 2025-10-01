@@ -1,6 +1,12 @@
 {
 	"$schema": "https://inlang.com/schema/inlang-message-format",
 	"common": {
+		"add": "Add",
+		"accept": "Accept",
+		"reject": "Decline",
+		"creating": "Creating...",
+		"deleting": "Deleting...",
+		"applying": "Applying...",
 		"submit": "Submit",
 		"cancel": "Cancel",
 		"save": "Save",
@@ -43,7 +49,10 @@
 		"login_with_google": "Login with Google",
 		"login_with_github": "Login with GitHub",
 		"welcome_back": "Welcome back",
-		"create_account": "Create account"
+		"create_account": "Create account",
+		"signing_in": "Signing in...",
+		"welcome_back_subtitle": "Welcome back! Login to continue",
+		"terms_agreement": "By logging in, you agree to our terms of use and privacy policy."
 	},
 	"trip": {
 		"title": "Trip",
@@ -77,6 +86,12 @@
 		"search_destination": "Search destination...",
 		"selected_airports": "Selected airports",
 		"selected_destinations": "Selected destinations",
+		"events_count": "{count} event",
+		"events_count_plural": "{count} events",
+		"days": "{count} day",
+		"days_plural": "{count} days",
+		"not_found_title": "Trip not found",
+		"not_found_description": "The trip you're looking for doesn't exist or was removed.",
 		"number_of_travelers": "Number of travelers",
 		"people_count": "{count} person",
 		"people_count_plural": "{count} people",
@@ -88,6 +103,18 @@
 		"create_custom_itinerary": "Create my custom itinerary",
 		"login_required": "Login required to create trips",
 		"login_required_message": "You need to be logged in to create a custom itinerary.",
+		"tabs": {
+			"concierge": "Concierge",
+			"itinerary": "Itinerary",
+			"timeline": "Timeline",
+			"calendar": "Calendar",
+			"flights": "Flights",
+			"accommodations": "Accommodations",
+			"locations": "Locations",
+			"members": "Members",
+			"financial": "Financial",
+			"settings": "Settings"
+		},
 		"your_trip": "Your trip",
 		"days_of_trip": "{days} days trip",
 		"starts_from": "From {amount}",
@@ -99,7 +126,25 @@
 		"departure": "departure",
 		"dates": "dates",
 		"today": "Today",
-		"tomorrow": "Tomorrow"
+		"tomorrow": "Tomorrow",
+		"wizard_name_title": "What do you want to call this trip?",
+		"wizard_name_description": "Choose a name that inspires you and easily identifies your adventure",
+		"wizard_summary_title": "Perfect! Let's create your trip",
+		"wizard_summary_description": "Review the details of your adventure before continuing",
+		"wizard_step_of": "Step {current} of {total}",
+		"wizard_percent_complete": "{percent}% complete",
+		"creating": "Creating...",
+		"created_successfully": "Trip created successfully!",
+		"created_redirect": "Redirecting to your new trip...",
+		"create_error": "Error creating trip",
+		"create_error_retry": "Please try again in a few moments.",
+		"data_error": "Data error",
+		"select_destination_required": "Select at least one destination or airport.",
+		"check_all_fields": "Make sure all information is filled in.",
+		"destination_unspecified": "Destination not specified",
+		"name_placeholder": "E.g.: Paris Adventure, Rio Getaway...",
+		"description_placeholder": "Describe goals, planned activities, notes for the group...",
+		"description_too_long": "Description too long"
 	},
 	"calendar": {
 		"title": "Calendar",
@@ -118,6 +163,28 @@
 		"end_time": "End time",
 		"all_day": "All day",
 		"no_events": "No events"
+	},
+	"event": {
+		"create_new": "Create new event",
+		"edit": "Edit event",
+		"title": "Title",
+		"type": "Type",
+		"type_transport": "Transport",
+		"type_food": "Food",
+		"type_activity": "Activity",
+		"select_type": "Select event type",
+		"location": "Location",
+		"location_placeholder": "Event location (optional)",
+		"price_optional": "Price (USD) — optional",
+		"description_optional": "Description — optional",
+		"description_placeholder": "Add details about this event...",
+		"link_optional": "Link — optional",
+		"link_placeholder": "https://example.com",
+		"date_and_time": "Date and time",
+		"start_time": "Start time",
+		"end_time": "End time",
+		"create": "Create event",
+		"save_changes": "Save changes"
 	},
 	"flight": {
 		"flight": "Flight",
@@ -146,7 +213,20 @@
 		"address": "Address",
 		"booking_reference": "Booking reference",
 		"price_per_night": "Price per night",
-		"total_price": "Total price"
+		"total_price": "Total price",
+		"name": "Name",
+		"type": "Type",
+		"type_hotel": "Hotel",
+		"type_hostel": "Hostel",
+		"type_apartment": "Apartment",
+		"type_other": "Other",
+		"start_date": "Start date",
+		"end_date": "End date",
+		"price_optional": "Price (USD) — optional",
+		"address_optional": "Address — optional",
+		"conflict_with": "Conflict with accommodation \"{name}\"",
+		"created_success": "Accommodation created successfully!",
+		"updated_success": "Accommodation updated successfully!"
 	},
 	"activity": {
 		"activity": "Activity",
@@ -167,6 +247,157 @@
 		"max_length": "Must be at most {max} characters",
 		"invalid_format": "Invalid format"
 	},
+	"concierge": {
+		"panel_label": "Concierge conversation",
+		"toggle_button": "Talk to concierge",
+		"open_floating": "Open floating concierge",
+		"close_floating": "Close floating concierge",
+		"pending_indicator": "Active pending issues",
+		"pending_loading": "Checking trip pending issues...",
+		"pending_section_label": "Concierge pending issues",
+		"pending_section_title": "Pending items identified",
+		"pending_section_description": "The concierge highlighted the items that need attention before the trip continues.",
+		"pending_severity": {
+			"critical": "Pending",
+			"advisory": "Suggestion"
+		},
+		"pending_affects": "Affects: {names}",
+		"pending_dates_single": "Discovered dates: {date}",
+		"pending_dates_range": "Discovered dates: {start} to {end}",
+		"messages": {
+			"actions": {
+				"retry": "Retry",
+				"copy": "Copy"
+			},
+			"loading": {
+				"events": "Fetching trip events...",
+				"participants": "Fetching trip participants...",
+				"accommodations": "Fetching available accommodations..."
+			},
+			"success_prefix": "✅ {message}"
+		},
+		"agent": {
+			"header": "Your assistant for planning the trip",
+			"header_with_name": "Your assistant for planning the trip: {name}",
+			"intro": {
+				"title": "What the Concierge can do",
+				"flights_title": "Add flights",
+				"flights_example": "\"Add a flight from GRU to JFK leaving 10/11 at 22:30 and arriving 11/11 at 07:10\".",
+				"events_title": "Events and schedules",
+				"events_example": "\"Create a dinner on 12/11 from 7pm to 9pm\" or \"Plan an outing on 13/11 in the afternoon\".",
+				"activities_title": "Add activities",
+				"activities_example": "\"Add a light activity to start the trip\" or \"Add acclimation on the first day\"."
+			},
+			"delayed_alert": "The concierge is reviewing your message. The reply may take a moment, but your request is already in the queue.",
+			"attachment_fallback": "Sent with attachments"
+		},
+		"tools": {
+			"accommodation_create": {
+				"toast_conflict": "There is a conflict with the accommodation \"{name}\"",
+				"result_conflict": "Conflict with accommodation \"{name}\"",
+				"toast_success": "Accommodation created successfully!",
+				"result_success": "Accommodation created by the user",
+				"toast_error": "Error creating accommodation",
+				"result_error": "Failed to create accommodation",
+				"toast_reject": "Accommodation request declined",
+				"result_reject": "User declined to create the accommodation",
+				"card_description": "The assistant suggests adding this accommodation to the trip",
+				"label_period": "Period",
+				"label_address": "Address",
+				"label_estimated_value": "Estimated value",
+				"status_completed": "✅ Accommodation created",
+				"status_cancelled": "❌ Declined or cancelled"
+			},
+			"accommodation": {
+				"date_range": "{start} to {end}",
+				"list_title": "Accommodations found",
+				"list_empty": "No accommodations registered for this trip yet.",
+				"list_error_fallback": "Error fetching accommodations"
+			},
+			"accommodation_delete": {
+				"toast_success": "Accommodation removed successfully!",
+				"result_success": "Accommodation removed by the user",
+				"toast_error": "Error deleting accommodation",
+				"result_error": "Failed to delete accommodation",
+				"toast_missing_confirmation": "Missing confirmation. Ask the assistant to confirm the removal before proceeding.",
+				"toast_reject": "Deletion request declined",
+				"result_reject": "User declined the deletion",
+				"title": "Remove accommodation {id}",
+				"badge_label": "Removal",
+				"description": "Confirm that you want to permanently delete this accommodation",
+				"label_reason": "Provided reason",
+				"label_confirmed": "Confirmed by the assistant",
+				"status_deleted": "✅ Accommodation deleted",
+				"status_cancelled": "❌ Declined or cancelled"
+			},
+			"accommodation_update": {
+				"toast_conflict": "There is a conflict with the accommodation \"{name}\"",
+				"result_conflict": "Conflict with accommodation \"{name}\"",
+				"toast_success": "Accommodation updated successfully!",
+				"toast_error": "Error updating accommodation",
+				"result_error": "Failed to update accommodation",
+				"toast_no_changes": "No changes were proposed to apply",
+				"toast_reject": "Update request declined",
+				"result_reject": "User declined the update",
+				"title": "Update accommodation {id}",
+				"badge_label": "Update",
+				"description": "Review and confirm the suggested changes before applying",
+				"empty": "No changes were proposed for this accommodation.",
+				"button_apply": "Apply changes",
+				"status_applied": "✅ Changes applied",
+				"status_cancelled": "❌ Declined or cancelled",
+				"label_no_value": "-",
+				"label_price": "Price"
+			},
+			"events": {
+				"error_fetch": "Error fetching events: {message}",
+				"error_unknown": "Unknown error",
+				"empty": "No events found for this trip.",
+				"title": "Trip events",
+				"description_count": "{message} ({count} event)",
+				"description_count_plural": "{message} ({count} events)",
+				"select_all": "Select all",
+				"select_all_aria": {
+					"select": "Select all events",
+					"unselect": "Deselect all events"
+				},
+				"remove_selected": "Remove selected",
+				"aria_event": "Select event {title}",
+				"details": {
+					"date": "📅 {date}",
+					"location": "📍 {location}",
+					"description": "💬 {description}",
+					"price": "💰 {price}",
+					"link": "🔗 Link"
+				},
+				"link_sr": "Open event link in a new tab",
+				"remove_single": "Remove",
+				"toast_removed": "Event removed successfully",
+				"toast_removed_plural": "{count} events removed successfully",
+				"toast_remove_error": "Could not remove all selected events",
+				"dialog_title": "Confirm removal",
+				"dialog_single": "Are you sure you want to remove the event \"{title}\"?",
+				"dialog_multiple": "Are you sure you want to remove {count} selected events?",
+				"dialog_cancel": "Cancel",
+				"dialog_confirm": "Remove",
+				"dialog_confirm_pending": "Removing..."
+			},
+			"event_create": {
+				"toast_success": "Event created successfully!",
+				"toast_error": "Error creating event",
+				"toast_reject": "Event suggestion declined",
+				"card_description": "The assistant suggests adding this event to your trip",
+				"label_start": "Start",
+				"label_end": "End",
+				"label_location": "Location",
+				"label_cost": "Estimated cost",
+				"label_description": "Description",
+				"label_link": "Link",
+				"status_created": "✅ Event created",
+				"status_rejected": "❌ Declined"
+			}
+		}
+	},
 	"error": {
 		"generic": "An error occurred. Please try again.",
 		"not_found": "Page not found",
@@ -174,5 +405,27 @@
 		"forbidden": "Access denied",
 		"server_error": "Server error",
 		"network_error": "Connection error"
+	},
+	"invite": {
+		"verifying": "Verifying invite...",
+		"expired_title": "Invite Expired",
+		"invalid_title": "Invalid Invite",
+		"expired_message": "This invite link has expired. Request a new invite from the trip organizer.",
+		"invalid_message": "This invite link is not valid or was removed.",
+		"login_required_title": "Login Required",
+		"login_required_message": "You need to be logged in to accept this invite.",
+		"invited_title": "You've been invited!",
+		"invited_description": "You received an invite to join this trip",
+		"accept_invite": "Accept Invite",
+		"accepting_invite": "Accepting invite...",
+		"accept_terms": "By accepting, you'll become a member of this trip and will be able to view all planning details.",
+		"trip_period": "Trip period",
+		"days": "{count} day",
+		"days_plural": "{count} days",
+		"accepted_success": "Invite accepted successfully!",
+		"accepted_message": "You are now a member of this trip.",
+		"accept_error": "Error accepting invite",
+		"accept_error_retry": "Please try again later.",
+		"accept_error_unexpected": "An unexpected error occurred. Please try again."
 	}
 }

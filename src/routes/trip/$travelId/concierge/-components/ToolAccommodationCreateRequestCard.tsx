@@ -11,6 +11,7 @@ import {
 import { formatCurrencyBRL } from "@/lib/currency";
 import { orpc } from "@/orpc/client";
 import type { MyConciergeTools } from "@/orpc/modules/concierge/concierge.ai";
+import * as m from "@/paraglide/messages";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { InferUITools } from "ai";
 import { CheckIcon, XIcon } from "lucide-react";
@@ -58,14 +59,18 @@ export function ToolAccommodationCreateRequestCard({
 
 				if (result.conflictingAccommodation) {
 					toast.error(
-						`Existe conflito com a acomodação "${result.conflictingAccommodation.name}"`,
+						m["concierge.tools.accommodation_create.toast_conflict"]({
+							name: result.conflictingAccommodation.name,
+						}),
 					);
 					await addToolResult({
 						tool: "requestToCreateAccommodation",
 						toolCallId,
 						output: {
 							success: false,
-							message: `Conflito com a acomodação "${result.conflictingAccommodation.name}"`,
+							message: m["concierge.tools.accommodation_create.result_conflict"]({
+								name: result.conflictingAccommodation.name,
+							}),
 						},
 					});
 					setIsProcessed(true);
@@ -73,7 +78,9 @@ export function ToolAccommodationCreateRequestCard({
 				}
 
 				if (result.id) {
-					toast.success("Acomodação criada com sucesso!");
+					toast.success(
+						m["concierge.tools.accommodation_create.toast_success"](),
+					);
 					await queryClient.invalidateQueries({
 						queryKey:
 							orpc.accommodationRoutes.getAccommodationsByTravel.queryKey({
@@ -91,7 +98,7 @@ export function ToolAccommodationCreateRequestCard({
 						output: {
 							success: true,
 							accommodation: { accommodationId: result.id },
-							message: "Acomodação criada pelo usuário",
+							message: m["concierge.tools.accommodation_create.result_success"](),
 						},
 					});
 				}
@@ -99,14 +106,16 @@ export function ToolAccommodationCreateRequestCard({
 				setIsProcessed(true);
 			},
 			onError: async (error) => {
-				toast.error("Erro ao criar acomodação");
+				toast.error(
+					m["concierge.tools.accommodation_create.toast_error"](),
+				);
 				console.error("Accommodation creation error:", error);
 				await addToolResult({
 					tool: "requestToCreateAccommodation",
 					toolCallId,
 					output: {
 						success: false,
-						message: "Falha ao criar acomodação",
+						message: m["concierge.tools.accommodation_create.result_error"](),
 					},
 				});
 				setIsProcessed(true);
@@ -135,13 +144,13 @@ export function ToolAccommodationCreateRequestCard({
 	const handleReject = () => {
 		if (isProcessed) return;
 
-		toast.info("Solicitação de acomodação rejeitada");
+		toast.info(m["concierge.tools.accommodation_create.toast_reject"]());
 		void addToolResult({
 			tool: "requestToCreateAccommodation",
 			toolCallId,
 			output: {
 				success: false,
-				message: "Usuário rejeitou a criação da acomodação",
+				message: m["concierge.tools.accommodation_create.result_reject"](),
 			},
 		});
 		setIsProcessed(true);
@@ -155,17 +164,23 @@ export function ToolAccommodationCreateRequestCard({
 					<Badge>{getAccommodationTypeLabel(input.type)}</Badge>
 				</div>
 				<CardDescription>
-					O assistente sugere adicionar esta acomodação à viagem
+					{m["concierge.tools.accommodation_create.card_description"]()}
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-3 text-sm">
-				<AccommodationInfoRow label="Período">
+				<AccommodationInfoRow
+					label={m["concierge.tools.accommodation_create.label_period"]()}
+				>
 					{formatDateRange(input.startDate, input.endDate)}
 				</AccommodationInfoRow>
-				<AccommodationInfoRow label="Endereço">
+				<AccommodationInfoRow
+					label={m["concierge.tools.accommodation_create.label_address"]()}
+				>
 					{input.address}
 				</AccommodationInfoRow>
-				<AccommodationInfoRow label="Valor estimado">
+				<AccommodationInfoRow
+					label={m["concierge.tools.accommodation_create.label_estimated_value"]()}
+				>
 					{formatCurrencyBRL(input.price)}
 				</AccommodationInfoRow>
 			</CardContent>
@@ -178,7 +193,9 @@ export function ToolAccommodationCreateRequestCard({
 							className="flex-1"
 						>
 							<CheckIcon className="w-4 h-4 mr-2" />
-							{createAccommodationMutation.isPending ? "Criando..." : "Aceitar"}
+							{createAccommodationMutation.isPending
+								? m["common.creating"]()
+								: m["common.accept"]()}
 						</Button>
 						<Button
 							variant="outline"
@@ -187,14 +204,14 @@ export function ToolAccommodationCreateRequestCard({
 							className="flex-1"
 						>
 							<XIcon className="w-4 h-4 mr-2" />
-							Recusar
+							{m["common.reject"]()}
 						</Button>
 					</>
 				) : (
 					<div className="flex-1 text-center text-sm text-muted-foreground">
 						{createAccommodationMutation.isSuccess
-							? "✅ Acomodação criada"
-							: "❌ Rejeitada ou cancelada"}
+							? m["concierge.tools.accommodation_create.status_completed"]()
+							: m["concierge.tools.accommodation_create.status_cancelled"]()}
 					</div>
 				)}
 			</CardFooter>

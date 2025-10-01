@@ -1,3 +1,4 @@
+import * as m from "@/paraglide/messages";
 import { ResponsiveModal } from "@/components/ui/ResponsiveModal";
 import { formatNumberPtBR, maskCurrencyInputPtBR } from "@/lib/currency";
 import type { AppEvent } from "@/lib/types";
@@ -67,7 +68,7 @@ export function EventCreateModal({
 			contentClassName="gap-0"
 		>
 			<DialogHeader className="border-b px-6 py-4">
-				<DialogTitle className="text-left">Criar novo evento</DialogTitle>
+				<DialogTitle className="text-left">{m["event.create_new"]()}</DialogTitle>
 			</DialogHeader>
 			<div className="flex flex-1 flex-col overflow-hidden">
 				<div className="flex-1 space-y-6 overflow-y-auto px-6 py-4">
@@ -75,7 +76,7 @@ export function EventCreateModal({
 					<div className="space-y-4">
 						<div className="grid grid-cols-2 gap-4">
 							<div className="space-y-2">
-								<Label htmlFor="title">Título</Label>
+								<Label htmlFor="title">{m["event.title"]()}</Label>
 								<Input
 									id="title"
 									value={newEvent.title}
@@ -85,11 +86,11 @@ export function EventCreateModal({
 											title: e.target.value,
 										}))
 									}
-									placeholder="Título do evento"
+									placeholder={m["calendar.event_title"]()}
 								/>
 							</div>
 							<div className="space-y-2">
-								<Label htmlFor="type">Tipo</Label>
+								<Label htmlFor="type">{m["event.type"]()}</Label>
 								<Select
 									value={newEvent.type}
 									onValueChange={(value: AppEvent["type"]) =>
@@ -97,19 +98,19 @@ export function EventCreateModal({
 									}
 								>
 									<SelectTrigger>
-										<SelectValue placeholder="Selecione o tipo de evento" />
+										<SelectValue placeholder={m["event.select_type"]()} />
 									</SelectTrigger>
 									<SelectContent>
-										<SelectItem value="travel">Transporte</SelectItem>
-										<SelectItem value="food">Alimentação</SelectItem>
-										<SelectItem value="activity">Atividade</SelectItem>
+										<SelectItem value="travel">{m["event.type_transport"]()}</SelectItem>
+										<SelectItem value="food">{m["event.type_food"]()}</SelectItem>
+										<SelectItem value="activity">{m["event.type_activity"]()}</SelectItem>
 									</SelectContent>
 								</Select>
 							</div>
 						</div>
 
 						<div className="space-y-2">
-							<Label htmlFor="location">Local</Label>
+							<Label htmlFor="location">{m["event.location"]()}</Label>
 							<Input
 								id="location"
 								value={newEvent.location}
@@ -119,11 +120,11 @@ export function EventCreateModal({
 										location: e.target.value,
 									}))
 								}
-								placeholder="Local do evento (opcional)"
+								placeholder={m["event.location_placeholder"]()}
 							/>
 						</div>
 						<div className="space-y-2">
-							<Label htmlFor="cost">Preço (R$) — opcional</Label>
+							<Label htmlFor="cost">{m["event.price_optional"]()}</Label>
 							<div className="relative">
 								<span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
 									R$
@@ -148,7 +149,7 @@ export function EventCreateModal({
 						</div>
 
 						<div className="space-y-2">
-							<Label htmlFor="description">Descrição — opcional</Label>
+							<Label htmlFor="description">{m["event.description_optional"]()}</Label>
 							<Textarea
 								id="description"
 								value={newEvent.description}
@@ -158,13 +159,13 @@ export function EventCreateModal({
 										description: e.target.value,
 									}))
 								}
-								placeholder="Adicione detalhes sobre este evento..."
+								placeholder={m["event.description_placeholder"]()}
 								rows={3}
 							/>
 						</div>
 
 						<div className="space-y-2">
-							<Label htmlFor="link">Link — opcional</Label>
+							<Label htmlFor="link">{m["event.link_optional"]()}</Label>
 							<Input
 								id="link"
 								type="url"
@@ -175,14 +176,14 @@ export function EventCreateModal({
 										link: e.target.value,
 									}))
 								}
-								placeholder="https://exemplo.com"
+								placeholder={m["event.link_placeholder"]()}
 							/>
 						</div>
 					</div>
 
 					{/* Date & Time */}
 					<div className="space-y-4">
-						<h3 className="text-sm font-medium">Data e horário</h3>
+						<h3 className="text-sm font-medium">{m["event.date_and_time"]()}</h3>
 						<div className="space-y-4">
 							<Calendar
 								mode="single"
@@ -226,7 +227,7 @@ export function EventCreateModal({
 
 							<div className="grid grid-cols-2 gap-4">
 								<div className="space-y-2">
-									<Label htmlFor="time-from">Horário de início</Label>
+									<Label htmlFor="time-from">{m["event.start_time"]()}</Label>
 									<div className="relative">
 										<Clock2Icon className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 select-none" />
 										<Input
@@ -258,7 +259,7 @@ export function EventCreateModal({
 								</div>
 
 								<div className="space-y-2">
-									<Label htmlFor="time-to">Horário de término</Label>
+									<Label htmlFor="time-to">{m["event.end_time"]()}</Label>
 									<div className="relative">
 										<Clock2Icon className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 select-none" />
 										<Input
@@ -296,14 +297,14 @@ export function EventCreateModal({
 							onClick={onClose}
 							className="w-full sm:w-auto"
 						>
-							Cancelar
+							{m["common.cancel"]()}
 						</Button>
 						<Button
 							onClick={onCreate}
 							disabled={!newEvent.title.trim()}
 							className="w-full sm:w-auto"
 						>
-							Criar evento
+							{m["event.create"]()}
 						</Button>
 					</div>
 				</div>

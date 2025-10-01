@@ -13,6 +13,7 @@ import {
 	SourcesTrigger,
 } from "@/components/ai-elements/sources";
 import type { MyUIMessage } from "@/orpc/modules/concierge/concierge.ai";
+import * as m from "@/paraglide/messages";
 import { CopyIcon, RefreshCcwIcon } from "lucide-react";
 import { Fragment } from "react";
 
@@ -78,15 +79,18 @@ export function Messages({
 										{message.role === "assistant" &&
 											i === messages.length - 1 && (
 												<Actions className="mt-2">
-													<Action onClick={() => {}} label="Retry">
+										<Action
+											onClick={() => {}}
+											label={m["concierge.messages.actions.retry"]()}
+										>
 														<RefreshCcwIcon className="size-3" />
 													</Action>
 													<Action
 														onClick={() =>
 															navigator.clipboard.writeText(part.text)
 														}
-														label="Copy"
-													>
+											label={m["concierge.messages.actions.copy"]()}
+										>
 														<CopyIcon className="size-3" />
 													</Action>
 												</Actions>
@@ -175,7 +179,7 @@ export function Messages({
 										>
 											<div className="h-2 w-2 animate-spin rounded-full border border-muted-foreground/30 border-t-transparent" />
 											<span className="text-xs text-muted-foreground/60">
-												Buscando eventos da viagem...
+												{m["concierge.messages.loading.events"]()}
 											</span>
 										</div>
 									);
@@ -202,7 +206,7 @@ export function Messages({
 										>
 											<div className="h-2 w-2 animate-spin rounded-full border border-muted-foreground/30 border-t-transparent" />
 											<span className="text-xs text-muted-foreground/60">
-												Buscando participantes da viagem...
+												{m["concierge.messages.loading.participants"]()}
 											</span>
 										</div>
 									);
@@ -224,7 +228,7 @@ export function Messages({
 											className="rounded-lg border border-border bg-muted/5 p-4"
 										>
 											<p className="text-sm text-muted-foreground">
-												✅ {data.message}
+												{m["concierge.messages.success_prefix"]({ message: data.message })}
 											</p>
 										</div>
 									);
@@ -240,7 +244,7 @@ export function Messages({
 										>
 											<div className="h-2 w-2 animate-spin rounded-full border border-muted-foreground/30 border-t-transparent" />
 											<span className="text-xs text-muted-foreground/60">
-												Buscando acomodações disponíveis...
+												{m["concierge.messages.loading.accommodations"]()}
 											</span>
 										</div>
 									);

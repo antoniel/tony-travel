@@ -17,19 +17,19 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Messages } from "@/routes/trip/$travelId/concierge/-components/Messages";
 import { PendingIssuesPanel } from "@/routes/trip/$travelId/concierge/-components/PendingIssuesPanel";
 import { useConciergeChatContext } from "@/routes/trip/$travelId/concierge/-components/concierge-chat-context";
+import * as m from "@/paraglide/messages";
 import { CalendarClock, Clock, MapPin, Plane } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 function InChatHeader({ travelName }: { travelName?: string }) {
+	const heading = travelName
+		? m["concierge.agent.header_with_name"]({ name: travelName })
+		: m["concierge.agent.header"]();
+
 	return (
-		<>
-			<div className="flex flex-col gap-2  ">
-				<h2 className="text-xl sm:text-2xl font-semibold tracking-tight">
-					Seu assistente para organizar a viagem
-					{travelName ? `: ${travelName}` : ""}
-				</h2>
-			</div>
-		</>
+		<div className="flex flex-col gap-2">
+			<h2 className="text-xl sm:text-2xl font-semibold tracking-tight">{heading}</h2>
+		</div>
 	);
 }
 
@@ -71,7 +71,8 @@ export const ConciergeAgent = ({
 		}
 
 		sendMessage({
-			text: message.text || "Sent with attachments",
+			text:
+				message.text || m["concierge.agent.attachment_fallback"](),
 			files: message.files,
 		});
 		setInput("");
@@ -92,45 +93,42 @@ export const ConciergeAgent = ({
 							summary={pendingSummary}
 							isLoading={isPendingIssuesLoading}
 						/>
-						{showIntro ? (
-							<div className="mb-4 mt-4 rounded-lg border bg-muted/40 p-4">
-								<h3 className="mb-2 text-sm font-medium">
-									O que o Concierge pode fazer
-								</h3>
-								<div className="flex flex-col gap-3">
-									<div className="rounded-md border bg-background p-3 text-sm">
-										<div className="mb-1 flex items-center gap-2 font-medium">
-											<Plane className="h-4 w-4 text-muted-foreground" />
-											Adicionar voos
-										</div>
-										<p className="text-muted-foreground">
-											"Adicionar voo de GRU para JFK saindo 10/11 às 22:30 e
-											chegando 11/11 às 07:10".
-										</p>
+			{showIntro ? (
+						<div className="mb-4 mt-4 rounded-lg border bg-muted/40 p-4">
+							<h3 className="mb-2 text-sm font-medium">
+								{m["concierge.agent.intro.title"]()}
+							</h3>
+							<div className="flex flex-col gap-3">
+								<div className="rounded-md border bg-background p-3 text-sm">
+									<div className="mb-1 flex items-center gap-2 font-medium">
+										<Plane className="h-4 w-4 text-muted-foreground" />
+										{m["concierge.agent.intro.flights_title"]()}
 									</div>
-									<div className="rounded-md border bg-background p-3 text-sm">
-										<div className="mb-1 flex items-center gap-2 font-medium">
-											<CalendarClock className="h-4 w-4 text-muted-foreground" />
-											Eventos e horários
-										</div>
-										<p className="text-muted-foreground">
-											"Criar jantar 12/11 das 19:00 às 21:00" ou "Passeio 13/11
-											à tarde".
-										</p>
+									<p className="text-muted-foreground">
+										{m["concierge.agent.intro.flights_example"]()}
+									</p>
+								</div>
+								<div className="rounded-md border bg-background p-3 text-sm">
+									<div className="mb-1 flex items-center gap-2 font-medium">
+										<CalendarClock className="h-4 w-4 text-muted-foreground" />
+										{m["concierge.agent.intro.events_title"]()}
 									</div>
-									<div className="rounded-md border bg-background p-3 text-sm">
-										<div className="mb-1 flex items-center gap-2 font-medium">
-											<MapPin className="h-4 w-4 text-muted-foreground" />
-											Adicione Atividades
-										</div>
-										<p className="text-muted-foreground">
-											"Adicione atividade leve para começar a viagem" ou
-											"Adicione no primeiro dia aclimatação".
-										</p>
+									<p className="text-muted-foreground">
+										{m["concierge.agent.intro.events_example"]()}
+									</p>
+								</div>
+								<div className="rounded-md border bg-background p-3 text-sm">
+									<div className="mb-1 flex items-center gap-2 font-medium">
+										<MapPin className="h-4 w-4 text-muted-foreground" />
+										{m["concierge.agent.intro.activities_title"]()}
 									</div>
+									<p className="text-muted-foreground">
+										{m["concierge.agent.intro.activities_example"]()}
+									</p>
 								</div>
 							</div>
-						) : null}
+						</div>
+					) : null}
 						<Messages
 							messages={messages}
 							status={status}
@@ -141,8 +139,7 @@ export const ConciergeAgent = ({
 							<Alert className="mx-4 mt-4 border-amber-200 bg-amber-50 text-amber-900">
 								<Clock className="h-4 w-4" />
 								<AlertDescription>
-									O concierge está analisando sua mensagem. A resposta pode
-									levar alguns instantes, mas seu pedido já está na fila.
+									{m["concierge.agent.delayed_alert"]()}
 								</AlertDescription>
 							</Alert>
 						) : null}

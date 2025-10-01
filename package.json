@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "pretest": "node scripts/clean-test-dbs.mjs",
-    "dev": "vite dev --port 5173 --host",
+    "dev": "vite dev --port 7084 ",
     "start": "node .output/server/index.mjs",
     "build": "vite build",
     "serve": "vite preview",
@@ -12,6 +12,7 @@
     "format": "biome format",
     "lint": "biome lint",
     "tscheck": "tsc --incremental --noEmit --skipLibCheck ",
+    "inlang": "npx @inlang/paraglide-js compile --project ./project.inlang --outdir ./src/paraglide",
     "check": "biome check",
     "migration:gen": "drizzle-kit generate",
     "migration:run": "drizzle-kit migrate",

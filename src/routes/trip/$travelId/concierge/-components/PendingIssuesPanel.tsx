@@ -1,6 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import * as m from "@/paraglide/messages";
+import { getLocale } from "@/paraglide/runtime";
 import type {
 	PendingIssue,
 	PendingIssuesSummary,
@@ -30,9 +32,9 @@ const SEVERITY_STYLES: Record<PendingIssue["severity"], string> = {
 	advisory: "border-amber-200/60 bg-amber-50/80",
 };
 
-const SEVERITY_BADGE: Record<PendingIssue["severity"], string> = {
-	critical: "Pendente",
-	advisory: "Sugestão",
+const SEVERITY_BADGE: Record<PendingIssue["severity"], () => string> = {
+	critical: () => m["concierge.pending_severity.critical"](),
+	advisory: () => m["concierge.pending_severity.advisory"](),
 };
 
 export function PendingIssuesPanel({
@@ -44,7 +46,7 @@ export function PendingIssuesPanel({
 			<div className="mb-4">
 				<div className="flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase">
 					<Loader2 className="h-3.5 w-3.5 animate-spin" />
-					<span>Verificando pendências da viagem...</span>
+					<span>{m["concierge.pending_loading"]()}</span>
 				</div>
 				<div className="mt-2 grid gap-2">
 					<div className="h-20 animate-pulse rounded-lg bg-muted/30" />
@@ -58,15 +60,14 @@ export function PendingIssuesPanel({
 	}
 
 	return (
-		<section aria-label="Pendências do concierge" className="mb-5 space-y-3">
+		<section aria-label={m["concierge.pending_section_label"]()} className="mb-5 space-y-3">
 			<header className="space-y-1">
 				<div className="flex items-center gap-2 text-xs font-medium uppercase text-muted-foreground">
 					<AlertTriangle className="h-3.5 w-3.5" />
-					<span>Pendências identificadas</span>
+					<span>{m["concierge.pending_section_title"]()}</span>
 				</div>
 				<p className="text-sm text-muted-foreground">
-					O concierge separou os pontos que precisam de atenção para seguir com
-					a viagem.
+					{m["concierge.pending_section_description"]()}
 				</p>
 			</header>
 			<div className="space-y-3">
@@ -81,13 +82,14 @@ export function PendingIssuesPanel({
 function PendingIssueCard({ issue }: { issue: PendingIssue }) {
 	const Icon = ICON_LOOKUP[issue.type];
 	const severityClass = SEVERITY_STYLES[issue.severity];
-	const badgeLabel = SEVERITY_BADGE[issue.severity];
+	const badgeLabel = SEVERITY_BADGE[issue.severity]();
 	const hasTravelers = issue.affectedTravelers.length > 0;
 	const namesPreview = issue.affectedTravelers
 		.map((traveler) => traveler.name)
 		.join(", ");
+	const locale = getLocale();
 	const formatDate = (isoDate: string) =>
-		new Date(`${isoDate}T00:00:00Z`).toLocaleDateString("pt-BR", {
+		new Date(`${isoDate}T00:00:00Z`).toLocaleDateString(locale, {
 			day: "2-digit",
 			month: "short",
 		});
@@ -116,17 +118,21 @@ function PendingIssueCard({ issue }: { issue: PendingIssue }) {
 						<p className="text-sm text-muted-foreground">{issue.description}</p>
 						{hasTravelers ? (
 							<p className="text-xs text-muted-foreground">
-								Afeta: {namesPreview}
+								{m["concierge.pending_affects"]({ names: namesPreview })}
 							</p>
 						) : null}
 						{issue.gapRanges.length > 0 ? (
 							<ul className="text-xs text-muted-foreground">
 								{issue.gapRanges.map((range) => (
 									<li key={`${range.start}-${range.end}`}>
-										Datas descobertas:{" "}
 										{range.start === range.end
-											? formatDate(range.start)
-											: `${formatDate(range.start)} até ${formatDate(range.end)}`}
+											? m["concierge.pending_dates_single"]({
+												date: formatDate(range.start),
+											})
+											: m["concierge.pending_dates_range"]({
+												start: formatDate(range.start),
+												end: formatDate(range.end),
+											})}
 									</li>
 								))}
 							</ul>

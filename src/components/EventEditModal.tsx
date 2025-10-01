@@ -1,3 +1,4 @@
+import * as m from "@/paraglide/messages";
 import { ResponsiveModal } from "@/components/ui/ResponsiveModal";
 import { maskCurrencyInputPtBR, formatNumberPtBR } from "@/lib/currency";
 import type { AppEvent } from "@/lib/types";
@@ -91,7 +92,7 @@ export function EventEditModal({
 			contentClassName="gap-0"
 		>
 			<DialogHeader className="border-b px-6 py-4">
-				<DialogTitle className="text-left">Editar evento</DialogTitle>
+				<DialogTitle className="text-left">{m["event.edit"]()}</DialogTitle>
 			</DialogHeader>
 			<div className="flex flex-1 flex-col overflow-hidden">
 				<div className="flex-1 space-y-6 overflow-y-auto px-6 py-4">
@@ -99,7 +100,7 @@ export function EventEditModal({
 					<div className="space-y-4">
 						<div className="grid grid-cols-2 gap-4">
 							<div className="space-y-2">
-								<Label htmlFor="edit-title">Título</Label>
+								<Label htmlFor="edit-title">{m["event.title"]()}</Label>
 								<Input
 									id="edit-title"
 									value={editEvent.title}
@@ -109,11 +110,11 @@ export function EventEditModal({
 											title: e.target.value,
 										}))
 									}
-									placeholder="Título do evento"
+									placeholder={m["calendar.event_title"]()}
 								/>
 							</div>
 							<div className="space-y-2">
-								<Label htmlFor="edit-type">Tipo</Label>
+								<Label htmlFor="edit-type">{m["event.type"]()}</Label>
 								<Select
 									value={editEvent.type}
 									onValueChange={(value: AppEvent["type"]) =>
@@ -121,19 +122,19 @@ export function EventEditModal({
 									}
 								>
 									<SelectTrigger>
-										<SelectValue placeholder="Selecione o tipo de evento" />
+										<SelectValue placeholder={m["event.select_type"]()} />
 									</SelectTrigger>
 									<SelectContent>
-										<SelectItem value="travel">Transporte</SelectItem>
-										<SelectItem value="food">Alimentação</SelectItem>
-										<SelectItem value="activity">Atividade</SelectItem>
+										<SelectItem value="travel">{m["event.type_transport"]()}</SelectItem>
+										<SelectItem value="food">{m["event.type_food"]()}</SelectItem>
+										<SelectItem value="activity">{m["event.type_activity"]()}</SelectItem>
 									</SelectContent>
 								</Select>
 							</div>
 						</div>
 
 						<div className="space-y-2">
-							<Label htmlFor="edit-location">Local</Label>
+							<Label htmlFor="edit-location">{m["event.location"]()}</Label>
 							<Input
 								id="edit-location"
 								value={editEvent.location}
@@ -143,11 +144,11 @@ export function EventEditModal({
 										location: e.target.value,
 									}))
 								}
-								placeholder="Local do evento (opcional)"
+								placeholder={m["event.location_placeholder"]()}
 							/>
 						</div>
 						<div className="space-y-2">
-							<Label htmlFor="edit-cost">Preço (R$) — opcional</Label>
+							<Label htmlFor="edit-cost">{m["event.price_optional"]()}</Label>
 							<div className="relative">
 								<span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
 									R$
@@ -172,7 +173,7 @@ export function EventEditModal({
 						</div>
 
 						<div className="space-y-2">
-							<Label htmlFor="edit-description">Descrição — opcional</Label>
+							<Label htmlFor="edit-description">{m["event.description_optional"]()}</Label>
 							<Textarea
 								id="edit-description"
 								value={editEvent.description}
@@ -182,13 +183,13 @@ export function EventEditModal({
 										description: e.target.value,
 									}))
 								}
-								placeholder="Adicione detalhes sobre este evento..."
+								placeholder={m["event.description_placeholder"]()}
 								rows={3}
 							/>
 						</div>
 
 						<div className="space-y-2">
-							<Label htmlFor="edit-link">Link — opcional</Label>
+							<Label htmlFor="edit-link">{m["event.link_optional"]()}</Label>
 							<Input
 								id="edit-link"
 								type="url"
@@ -199,14 +200,14 @@ export function EventEditModal({
 										link: e.target.value,
 									}))
 								}
-								placeholder="https://exemplo.com"
+								placeholder={m["event.link_placeholder"]()}
 							/>
 						</div>
 					</div>
 
 					{/* Date & Time */}
 					<div className="space-y-4">
-						<h3 className="text-sm font-medium">Data e horário</h3>
+						<h3 className="text-sm font-medium">{m["event.date_and_time"]()}</h3>
 						<div className="space-y-4">
 							<Calendar
 								mode="single"
@@ -250,7 +251,7 @@ export function EventEditModal({
 
 							<div className="grid grid-cols-2 gap-4">
 							<div className="space-y-2">
-								<Label htmlFor="edit-time-from">Horário de início</Label>
+								<Label htmlFor="edit-time-from">{m["event.start_time"]()}</Label>
 									<div className="relative">
 										<Clock2Icon className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 select-none" />
 										<Input
@@ -282,7 +283,7 @@ export function EventEditModal({
 								</div>
 
 							<div className="space-y-2">
-								<Label htmlFor="edit-time-to">Horário de término</Label>
+								<Label htmlFor="edit-time-to">{m["event.end_time"]()}</Label>
 									<div className="relative">
 										<Clock2Icon className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 select-none" />
 										<Input
@@ -319,14 +320,14 @@ export function EventEditModal({
 							onClick={handleClose}
 							className="w-full sm:w-auto"
 						>
-							Cancelar
+							{m["common.cancel"]()}
 						</Button>
 						<Button
 							onClick={handleSave}
 							disabled={!editEvent.title.trim()}
 							className="w-full sm:w-auto"
 						>
-							Salvar alterações
+							{m["event.save_changes"]()}
 						</Button>
 					</div>
 				</div>
