@@ -4,8 +4,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { AppEvent } from "@/lib/types";
 import { orpc } from "@/orpc/client";
-import ItineraryCalendar from "@/routes/{-$locale}/trip/$travelId/-components/itinerary-calendar";
-import { ItineraryTimeline } from "@/routes/{-$locale}/trip/$travelId/-components/itinerary-timeline";
+import ItineraryCalendar from "@/routes/trip/$travelId/-components/itinerary-calendar";
+import { ItineraryTimeline } from "@/routes/trip/$travelId/-components/itinerary-timeline";
 import {
 	useMutation,
 	useQueryClient,
@@ -15,7 +15,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Calendar as CalendarIcon, Clock, Plus } from "lucide-react";
 import { Suspense, useEffect, useMemo, useState } from "react";
 
-export const Route = createFileRoute("/{-$locale}/trip/$travelId/")({
+export const Route = createFileRoute("/trip/$travelId/")({
 	component: () => (
 		<Suspense fallback={<ItineraryPageSkeleton />}>
 			<ItineraryPage />

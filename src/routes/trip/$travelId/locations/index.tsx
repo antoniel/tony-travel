@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { ExternalLink, MapPin, Plus, Star } from "lucide-react";
 
-export const Route = createFileRoute("/{-$locale}/trip/$travelId/locations/")({
+export const Route = createFileRoute("/trip/$travelId/locations/")({
 	component: LocationsPage,
 });
 

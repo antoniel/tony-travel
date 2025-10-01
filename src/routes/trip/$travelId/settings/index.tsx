@@ -44,7 +44,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 
-export const Route = createFileRoute("/{-$locale}/trip/$travelId/settings/")({
+export const Route = createFileRoute("/trip/$travelId/settings/")({
 	component: () => (
 		<Suspense fallback={<TripSettingsSkeleton />}>
 			<TripSettingsPage />

@@ -1,6 +1,7 @@
 {
   "include": ["**/*.ts", "**/*.tsx"],
   "compilerOptions": {
+    "allowJs": true,
     "target": "ES2022",
     "noErrorTruncation": true,
     "jsx": "react-jsx",

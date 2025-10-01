@@ -8,7 +8,7 @@ interface LoginSearchParams {
 	redirect?: string;
 }
 
-export const Route = createFileRoute("/{-$locale}/auth/login")({
+export const Route = createFileRoute("/auth/login")({
 	validateSearch: (search: Record<string, unknown>): LoginSearchParams => {
 		return {
 			redirect: (search.redirect as string) || "/",

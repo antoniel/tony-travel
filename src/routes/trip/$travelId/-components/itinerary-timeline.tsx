@@ -14,8 +14,8 @@ import {
 	UtensilsCrossed,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { EventCreateModal } from "../../../../../components/EventCreateModal";
-import { EventEditModal } from "../../../../../components/EventEditModal";
+import { EventCreateModal } from "../../../../components/EventCreateModal";
+import { EventEditModal } from "../../../../components/EventEditModal";
 import { EventDetailsModal } from "./event-details-modal";
 import { FlightDetailsModal } from "./flight-event-block";
 import {

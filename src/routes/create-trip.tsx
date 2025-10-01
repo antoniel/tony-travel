@@ -11,7 +11,7 @@ const CreateTripSearchSchema = z.object({
 	departureAirports: z.string().optional(),
 });
 
-export const Route = createFileRoute("/{-$locale}/create-trip")({
+export const Route = createFileRoute("/create-trip")({
 	validateSearch: CreateTripSearchSchema,
 	component: CreateTripPage,
 });

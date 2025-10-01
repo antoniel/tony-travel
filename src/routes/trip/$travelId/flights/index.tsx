@@ -41,7 +41,7 @@ import {
 } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
 
-export const Route = createFileRoute("/{-$locale}/trip/$travelId/flights/")({
+export const Route = createFileRoute("/trip/$travelId/flights/")({
 	validateSearch: z.object({
 		highlightFlightId: z.string().optional(),
 	}),

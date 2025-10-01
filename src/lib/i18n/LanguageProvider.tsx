@@ -1,11 +1,6 @@
 import { setLocale } from "@/paraglide/runtime";
-import { useNavigate } from "@tanstack/react-router";
 import { createContext, useContext, useEffect, useState } from "react";
-import {
-	buildPathWithLanguage,
-	getCurrentLanguage,
-	saveLanguage,
-} from "./language-utils";
+import { getCurrentLanguage, saveLanguage } from "./language-utils";
 import type { Language } from "./types";
 
 interface LanguageContextValue {
@@ -24,17 +19,16 @@ export function LanguageProvider({
 	children,
 	initialLanguage,
 }: LanguageProviderProps) {
-	const navigate = useNavigate();
 	const [currentLanguage, setCurrentLanguage] = useState<Language>(() => {
 		const lang = initialLanguage || getCurrentLanguage();
 		// Set Paraglide locale
-		setLocale(lang);
+		setLocale(lang, { reload: true });
 		return lang;
 	});
 
 	// Update Paraglide when language changes
 	useEffect(() => {
-		setLocale(currentLanguage, { reload: false });
+		setLocale(currentLanguage);
 	}, [currentLanguage]);
 
 	const handleSetLanguage = (lang: Language) => {
@@ -43,15 +37,6 @@ export function LanguageProvider({
 
 		// Update state
 		setCurrentLanguage(lang);
-
-		// Navigate to same page with new language
-		const currentPath = window.location.pathname;
-		const newPath = buildPathWithLanguage(currentPath, lang);
-
-		// Only navigate if path actually changed
-		if (newPath !== currentPath) {
-			navigate({ to: newPath });
-		}
 	};
 
 	const value: LanguageContextValue = {

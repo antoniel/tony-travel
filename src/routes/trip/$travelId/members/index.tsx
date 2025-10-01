@@ -14,7 +14,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Crown, Shield, Users } from "lucide-react";
 import { Suspense } from "react";
 
-export const Route = createFileRoute("/{-$locale}/trip/$travelId/members/")({
+export const Route = createFileRoute("/trip/$travelId/members/")({
 	component: () => (
 		<Suspense fallback={<MembersPageSkeleton />}>
 			<MembersPage />

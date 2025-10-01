@@ -2,12 +2,12 @@ import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatCurrencyBRL } from "@/lib/currency";
 import type { AppEvent } from "@/lib/types";
 import { ExternalLink, Pencil } from "lucide-react";
-import ActivityImage from "../../../../../components/ActivityImage";
-import { ResponsiveModal } from "../../../../../components/ui/ResponsiveModal";
-import { Badge } from "../../../../../components/ui/badge";
-import { Button } from "../../../../../components/ui/button";
-import { ScrollArea } from "../../../../../components/ui/scroll-area";
-import { Separator } from "../../../../../components/ui/separator";
+import ActivityImage from "../../../../components/ActivityImage";
+import { ResponsiveModal } from "../../../../components/ui/ResponsiveModal";
+import { Badge } from "../../../../components/ui/badge";
+import { Button } from "../../../../components/ui/button";
+import { ScrollArea } from "../../../../components/ui/scroll-area";
+import { Separator } from "../../../../components/ui/separator";
 
 export function EventDetailsModal({
 	event,

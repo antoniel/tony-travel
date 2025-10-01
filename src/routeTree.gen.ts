@@ -11,102 +11,96 @@
 import { createServerRootRoute } from '@tanstack/react-start/server'
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as Char123LocaleChar125IndexRouteImport } from './routes/{-$locale}/index'
-import { Route as Char123LocaleChar125CreateTripRouteImport } from './routes/{-$locale}/create-trip'
-import { Route as Char123LocaleChar125TripTravelIdRouteImport } from './routes/{-$locale}/trip/$travelId'
-import { Route as Char123LocaleChar125InviteTokenRouteImport } from './routes/{-$locale}/invite/$token'
-import { Route as Char123LocaleChar125AuthLoginRouteImport } from './routes/{-$locale}/auth/login'
-import { Route as Char123LocaleChar125TripTravelIdIndexRouteImport } from './routes/{-$locale}/trip/$travelId/index'
-import { Route as Char123LocaleChar125TripTravelIdSettingsIndexRouteImport } from './routes/{-$locale}/trip/$travelId/settings/index'
-import { Route as Char123LocaleChar125TripTravelIdMembersIndexRouteImport } from './routes/{-$locale}/trip/$travelId/members/index'
-import { Route as Char123LocaleChar125TripTravelIdLocationsIndexRouteImport } from './routes/{-$locale}/trip/$travelId/locations/index'
-import { Route as Char123LocaleChar125TripTravelIdFlightsIndexRouteImport } from './routes/{-$locale}/trip/$travelId/flights/index'
-import { Route as Char123LocaleChar125TripTravelIdFinancialIndexRouteImport } from './routes/{-$locale}/trip/$travelId/financial/index'
-import { Route as Char123LocaleChar125TripTravelIdConciergeIndexRouteImport } from './routes/{-$locale}/trip/$travelId/concierge/index'
-import { Route as Char123LocaleChar125TripTravelIdAccommodationsIndexRouteImport } from './routes/{-$locale}/trip/$travelId/accommodations/index'
+import { Route as CreateTripRouteImport } from './routes/create-trip'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as TripTravelIdRouteImport } from './routes/trip/$travelId'
+import { Route as InviteTokenRouteImport } from './routes/invite/$token'
+import { Route as AuthLoginRouteImport } from './routes/auth/login'
+import { Route as TripTravelIdIndexRouteImport } from './routes/trip/$travelId/index'
+import { Route as TripTravelIdSettingsIndexRouteImport } from './routes/trip/$travelId/settings/index'
+import { Route as TripTravelIdMembersIndexRouteImport } from './routes/trip/$travelId/members/index'
+import { Route as TripTravelIdLocationsIndexRouteImport } from './routes/trip/$travelId/locations/index'
+import { Route as TripTravelIdFlightsIndexRouteImport } from './routes/trip/$travelId/flights/index'
+import { Route as TripTravelIdFinancialIndexRouteImport } from './routes/trip/$travelId/financial/index'
+import { Route as TripTravelIdConciergeIndexRouteImport } from './routes/trip/$travelId/concierge/index'
+import { Route as TripTravelIdAccommodationsIndexRouteImport } from './routes/trip/$travelId/accommodations/index'
 import { ServerRoute as ApiSplatServerRouteImport } from './routes/api.$'
 import { ServerRoute as ApiRpcSplatServerRouteImport } from './routes/api.rpc.$'
 import { ServerRoute as ApiAuthSplatServerRouteImport } from './routes/api.auth.$'
 
 const rootServerRouteImport = createServerRootRoute()
 
-const Char123LocaleChar125IndexRoute =
-  Char123LocaleChar125IndexRouteImport.update({
-    id: '/{-$locale}/',
-    path: '/{-$locale}/',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const Char123LocaleChar125CreateTripRoute =
-  Char123LocaleChar125CreateTripRouteImport.update({
-    id: '/{-$locale}/create-trip',
-    path: '/{-$locale}/create-trip',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const Char123LocaleChar125TripTravelIdRoute =
-  Char123LocaleChar125TripTravelIdRouteImport.update({
-    id: '/{-$locale}/trip/$travelId',
-    path: '/{-$locale}/trip/$travelId',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const Char123LocaleChar125InviteTokenRoute =
-  Char123LocaleChar125InviteTokenRouteImport.update({
-    id: '/{-$locale}/invite/$token',
-    path: '/{-$locale}/invite/$token',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const Char123LocaleChar125AuthLoginRoute =
-  Char123LocaleChar125AuthLoginRouteImport.update({
-    id: '/{-$locale}/auth/login',
-    path: '/{-$locale}/auth/login',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const Char123LocaleChar125TripTravelIdIndexRoute =
-  Char123LocaleChar125TripTravelIdIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => Char123LocaleChar125TripTravelIdRoute,
-  } as any)
-const Char123LocaleChar125TripTravelIdSettingsIndexRoute =
-  Char123LocaleChar125TripTravelIdSettingsIndexRouteImport.update({
+const CreateTripRoute = CreateTripRouteImport.update({
+  id: '/create-trip',
+  path: '/create-trip',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TripTravelIdRoute = TripTravelIdRouteImport.update({
+  id: '/trip/$travelId',
+  path: '/trip/$travelId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthLoginRoute = AuthLoginRouteImport.update({
+  id: '/auth/login',
+  path: '/auth/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TripTravelIdIndexRoute = TripTravelIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => TripTravelIdRoute,
+} as any)
+const TripTravelIdSettingsIndexRoute =
+  TripTravelIdSettingsIndexRouteImport.update({
     id: '/settings/',
     path: '/settings/',
-    getParentRoute: () => Char123LocaleChar125TripTravelIdRoute,
+    getParentRoute: () => TripTravelIdRoute,
   } as any)
-const Char123LocaleChar125TripTravelIdMembersIndexRoute =
-  Char123LocaleChar125TripTravelIdMembersIndexRouteImport.update({
+const TripTravelIdMembersIndexRoute =
+  TripTravelIdMembersIndexRouteImport.update({
     id: '/members/',
     path: '/members/',
-    getParentRoute: () => Char123LocaleChar125TripTravelIdRoute,
+    getParentRoute: () => TripTravelIdRoute,
   } as any)
-const Char123LocaleChar125TripTravelIdLocationsIndexRoute =
-  Char123LocaleChar125TripTravelIdLocationsIndexRouteImport.update({
+const TripTravelIdLocationsIndexRoute =
+  TripTravelIdLocationsIndexRouteImport.update({
     id: '/locations/',
     path: '/locations/',
-    getParentRoute: () => Char123LocaleChar125TripTravelIdRoute,
+    getParentRoute: () => TripTravelIdRoute,
   } as any)
-const Char123LocaleChar125TripTravelIdFlightsIndexRoute =
-  Char123LocaleChar125TripTravelIdFlightsIndexRouteImport.update({
+const TripTravelIdFlightsIndexRoute =
+  TripTravelIdFlightsIndexRouteImport.update({
     id: '/flights/',
     path: '/flights/',
-    getParentRoute: () => Char123LocaleChar125TripTravelIdRoute,
+    getParentRoute: () => TripTravelIdRoute,
   } as any)
-const Char123LocaleChar125TripTravelIdFinancialIndexRoute =
-  Char123LocaleChar125TripTravelIdFinancialIndexRouteImport.update({
+const TripTravelIdFinancialIndexRoute =
+  TripTravelIdFinancialIndexRouteImport.update({
     id: '/financial/',
     path: '/financial/',
-    getParentRoute: () => Char123LocaleChar125TripTravelIdRoute,
+    getParentRoute: () => TripTravelIdRoute,
   } as any)
-const Char123LocaleChar125TripTravelIdConciergeIndexRoute =
-  Char123LocaleChar125TripTravelIdConciergeIndexRouteImport.update({
+const TripTravelIdConciergeIndexRoute =
+  TripTravelIdConciergeIndexRouteImport.update({
     id: '/concierge/',
     path: '/concierge/',
-    getParentRoute: () => Char123LocaleChar125TripTravelIdRoute,
+    getParentRoute: () => TripTravelIdRoute,
   } as any)
-const Char123LocaleChar125TripTravelIdAccommodationsIndexRoute =
-  Char123LocaleChar125TripTravelIdAccommodationsIndexRouteImport.update({
+const TripTravelIdAccommodationsIndexRoute =
+  TripTravelIdAccommodationsIndexRouteImport.update({
     id: '/accommodations/',
     path: '/accommodations/',
-    getParentRoute: () => Char123LocaleChar125TripTravelIdRoute,
+    getParentRoute: () => TripTravelIdRoute,
   } as any)
 const ApiSplatServerRoute = ApiSplatServerRouteImport.update({
   id: '/api/$',
@@ -125,103 +119,103 @@ const ApiAuthSplatServerRoute = ApiAuthSplatServerRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/{-$locale}/create-trip': typeof Char123LocaleChar125CreateTripRoute
-  '/{-$locale}': typeof Char123LocaleChar125IndexRoute
-  '/{-$locale}/auth/login': typeof Char123LocaleChar125AuthLoginRoute
-  '/{-$locale}/invite/$token': typeof Char123LocaleChar125InviteTokenRoute
-  '/{-$locale}/trip/$travelId': typeof Char123LocaleChar125TripTravelIdRouteWithChildren
-  '/{-$locale}/trip/$travelId/': typeof Char123LocaleChar125TripTravelIdIndexRoute
-  '/{-$locale}/trip/$travelId/accommodations': typeof Char123LocaleChar125TripTravelIdAccommodationsIndexRoute
-  '/{-$locale}/trip/$travelId/concierge': typeof Char123LocaleChar125TripTravelIdConciergeIndexRoute
-  '/{-$locale}/trip/$travelId/financial': typeof Char123LocaleChar125TripTravelIdFinancialIndexRoute
-  '/{-$locale}/trip/$travelId/flights': typeof Char123LocaleChar125TripTravelIdFlightsIndexRoute
-  '/{-$locale}/trip/$travelId/locations': typeof Char123LocaleChar125TripTravelIdLocationsIndexRoute
-  '/{-$locale}/trip/$travelId/members': typeof Char123LocaleChar125TripTravelIdMembersIndexRoute
-  '/{-$locale}/trip/$travelId/settings': typeof Char123LocaleChar125TripTravelIdSettingsIndexRoute
+  '/': typeof IndexRoute
+  '/create-trip': typeof CreateTripRoute
+  '/auth/login': typeof AuthLoginRoute
+  '/invite/$token': typeof InviteTokenRoute
+  '/trip/$travelId': typeof TripTravelIdRouteWithChildren
+  '/trip/$travelId/': typeof TripTravelIdIndexRoute
+  '/trip/$travelId/accommodations': typeof TripTravelIdAccommodationsIndexRoute
+  '/trip/$travelId/concierge': typeof TripTravelIdConciergeIndexRoute
+  '/trip/$travelId/financial': typeof TripTravelIdFinancialIndexRoute
+  '/trip/$travelId/flights': typeof TripTravelIdFlightsIndexRoute
+  '/trip/$travelId/locations': typeof TripTravelIdLocationsIndexRoute
+  '/trip/$travelId/members': typeof TripTravelIdMembersIndexRoute
+  '/trip/$travelId/settings': typeof TripTravelIdSettingsIndexRoute
 }
 export interface FileRoutesByTo {
-  '/{-$locale}/create-trip': typeof Char123LocaleChar125CreateTripRoute
-  '/{-$locale}': typeof Char123LocaleChar125IndexRoute
-  '/{-$locale}/auth/login': typeof Char123LocaleChar125AuthLoginRoute
-  '/{-$locale}/invite/$token': typeof Char123LocaleChar125InviteTokenRoute
-  '/{-$locale}/trip/$travelId': typeof Char123LocaleChar125TripTravelIdIndexRoute
-  '/{-$locale}/trip/$travelId/accommodations': typeof Char123LocaleChar125TripTravelIdAccommodationsIndexRoute
-  '/{-$locale}/trip/$travelId/concierge': typeof Char123LocaleChar125TripTravelIdConciergeIndexRoute
-  '/{-$locale}/trip/$travelId/financial': typeof Char123LocaleChar125TripTravelIdFinancialIndexRoute
-  '/{-$locale}/trip/$travelId/flights': typeof Char123LocaleChar125TripTravelIdFlightsIndexRoute
-  '/{-$locale}/trip/$travelId/locations': typeof Char123LocaleChar125TripTravelIdLocationsIndexRoute
-  '/{-$locale}/trip/$travelId/members': typeof Char123LocaleChar125TripTravelIdMembersIndexRoute
-  '/{-$locale}/trip/$travelId/settings': typeof Char123LocaleChar125TripTravelIdSettingsIndexRoute
+  '/': typeof IndexRoute
+  '/create-trip': typeof CreateTripRoute
+  '/auth/login': typeof AuthLoginRoute
+  '/invite/$token': typeof InviteTokenRoute
+  '/trip/$travelId': typeof TripTravelIdIndexRoute
+  '/trip/$travelId/accommodations': typeof TripTravelIdAccommodationsIndexRoute
+  '/trip/$travelId/concierge': typeof TripTravelIdConciergeIndexRoute
+  '/trip/$travelId/financial': typeof TripTravelIdFinancialIndexRoute
+  '/trip/$travelId/flights': typeof TripTravelIdFlightsIndexRoute
+  '/trip/$travelId/locations': typeof TripTravelIdLocationsIndexRoute
+  '/trip/$travelId/members': typeof TripTravelIdMembersIndexRoute
+  '/trip/$travelId/settings': typeof TripTravelIdSettingsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/{-$locale}/create-trip': typeof Char123LocaleChar125CreateTripRoute
-  '/{-$locale}/': typeof Char123LocaleChar125IndexRoute
-  '/{-$locale}/auth/login': typeof Char123LocaleChar125AuthLoginRoute
-  '/{-$locale}/invite/$token': typeof Char123LocaleChar125InviteTokenRoute
-  '/{-$locale}/trip/$travelId': typeof Char123LocaleChar125TripTravelIdRouteWithChildren
-  '/{-$locale}/trip/$travelId/': typeof Char123LocaleChar125TripTravelIdIndexRoute
-  '/{-$locale}/trip/$travelId/accommodations/': typeof Char123LocaleChar125TripTravelIdAccommodationsIndexRoute
-  '/{-$locale}/trip/$travelId/concierge/': typeof Char123LocaleChar125TripTravelIdConciergeIndexRoute
-  '/{-$locale}/trip/$travelId/financial/': typeof Char123LocaleChar125TripTravelIdFinancialIndexRoute
-  '/{-$locale}/trip/$travelId/flights/': typeof Char123LocaleChar125TripTravelIdFlightsIndexRoute
-  '/{-$locale}/trip/$travelId/locations/': typeof Char123LocaleChar125TripTravelIdLocationsIndexRoute
-  '/{-$locale}/trip/$travelId/members/': typeof Char123LocaleChar125TripTravelIdMembersIndexRoute
-  '/{-$locale}/trip/$travelId/settings/': typeof Char123LocaleChar125TripTravelIdSettingsIndexRoute
+  '/': typeof IndexRoute
+  '/create-trip': typeof CreateTripRoute
+  '/auth/login': typeof AuthLoginRoute
+  '/invite/$token': typeof InviteTokenRoute
+  '/trip/$travelId': typeof TripTravelIdRouteWithChildren
+  '/trip/$travelId/': typeof TripTravelIdIndexRoute
+  '/trip/$travelId/accommodations/': typeof TripTravelIdAccommodationsIndexRoute
+  '/trip/$travelId/concierge/': typeof TripTravelIdConciergeIndexRoute
+  '/trip/$travelId/financial/': typeof TripTravelIdFinancialIndexRoute
+  '/trip/$travelId/flights/': typeof TripTravelIdFlightsIndexRoute
+  '/trip/$travelId/locations/': typeof TripTravelIdLocationsIndexRoute
+  '/trip/$travelId/members/': typeof TripTravelIdMembersIndexRoute
+  '/trip/$travelId/settings/': typeof TripTravelIdSettingsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/{-$locale}/create-trip'
-    | '/{-$locale}'
-    | '/{-$locale}/auth/login'
-    | '/{-$locale}/invite/$token'
-    | '/{-$locale}/trip/$travelId'
-    | '/{-$locale}/trip/$travelId/'
-    | '/{-$locale}/trip/$travelId/accommodations'
-    | '/{-$locale}/trip/$travelId/concierge'
-    | '/{-$locale}/trip/$travelId/financial'
-    | '/{-$locale}/trip/$travelId/flights'
-    | '/{-$locale}/trip/$travelId/locations'
-    | '/{-$locale}/trip/$travelId/members'
-    | '/{-$locale}/trip/$travelId/settings'
+    | '/'
+    | '/create-trip'
+    | '/auth/login'
+    | '/invite/$token'
+    | '/trip/$travelId'
+    | '/trip/$travelId/'
+    | '/trip/$travelId/accommodations'
+    | '/trip/$travelId/concierge'
+    | '/trip/$travelId/financial'
+    | '/trip/$travelId/flights'
+    | '/trip/$travelId/locations'
+    | '/trip/$travelId/members'
+    | '/trip/$travelId/settings'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/{-$locale}/create-trip'
-    | '/{-$locale}'
-    | '/{-$locale}/auth/login'
-    | '/{-$locale}/invite/$token'
-    | '/{-$locale}/trip/$travelId'
-    | '/{-$locale}/trip/$travelId/accommodations'
-    | '/{-$locale}/trip/$travelId/concierge'
-    | '/{-$locale}/trip/$travelId/financial'
-    | '/{-$locale}/trip/$travelId/flights'
-    | '/{-$locale}/trip/$travelId/locations'
-    | '/{-$locale}/trip/$travelId/members'
-    | '/{-$locale}/trip/$travelId/settings'
+    | '/'
+    | '/create-trip'
+    | '/auth/login'
+    | '/invite/$token'
+    | '/trip/$travelId'
+    | '/trip/$travelId/accommodations'
+    | '/trip/$travelId/concierge'
+    | '/trip/$travelId/financial'
+    | '/trip/$travelId/flights'
+    | '/trip/$travelId/locations'
+    | '/trip/$travelId/members'
+    | '/trip/$travelId/settings'
   id:
     | '__root__'
-    | '/{-$locale}/create-trip'
-    | '/{-$locale}/'
-    | '/{-$locale}/auth/login'
-    | '/{-$locale}/invite/$token'
-    | '/{-$locale}/trip/$travelId'
-    | '/{-$locale}/trip/$travelId/'
-    | '/{-$locale}/trip/$travelId/accommodations/'
-    | '/{-$locale}/trip/$travelId/concierge/'
-    | '/{-$locale}/trip/$travelId/financial/'
-    | '/{-$locale}/trip/$travelId/flights/'
-    | '/{-$locale}/trip/$travelId/locations/'
-    | '/{-$locale}/trip/$travelId/members/'
-    | '/{-$locale}/trip/$travelId/settings/'
+    | '/'
+    | '/create-trip'
+    | '/auth/login'
+    | '/invite/$token'
+    | '/trip/$travelId'
+    | '/trip/$travelId/'
+    | '/trip/$travelId/accommodations/'
+    | '/trip/$travelId/concierge/'
+    | '/trip/$travelId/financial/'
+    | '/trip/$travelId/flights/'
+    | '/trip/$travelId/locations/'
+    | '/trip/$travelId/members/'
+    | '/trip/$travelId/settings/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  Char123LocaleChar125CreateTripRoute: typeof Char123LocaleChar125CreateTripRoute
-  Char123LocaleChar125IndexRoute: typeof Char123LocaleChar125IndexRoute
-  Char123LocaleChar125AuthLoginRoute: typeof Char123LocaleChar125AuthLoginRoute
-  Char123LocaleChar125InviteTokenRoute: typeof Char123LocaleChar125InviteTokenRoute
-  Char123LocaleChar125TripTravelIdRoute: typeof Char123LocaleChar125TripTravelIdRouteWithChildren
+  IndexRoute: typeof IndexRoute
+  CreateTripRoute: typeof CreateTripRoute
+  AuthLoginRoute: typeof AuthLoginRoute
+  InviteTokenRoute: typeof InviteTokenRoute
+  TripTravelIdRoute: typeof TripTravelIdRouteWithChildren
 }
 export interface FileServerRoutesByFullPath {
   '/api/$': typeof ApiSplatServerRoute
@@ -255,96 +249,96 @@ export interface RootServerRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/{-$locale}/': {
-      id: '/{-$locale}/'
-      path: '/{-$locale}'
-      fullPath: '/{-$locale}'
-      preLoaderRoute: typeof Char123LocaleChar125IndexRouteImport
+    '/create-trip': {
+      id: '/create-trip'
+      path: '/create-trip'
+      fullPath: '/create-trip'
+      preLoaderRoute: typeof CreateTripRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/{-$locale}/create-trip': {
-      id: '/{-$locale}/create-trip'
-      path: '/{-$locale}/create-trip'
-      fullPath: '/{-$locale}/create-trip'
-      preLoaderRoute: typeof Char123LocaleChar125CreateTripRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/{-$locale}/trip/$travelId': {
-      id: '/{-$locale}/trip/$travelId'
-      path: '/{-$locale}/trip/$travelId'
-      fullPath: '/{-$locale}/trip/$travelId'
-      preLoaderRoute: typeof Char123LocaleChar125TripTravelIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/{-$locale}/invite/$token': {
-      id: '/{-$locale}/invite/$token'
-      path: '/{-$locale}/invite/$token'
-      fullPath: '/{-$locale}/invite/$token'
-      preLoaderRoute: typeof Char123LocaleChar125InviteTokenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/{-$locale}/auth/login': {
-      id: '/{-$locale}/auth/login'
-      path: '/{-$locale}/auth/login'
-      fullPath: '/{-$locale}/auth/login'
-      preLoaderRoute: typeof Char123LocaleChar125AuthLoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/{-$locale}/trip/$travelId/': {
-      id: '/{-$locale}/trip/$travelId/'
+    '/': {
+      id: '/'
       path: '/'
-      fullPath: '/{-$locale}/trip/$travelId/'
-      preLoaderRoute: typeof Char123LocaleChar125TripTravelIdIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125TripTravelIdRoute
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/{-$locale}/trip/$travelId/settings/': {
-      id: '/{-$locale}/trip/$travelId/settings/'
+    '/trip/$travelId': {
+      id: '/trip/$travelId'
+      path: '/trip/$travelId'
+      fullPath: '/trip/$travelId'
+      preLoaderRoute: typeof TripTravelIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invite/$token': {
+      id: '/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof InviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/login': {
+      id: '/auth/login'
+      path: '/auth/login'
+      fullPath: '/auth/login'
+      preLoaderRoute: typeof AuthLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trip/$travelId/': {
+      id: '/trip/$travelId/'
+      path: '/'
+      fullPath: '/trip/$travelId/'
+      preLoaderRoute: typeof TripTravelIdIndexRouteImport
+      parentRoute: typeof TripTravelIdRoute
+    }
+    '/trip/$travelId/settings/': {
+      id: '/trip/$travelId/settings/'
       path: '/settings'
-      fullPath: '/{-$locale}/trip/$travelId/settings'
-      preLoaderRoute: typeof Char123LocaleChar125TripTravelIdSettingsIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125TripTravelIdRoute
+      fullPath: '/trip/$travelId/settings'
+      preLoaderRoute: typeof TripTravelIdSettingsIndexRouteImport
+      parentRoute: typeof TripTravelIdRoute
     }
-    '/{-$locale}/trip/$travelId/members/': {
-      id: '/{-$locale}/trip/$travelId/members/'
+    '/trip/$travelId/members/': {
+      id: '/trip/$travelId/members/'
       path: '/members'
-      fullPath: '/{-$locale}/trip/$travelId/members'
-      preLoaderRoute: typeof Char123LocaleChar125TripTravelIdMembersIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125TripTravelIdRoute
+      fullPath: '/trip/$travelId/members'
+      preLoaderRoute: typeof TripTravelIdMembersIndexRouteImport
+      parentRoute: typeof TripTravelIdRoute
     }
-    '/{-$locale}/trip/$travelId/locations/': {
-      id: '/{-$locale}/trip/$travelId/locations/'
+    '/trip/$travelId/locations/': {
+      id: '/trip/$travelId/locations/'
       path: '/locations'
-      fullPath: '/{-$locale}/trip/$travelId/locations'
-      preLoaderRoute: typeof Char123LocaleChar125TripTravelIdLocationsIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125TripTravelIdRoute
+      fullPath: '/trip/$travelId/locations'
+      preLoaderRoute: typeof TripTravelIdLocationsIndexRouteImport
+      parentRoute: typeof TripTravelIdRoute
     }
-    '/{-$locale}/trip/$travelId/flights/': {
-      id: '/{-$locale}/trip/$travelId/flights/'
+    '/trip/$travelId/flights/': {
+      id: '/trip/$travelId/flights/'
       path: '/flights'
-      fullPath: '/{-$locale}/trip/$travelId/flights'
-      preLoaderRoute: typeof Char123LocaleChar125TripTravelIdFlightsIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125TripTravelIdRoute
+      fullPath: '/trip/$travelId/flights'
+      preLoaderRoute: typeof TripTravelIdFlightsIndexRouteImport
+      parentRoute: typeof TripTravelIdRoute
     }
-    '/{-$locale}/trip/$travelId/financial/': {
-      id: '/{-$locale}/trip/$travelId/financial/'
+    '/trip/$travelId/financial/': {
+      id: '/trip/$travelId/financial/'
       path: '/financial'
-      fullPath: '/{-$locale}/trip/$travelId/financial'
-      preLoaderRoute: typeof Char123LocaleChar125TripTravelIdFinancialIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125TripTravelIdRoute
+      fullPath: '/trip/$travelId/financial'
+      preLoaderRoute: typeof TripTravelIdFinancialIndexRouteImport
+      parentRoute: typeof TripTravelIdRoute
     }
-    '/{-$locale}/trip/$travelId/concierge/': {
-      id: '/{-$locale}/trip/$travelId/concierge/'
+    '/trip/$travelId/concierge/': {
+      id: '/trip/$travelId/concierge/'
       path: '/concierge'
-      fullPath: '/{-$locale}/trip/$travelId/concierge'
-      preLoaderRoute: typeof Char123LocaleChar125TripTravelIdConciergeIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125TripTravelIdRoute
+      fullPath: '/trip/$travelId/concierge'
+      preLoaderRoute: typeof TripTravelIdConciergeIndexRouteImport
+      parentRoute: typeof TripTravelIdRoute
     }
-    '/{-$locale}/trip/$travelId/accommodations/': {
-      id: '/{-$locale}/trip/$travelId/accommodations/'
+    '/trip/$travelId/accommodations/': {
+      id: '/trip/$travelId/accommodations/'
       path: '/accommodations'
-      fullPath: '/{-$locale}/trip/$travelId/accommodations'
-      preLoaderRoute: typeof Char123LocaleChar125TripTravelIdAccommodationsIndexRouteImport
-      parentRoute: typeof Char123LocaleChar125TripTravelIdRoute
+      fullPath: '/trip/$travelId/accommodations'
+      preLoaderRoute: typeof TripTravelIdAccommodationsIndexRouteImport
+      parentRoute: typeof TripTravelIdRoute
     }
   }
 }
@@ -374,49 +368,38 @@ declare module '@tanstack/react-start/server' {
   }
 }
 
-interface Char123LocaleChar125TripTravelIdRouteChildren {
-  Char123LocaleChar125TripTravelIdIndexRoute: typeof Char123LocaleChar125TripTravelIdIndexRoute
-  Char123LocaleChar125TripTravelIdAccommodationsIndexRoute: typeof Char123LocaleChar125TripTravelIdAccommodationsIndexRoute
-  Char123LocaleChar125TripTravelIdConciergeIndexRoute: typeof Char123LocaleChar125TripTravelIdConciergeIndexRoute
-  Char123LocaleChar125TripTravelIdFinancialIndexRoute: typeof Char123LocaleChar125TripTravelIdFinancialIndexRoute
-  Char123LocaleChar125TripTravelIdFlightsIndexRoute: typeof Char123LocaleChar125TripTravelIdFlightsIndexRoute
-  Char123LocaleChar125TripTravelIdLocationsIndexRoute: typeof Char123LocaleChar125TripTravelIdLocationsIndexRoute
-  Char123LocaleChar125TripTravelIdMembersIndexRoute: typeof Char123LocaleChar125TripTravelIdMembersIndexRoute
-  Char123LocaleChar125TripTravelIdSettingsIndexRoute: typeof Char123LocaleChar125TripTravelIdSettingsIndexRoute
+interface TripTravelIdRouteChildren {
+  TripTravelIdIndexRoute: typeof TripTravelIdIndexRoute
+  TripTravelIdAccommodationsIndexRoute: typeof TripTravelIdAccommodationsIndexRoute
+  TripTravelIdConciergeIndexRoute: typeof TripTravelIdConciergeIndexRoute
+  TripTravelIdFinancialIndexRoute: typeof TripTravelIdFinancialIndexRoute
+  TripTravelIdFlightsIndexRoute: typeof TripTravelIdFlightsIndexRoute
+  TripTravelIdLocationsIndexRoute: typeof TripTravelIdLocationsIndexRoute
+  TripTravelIdMembersIndexRoute: typeof TripTravelIdMembersIndexRoute
+  TripTravelIdSettingsIndexRoute: typeof TripTravelIdSettingsIndexRoute
 }
 
-const Char123LocaleChar125TripTravelIdRouteChildren: Char123LocaleChar125TripTravelIdRouteChildren =
-  {
-    Char123LocaleChar125TripTravelIdIndexRoute:
-      Char123LocaleChar125TripTravelIdIndexRoute,
-    Char123LocaleChar125TripTravelIdAccommodationsIndexRoute:
-      Char123LocaleChar125TripTravelIdAccommodationsIndexRoute,
-    Char123LocaleChar125TripTravelIdConciergeIndexRoute:
-      Char123LocaleChar125TripTravelIdConciergeIndexRoute,
-    Char123LocaleChar125TripTravelIdFinancialIndexRoute:
-      Char123LocaleChar125TripTravelIdFinancialIndexRoute,
-    Char123LocaleChar125TripTravelIdFlightsIndexRoute:
-      Char123LocaleChar125TripTravelIdFlightsIndexRoute,
-    Char123LocaleChar125TripTravelIdLocationsIndexRoute:
-      Char123LocaleChar125TripTravelIdLocationsIndexRoute,
-    Char123LocaleChar125TripTravelIdMembersIndexRoute:
-      Char123LocaleChar125TripTravelIdMembersIndexRoute,
-    Char123LocaleChar125TripTravelIdSettingsIndexRoute:
-      Char123LocaleChar125TripTravelIdSettingsIndexRoute,
-  }
+const TripTravelIdRouteChildren: TripTravelIdRouteChildren = {
+  TripTravelIdIndexRoute: TripTravelIdIndexRoute,
+  TripTravelIdAccommodationsIndexRoute: TripTravelIdAccommodationsIndexRoute,
+  TripTravelIdConciergeIndexRoute: TripTravelIdConciergeIndexRoute,
+  TripTravelIdFinancialIndexRoute: TripTravelIdFinancialIndexRoute,
+  TripTravelIdFlightsIndexRoute: TripTravelIdFlightsIndexRoute,
+  TripTravelIdLocationsIndexRoute: TripTravelIdLocationsIndexRoute,
+  TripTravelIdMembersIndexRoute: TripTravelIdMembersIndexRoute,
+  TripTravelIdSettingsIndexRoute: TripTravelIdSettingsIndexRoute,
+}
 
-const Char123LocaleChar125TripTravelIdRouteWithChildren =
-  Char123LocaleChar125TripTravelIdRoute._addFileChildren(
-    Char123LocaleChar125TripTravelIdRouteChildren,
-  )
+const TripTravelIdRouteWithChildren = TripTravelIdRoute._addFileChildren(
+  TripTravelIdRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
-  Char123LocaleChar125CreateTripRoute: Char123LocaleChar125CreateTripRoute,
-  Char123LocaleChar125IndexRoute: Char123LocaleChar125IndexRoute,
-  Char123LocaleChar125AuthLoginRoute: Char123LocaleChar125AuthLoginRoute,
-  Char123LocaleChar125InviteTokenRoute: Char123LocaleChar125InviteTokenRoute,
-  Char123LocaleChar125TripTravelIdRoute:
-    Char123LocaleChar125TripTravelIdRouteWithChildren,
+  IndexRoute: IndexRoute,
+  CreateTripRoute: CreateTripRoute,
+  AuthLoginRoute: AuthLoginRoute,
+  InviteTokenRoute: InviteTokenRoute,
+  TripTravelIdRoute: TripTravelIdRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

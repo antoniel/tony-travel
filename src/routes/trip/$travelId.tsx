@@ -1,9 +1,9 @@
 import { orpc } from "@/orpc/client";
-import { FloatingConciergeToggle } from "@/routes/{-$locale}/trip/$travelId/-components/FloatingConciergeToggle";
+import { FloatingConciergeToggle } from "@/routes/trip/$travelId/-components/FloatingConciergeToggle";
 import {
 	ConciergeChatProvider,
 	useConciergeChatContext,
-} from "@/routes/{-$locale}/trip/$travelId/concierge/-components/concierge-chat-context";
+} from "@/routes/trip/$travelId/concierge/-components/concierge-chat-context";
 import { useQuery } from "@tanstack/react-query";
 import {
 	Link,
@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-export const Route = createFileRoute("/{-$locale}/trip/$travelId")({
+export const Route = createFileRoute("/trip/$travelId")({
 	component: TripLayout,
 });
 

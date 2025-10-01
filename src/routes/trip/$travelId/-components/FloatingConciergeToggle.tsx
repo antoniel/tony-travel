@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ConciergeAgent } from "@/routes/{-$locale}/trip/$travelId/concierge/-components/concierge-agent";
-import { useConciergeChatContext } from "@/routes/{-$locale}/trip/$travelId/concierge/-components/concierge-chat-context";
+import { ConciergeAgent } from "@/routes/trip/$travelId/concierge/-components/concierge-agent";
+import { useConciergeChatContext } from "@/routes/trip/$travelId/concierge/-components/concierge-chat-context";
 import { ConciergeBell, MessageSquareText, X } from "lucide-react";
 import { useEffect, useRef } from "react";
 

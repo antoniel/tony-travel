@@ -14,9 +14,9 @@ import {
 	PromptInputTextarea,
 } from "@/components/ai-elements/prompt-input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Messages } from "@/routes/{-$locale}/trip/$travelId/concierge/-components/Messages";
-import { PendingIssuesPanel } from "@/routes/{-$locale}/trip/$travelId/concierge/-components/PendingIssuesPanel";
-import { useConciergeChatContext } from "@/routes/{-$locale}/trip/$travelId/concierge/-components/concierge-chat-context";
+import { Messages } from "@/routes/trip/$travelId/concierge/-components/Messages";
+import { PendingIssuesPanel } from "@/routes/trip/$travelId/concierge/-components/PendingIssuesPanel";
+import { useConciergeChatContext } from "@/routes/trip/$travelId/concierge/-components/concierge-chat-context";
 import { CalendarClock, Clock, MapPin, Plane } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 

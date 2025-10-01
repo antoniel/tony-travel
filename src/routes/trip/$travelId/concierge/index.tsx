@@ -1,12 +1,12 @@
 import { TravelMemberOnly } from "@/components/guards/TravelMemberOnly";
 import { orpc } from "@/orpc/client";
-import { ConciergeAgent } from "@/routes/{-$locale}/trip/$travelId/concierge/-components/concierge-agent";
-import { useConciergeChatContext } from "@/routes/{-$locale}/trip/$travelId/concierge/-components/concierge-chat-context";
+import { ConciergeAgent } from "@/routes/trip/$travelId/concierge/-components/concierge-agent";
+import { useConciergeChatContext } from "@/routes/trip/$travelId/concierge/-components/concierge-chat-context";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 
-export const Route = createFileRoute("/{-$locale}/trip/$travelId/concierge/")({
+export const Route = createFileRoute("/trip/$travelId/concierge/")({
 	component: ConciergePage,
 });
 

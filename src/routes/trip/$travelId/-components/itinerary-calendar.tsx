@@ -16,8 +16,8 @@ import {
 	useRef,
 	useState,
 } from "react";
-import { EventCreateModal } from "../../../../../components/EventCreateModal";
-import { EventEditModal } from "../../../../../components/EventEditModal";
+import { EventCreateModal } from "../../../../components/EventCreateModal";
+import { EventEditModal } from "../../../../components/EventEditModal";
 import {
 	PX_PER_HOUR,
 	addDaysUtc,

@@ -23,7 +23,7 @@ import {
 import { useEffect } from "react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/{-$locale}/invite/$token")({
+export const Route = createFileRoute("/invite/$token")({
 	component: InviteAcceptancePage,
 });
 
