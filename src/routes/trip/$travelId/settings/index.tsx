@@ -43,6 +43,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
+import * as m from "@/paraglide/messages";
 
 export const Route = createFileRoute("/trip/$travelId/settings/")({
 	component: () => (
@@ -57,11 +58,14 @@ const TravelSettingsSchema = z
 	.object({
 		name: z
 			.string()
-			.min(1, "Nome da viagem é obrigatório")
-			.max(255, "Nome muito longo"),
-		startDate: z.date({ message: "Data de início é obrigatória" }),
-		endDate: z.date({ message: "Data de fim é obrigatória" }),
-		description: z.string().max(1000, "Descrição muito longa").optional(),
+			.min(1, m["validation.required_field"]())
+			.max(255, m["validation.max_length"]({ max: 255 })),
+		startDate: z.date({ message: m["validation.required_field"]() }),
+		endDate: z.date({ message: m["validation.required_field"]() }),
+		description: z
+			.string()
+			.max(1000, m["validation.max_length"]({ max: 1000 }))
+			.optional(),
 		destinationAirports: z
 			.array(
 				z.object({
@@ -69,10 +73,10 @@ const TravelSettingsSchema = z
 					label: z.string(),
 				}),
 			)
-			.min(1, "Selecione ao menos um aeroporto de destino"),
+			.min(1, m["validation.required_field"]()),
 	})
 	.refine((data) => data.endDate >= data.startDate, {
-		message: "Data de fim deve ser posterior à data de início",
+		message: m["validation.end_date_after_start"](),
 		path: ["endDate"],
 	})
 
@@ -80,7 +84,9 @@ type TravelSettingsFormData = z.infer<typeof TravelSettingsSchema>;
 
 // Delete confirmation schema
 const DeleteConfirmationSchema = z.object({
-	confirmationName: z.string().min(1, "Digite o nome da viagem para confirmar"),
+	confirmationName: z
+		.string()
+		.min(1, m["trip.settings.delete_name_hint"]()),
 });
 
 type DeleteConfirmationData = z.infer<typeof DeleteConfirmationSchema>;
@@ -104,9 +110,11 @@ function TripSettingsPage() {
 	if (!travel || travel.userMembership?.role !== "owner") {
 		return (
 			<div className="space-y-4">
-				<h1 className="text-2xl font-bold text-destructive">Acesso Negado</h1>
+				<h1 className="text-2xl font-bold text-destructive">
+					{m["membership.access_denied_title"]()}
+				</h1>
 				<p className="text-muted-foreground">
-					Apenas proprietários da viagem podem acessar as configurações.
+					{m["membership.access_denied_description"]()}
 				</p>
 			</div>
 		)
@@ -116,10 +124,10 @@ function TripSettingsPage() {
 		<div className="space-y-8">
 			<div className="space-y-2">
 				<h1 className="text-2xl font-bold tracking-tight">
-					Configurações da Viagem
+					{m["trip.settings.page_title"]()}
 				</h1>
 				<p className="text-muted-foreground">
-					Gerencie as configurações e detalhes da sua viagem.
+					{m["trip.settings.page_description"]()}
 				</p>
 			</div>
 
@@ -220,7 +228,7 @@ function TravelSettingsForm({
 	const updateTravelMutation = useMutation({
 		...orpc.travelRoutes.updateTravel.mutationOptions(),
 		onSuccess: () => {
-			toast.success("Configurações da viagem atualizadas com sucesso!");
+			toast.success(m["trip.settings.update_success"]());
 			queryClient.invalidateQueries({
 				queryKey: orpc.travelRoutes.getTravel.queryKey({
 					input: { id: travel.id },
@@ -228,7 +236,7 @@ function TravelSettingsForm({
 			})
 		},
 		onError: (error) => {
-			toast.error("Erro ao atualizar configurações da viagem");
+			toast.error(m["trip.settings.update_error"]());
 			console.error("Update error:", error);
 		},
 		onSettled: () => {
@@ -258,9 +266,11 @@ function TravelSettingsForm({
 	return (
 		<div className="space-y-6">
 			<div className="space-y-2">
-				<h2 className="text-lg font-semibold">Detalhes da Viagem</h2>
+				<h2 className="text-lg font-semibold">
+					{m["trip.settings.details_section_title"]()}
+				</h2>
 				<p className="text-sm text-muted-foreground">
-					Atualize as informações básicas da sua viagem.
+					{m["trip.settings.details_section_description"]()}
 				</p>
 			</div>
 
@@ -272,12 +282,12 @@ function TravelSettingsForm({
 							name="name"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>Nome da Viagem</FormLabel>
+									<FormLabel>{m["trip.settings.name_label"]()}</FormLabel>
 									<FormControl>
-										<Input placeholder="Ex: Viagem para Paris" {...field} />
+										<Input placeholder={m["trip.name_placeholder"]()} {...field} />
 									</FormControl>
 									<FormDescription>
-										O nome que identifica sua viagem.
+										{m["trip.settings.name_description"]()}
 									</FormDescription>
 									<FormMessage />
 								</FormItem>
@@ -285,13 +295,13 @@ function TravelSettingsForm({
 						/>
 
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-							<FormField
-								control={form.control}
-								name="startDate"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Data de Início</FormLabel>
-										<FormControl>
+						<FormField
+							control={form.control}
+							name="startDate"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>{m["trip.settings.start_label"]()}</FormLabel>
+									<FormControl>
 											<Input
 												type="date"
 												{...field}
@@ -310,12 +320,12 @@ function TravelSettingsForm({
 								)}
 							/>
 
-							<FormField
-								control={form.control}
-								name="endDate"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Data de Fim</FormLabel>
+						<FormField
+							control={form.control}
+							name="endDate"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>{m["trip.settings.end_label"]()}</FormLabel>
 										<FormControl>
 											<Input
 												type="date"
@@ -341,17 +351,16 @@ function TravelSettingsForm({
 							name="destinationAirports"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>Aeroportos de Destino</FormLabel>
+									<FormLabel>{m["trip.settings.destinations_label"]()}</FormLabel>
 									<FormDescription>
-										Selecione todos os aeroportos possíveis para a chegada desta
-										viagem.
+										{m["trip.settings.destinations_description"]()}
 									</FormDescription>
 									<FormControl>
 										<LocationSelector
-											label="Aeroportos de Destino"
-											placeholder="Selecione aeroporto(s) de destino"
-											searchPlaceholder="Buscar por cidade, aeroporto ou código..."
-											selectedLabel="Aeroportos selecionados"
+											label={m["trip.settings.destinations_label"]()}
+											placeholder={m["trip.settings.destinations_placeholder"]()}
+											searchPlaceholder={m["trip.search_city_airport"]()}
+											selectedLabel={m["trip.selected_airports"]()}
 											icon={<Plane className="h-4 w-4" />}
 											options={destinationOptions}
 											selected={(field.value as LocationOption[]) ?? []}
@@ -373,17 +382,16 @@ function TravelSettingsForm({
 							name="description"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>Descrição (Opcional)</FormLabel>
+									<FormLabel>{m["trip.settings.description_label"]()}</FormLabel>
 									<FormControl>
 										<Textarea
-											placeholder="Descreva sua viagem, objetivos, atividades planejadas..."
+											placeholder={m["trip.description_placeholder"]()}
 											className="min-h-[100px]"
 											{...field}
 										/>
 									</FormControl>
 									<FormDescription>
-										Adicione detalhes sobre sua viagem que podem ser úteis para
-										outros membros.
+										{m["trip.settings.description_help"]()}
 									</FormDescription>
 									<FormMessage />
 								</FormItem>
@@ -395,7 +403,9 @@ function TravelSettingsForm({
 								type="submit"
 								disabled={isSubmitting || !form.formState.isDirty}
 							>
-								{isSubmitting ? "Salvando..." : "Salvar Alterações"}
+								{isSubmitting
+									? m["trip.settings.submitting"]()
+									: m["trip.settings.submit"]()}
 							</Button>
 						</div>
 					</form>
@@ -428,7 +438,7 @@ function DangerZone({ travel }: { travel: Pick<Travel, "id" | "name"> }) {
 			DeleteConfirmationSchema.refine(
 				(data) => data.confirmationName === travel.name,
 				{
-					message: "O nome digitado não confere com o nome da viagem",
+					message: m["trip.settings.delete_name_mismatch"](),
 					path: ["confirmationName"],
 				},
 			),
@@ -441,11 +451,11 @@ function DangerZone({ travel }: { travel: Pick<Travel, "id" | "name"> }) {
 	const deleteTravelMutation = useMutation({
 		...orpc.travelRoutes.deleteTravel.mutationOptions(),
 		onSuccess: () => {
-			toast.success("Viagem excluída com sucesso");
+			toast.success(m["trip.settings.delete_toast_success"]());
 			navigate({ to: "/" });
 		},
 		onError: (error) => {
-			toast.error("Erro ao excluir viagem");
+			toast.error(m["trip.settings.delete_toast_error"]());
 			console.error("Delete error:", error);
 		},
 		onSettled: () => {
@@ -468,22 +478,20 @@ function DangerZone({ travel }: { travel: Pick<Travel, "id" | "name"> }) {
 		<div className="space-y-6">
 			<div className="space-y-2">
 				<h2 className="text-lg font-semibold text-destructive">
-					Zona de Perigo
+					{m["trip.settings.danger_zone_title"]()}
 				</h2>
 				<p className="text-sm text-muted-foreground">
-					Ações irreversíveis que afetam permanentemente sua viagem.
+					{m["trip.settings.danger_zone_description"]()}
 				</p>
 			</div>
 
 			<div className="rounded-lg border border-destructive/20 bg-destructive/5 p-6 space-y-4">
 				<div className="space-y-2">
 					<h3 className="text-base font-medium text-destructive">
-						Excluir Viagem
+						{m["trip.settings.delete_title"]()}
 					</h3>
 					<p className="text-sm text-muted-foreground">
-						Esta ação não pode ser desfeita. Todos os dados da viagem
-						(acomodações, voos, eventos e membros) serão permanentemente
-						removidos.
+						{m["trip.settings.delete_description"]()}
 					</p>
 				</div>
 
@@ -491,15 +499,16 @@ function DangerZone({ travel }: { travel: Pick<Travel, "id" | "name"> }) {
 					<AlertDialogTrigger asChild>
 						<Button variant="destructive" size="sm" className="gap-2">
 							<Trash2 className="w-4 h-4" />
-							Excluir Viagem
+							{m["trip.settings.delete_button"]()}
 						</Button>
 					</AlertDialogTrigger>
 					<AlertDialogContent className="max-w-md">
 						<AlertDialogHeader>
-							<AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+							<AlertDialogTitle>
+								{m["trip.settings.delete_dialog_title"]()}
+							</AlertDialogTitle>
 							<AlertDialogDescription>
-								Esta ação é irreversível. Para confirmar, digite o nome exato da
-								viagem abaixo:
+								{m["trip.settings.delete_dialog_description"]()}
 								<br />
 								<strong>"{travel.name}"</strong>
 							</AlertDialogDescription>
@@ -507,12 +516,12 @@ function DangerZone({ travel }: { travel: Pick<Travel, "id" | "name"> }) {
 
 						<Form {...deleteForm}>
 							<form className="space-y-4">
-								<FormField
-									control={deleteForm.control}
-									name="confirmationName"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>Nome da viagem</FormLabel>
+							<FormField
+								control={deleteForm.control}
+								name="confirmationName"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>{m["trip.settings.delete_name_label"]()}</FormLabel>
 											<FormControl>
 												<Input placeholder={travel.name} {...field} />
 											</FormControl>
@@ -525,7 +534,7 @@ function DangerZone({ travel }: { travel: Pick<Travel, "id" | "name"> }) {
 
 						<AlertDialogFooter>
 							<AlertDialogCancel disabled={isDeleting}>
-								Cancelar
+								{m["common.cancel"]()}
 							</AlertDialogCancel>
 							<AlertDialogAction
 								disabled={
@@ -535,7 +544,9 @@ function DangerZone({ travel }: { travel: Pick<Travel, "id" | "name"> }) {
 								onClick={onDelete}
 								className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 							>
-								{isDeleting ? "Excluindo..." : "Excluir Viagem"}
+								{isDeleting
+									? m["trip.settings.delete_confirming"]()
+									: m["trip.settings.delete_button"]()}
 							</AlertDialogAction>
 						</AlertDialogFooter>
 					</AlertDialogContent>

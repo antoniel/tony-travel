@@ -144,7 +144,39 @@
 		"destination_unspecified": "Destino não especificado",
 		"name_placeholder": "Ex: Aventura em Paris, Escapada no Rio...",
 		"description_placeholder": "Descreva objetivos, atividades planejadas, anotações para o grupo...",
-		"description_too_long": "Descrição muito longa"
+		"description_too_long": "Descrição muito longa",
+		"settings": {
+			"page_title": "Configurações da Viagem",
+			"page_description": "Gerencie as configurações e detalhes da sua viagem.",
+			"details_section_title": "Detalhes da Viagem",
+			"details_section_description": "Atualize as informações básicas da sua viagem.",
+			"name_label": "Nome da Viagem",
+			"name_description": "O nome que identifica sua viagem.",
+			"start_label": "Data de Início",
+			"end_label": "Data de Fim",
+			"destinations_label": "Aeroportos de Destino",
+			"destinations_description": "Selecione todos os aeroportos possíveis para a chegada desta viagem.",
+			"destinations_placeholder": "Selecione aeroporto(s) de destino",
+			"description_label": "Descrição (Opcional)",
+			"description_help": "Adicione detalhes sobre sua viagem que podem ser úteis para outros membros.",
+			"submit": "Salvar Alterações",
+			"submitting": "Salvando...",
+			"update_success": "Configurações da viagem atualizadas com sucesso!",
+			"update_error": "Erro ao atualizar configurações da viagem.",
+			"danger_zone_title": "Zona de Perigo",
+			"danger_zone_description": "Ações irreversíveis que afetam permanentemente sua viagem.",
+			"delete_title": "Excluir Viagem",
+			"delete_description": "Esta ação não pode ser desfeita. Todos os dados da viagem (acomodações, voos, eventos e membros) serão permanentemente removidos.",
+			"delete_button": "Excluir Viagem",
+			"delete_dialog_title": "Confirmar Exclusão",
+			"delete_dialog_description": "Esta ação é irreversível. Para confirmar, digite o nome exato da viagem abaixo:",
+			"delete_name_label": "Nome da viagem",
+			"delete_confirming": "Excluindo...",
+			"delete_toast_success": "Viagem excluída com sucesso",
+			"delete_toast_error": "Erro ao excluir viagem.",
+			"delete_name_hint": "Digite o nome da viagem para confirmar.",
+			"delete_name_mismatch": "O nome digitado não confere com o nome da viagem."
+		}
 	},
 	"concierge": {
 		"panel_label": "Conversa com o concierge",
@@ -396,7 +428,18 @@
 		"date_must_be_before": "A data deve ser anterior a {date}",
 		"min_length": "Deve ter pelo menos {min} caracteres",
 		"max_length": "Deve ter no máximo {max} caracteres",
-		"invalid_format": "Formato inválido"
+		"invalid_format": "Formato inválido",
+		"end_date_after_start": "A data de fim deve ser posterior à data de início"
+	},
+	"membership": {
+		"access_denied_title": "Acesso negado",
+		"access_denied_description": "Apenas proprietários da viagem podem acessar estas configurações.",
+		"checking_permissions": "Verificando permissões...",
+		"login_required_title": "Login necessário",
+		"login_required_description": "Você precisa fazer login para acessar esta viagem.",
+		"login_button": "Fazer login",
+		"restricted_title": "Acesso restringido",
+		"restricted_description": "Você não tem permissão para acessar esta viagem. Entre em contato com o organizador para solicitar acesso."
 	},
 	"error": {
 		"generic": "Ocorreu um erro. Por favor, tente novamente.",

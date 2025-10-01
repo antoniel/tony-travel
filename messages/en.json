@@ -144,7 +144,39 @@
 		"destination_unspecified": "Destination not specified",
 		"name_placeholder": "E.g.: Paris Adventure, Rio Getaway...",
 		"description_placeholder": "Describe goals, planned activities, notes for the group...",
-		"description_too_long": "Description too long"
+		"description_too_long": "Description too long",
+		"settings": {
+			"page_title": "Trip settings",
+			"page_description": "Manage the settings and details of your trip.",
+			"details_section_title": "Trip details",
+			"details_section_description": "Update the basic information for your trip.",
+			"name_label": "Trip name",
+			"name_description": "The name that identifies your trip.",
+			"start_label": "Start date",
+			"end_label": "End date",
+			"destinations_label": "Destination airports",
+			"destinations_description": "Select every possible arrival airport for this trip.",
+			"destinations_placeholder": "Select destination airport(s)",
+			"description_label": "Description (optional)",
+			"description_help": "Add details about your trip that might help other members.",
+			"submit": "Save changes",
+			"submitting": "Saving...",
+			"update_success": "Trip settings updated successfully!",
+			"update_error": "Failed to update trip settings.",
+			"danger_zone_title": "Danger zone",
+			"danger_zone_description": "Irreversible actions that permanently affect your trip.",
+			"delete_title": "Delete trip",
+			"delete_description": "This action cannot be undone. All trip data (accommodations, flights, events, members) will be permanently removed.",
+			"delete_button": "Delete trip",
+			"delete_dialog_title": "Confirm deletion",
+			"delete_dialog_description": "This action is irreversible. To confirm, type the exact trip name below:",
+			"delete_name_label": "Trip name",
+			"delete_confirming": "Deleting...",
+			"delete_toast_success": "Trip deleted successfully",
+			"delete_toast_error": "Failed to delete trip.",
+			"delete_name_hint": "Type the trip name to confirm.",
+			"delete_name_mismatch": "The typed name does not match the trip name."
+		}
 	},
 	"calendar": {
 		"title": "Calendar",
@@ -245,7 +277,18 @@
 		"date_must_be_before": "Date must be before {date}",
 		"min_length": "Must be at least {min} characters",
 		"max_length": "Must be at most {max} characters",
-		"invalid_format": "Invalid format"
+		"invalid_format": "Invalid format",
+		"end_date_after_start": "End date must be after the start date"
+	},
+	"membership": {
+		"access_denied_title": "Access denied",
+		"access_denied_description": "Only trip owners can access these settings.",
+		"checking_permissions": "Checking permissions...",
+		"login_required_title": "Login required",
+		"login_required_description": "You need to log in to access this trip.",
+		"login_button": "Log in",
+		"restricted_title": "Restricted access",
+		"restricted_description": "You don't have permission to access this trip. Contact the organizer for access."
 	},
 	"concierge": {
 		"panel_label": "Concierge conversation",

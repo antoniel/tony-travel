@@ -3,6 +3,7 @@ import { useUser } from "@/hooks/useUser";
 import { AlertCircle, Loader2, Lock } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Button } from "../ui/button";
+import * as m from "@/paraglide/messages";
 import {
 	Card,
 	CardContent,
@@ -49,7 +50,7 @@ function MembershipLoadingState() {
 			<div className="flex flex-col items-center gap-3">
 				<Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
 				<p className="text-sm text-muted-foreground">
-					Verificando permissões...
+					{m["membership.checking_permissions"]()}
 				</p>
 			</div>
 		</div>
@@ -63,9 +64,9 @@ function LoginPrompt() {
 				<div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center mx-auto mb-3">
 					<Lock className="w-6 h-6 text-blue-600 dark:text-blue-400" />
 				</div>
-				<CardTitle>Login Necessário</CardTitle>
+				<CardTitle>{m["membership.login_required_title"]()}</CardTitle>
 				<CardDescription>
-					Você precisa fazer login para acessar esta viagem.
+					{m["membership.login_required_description"]()}
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="text-center">
@@ -74,7 +75,7 @@ function LoginPrompt() {
 						window.location.href = "/auth/login";
 					}}
 				>
-					Fazer Login
+					{m["membership.login_button"]()}
 				</Button>
 			</CardContent>
 		</Card>
@@ -86,11 +87,10 @@ function AccessDeniedState() {
 		<Alert className="max-w-md mx-auto border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-900/20">
 			<AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
 			<AlertTitle className="text-orange-800 dark:text-orange-300">
-				Acesso Restrito
+				{m["membership.restricted_title"]()}
 			</AlertTitle>
 			<AlertDescription className="text-orange-700 dark:text-orange-400">
-				Você não tem permissão para acessar esta viagem. Entre em contato com o
-				organizador para solicitar acesso.
+				{m["membership.restricted_description"]()}
 			</AlertDescription>
 		</Alert>
 	);
