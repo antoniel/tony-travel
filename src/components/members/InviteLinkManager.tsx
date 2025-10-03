@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { orpc } from "@/orpc/client";
 import type { InviteLinkResponse } from "@/orpc/modules/invitation/invitation.model";
+import * as m from "@/paraglide/messages";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
 	Copy,
@@ -55,16 +56,14 @@ export function InviteLinkManager({ travelId }: InviteLinkManagerProps) {
 							input: { travelId },
 						}),
 					});
-					toast.success("Link de convite gerado!", {
-						description:
-							"O link de convite foi criado e está pronto para ser compartilhado.",
+					toast.success(m["invite_link.generated_success"](), {
+						description: m["invite_link.generated_success_description"](),
 					});
 				},
 				onError: (e) => {
-					toast.error("Erro ao gerar link", {
+					toast.error(m["invite_link.generate_error"](), {
 						description:
-							e.message ||
-							"Não foi possível criar o link de convite. Tente novamente.",
+							e.message || m["invite_link.generate_error_description"](),
 					});
 				},
 			},
@@ -76,14 +75,12 @@ export function InviteLinkManager({ travelId }: InviteLinkManagerProps) {
 
 		try {
 			await navigator.clipboard.writeText(currentLink.inviteUrl);
-			toast.success("Link copiado!", {
-				description:
-					"O link de convite foi copiado para a área de transferência.",
+			toast.success(m["invite_link.copied_success"](), {
+				description: m["invite_link.copied_success_description"](),
 			});
 		} catch (error) {
-			toast.error("Erro ao copiar", {
-				description:
-					"Não foi possível copiar o link. Tente selecionar e copiar manualmente.",
+			toast.error(m["invite_link.copy_error"](), {
+				description: m["invite_link.copy_error_description"](),
 			});
 		}
 	};
@@ -97,10 +94,10 @@ export function InviteLinkManager({ travelId }: InviteLinkManagerProps) {
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
 					<Share2 className="w-5 h-5" />
-					Link de Convite
+					{m["invite_link.title"]()}
 				</CardTitle>
 				<CardDescription>
-					Compartilhe este link para convidar novos membros para a viagem.
+					{m["invite_link.share_description"]()}
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-4">

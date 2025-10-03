@@ -312,16 +312,16 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 														}
 													>
 														<SelectTrigger className="h-12 text-base w-full bg-background border border-border shadow-xs">
-															<SelectValue placeholder="Número de viajantes" />
+															<SelectValue placeholder={m["trip.traveler_placeholder"]()} />
 														</SelectTrigger>
 														<SelectContent>
-															<SelectItem value="1">1 pessoa</SelectItem>
-															<SelectItem value="2">2 pessoas</SelectItem>
-															<SelectItem value="3">3 pessoas</SelectItem>
-															<SelectItem value="4">4 pessoas</SelectItem>
-															<SelectItem value="5">5+ pessoas</SelectItem>
+															<SelectItem value="1">{m["trip.people_1"]()}</SelectItem>
+															<SelectItem value="2">{m["trip.people_2"]()}</SelectItem>
+															<SelectItem value="3">{m["trip.people_3"]()}</SelectItem>
+															<SelectItem value="4">{m["trip.people_4"]()}</SelectItem>
+															<SelectItem value="5">{m["trip.people_5_plus"]()}</SelectItem>
 															<SelectItem value="custom">
-																💡 Valor personalizado
+																{m["trip.people_custom"]()}
 															</SelectItem>
 														</SelectContent>
 													</Select>
@@ -363,7 +363,7 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 									{/* Date Range - Full width */}
 									<div className="space-y-3">
 										<Label className="text-base font-medium">
-											Quando você quer viajar?
+											{m["trip.when_travel"]()}
 										</Label>
 										<Popover
 											open={isDatePopoverOpen}
@@ -385,7 +385,7 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 																{format(form.dateRange.from, "dd/MM/yyyy", {
 																	locale: ptBR,
 																})}{" "}
-																até{" "}
+																{m["trip.date_range_to"]()}{" "}
 																{format(form.dateRange.to, "dd/MM/yyyy", {
 																	locale: ptBR,
 																})}
@@ -443,13 +443,13 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 												missingDestination ||
 												missingDates
 											) {
-												let msg = "Preencha os campos obrigatórios: ";
+												let msg = m["trip.fill_required_fields"]();
 												const parts: string[] = [];
 												if (missingDeparture) parts.push(m["trip.departure"]());
 												if (missingDestination)
 													parts.push(m["trip.destination"]());
 												if (missingDates) parts.push(m["trip.dates"]());
-												msg += parts.join(", ");
+												msg += " " + parts.join(", ");
 												toast.error(msg);
 												if (missingDeparture) {
 													setIsAirportPopoverOpen(true);
@@ -519,10 +519,10 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 					>
 						<DialogHeader className="border-b px-6 py-4">
 							<DialogTitle className="text-left">
-								Faça login para continuar
+								{m["trip.login_required"]()}
 							</DialogTitle>
 							<DialogDescription>
-								Você precisa estar logado para criar um roteiro personalizado.
+								{m["trip.login_required_message"]()}
 							</DialogDescription>
 						</DialogHeader>
 						<div className="space-y-4 px-6 py-4">
@@ -550,11 +550,10 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 										d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
 									/>
 								</svg>
-								Entrar com Google
+								{m["auth.login_with_google"]()}
 							</Button>
 							<div className="text-center text-sm text-muted-foreground">
-								Ao fazer login, você concorda com nossos termos de uso e
-								política de privacidade.
+								{m["auth.terms_agreement"]()}
 							</div>
 						</div>
 					</ResponsiveModal>
@@ -573,7 +572,7 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 					{/* Predefined Trips */}
 					<div className=" mx-auto">
 						<h2 className="text-2xl md:text-3xl font-bold mb-8 text-center bg-gradient-to-r from-primary/90 via-foreground to-accent/80 bg-clip-text text-transparent">
-							Planejamentos em destaque
+							{m["trip.featured_trips"]()}
 						</h2>
 						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 							{predefinedTrips.map((trip) => {
@@ -588,10 +587,10 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 								const countdownLabel =
 									trip.userMembership && daysUntilStart >= 0
 										? daysUntilStart === 0
-											? "Hoje"
+											? m["trip.today"]()
 											: daysUntilStart === 1
-												? "Amanhã"
-												: `Em ${daysUntilStart} dias`
+												? m["trip.tomorrow"]()
+												: m["trip.in_days"]({ days: daysUntilStart.toString() })
 										: null;
 
 								return (
@@ -779,7 +778,7 @@ function DialogCreateTravel(props: {
 		setImportError(null);
 		const text = props.chatgptResponse.trim();
 		if (!text) {
-			setImportError("Cole a resposta do ChatGPT para continuar.");
+			setImportError(m["trip.chatgpt_paste_placeholder"]());
 			return;
 		}
 
@@ -795,18 +794,14 @@ function DialogCreateTravel(props: {
 		try {
 			parsed = JSON.parse(jsonText);
 		} catch {
-			setImportError(
-				"JSON inválido. Verifique vírgulas, aspas e datas como strings ISO.",
-			);
+			setImportError(m["trip.import_error_invalid_json"]());
 			return;
 		}
 
 		// Ensure Travel shape minimally
 		const t = parsed as TravelWithRelations;
 		if (!t || !t.name || !t.startDate || !t.endDate || !t.events) {
-			setImportError(
-				"Objeto inválido: faltam campos obrigatórios (name, dates, events).",
-			);
+			setImportError(m["trip.import_error_missing_fields"]());
 			return;
 		}
 
@@ -832,14 +827,13 @@ function DialogCreateTravel(props: {
 					{m["trip.generate_import_itinerary"]()}
 				</DialogTitle>
 				<DialogDescription>
-					1) Copie o prompt abaixo e cole no ChatGPT. 2) Cole aqui APENAS um
-					bloco <code>```json</code> com o objeto Travel (nenhum texto fora do
+					{m["trip.chatgpt_prompt_instructions"]()} <code>```json</code> com o objeto Travel (nenhum texto fora do
 					bloco).
 				</DialogDescription>
 			</DialogHeader>
 			<div className="space-y-4 px-6 py-4">
 				<div>
-					<div className="mb-2 text-sm font-medium">Prompt para ChatGPT</div>
+					<div className="mb-2 text-sm font-medium">{m["trip.chatgpt_prompt_title"]()}</div>
 					<textarea
 						readOnly
 						className="h-56 w-full rounded-md border bg-muted/30 p-3 text-sm"
@@ -850,14 +844,14 @@ function DialogCreateTravel(props: {
 							size="sm"
 							onClick={() => props.copyToClipboard(props.generatedPrompt)}
 						>
-							Copiar
+							{m["trip.chatgpt_copy"]()}
 						</Button>
 					</div>
 				</div>
 
 				<div className="pt-2">
 					<div className="mb-2 text-sm font-medium">
-						Resposta do ChatGPT (cole aqui o bloco <code>```json</code>)
+						{m["trip.chatgpt_response_label"]()} <code>```json</code>)
 					</div>
 					<textarea
 						className="h-40 w-full rounded-md border p-3 text-sm"

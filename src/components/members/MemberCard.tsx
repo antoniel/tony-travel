@@ -10,6 +10,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { orpc } from "@/orpc/client";
+import * as m from "@/paraglide/messages";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Crown, Eye, Loader2, Shield, Trash2, UserMinus } from "lucide-react";
 import { useState } from "react";
@@ -57,9 +58,9 @@ export function MemberCard({
 			});
 
 			if (result.success) {
-				toast.success("Membro removido", {
+				toast.success(m["members.removed_success"](), {
 					description:
-						result.message || "O membro foi removido da viagem com sucesso.",
+						result.message || m["members.removed_success_description"](),
 				});
 
 				// Invalidate members query to refetch the list
@@ -73,13 +74,13 @@ export function MemberCard({
 
 				setIsRemoveDialogOpen(false);
 			} else {
-				toast.error("Erro ao remover membro", {
-					description: result.message || "Não foi possível remover o membro.",
+				toast.error(m["members.remove_error"](), {
+					description: result.message || m["members.remove_error_description"](),
 				});
 			}
 		} catch (error) {
-			toast.error("Erro ao remover membro", {
-				description: "Ocorreu um erro inesperado. Tente novamente.",
+			toast.error(m["members.remove_error"](), {
+				description: m["members.remove_error_unexpected"](),
 			});
 		}
 	};
@@ -98,11 +99,11 @@ export function MemberCard({
 	const getRoleLabel = (role: string) => {
 		switch (role) {
 			case "owner":
-				return "Proprietário";
+				return m["members.role_owner"]();
 			case "member":
-				return "Membro";
+				return m["members.role_member"]();
 			default:
-				return "Visualizador";
+				return m["members.role_viewer"]();
 		}
 	};
 

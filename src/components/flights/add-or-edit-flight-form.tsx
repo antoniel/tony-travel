@@ -27,6 +27,7 @@ import {
 	normalizeCurrencyInputPtBR,
 } from "@/lib/currency";
 import { orpc } from "@/orpc/client";
+import * as m from "@/paraglide/messages";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DollarSign, Info, Plane, Plus, Trash2 } from "lucide-react";
@@ -74,12 +75,12 @@ type FlightForForm = {
 const flightSegmentSchema = z
 	.object({
 		id: z.string().optional(),
-		originAirport: z.string().min(1, "Aeroporto de origem é obrigatório"),
-		destinationAirport: z.string().min(1, "Aeroporto de destino é obrigatório"),
-		departureDate: z.string().min(1, "Data de partida é obrigatória"),
-		departureTime: z.string().min(1, "Horário de partida é obrigatório"),
-		arrivalDate: z.string().min(1, "Data de chegada é obrigatória"),
-		arrivalTime: z.string().min(1, "Horário de chegada é obrigatório"),
+		originAirport: z.string().min(1, m["validation.origin_airport_required"]()),
+		destinationAirport: z.string().min(1, m["validation.destination_airport_required"]()),
+		departureDate: z.string().min(1, m["validation.departure_date_required"]()),
+		departureTime: z.string().min(1, m["validation.departure_time_required"]()),
+		arrivalDate: z.string().min(1, m["validation.arrival_date_required"]()),
+		arrivalTime: z.string().min(1, m["validation.arrival_time_required"]()),
 		marketingFlightNumber: z.string().optional(),
 		operatingCarrierCode: z.string().optional(),
 		aircraftName: z.string().optional(),
@@ -100,12 +101,12 @@ const flightSegmentSchema = z
 		if (arrival.getTime() <= departure.getTime()) {
 			ctx.addIssue({
 				code: z.ZodIssueCode.custom,
-				message: "Chegada deve ser após a partida",
+				message: m["validation.arrival_after_departure"](),
 				path: ["arrivalDate"],
 			});
 			ctx.addIssue({
 				code: z.ZodIssueCode.custom,
-				message: "Chegada deve ser após a partida",
+				message: m["validation.arrival_after_departure"](),
 				path: ["arrivalTime"],
 			});
 		}
