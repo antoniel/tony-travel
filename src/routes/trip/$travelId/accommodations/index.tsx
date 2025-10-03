@@ -11,6 +11,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Accommodation } from "@/lib/db/schema";
 import { orpc } from "@/orpc/client";
+import * as m from "@/paraglide/messages";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Calendar, Edit, Home, MapPin, Plus } from "lucide-react";
@@ -53,15 +54,15 @@ function AccommodationCard({
 	const getAccommodationTypeLabel = (type: string) => {
 		switch (type?.toLowerCase()) {
 			case "hotel":
-				return "Hotel";
+				return m["accommodations.type_hotel"]();
 			case "hostel":
-				return "Hostel";
+				return m["accommodations.type_hostel"]();
 			case "airbnb":
-				return "Airbnb";
+				return m["accommodations.type_airbnb"]();
 			case "resort":
-				return "Resort";
+				return m["accommodations.type_resort"]();
 			default:
-				return "Hotel";
+				return m["accommodations.type_hotel"]();
 		}
 	}
 
@@ -111,7 +112,9 @@ function AccommodationCard({
 									{nights > 0 && (
 										<div className="text-center ">
 											<Badge variant="secondary" className="font-medium">
-												{nights} noite{nights !== 1 ? "s" : ""}
+												{nights === 1
+													? m["accommodations.nights_count"]({ count: "1" })
+													: m["accommodations.nights_count_plural"]({ count: nights.toString() })}
 											</Badge>
 										</div>
 									)}
@@ -149,7 +152,7 @@ function AccommodationCard({
 								<div className="grid grid-cols-2 gap-4">
 									<div>
 										<span className="font-medium text-primary block mb-1">
-											Check-in
+											{m["accommodations.check_in"]()}
 										</span>
 										<span className="text-foreground">
 											{new Date(accommodation.startDate).toLocaleDateString(
@@ -164,7 +167,7 @@ function AccommodationCard({
 									</div>
 									<div>
 										<span className="font-medium text-primary block mb-1">
-											Check-out
+											{m["accommodations.check_out"]()}
 										</span>
 										<span className="text-foreground">
 											{new Date(accommodation.endDate).toLocaleDateString(
@@ -193,7 +196,7 @@ function AccommodationCard({
 							onClick={() => onEdit(accommodation)}
 						>
 							<Edit className="w-4 h-4 mr-2" />
-							Editar
+							{m["accommodations.edit"]()}
 						</Button>
 					) : null}
 					<Button
@@ -225,15 +228,18 @@ function AccommodationStats({
 			<Badge variant="secondary" className="gap-2 px-3 py-1">
 				<Home className="w-4 h-4" />
 				<span>
-					{accommodations.length} local
-					{accommodations.length !== 1 ? "ais" : ""}
+					{accommodations.length === 1
+						? m["accommodations.locations_count"]({ count: "1" })
+						: m["accommodations.locations_count_plural"]({ count: accommodations.length.toString() })}
 				</span>
 			</Badge>
 			{totalNights > 0 && (
 				<Badge variant="outline" className="gap-2 px-3 py-1">
 					<Calendar className="w-4 h-4" />
 					<span>
-						{totalNights} noite{totalNights !== 1 ? "s" : ""}
+						{totalNights === 1
+							? m["accommodations.nights_count"]({ count: "1" })
+							: m["accommodations.nights_count_plural"]({ count: totalNights.toString() })}
 					</span>
 				</Badge>
 			)}
@@ -255,9 +261,9 @@ function PageHeader({
 	return (
 		<div className="flex flex-col sm:flex-row sm:justify-between sm:items-start">
 			<div className="space-y-3">
-				<h1 className="text-3xl font-bold tracking-tight">Acomodações</h1>
+				<h1 className="text-3xl font-bold tracking-tight">{m["accommodations.page_title"]()}</h1>
 				<p className="text-lg text-muted-foreground">
-					Organize onde você vai se hospedar durante a viagem
+					{m["accommodations.page_description"]()}
 				</p>
 			</div>
 
@@ -272,8 +278,8 @@ function PageHeader({
 						onClick={onAddAccommodation}
 					>
 						<Plus className="w-4 h-4 mr-2" />
-						<span className="hidden sm:inline">Adicionar Acomodação</span>
-						<span className="sm:hidden">Adicionar</span>
+						<span className="hidden sm:inline">{m["accommodations.add_accommodation"]()}</span>
+						<span className="sm:hidden">{m["common.add"]()}</span>
 					</Button>
 				) : null}
 			</div>
@@ -293,10 +299,9 @@ function EmptyAccommodationsState({
 						<Home className="w-16 h-16 text-primary/60" />
 					</div>
 					<div className="space-y-4">
-						<h3 className="text-2xl font-semibold">Ainda sem acomodações</h3>
+						<h3 className="text-2xl font-semibold">{m["accommodations.no_accommodations"]()}</h3>
 						<p className="text-muted-foreground leading-relaxed text-lg max-w-md mx-auto">
-							Adicione hotéis, hostels, Airbnbs ou outras acomodações para
-							organizar onde você vai se hospedar durante a viagem.
+							{m["accommodations.no_accommodations_description"]()}
 						</p>
 					</div>
 					<div className="space-y-6">
@@ -307,7 +312,7 @@ function EmptyAccommodationsState({
 								onClick={onAddAccommodation}
 							>
 								<Plus className="w-5 h-5 mr-2" />
-								Adicionar Primeira Acomodação
+								{m["accommodations.add_first"]()}
 							</Button>
 						) : null}
 						<div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-sm mx-auto">
@@ -336,37 +341,33 @@ function EmptyAccommodationsState({
 				<CardHeader>
 					<CardTitle className="flex items-center gap-2 text-base">
 						<Home className="w-5 h-5" />
-						Dicas para Escolher Acomodações
+						{m["accommodations.tips_title"]()}
 					</CardTitle>
 				</CardHeader>
 				<CardContent>
 					<div className="grid gap-4 md:grid-cols-2">
 						<div className="space-y-2">
-							<h4 className="font-medium">📍 Localização</h4>
+							<h4 className="font-medium">{m["accommodations.tip_location_title"]()}</h4>
 							<p className="text-sm text-muted-foreground">
-								Escolha acomodações próximas aos pontos turísticos principais ou
-								com bom acesso ao transporte público.
+								{m["accommodations.tip_location_description"]()}
 							</p>
 						</div>
 						<div className="space-y-2">
-							<h4 className="font-medium">💰 Orçamento</h4>
+							<h4 className="font-medium">{m["accommodations.tip_budget_title"]()}</h4>
 							<p className="text-sm text-muted-foreground">
-								Compare preços entre diferentes tipos de acomodação e considere
-								a relação custo-benefício.
+								{m["accommodations.tip_budget_description"]()}
 							</p>
 						</div>
 						<div className="space-y-2">
-							<h4 className="font-medium">⭐ Avaliações</h4>
+							<h4 className="font-medium">{m["accommodations.tip_reviews_title"]()}</h4>
 							<p className="text-sm text-muted-foreground">
-								Verifique as avaliações de outros hóspedes para ter uma ideia da
-								qualidade do local.
+								{m["accommodations.tip_reviews_description"]()}
 							</p>
 						</div>
 						<div className="space-y-2">
-							<h4 className="font-medium">🛏️ Comodidades</h4>
+							<h4 className="font-medium">{m["accommodations.tip_amenities_title"]()}</h4>
 							<p className="text-sm text-muted-foreground">
-								Considere as comodidades oferecidas como Wi-Fi, café da manhã,
-								academia, piscina, etc.
+								{m["accommodations.tip_amenities_description"]()}
 							</p>
 						</div>
 					</div>
@@ -421,9 +422,9 @@ function AccommodationsPage() {
 		return (
 			<div className="text-center py-12">
 				<Home className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-				<h3 className="text-lg font-medium mb-2">Viagem não encontrada</h3>
+				<h3 className="text-lg font-medium mb-2">{m["accommodations.not_found"]()}</h3>
 				<p className="text-muted-foreground">
-					A viagem selecionada não está disponível.
+					{m["accommodations.not_found_description"]()}
 				</p>
 			</div>
 		)

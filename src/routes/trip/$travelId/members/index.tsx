@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useTravelMembership } from "@/hooks/useTravelMembership";
 import { useUser } from "@/hooks/useUser";
 import { orpc } from "@/orpc/client";
+import * as m from "@/paraglide/messages";
 import type { TravelMemberWithUser } from "@/orpc/modules/invitation/invitation.model";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
@@ -94,9 +95,9 @@ function MembersHeader({
 	return (
 		<div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-6">
 			<div className="space-y-3">
-				<h1 className="text-3xl font-bold tracking-tight">Membros da Viagem</h1>
+				<h1 className="text-3xl font-bold tracking-tight">{m["members.page_title"]()}</h1>
 				<p className="text-lg text-muted-foreground">
-					Gerencie quem pode acessar e colaborar nesta viagem
+					{m["members.page_description"]()}
 				</p>
 			</div>
 
@@ -104,14 +105,14 @@ function MembersHeader({
 				<Badge variant="secondary" className="gap-2">
 					<Users className="w-4 h-4" />
 					<span>
-						{activeMembersCount} membro{activeMembersCount !== 1 ? "s" : ""}
+						{activeMembersCount === 1 ? m["members.members_count"]({ count: "1" }) : m["members.members_count_plural"]({ count: activeMembersCount.toString() })}
 					</span>
 				</Badge>
 				{ownerCount > 0 && (
 					<Badge variant="default" className="gap-2">
 						<Crown className="w-4 h-4" />
 						<span>
-							{ownerCount} proprietário{ownerCount !== 1 ? "s" : ""}
+							{ownerCount === 1 ? m["members.owners_count"]({ count: "1" }) : m["members.owners_count_plural"]({ count: ownerCount.toString() })}
 						</span>
 					</Badge>
 				)}
@@ -119,7 +120,7 @@ function MembersHeader({
 					<Badge variant="outline" className="gap-2">
 						<Shield className="w-4 h-4" />
 						<span>
-							{regularMembersCount} membro{regularMembersCount !== 1 ? "s" : ""}
+							{regularMembersCount === 1 ? m["members.members_count"]({ count: "1" }) : m["members.members_count_plural"]({ count: regularMembersCount.toString() })}
 						</span>
 					</Badge>
 				)}
@@ -189,9 +190,9 @@ function MembersList({
 			<Card className="border-2 border-dashed">
 				<CardContent className="flex flex-col items-center justify-center py-12">
 					<Users className="w-12 h-12 text-muted-foreground mb-4" />
-					<h3 className="font-medium mb-2">Nenhum membro encontrado</h3>
+					<h3 className="font-medium mb-2">{m["members.no_members"]()}</h3>
 					<p className="text-sm text-muted-foreground text-center">
-						Esta viagem ainda não tem membros.
+						{m["members.no_members_description"]()}
 					</p>
 				</CardContent>
 			</Card>

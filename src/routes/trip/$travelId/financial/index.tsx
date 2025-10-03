@@ -22,6 +22,7 @@ import {
 } from "@/lib/currency";
 import { orpc } from "@/orpc/client";
 import type { FinancialSummary } from "@/orpc/modules/financial/financial.model";
+import * as m from "@/paraglide/messages";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
 	useMutation,
@@ -100,9 +101,9 @@ function BudgetSection({
 	}
 
 	const getUtilizationStatus = (percentage: number) => {
-		if (percentage <= 50) return { text: "Excelente", color: "text-green-600" };
-		if (percentage <= 80) return { text: "Atenção", color: "text-yellow-600" };
-		return { text: "Limite", color: "text-red-600" };
+		if (percentage <= 50) return { text: m["financial.status_excellent"](), color: "text-green-600" };
+		if (percentage <= 80) return { text: m["financial.status_attention"](), color: "text-yellow-600" };
+		return { text: m["financial.status_limit"](), color: "text-red-600" };
 	}
 
 	const currentSummary =
@@ -115,16 +116,16 @@ function BudgetSection({
 
 	const participantsLabel =
 		financialData.participantsCount === 0
-			? "Nenhum viajante cadastrado"
+			? m["financial.no_travelers"]()
 			: financialData.participantsCount === 1
-				? "1 viajante"
-				: `${financialData.participantsCount} viajantes`;
+				? m["financial.traveler_count"]({ count: "1" })
+				: m["financial.traveler_count_plural"]({ count: financialData.participantsCount.toString() });
 	const baseBudgetLabel =
 		financialData.budgetPerPerson !== null
-			? `${formatCurrencyBRL(financialData.budgetPerPerson)} por pessoa`
+			? m["financial.base_budget"]({ amount: formatCurrencyBRL(financialData.budgetPerPerson) })
 			: null
 	const modeLabel =
-		viewMode === "perPerson" ? "Modo por pessoa" : "Modo por grupo";
+		viewMode === "perPerson" ? m["financial.per_person_mode"]() : m["financial.per_group_mode"]();
 
 	return (
 		<Card className="border-2 border-primary/10 bg-gradient-to-br from-primary/5 to-primary/10">
@@ -135,9 +136,9 @@ function BudgetSection({
 							<Wallet className="w-6 h-6 text-primary" />
 						</div>
 						<div>
-							<CardTitle className="text-xl">Controle Orçamentário</CardTitle>
+							<CardTitle className="text-xl">{m["financial.budget_control"]()}</CardTitle>
 							<p className="text-sm text-muted-foreground">
-								Gerencie e acompanhe seus gastos de viagem
+								{m["financial.budget_control_description"]()}
 							</p>
 						</div>
 					</div>
@@ -152,15 +153,15 @@ function BudgetSection({
 							>
 								<ToggleGroupItem
 									value="perPerson"
-									aria-label="Visualizar por pessoa"
+									aria-label={m["financial.per_person"]()}
 								>
-									Por pessoa
+									{m["financial.per_person"]()}
 								</ToggleGroupItem>
 								<ToggleGroupItem
 									value="group"
-									aria-label="Visualizar por grupo"
+									aria-label={m["financial.per_group"]()}
 								>
-									Por grupo
+									{m["financial.per_group"]()}
 								</ToggleGroupItem>
 							</ToggleGroup>
 						</div>
@@ -172,7 +173,7 @@ function BudgetSection({
 								className="gap-2 self-end"
 							>
 								<Calculator className="w-4 h-4" />
-								Editar Orçamento
+								{m["financial.edit_budget"]()}
 							</Button>
 						)}
 					</div>
@@ -187,7 +188,7 @@ function BudgetSection({
 								name="budget"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel>Orçamento por pessoa</FormLabel>
+										<FormLabel>{m["financial.budget_per_person"]()}</FormLabel>
 										<FormControl>
 											<div className="relative">
 												<span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -213,8 +214,7 @@ function BudgetSection({
 											</div>
 										</FormControl>
 										<FormDescription>
-											Defina o orçamento base individual para distribuir entre
-											os participantes
+											{m["financial.budget_description"]()}
 										</FormDescription>
 										<FormMessage />
 									</FormItem>
@@ -227,10 +227,10 @@ function BudgetSection({
 									size="sm"
 									onClick={() => setIsEditing(false)}
 								>
-									Cancelar
+									{m["common.cancel"]()}
 								</Button>
 								<Button type="submit" size="sm" disabled={isUpdating}>
-									Salvar
+									{m["common.save"]()}
 								</Button>
 							</div>
 						</form>
@@ -243,20 +243,20 @@ function BudgetSection({
 									{formatCurrencyBRL(currentSummary.budget ?? 0)}
 								</div>
 								<div className="text-sm text-muted-foreground">
-									Orçamento Total
+									{m["financial.total_budget"]()}
 								</div>
 							</div>
 							<div className="text-center p-4 bg-card rounded-lg border">
 								<div className="text-2xl font-bold">
 									{formatCurrencyBRL(currentSummary.totalExpenses)}
 								</div>
-								<div className="text-sm text-muted-foreground">Gasto Atual</div>
+								<div className="text-sm text-muted-foreground">{m["financial.current_expenses"]()}</div>
 							</div>
 							<div className="text-center p-4 bg-card rounded-lg border">
 								<div className="text-2xl font-bold">
 									{formatCurrencyBRL(currentSummary.remainingBudget ?? 0)}
 								</div>
-								<div className="text-sm text-muted-foreground">Restante</div>
+								<div className="text-sm text-muted-foreground">{m["financial.remaining"]()}</div>
 							</div>
 						</div>
 
@@ -264,7 +264,7 @@ function BudgetSection({
 							<div className="space-y-3">
 								<div className="flex items-center justify-between">
 									<span className="text-sm font-medium">
-										Utilização do Orçamento
+										{m["financial.budget_utilization"]()}
 									</span>
 									<div className="flex items-center gap-2">
 										<Badge
@@ -317,11 +317,11 @@ function ExpenseBreakdown({
 	const getCategoryTitle = (category: string) => {
 		switch (category) {
 			case "passagens":
-				return "Passagens";
+				return m["financial.category_flights"]();
 			case "acomodacoes":
-				return "Acomodações";
+				return m["financial.category_accommodations"]();
 			case "atracoes":
-				return "Atrações";
+				return m["financial.category_attractions"]();
 			default:
 				return category;
 		}
@@ -369,24 +369,25 @@ function ExpenseBreakdown({
 		}
 	}
 
+	const expenseContext =
+		financialData.participantsCount === 0
+			? m["financial.expense_context_none"]()
+			: financialData.participantsCount === 1
+				? m["financial.expense_context_one"]()
+				: m["financial.expense_context_many"]({ count: financialData.participantsCount.toString() });
+
 	return (
 		<div className="space-y-6">
 			<div className="flex items-center gap-3">
 				<BarChart3 className="w-6 h-6 text-primary" />
 				<div>
-					<h2 className="text-xl font-semibold">Resumo de Gastos</h2>
+					<h2 className="text-xl font-semibold">{m["financial.expense_summary"]()}</h2>
 					<div className="space-y-1">
 						<p className="text-sm text-muted-foreground">
-							Breakdown detalhado por categoria
+							{m["financial.expense_summary_description"]()}
 						</p>
 						<p className="text-xs text-muted-foreground">
-							Valores consideram rateio igual entre{" "}
-							{financialData.participantsCount === 0
-								? "os participantes cadastrados"
-								: financialData.participantsCount === 1
-									? "o viajante desta trip"
-									: `${financialData.participantsCount} viajantes`}
-							.
+							{m["financial.expense_summary_note"]({ context: expenseContext })}
 						</p>
 					</div>
 				</div>
@@ -414,7 +415,7 @@ function ExpenseBreakdown({
 												{getCategoryTitle(category.category)}
 											</CardTitle>
 											<p className="text-xs text-muted-foreground">
-												{category.percentage.toFixed(1)}% do total
+												{m["financial.percentage_of_total"]({ percentage: category.percentage.toFixed(1) })}
 											</p>
 										</div>
 									</div>
@@ -467,33 +468,34 @@ function AttractionsTree({
 						<MapPin className="w-8 h-8 text-muted-foreground" />
 					</div>
 					<h3 className="text-lg font-semibold mb-2">
-						Nenhuma atração cadastrada
+						{m["financial.no_attractions"]()}
 					</h3>
 					<p className="text-muted-foreground">
-						Adicione eventos e atividades para ver o breakdown de custos aqui
+						{m["financial.no_attractions_description"]()}
 					</p>
 				</CardContent>
 			</Card>
 		)
 	}
 
+	const attractionsContext =
+		financialData.participantsCount === 0
+			? m["financial.expense_context_none"]()
+			: financialData.participantsCount === 1
+				? m["financial.expense_context_one"]()
+				: m["financial.expense_context_many"]({ count: financialData.participantsCount.toString() });
+
 	return (
 		<div className="space-y-6">
 			<div className="flex items-center gap-3">
 				<TrendingUp className="w-6 h-6 text-primary" />
 				<div>
-					<h2 className="text-xl font-semibold">Detalhamento de Atrações</h2>
+					<h2 className="text-xl font-semibold">{m["financial.attractions_detail"]()}</h2>
 					<p className="text-sm text-muted-foreground">
-						Custos organizados por atividade principal
+						{m["financial.attractions_detail_description"]()}
 					</p>
 					<p className="text-xs text-muted-foreground">
-						Valores rateados igualmente entre{" "}
-						{financialData.participantsCount === 0
-							? "os participantes cadastrados"
-							: financialData.participantsCount === 1
-								? "o viajante desta trip"
-								: `${financialData.participantsCount} viajantes`}
-						.
+						{m["financial.expense_summary_note"]({ context: attractionsContext })}
 					</p>
 				</div>
 			</div>
@@ -538,17 +540,15 @@ function AttractionsTree({
 												</CardTitle>
 												<div className="flex items-center gap-2 mt-1">
 													<Badge variant="outline" className="text-xs">
-														{(
-															(activity.cost / attractionsCategory.total) *
-															100
-														).toFixed(1)}
-														% do total
+														{m["financial.percentage_of_total"]({
+															percentage: ((activity.cost / attractionsCategory.total) * 100).toFixed(1)
+														})}
 													</Badge>
 													{hasDependencies && (
 														<Badge variant="secondary" className="text-xs">
-															{childItems.length} item
-															{childItems.length !== 1 ? "s" : ""} relacionado
-															{childItems.length !== 1 ? "s" : ""}
+															{childItems.length === 1
+																? m["financial.related_items"]({ count: "1" })
+																: m["financial.related_items_plural"]({ count: childItems.length.toString() })}
 														</Badge>
 													)}
 												</div>
@@ -621,10 +621,10 @@ function FinancialPage() {
 				<div className="space-y-2">
 					<h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
 						<DollarSign className="w-8 h-8 text-primary" />
-						Controle Financeiro
+						{m["financial.page_title"]()}
 					</h1>
 					<p className="text-lg text-muted-foreground">
-						Gerencie o orçamento e acompanhe os gastos da sua viagem
+						{m["financial.page_description"]()}
 					</p>
 				</div>
 				<Card className="border-destructive">
@@ -633,13 +633,13 @@ function FinancialPage() {
 							<DollarSign className="w-8 h-8 text-destructive" />
 						</div>
 						<h3 className="text-lg font-semibold mb-2">
-							Erro ao carregar dados financeiros
+							{m["financial.error_loading"]()}
 						</h3>
 						<p className="text-muted-foreground mb-4">
-							Ocorreu um erro ao buscar as informações financeiras da viagem.
+							{m["financial.error_loading_description"]()}
 						</p>
 						<Button onClick={() => financialQuery.refetch()}>
-							Tentar novamente
+							{m["financial.try_again"]()}
 						</Button>
 					</CardContent>
 				</Card>
@@ -670,9 +670,9 @@ function FinancialPage() {
 				}),
 			)
 
-			toast.success("Orçamento atualizado com sucesso!");
+			toast.success(m["financial.budget_updated"]());
 		} catch (error) {
-			toast.error("Erro ao atualizar orçamento", {
+			toast.error(m["financial.budget_update_error"](), {
 				description: error instanceof Error ? error.message : undefined,
 			})
 		}
@@ -683,10 +683,10 @@ function FinancialPage() {
 			<div className="space-y-2">
 				<h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
 					<DollarSign className="w-8 h-8 text-primary" />
-					Controle Financeiro
+					{m["financial.page_title"]()}
 				</h1>
 				<p className="text-lg text-muted-foreground">
-					Gerencie o orçamento e acompanhe os gastos da sua viagem
+					{m["financial.page_description"]()}
 				</p>
 			</div>
 

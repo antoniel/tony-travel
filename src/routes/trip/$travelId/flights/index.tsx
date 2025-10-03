@@ -4,6 +4,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import * as m from "@/paraglide/messages";
 import {
 	Collapsible,
 	CollapsibleContent,
@@ -206,11 +207,11 @@ const getChainColor = (chainId: string): string => {
 const getChainTypeLabel = (chainType: FlightChainInfo["chainType"]): string => {
 	switch (chainType) {
 		case "round_trip":
-			return "ida e volta";
+			return m["flights.round_trip"]();
 		case "multi_city":
-			return "múltiplas cidades";
+			return m["flights.multi_city"]();
 		case "one_way":
-			return "só ida";
+			return m["flights.one_way"]();
 		default:
 			return "";
 	}
@@ -222,7 +223,7 @@ const getSmartCostDisplay = (flight: FlightWithSlices) => {
 	const currencyLabel = currency === "BRL" ? "R$" : currency;
 
 	if (!costValue) {
-		return { display: "Sem preço definido", hasValue: false };
+		return { display: m["flights.no_price"](), hasValue: false };
 	}
 
 	const chainInfo = flight.chainInfo;
@@ -261,8 +262,7 @@ function FlightWarnings({
 				<Alert>
 					<AlertTriangle className="h-4 w-4" />
 					<AlertDescription>
-						{flightsWithoutParticipants} voo(s) sem participantes. Adicione
-						pessoas aos voos para melhor organização.
+						{m["flights.warnings.no_participants"]({ count: flightsWithoutParticipants.toString() })}
 					</AlertDescription>
 				</Alert>
 			)}
@@ -270,7 +270,7 @@ function FlightWarnings({
 				<Alert variant="default" className="border-orange-200 bg-orange-50/50">
 					<Info className="h-4 w-4 text-orange-600" />
 					<AlertDescription className="text-orange-800">
-						{flightsWithoutCost} voo(s) sem preço informado.
+						{m["flights.warnings.no_cost"]({ count: flightsWithoutCost.toString() })}
 					</AlertDescription>
 				</Alert>
 			)}
@@ -294,9 +294,9 @@ function FlightPageHeader({
 	return (
 		<div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-6">
 			<div className="space-y-3">
-				<h1 className="text-3xl font-bold tracking-tight">Voos da Viagem</h1>
+				<h1 className="text-3xl font-bold tracking-tight">{m["flights.page_title"]()}</h1>
 				<p className="text-lg text-muted-foreground">
-					Gerencie os voos de todos os membros da viagem
+					{m["flights.page_description"]()}
 				</p>
 			</div>
 			{canWrite ? (
@@ -306,14 +306,14 @@ function FlightPageHeader({
 					trigger={
 						<Button className="flex items-center gap-2">
 							<Plus className="w-4 h-4" />
-							Adicionar Voo
+							{m["flights.add_flight"]()}
 						</Button>
 					}
 					desktopClassName="sm:max-w-2xl"
 					contentClassName="gap-0"
 				>
 					<DialogHeader className="border-b px-6 py-4">
-						<DialogTitle className="text-left">Adicionar Novo Voo</DialogTitle>
+						<DialogTitle className="text-left">{m["flights.add_new_flight"]()}</DialogTitle>
 					</DialogHeader>
 					<div className="flex flex-1 flex-col overflow-hidden">
 						<AddOrEditFlightForm
@@ -436,7 +436,7 @@ function FlightsPage() {
 	const handleDeleteFlight = async (flightId: string) => {
 		if (
 			confirm(
-				"Tem certeza que deseja excluir este voo? Isso removerá todos os trechos deste voo.",
+				m["flights.delete_confirm"]()
 			)
 		) {
 			try {
@@ -504,7 +504,7 @@ function FlightsPage() {
 					contentClassName="gap-0"
 				>
 					<DialogHeader className="border-b px-6 py-4">
-						<DialogTitle className="text-left">Editar Voo</DialogTitle>
+						<DialogTitle className="text-left">{m["flights.edit_flight"]()}</DialogTitle>
 					</DialogHeader>
 					{editingFlight ? (
 						<AddOrEditFlightForm
@@ -604,11 +604,10 @@ function EmptyFlightState({
 
 					<div className="space-y-4">
 						<h3 className="text-2xl font-bold text-foreground tracking-tight">
-							Nenhum voo cadastrado
+							{m["flights.no_flights"]()}
 						</h3>
 						<p className="text-lg text-muted-foreground max-w-md mx-auto">
-							Comece adicionando os primeiros voos da sua viagem para organizar
-							todos os deslocamentos
+							{m["flights.empty_description"]()}
 						</p>
 					</div>
 
@@ -619,7 +618,7 @@ function EmptyFlightState({
 								className="px-8 py-3 text-base font-semibold bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg hover:shadow-xl transition-all duration-200"
 							>
 								<Plus className="w-5 h-5 mr-2" />
-								Adicionar Primeiro Voo
+								{m["flights.add_first_flight"]()}
 							</Button>
 						</div>
 					) : null}
@@ -659,19 +658,16 @@ function HierarchicalFlightGroupHeader({
 					</div>
 					<div className="flex-1 text-left">
 						<h2 className="text-xl font-bold text-foreground tracking-tight">
-							Partindo de {group.originAirport}
+							{m["flights.departing_from"]({ airport: group.originAirport })}
 						</h2>
 						<p className="text-sm text-muted-foreground font-medium">
-							{group.flights.length}{" "}
-							{group.flights.length === 1 ? "voo" : "voos"} • {totalSlices}{" "}
-							{totalSlices === 1 ? "trecho" : "trechos"} • {totalPassengers}{" "}
-							{totalPassengers === 1 ? "passageiro" : "passageiros"}
+							{group.flights.length === 1 ? m["flights.flights_count"]({ count: "1" }) : m["flights.flights_count_plural"]({ count: group.flights.length.toString() })} • {totalSlices === 1 ? m["flights.slices_count"]({ count: "1" }) : m["flights.slices_count_plural"]({ count: totalSlices.toString() })} • {totalPassengers === 1 ? m["flights.passengers_count"]({ count: "1" }) : m["flights.passengers_count_plural"]({ count: totalPassengers.toString() })}
 						</p>
 					</div>
 					<div className="flex items-center gap-2">
 						<div className="px-3 py-1 rounded-full bg-background/80 border border-border/50">
 							<span className="text-xs font-semibold text-primary">
-								{group.flights.length} voos
+								{group.flights.length === 1 ? m["flights.flights_count"]({ count: "1" }) : m["flights.flights_count_plural"]({ count: group.flights.length.toString() })}
 							</span>
 						</div>
 						{isOpen ? (
@@ -978,15 +974,14 @@ function FlightContainer({
 									)}
 								</div>
 								<span className="text-sm text-muted-foreground">
-									{flight.participants.length}{" "}
-									{flight.participants.length === 1 ? "pessoa" : "pessoas"}
+									{flight.participants.length === 1 ? m["flights.person_count"]({ count: "1" }) : m["flights.person_count_plural"]({ count: flight.participants.length.toString() })}
 								</span>
 							</div>
 						) : (
 							<div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-50 border border-orange-200">
 								<AlertTriangle className="w-4 h-4 text-orange-600" />
 								<span className="text-sm font-medium text-orange-700">
-									Sem participantes
+									{m["flights.no_participants"]()}
 								</span>
 							</div>
 						)}
@@ -1072,7 +1067,7 @@ function SingleSliceFlightView({
 			{slice.segments.length > 1 && (
 				<div className="mt-4 p-3 bg-muted/20 rounded-lg">
 					<div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
-						{slice.segments.length} Conexões
+						{slice.segments.length - 1 === 1 ? m["flights.connections_count"]({ count: "1" }) : m["flights.connections_count_plural"]({ count: (slice.segments.length - 1).toString() })}
 					</div>
 					<div className="space-y-2">
 						{slice.segments.map((segment, index) => (
@@ -1157,7 +1152,7 @@ function SliceCard({
 						{sliceIndex + 1}
 					</div>
 					<span className="text-xs text-muted-foreground mt-1">
-						de {totalSlices}
+						{m["flights.slice_of"]({ total: totalSlices.toString() })}
 					</span>
 				</div>
 
@@ -1191,8 +1186,7 @@ function SliceCard({
 							)}
 							{hasConnections && (
 								<span className="text-xs text-amber-600 mt-1">
-									{slice.segments.length - 1} conexão
-									{slice.segments.length > 2 ? "ões" : ""}
+									{slice.segments.length - 1 === 1 ? m["flights.connections_count"]({ count: "1" }) : m["flights.connections_count_plural"]({ count: (slice.segments.length - 1).toString() })}
 								</span>
 							)}
 						</div>
@@ -1215,7 +1209,7 @@ function SliceCard({
 					{isExpanded && hasConnections && (
 						<div className="mt-3 p-3 bg-background/60 rounded border border-border/30">
 							<div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
-								Segmentos do Trecho
+								{m["flights.segment_details"]()}
 							</div>
 							<div className="space-y-2">
 								{slice.segments.map((segment, index) => (

@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { orpc } from "@/orpc/client";
+import * as m from "@/paraglide/messages";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { ExternalLink, MapPin, Plus, Star } from "lucide-react";
@@ -78,10 +79,10 @@ function LocationsPage() {
 			type: event.type,
 			category:
 				event.type === "food"
-					? "Restaurante"
+					? m["locations.category_restaurant"]()
 					: event.type === "activity"
-						? "Atividade"
-						: "Transporte",
+						? m["locations.category_activity"]()
+						: m["locations.category_transport"](),
 			address: event.location,
 			description: undefined,
 			rating: undefined,
@@ -105,10 +106,10 @@ function LocationsPage() {
 			<div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-6">
 				<div className="space-y-3">
 					<h1 className="text-3xl font-bold tracking-tight">
-						Pontos de Interesse
+						{m["locations.page_title"]()}
 					</h1>
 					<p className="text-lg text-muted-foreground">
-						Descubra e organize os locais que você quer visitar
+						{m["locations.page_description"]()}
 					</p>
 				</div>
 
@@ -119,16 +120,18 @@ function LocationsPage() {
 							<Badge variant="secondary" className="gap-2">
 								<MapPin className="w-4 h-4" />
 								<span>
-									{allLocations.length} local
-									{allLocations.length !== 1 ? "ais" : ""}
+									{allLocations.length === 1
+										? m["locations.locations_count"]({ count: "1" })
+										: m["locations.locations_count_plural"]({ count: allLocations.length.toString() })}
 								</span>
 							</Badge>
 							{Object.keys(locationsByCategory).length > 0 && (
 								<Badge variant="outline" className="gap-2">
 									<span>🏷️</span>
 									<span>
-										{Object.keys(locationsByCategory).length} categoria
-										{Object.keys(locationsByCategory).length !== 1 ? "s" : ""}
+										{Object.keys(locationsByCategory).length === 1
+											? m["locations.categories_count"]({ count: "1" })
+											: m["locations.categories_count_plural"]({ count: Object.keys(locationsByCategory).length.toString() })}
 									</span>
 								</Badge>
 							)}
@@ -137,8 +140,8 @@ function LocationsPage() {
 
 					<Button className="shadow-sm">
 						<Plus className="w-4 h-4 mr-2" />
-						<span className="hidden sm:inline">Adicionar Local</span>
-						<span className="sm:hidden">Adicionar</span>
+						<span className="hidden sm:inline">{m["locations.add_location"]()}</span>
+						<span className="sm:hidden">{m["common.add"]()}</span>
 					</Button>
 				</div>
 			</div>
@@ -151,15 +154,15 @@ function LocationsPage() {
 							<div className="flex items-center justify-between">
 								<CardTitle className="flex items-center gap-2">
 									<MapPin className="w-5 h-5" />
-									Visualização no Mapa
+									{m["locations.map_view"]()}
 								</CardTitle>
 								<div className="flex gap-2">
 									<Button variant="outline" size="sm">
 										<Plus className="w-4 h-4 mr-1" />
-										Rota
+										{m["locations.add_route"]()}
 									</Button>
 									<Button variant="outline" size="sm">
-										Filtros
+										{m["locations.filters"]()}
 									</Button>
 								</div>
 							</div>
@@ -171,18 +174,19 @@ function LocationsPage() {
 										<MapPin className="w-8 h-8 text-primary" />
 									</div>
 									<div className="space-y-2">
-										<h3 className="font-semibold text-lg">Mapa Interativo</h3>
+										<h3 className="font-semibold text-lg">{m["locations.interactive_map"]()}</h3>
 										<p className="text-muted-foreground max-w-sm">
-											Visualize todos os seus locais de interesse plotados no
-											mapa com rotas otimizadas.
+											{m["locations.map_description"]()}
 										</p>
 									</div>
 									<div className="flex flex-wrap justify-center gap-2 text-sm">
 										<Badge variant="secondary">
-											📍 {allLocations.length} locais
+											📍 {allLocations.length === 1
+												? m["locations.locations_count"]({ count: "1" })
+												: m["locations.locations_count_plural"]({ count: allLocations.length.toString() })}
 										</Badge>
-										<Badge variant="secondary">🗺️ Vista satélite</Badge>
-										<Badge variant="secondary">🚗 Rotas otimizadas</Badge>
+										<Badge variant="secondary">{m["locations.satellite_view"]()}</Badge>
+										<Badge variant="secondary">{m["locations.optimized_routes"]()}</Badge>
 									</div>
 								</div>
 							</div>
@@ -192,13 +196,13 @@ function LocationsPage() {
 					{/* Location Cards - Moved below map */}
 					<div className="space-y-6">
 						<div className="flex items-center justify-between">
-							<h2 className="text-xl font-semibold">Lista de Localizações</h2>
+							<h2 className="text-xl font-semibold">{m["locations.locations_list"]()}</h2>
 							<div className="flex gap-2">
 								<Button variant="outline" size="sm">
-									Ordenar
+									{m["locations.sort"]()}
 								</Button>
 								<Button variant="outline" size="sm">
-									Filtrar
+									{m["locations.filter"]()}
 								</Button>
 							</div>
 						</div>
@@ -275,7 +279,7 @@ function LocationsPage() {
 										<div className="flex gap-2 pt-2">
 											<Button variant="outline" size="sm" className="flex-1">
 												<ExternalLink className="w-4 h-4 mr-1" />
-												Detalhes
+												{m["locations.details"]()}
 											</Button>
 											<Button variant="outline" size="sm">
 												<MapPin className="w-4 h-4" />
@@ -295,34 +299,33 @@ function LocationsPage() {
 						</div>
 						<div className="space-y-4">
 							<h3 className="text-2xl font-semibold">
-								Descubra locais incríveis
+								{m["locations.no_locations"]()}
 							</h3>
 							<p className="text-muted-foreground leading-relaxed text-lg max-w-md mx-auto">
-								Adicione pontos turísticos, restaurantes, museus e outros locais
-								interessantes para criar o roteiro perfeito da sua viagem.
+								{m["locations.no_locations_description"]()}
 							</p>
 						</div>
 						<div className="space-y-6">
 							<Button size="lg" className="shadow-sm px-8 py-3 text-base">
 								<Plus className="w-5 h-5 mr-2" />
-								Adicionar Primeiro Local
+								{m["locations.add_first"]()}
 							</Button>
 							<div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-md mx-auto">
 								<div className="flex flex-col items-center gap-2 p-4 bg-muted/30 rounded-lg">
 									<span className="text-2xl">🎭</span>
-									<span className="text-sm font-medium">Atrações</span>
+									<span className="text-sm font-medium">{m["locations.category_attractions"]()}</span>
 								</div>
 								<div className="flex flex-col items-center gap-2 p-4 bg-muted/30 rounded-lg">
 									<span className="text-2xl">🍽️</span>
-									<span className="text-sm font-medium">Restaurantes</span>
+									<span className="text-sm font-medium">{m["locations.category_restaurants"]()}</span>
 								</div>
 								<div className="flex flex-col items-center gap-2 p-4 bg-muted/30 rounded-lg">
 									<span className="text-2xl">🏛️</span>
-									<span className="text-sm font-medium">Museus</span>
+									<span className="text-sm font-medium">{m["locations.category_museums"]()}</span>
 								</div>
 								<div className="flex flex-col items-center gap-2 p-4 bg-muted/30 rounded-lg">
 									<span className="text-2xl">🌳</span>
-									<span className="text-sm font-medium">Parques</span>
+									<span className="text-sm font-medium">{m["locations.category_parks"]()}</span>
 								</div>
 							</div>
 						</div>
@@ -336,45 +339,41 @@ function LocationsPage() {
 					<CardHeader>
 						<CardTitle className="flex items-center gap-2 text-base">
 							<Star className="w-5 h-5" />
-							Como Descobrir Locais Incríveis
+							{m["locations.discovery_title"]()}
 						</CardTitle>
 					</CardHeader>
 					<CardContent>
 						<div className="grid gap-6 md:grid-cols-2">
 							<div className="space-y-3">
 								<h4 className="font-medium flex items-center gap-2">
-									<span>🔍</span> Pesquise por Categoria
+									{m["locations.discovery_search_title"]()}
 								</h4>
 								<p className="text-sm text-muted-foreground">
-									Use filtros por tipo: restaurantes, pontos turísticos, museus,
-									parques, compras, vida noturna.
+									{m["locations.discovery_search_description"]()}
 								</p>
 							</div>
 							<div className="space-y-3">
 								<h4 className="font-medium flex items-center gap-2">
-									<span>⭐</span> Confira Avaliações
+									{m["locations.discovery_reviews_title"]()}
 								</h4>
 								<p className="text-sm text-muted-foreground">
-									Veja as avaliações de outros viajantes para escolher os
-									melhores locais.
+									{m["locations.discovery_reviews_description"]()}
 								</p>
 							</div>
 							<div className="space-y-3">
 								<h4 className="font-medium flex items-center gap-2">
-									<span>📍</span> Considere a Localização
+									{m["locations.discovery_location_title"]()}
 								</h4>
 								<p className="text-sm text-muted-foreground">
-									Agrupe locais por região para otimizar seu tempo e reduzir
-									deslocamentos.
+									{m["locations.discovery_location_description"]()}
 								</p>
 							</div>
 							<div className="space-y-3">
 								<h4 className="font-medium flex items-center gap-2">
-									<span>💡</span> Dicas Locais
+									{m["locations.discovery_tips_title"]()}
 								</h4>
 								<p className="text-sm text-muted-foreground">
-									Procure por experiências autênticas e locais frequentados
-									pelos moradores.
+									{m["locations.discovery_tips_description"]()}
 								</p>
 							</div>
 						</div>
