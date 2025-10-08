@@ -40,7 +40,10 @@ import * as z from "zod";
 // Types and schemas for the wizard
 const TripWizardSchema = z.object({
 	name: z.string().min(2, m["validation.min_length"]({ min: 2 })),
-	description: z.string().max(1000, m["trip.description_too_long"]()).optional(),
+	description: z
+		.string()
+		.max(1000, m["trip.description_too_long"]())
+		.optional(),
 	tripType: z.string().optional(),
 	destinations: z
 		.array(z.object({ value: z.string(), label: z.string() }))
@@ -237,10 +240,15 @@ export default function TripWizard({ initialData }: TripWizardProps) {
 					<div className="mb-8">
 						<div className="flex items-center justify-between mb-4">
 							<span className="text-sm font-medium text-muted-foreground">
-								{m["trip.wizard_step_of"]({ current: currentStep + 1, total: STEPS.length })}
+								{m["trip.wizard_step_of"]({
+									current: currentStep + 1,
+									total: STEPS.length,
+								})}
 							</span>
 							<span className="text-sm font-medium text-muted-foreground">
-								{m["trip.wizard_percent_complete"]({ percent: Math.round(progress) })}
+								{m["trip.wizard_percent_complete"]({
+									percent: Math.round(progress),
+								})}
 							</span>
 						</div>
 						<div className="w-full bg-secondary/50 rounded-full h-2">
@@ -312,7 +320,9 @@ export default function TripWizard({ initialData }: TripWizardProps) {
 								) : (
 									<Check className="h-4 w-4 mr-2" />
 								)}
-								{saveTravelMutation.isPending ? m["trip.creating"]() : m["trip.create_trip"]()}
+								{saveTravelMutation.isPending
+									? m["trip.creating"]()
+									: m["trip.create_trip"]()}
 							</Button>
 						) : (
 							<Button
@@ -377,7 +387,10 @@ function NameStep({ form }: StepProps) {
 								aria-invalid={!!fieldState.error}
 							/>
 						</FormControl>
-						<FormDescription>{m["common.optional"]()}, {m["validation.max_length"]({ max: 1000 })}</FormDescription>
+						<FormDescription>
+							{m["common.optional"]()},{" "}
+							{m["validation.max_length"]({ max: 1000 })}
+						</FormDescription>
 						<FormMessage />
 					</FormItem>
 				)}
@@ -395,14 +408,18 @@ function SummaryStep({
 			<div className="grid gap-6">
 				{/* Trip Name */}
 				<div className="flex items-center justify-between py-3 border-b border-border/50">
-					<span className="text-muted-foreground">{m["trip.trip_name"]()}:</span>
+					<span className="text-muted-foreground">
+						{m["trip.trip_name"]()}:
+					</span>
 					<span className="font-medium">{data.name}</span>
 				</div>
 
 				{/* Description */}
 				{data.description && data.description.trim().length > 0 && (
 					<div className="py-3 border-b border-border/50">
-						<span className="text-muted-foreground block mb-1">{m["trip.description"]()}:</span>
+						<span className="text-muted-foreground block mb-1">
+							{m["trip.description"]()}:
+						</span>
 						<span className="whitespace-pre-wrap">{data.description}</span>
 					</div>
 				)}
@@ -420,7 +437,9 @@ function SummaryStep({
 				{/* Arrivals (Destinations) */}
 				{data.destinations && data.destinations.length > 0 && (
 					<div className="flex items-start justify-between py-3 border-b border-border/50">
-						<span className="text-muted-foreground">{m["trip.destination"]()}:</span>
+						<span className="text-muted-foreground">
+							{m["trip.destination"]()}:
+						</span>
 						<div className="text-right flex flex-wrap justify-end">
 							{data.destinations.map((dest) => (
 								<Badge
@@ -455,10 +474,14 @@ function SummaryStep({
 				{/* People */}
 				{data.people && (
 					<div className="flex items-center justify-between py-3 border-b border-border/50">
-						<span className="text-muted-foreground">{m["trip.travelers"]()}:</span>
+						<span className="text-muted-foreground">
+							{m["trip.travelers"]()}:
+						</span>
 						<div className="flex items-center gap-2">
 							<Users className="h-4 w-4" />
-							<span className="font-medium">{m["trip.people_count_plural"]({ count: data.people })}</span>
+							<span className="font-medium">
+								{m["trip.people_count_plural"]({ count: data.people })}
+							</span>
 						</div>
 					</div>
 				)}
@@ -483,7 +506,9 @@ function SummaryStep({
 				{/* Departures */}
 				{data.departureAirports && data.departureAirports.length > 0 && (
 					<div className="flex items-start justify-between py-3">
-						<span className="text-muted-foreground">{m["trip.departure"]()}:</span>
+						<span className="text-muted-foreground">
+							{m["trip.departure"]()}:
+						</span>
 						<div className="text-right flex flex-wrap justify-end">
 							{data.departureAirports.map((airport: Airport) => (
 								<Badge

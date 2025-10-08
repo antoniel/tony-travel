@@ -63,7 +63,9 @@ export class FinancialDao {
 					orderBy: (fields, { asc: orderAsc }) => [orderAsc(fields.sliceIndex)],
 					with: {
 						segments: {
-							orderBy: (fields, { asc: orderAsc }) => [orderAsc(fields.segmentIndex)],
+							orderBy: (fields, { asc: orderAsc }) => [
+								orderAsc(fields.segmentIndex),
+							],
 						},
 					},
 				},

@@ -312,14 +312,26 @@ export default function TripSelection({ predefinedTrips }: TripSelectionProps) {
 														}
 													>
 														<SelectTrigger className="h-12 text-base w-full bg-background border border-border shadow-xs">
-															<SelectValue placeholder={m["trip.traveler_placeholder"]()} />
+															<SelectValue
+																placeholder={m["trip.traveler_placeholder"]()}
+															/>
 														</SelectTrigger>
 														<SelectContent>
-															<SelectItem value="1">{m["trip.people_1"]()}</SelectItem>
-															<SelectItem value="2">{m["trip.people_2"]()}</SelectItem>
-															<SelectItem value="3">{m["trip.people_3"]()}</SelectItem>
-															<SelectItem value="4">{m["trip.people_4"]()}</SelectItem>
-															<SelectItem value="5">{m["trip.people_5_plus"]()}</SelectItem>
+															<SelectItem value="1">
+																{m["trip.people_1"]()}
+															</SelectItem>
+															<SelectItem value="2">
+																{m["trip.people_2"]()}
+															</SelectItem>
+															<SelectItem value="3">
+																{m["trip.people_3"]()}
+															</SelectItem>
+															<SelectItem value="4">
+																{m["trip.people_4"]()}
+															</SelectItem>
+															<SelectItem value="5">
+																{m["trip.people_5_plus"]()}
+															</SelectItem>
 															<SelectItem value="custom">
 																{m["trip.people_custom"]()}
 															</SelectItem>
@@ -827,13 +839,15 @@ function DialogCreateTravel(props: {
 					{m["trip.generate_import_itinerary"]()}
 				</DialogTitle>
 				<DialogDescription>
-					{m["trip.chatgpt_prompt_instructions"]()} <code>```json</code> com o objeto Travel (nenhum texto fora do
-					bloco).
+					{m["trip.chatgpt_prompt_instructions"]()} <code>```json</code> com o
+					objeto Travel (nenhum texto fora do bloco).
 				</DialogDescription>
 			</DialogHeader>
 			<div className="space-y-4 px-6 py-4">
 				<div>
-					<div className="mb-2 text-sm font-medium">{m["trip.chatgpt_prompt_title"]()}</div>
+					<div className="mb-2 text-sm font-medium">
+						{m["trip.chatgpt_prompt_title"]()}
+					</div>
 					<textarea
 						readOnly
 						className="h-56 w-full rounded-md border bg-muted/30 p-3 text-sm"

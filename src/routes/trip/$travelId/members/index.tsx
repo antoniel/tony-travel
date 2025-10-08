@@ -40,7 +40,7 @@ function MembersPage() {
 				currentUserId={user?.id}
 			/>
 		</TravelMemberOnly>
-	)
+	);
 }
 
 function MembersContent({
@@ -56,7 +56,7 @@ function MembersContent({
 		orpc.invitationRoutes.getTravelMembers.queryOptions({
 			input: { travelId },
 		}),
-	)
+	);
 
 	const activeMembersCount = members.length;
 	const ownerCount = members.filter((m) => m.role === "owner").length;
@@ -80,7 +80,7 @@ function MembersContent({
 				currentUserId={currentUserId}
 			/>
 		</div>
-	)
+	);
 }
 
 function MembersHeader({
@@ -95,7 +95,9 @@ function MembersHeader({
 	return (
 		<div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-6">
 			<div className="space-y-3">
-				<h1 className="text-3xl font-bold tracking-tight">{m["members.page_title"]()}</h1>
+				<h1 className="text-3xl font-bold tracking-tight">
+					{m["members.page_title"]()}
+				</h1>
 				<p className="text-lg text-muted-foreground">
 					{m["members.page_description"]()}
 				</p>
@@ -105,14 +107,22 @@ function MembersHeader({
 				<Badge variant="secondary" className="gap-2">
 					<Users className="w-4 h-4" />
 					<span>
-						{activeMembersCount === 1 ? m["members.members_count"]({ count: "1" }) : m["members.members_count_plural"]({ count: activeMembersCount.toString() })}
+						{activeMembersCount === 1
+							? m["members.members_count"]({ count: "1" })
+							: m["members.members_count_plural"]({
+									count: activeMembersCount.toString(),
+								})}
 					</span>
 				</Badge>
 				{ownerCount > 0 && (
 					<Badge variant="default" className="gap-2">
 						<Crown className="w-4 h-4" />
 						<span>
-							{ownerCount === 1 ? m["members.owners_count"]({ count: "1" }) : m["members.owners_count_plural"]({ count: ownerCount.toString() })}
+							{ownerCount === 1
+								? m["members.owners_count"]({ count: "1" })
+								: m["members.owners_count_plural"]({
+										count: ownerCount.toString(),
+									})}
 						</span>
 					</Badge>
 				)}
@@ -120,13 +130,17 @@ function MembersHeader({
 					<Badge variant="outline" className="gap-2">
 						<Shield className="w-4 h-4" />
 						<span>
-							{regularMembersCount === 1 ? m["members.members_count"]({ count: "1" }) : m["members.members_count_plural"]({ count: regularMembersCount.toString() })}
+							{regularMembersCount === 1
+								? m["members.members_count"]({ count: "1" })
+								: m["members.members_count_plural"]({
+										count: regularMembersCount.toString(),
+									})}
 						</span>
 					</Badge>
 				)}
 			</div>
 		</div>
-	)
+	);
 }
 
 function MembersPageSkeleton() {
@@ -173,7 +187,7 @@ function MembersPageSkeleton() {
 				))}
 			</div>
 		</div>
-	)
+	);
 }
 
 function MembersList({
@@ -196,7 +210,7 @@ function MembersList({
 					</p>
 				</CardContent>
 			</Card>
-		)
+		);
 	}
 
 	return (
@@ -210,5 +224,5 @@ function MembersList({
 				/>
 			))}
 		</div>
-	)
+	);
 }

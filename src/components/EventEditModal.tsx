@@ -52,14 +52,19 @@ export function EventEditModal({
 	const handleSave = () => {
 		// Only send changed fields
 		const changes: Partial<AppEvent> = {};
-		
+
 		if (editEvent.title !== event.title) changes.title = editEvent.title;
-		if (editEvent.startDate.getTime() !== event.startDate.getTime()) changes.startDate = editEvent.startDate;
-		if (editEvent.endDate.getTime() !== event.endDate.getTime()) changes.endDate = editEvent.endDate;
+		if (editEvent.startDate.getTime() !== event.startDate.getTime())
+			changes.startDate = editEvent.startDate;
+		if (editEvent.endDate.getTime() !== event.endDate.getTime())
+			changes.endDate = editEvent.endDate;
 		if (editEvent.type !== event.type) changes.type = editEvent.type;
-		if (editEvent.location !== (event.location || "")) changes.location = editEvent.location;
-		if (editEvent.cost !== (event.cost || event.estimatedCost || null)) changes.cost = editEvent.cost;
-		if (editEvent.description !== (event.description || "")) changes.description = editEvent.description;
+		if (editEvent.location !== (event.location || ""))
+			changes.location = editEvent.location;
+		if (editEvent.cost !== (event.cost || event.estimatedCost || null))
+			changes.cost = editEvent.cost;
+		if (editEvent.description !== (event.description || ""))
+			changes.description = editEvent.description;
 		if (editEvent.link !== (event.link || "")) changes.link = editEvent.link;
 
 		onSave(changes);
@@ -125,9 +130,15 @@ export function EventEditModal({
 										<SelectValue placeholder={m["event.select_type"]()} />
 									</SelectTrigger>
 									<SelectContent>
-										<SelectItem value="travel">{m["event.type_transport"]()}</SelectItem>
-										<SelectItem value="food">{m["event.type_food"]()}</SelectItem>
-										<SelectItem value="activity">{m["event.type_activity"]()}</SelectItem>
+										<SelectItem value="travel">
+											{m["event.type_transport"]()}
+										</SelectItem>
+										<SelectItem value="food">
+											{m["event.type_food"]()}
+										</SelectItem>
+										<SelectItem value="activity">
+											{m["event.type_activity"]()}
+										</SelectItem>
 									</SelectContent>
 								</Select>
 							</div>
@@ -173,7 +184,9 @@ export function EventEditModal({
 						</div>
 
 						<div className="space-y-2">
-							<Label htmlFor="edit-description">{m["event.description_optional"]()}</Label>
+							<Label htmlFor="edit-description">
+								{m["event.description_optional"]()}
+							</Label>
 							<Textarea
 								id="edit-description"
 								value={editEvent.description}
@@ -207,7 +220,9 @@ export function EventEditModal({
 
 					{/* Date & Time */}
 					<div className="space-y-4">
-						<h3 className="text-sm font-medium">{m["event.date_and_time"]()}</h3>
+						<h3 className="text-sm font-medium">
+							{m["event.date_and_time"]()}
+						</h3>
 						<div className="space-y-4">
 							<Calendar
 								mode="single"
@@ -250,8 +265,10 @@ export function EventEditModal({
 							/>
 
 							<div className="grid grid-cols-2 gap-4">
-							<div className="space-y-2">
-								<Label htmlFor="edit-time-from">{m["event.start_time"]()}</Label>
+								<div className="space-y-2">
+									<Label htmlFor="edit-time-from">
+										{m["event.start_time"]()}
+									</Label>
 									<div className="relative">
 										<Clock2Icon className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 select-none" />
 										<Input
@@ -282,8 +299,8 @@ export function EventEditModal({
 									</div>
 								</div>
 
-							<div className="space-y-2">
-								<Label htmlFor="edit-time-to">{m["event.end_time"]()}</Label>
+								<div className="space-y-2">
+									<Label htmlFor="edit-time-to">{m["event.end_time"]()}</Label>
 									<div className="relative">
 										<Clock2Icon className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 select-none" />
 										<Input

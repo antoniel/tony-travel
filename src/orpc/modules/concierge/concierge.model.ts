@@ -36,7 +36,11 @@ export const ConciergeChatResponseSchema = z.object({
 
 export type ConciergeChatResponse = z.infer<typeof ConciergeChatResponseSchema>;
 
-export const PendingIssueTypeSchema = z.enum(["flight", "accommodation", "event"]);
+export const PendingIssueTypeSchema = z.enum([
+	"flight",
+	"accommodation",
+	"event",
+]);
 
 export const PendingIssueSeveritySchema = z.enum(["critical", "advisory"]);
 
@@ -44,10 +48,7 @@ export const PendingIssueActionSchema = z.object({
 	type: z.enum(["navigate"]),
 	label: z.string().min(1),
 	path: z.string().min(1),
-	params: z
-		.record(z.string(), z.string())
-		.default({})
-		.optional(),
+	params: z.record(z.string(), z.string()).default({}).optional(),
 });
 
 export const PendingIssueSchema = z.object({

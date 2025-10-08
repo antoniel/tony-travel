@@ -39,17 +39,17 @@ function AccommodationCard({
 	const getAccommodationTypeIcon = (type: string) => {
 		switch (type?.toLowerCase()) {
 			case "hotel":
-				return "🏨"
+				return "🏨";
 			case "hostel":
-				return "🏠"
+				return "🏠";
 			case "airbnb":
-				return "🏡"
+				return "🏡";
 			case "resort":
 				return "🏖️";
 			default:
-				return "🏨"
+				return "🏨";
 		}
-	}
+	};
 
 	const getAccommodationTypeLabel = (type: string) => {
 		switch (type?.toLowerCase()) {
@@ -64,14 +64,14 @@ function AccommodationCard({
 			default:
 				return m["accommodations.type_hotel"]();
 		}
-	}
+	};
 
 	const calculateNights = (startDate: Date, endDate: Date) => {
 		const nights = Math.ceil(
 			(endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
-		)
+		);
 		return Math.max(0, nights);
-	}
+	};
 
 	const formatCurrency = (amount: number | null) => {
 		if (!amount) return null;
@@ -79,10 +79,10 @@ function AccommodationCard({
 		const formatter = new Intl.NumberFormat("pt-BR", {
 			style: "currency",
 			currency: "BRL",
-		})
+		});
 
 		return formatter.format(amount);
-	}
+	};
 
 	const nights =
 		accommodation.startDate && accommodation.endDate
@@ -90,7 +90,7 @@ function AccommodationCard({
 					new Date(accommodation.startDate),
 					new Date(accommodation.endDate),
 				)
-			: 0
+			: 0;
 
 	return (
 		<Card className="gap-0 justify-between group hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 border-border/50 hover:border-primary/20 backdrop-blur-sm bg-card/90">
@@ -114,7 +114,9 @@ function AccommodationCard({
 											<Badge variant="secondary" className="font-medium">
 												{nights === 1
 													? m["accommodations.nights_count"]({ count: "1" })
-													: m["accommodations.nights_count_plural"]({ count: nights.toString() })}
+													: m["accommodations.nights_count_plural"]({
+															count: nights.toString(),
+														})}
 											</Badge>
 										</div>
 									)}
@@ -209,7 +211,7 @@ function AccommodationCard({
 				</div>
 			</CardFooter>
 		</Card>
-	)
+	);
 }
 
 interface AccommodationStatsProps {
@@ -230,7 +232,9 @@ function AccommodationStats({
 				<span>
 					{accommodations.length === 1
 						? m["accommodations.locations_count"]({ count: "1" })
-						: m["accommodations.locations_count_plural"]({ count: accommodations.length.toString() })}
+						: m["accommodations.locations_count_plural"]({
+								count: accommodations.length.toString(),
+							})}
 				</span>
 			</Badge>
 			{totalNights > 0 && (
@@ -239,12 +243,14 @@ function AccommodationStats({
 					<span>
 						{totalNights === 1
 							? m["accommodations.nights_count"]({ count: "1" })
-							: m["accommodations.nights_count_plural"]({ count: totalNights.toString() })}
+							: m["accommodations.nights_count_plural"]({
+									count: totalNights.toString(),
+								})}
 					</span>
 				</Badge>
 			)}
 		</div>
-	)
+	);
 }
 
 function PageHeader({
@@ -261,7 +267,9 @@ function PageHeader({
 	return (
 		<div className="flex flex-col sm:flex-row sm:justify-between sm:items-start">
 			<div className="space-y-3">
-				<h1 className="text-3xl font-bold tracking-tight">{m["accommodations.page_title"]()}</h1>
+				<h1 className="text-3xl font-bold tracking-tight">
+					{m["accommodations.page_title"]()}
+				</h1>
 				<p className="text-lg text-muted-foreground">
 					{m["accommodations.page_description"]()}
 				</p>
@@ -278,13 +286,15 @@ function PageHeader({
 						onClick={onAddAccommodation}
 					>
 						<Plus className="w-4 h-4 mr-2" />
-						<span className="hidden sm:inline">{m["accommodations.add_accommodation"]()}</span>
+						<span className="hidden sm:inline">
+							{m["accommodations.add_accommodation"]()}
+						</span>
 						<span className="sm:hidden">{m["common.add"]()}</span>
 					</Button>
 				) : null}
 			</div>
 		</div>
-	)
+	);
 }
 
 function EmptyAccommodationsState({
@@ -299,7 +309,9 @@ function EmptyAccommodationsState({
 						<Home className="w-16 h-16 text-primary/60" />
 					</div>
 					<div className="space-y-4">
-						<h3 className="text-2xl font-semibold">{m["accommodations.no_accommodations"]()}</h3>
+						<h3 className="text-2xl font-semibold">
+							{m["accommodations.no_accommodations"]()}
+						</h3>
 						<p className="text-muted-foreground leading-relaxed text-lg max-w-md mx-auto">
 							{m["accommodations.no_accommodations_description"]()}
 						</p>
@@ -347,25 +359,33 @@ function EmptyAccommodationsState({
 				<CardContent>
 					<div className="grid gap-4 md:grid-cols-2">
 						<div className="space-y-2">
-							<h4 className="font-medium">{m["accommodations.tip_location_title"]()}</h4>
+							<h4 className="font-medium">
+								{m["accommodations.tip_location_title"]()}
+							</h4>
 							<p className="text-sm text-muted-foreground">
 								{m["accommodations.tip_location_description"]()}
 							</p>
 						</div>
 						<div className="space-y-2">
-							<h4 className="font-medium">{m["accommodations.tip_budget_title"]()}</h4>
+							<h4 className="font-medium">
+								{m["accommodations.tip_budget_title"]()}
+							</h4>
 							<p className="text-sm text-muted-foreground">
 								{m["accommodations.tip_budget_description"]()}
 							</p>
 						</div>
 						<div className="space-y-2">
-							<h4 className="font-medium">{m["accommodations.tip_reviews_title"]()}</h4>
+							<h4 className="font-medium">
+								{m["accommodations.tip_reviews_title"]()}
+							</h4>
 							<p className="text-sm text-muted-foreground">
 								{m["accommodations.tip_reviews_description"]()}
 							</p>
 						</div>
 						<div className="space-y-2">
-							<h4 className="font-medium">{m["accommodations.tip_amenities_title"]()}</h4>
+							<h4 className="font-medium">
+								{m["accommodations.tip_amenities_title"]()}
+							</h4>
 							<p className="text-sm text-muted-foreground">
 								{m["accommodations.tip_amenities_description"]()}
 							</p>
@@ -374,7 +394,7 @@ function EmptyAccommodationsState({
 				</CardContent>
 			</Card>
 		</>
-	)
+	);
 }
 
 function AccommodationsPage() {
@@ -385,19 +405,19 @@ function AccommodationsPage() {
 
 	const { data: travel } = useSuspenseQuery(
 		orpc.travelRoutes.getTravel.queryOptions({ input: { id: travelId } }),
-	)
+	);
 
 	const { data: accommodations = [] } = useSuspenseQuery(
 		orpc.accommodationRoutes.getAccommodationsByTravel.queryOptions({
 			input: { travelId },
 		}),
-	)
+	);
 	const totalNights = accommodations.reduce((total, acc) => {
 		if (acc.startDate && acc.endDate) {
 			const nights = Math.ceil(
 				(new Date(acc.endDate).getTime() - new Date(acc.startDate).getTime()) /
 					(1000 * 60 * 60 * 24),
-			)
+			);
 			return total + Math.max(0, nights);
 		}
 		return total;
@@ -406,28 +426,30 @@ function AccommodationsPage() {
 	const handleEdit = (accommodation: Accommodation) => {
 		setEditingAccommodation(accommodation);
 		setIsModalOpen(true);
-	}
+	};
 
 	const handleModalClose = () => {
 		setIsModalOpen(false);
 		setEditingAccommodation(null);
-	}
+	};
 
 	const handleAddAccommodation = () => {
 		setEditingAccommodation(null);
 		setIsModalOpen(true);
-	}
+	};
 
 	if (!travel) {
 		return (
 			<div className="text-center py-12">
 				<Home className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-				<h3 className="text-lg font-medium mb-2">{m["accommodations.not_found"]()}</h3>
+				<h3 className="text-lg font-medium mb-2">
+					{m["accommodations.not_found"]()}
+				</h3>
 				<p className="text-muted-foreground">
 					{m["accommodations.not_found_description"]()}
 				</p>
 			</div>
-		)
+		);
 	}
 
 	const canWrite = !!travel.userMembership;
@@ -469,7 +491,7 @@ function AccommodationsPage() {
 				/>
 			) : null}
 		</div>
-	)
+	);
 }
 
 function AccommodationsPageSkeleton() {
@@ -520,5 +542,5 @@ function AccommodationsPageSkeleton() {
 				))}
 			</div>
 		</div>
-	)
+	);
 }

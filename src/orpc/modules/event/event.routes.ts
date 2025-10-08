@@ -13,11 +13,11 @@ import {
 	UpdateEventOutputSchema,
 } from "./event.model";
 import {
-  createEventService,
-  deleteEventService,
-  getEventService,
-  getEventsByTravelService,
-  updateEventService,
+	createEventService,
+	deleteEventService,
+	getEventService,
+	getEventsByTravelService,
+	updateEventService,
 } from "./event.service";
 
 /**
@@ -68,10 +68,10 @@ export const getEvent = optionalAuthProcedure
  * Get all events for a travel
  */
 export const getEventsByTravel = optionalAuthProcedure
-    .input(z.object({ travelId: z.string() }))
-    .handler(async ({ input, context }) => {
-        const eventDAO = createEventDAO(context.db);
-        const travelDAO = createTravelDAO(context.db);
+	.input(z.object({ travelId: z.string() }))
+	.handler(async ({ input, context }) => {
+		const eventDAO = createEventDAO(context.db);
+		const travelDAO = createTravelDAO(context.db);
 
 		const result = await getEventsByTravelService(
 			eventDAO,
@@ -86,29 +86,29 @@ export const getEventsByTravel = optionalAuthProcedure
 			});
 		}
 
-        return result.data;
-    });
+		return result.data;
+	});
 
 /**
  * Update an event (partial)
  */
 export const updateEvent = travelMemberProcedure
-  .input(UpdateEventInputSchema)
-  .output(UpdateEventOutputSchema)
-  .handler(async ({ input, context }) => {
-    const eventDAO = createEventDAO(context.db);
+	.input(UpdateEventInputSchema)
+	.output(UpdateEventOutputSchema)
+	.handler(async ({ input, context }) => {
+		const eventDAO = createEventDAO(context.db);
 
-    const result = await updateEventService(eventDAO, input);
+		const result = await updateEventService(eventDAO, input);
 
-    if (AppResult.isFailure(result)) {
-      throw new ORPCError(result.error.type, {
-        message: result.error.message,
-        data: result.error.data,
-      });
-    }
+		if (AppResult.isFailure(result)) {
+			throw new ORPCError(result.error.type, {
+				message: result.error.message,
+				data: result.error.data,
+			});
+		}
 
-    return result.data;
-  });
+		return result.data;
+	});
 
 export const deleteEvent = travelMemberProcedure
 	.input(DeleteEventInputSchema)
@@ -116,11 +116,7 @@ export const deleteEvent = travelMemberProcedure
 	.handler(async ({ input, context }) => {
 		const eventDAO = createEventDAO(context.db);
 
-		const result = await deleteEventService(
-			eventDAO,
-			input.id,
-			input.travelId,
-		);
+		const result = await deleteEventService(eventDAO, input.id, input.travelId);
 
 		if (AppResult.isFailure(result)) {
 			throw new ORPCError(result.error.type, {

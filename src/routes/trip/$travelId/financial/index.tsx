@@ -82,36 +82,44 @@ function BudgetSection({
 		defaultValues: {
 			budget: financialData.budgetPerPerson ?? 0,
 		},
-	})
+	});
 
 	const onSubmit = (data: BudgetUpdateFormData) => {
 		onBudgetUpdate(data.budget);
 		setIsEditing(false);
-	}
+	};
 
 	const handleModeChange = (value: string) => {
 		if (!value) return;
 		setViewMode(value as BudgetViewMode);
-	}
+	};
 
 	const getUtilizationColor = (percentage: number) => {
 		if (percentage <= 50) return "bg-green-500";
 		if (percentage <= 80) return "bg-yellow-500";
 		return "bg-red-500";
-	}
+	};
 
 	const getUtilizationStatus = (percentage: number) => {
-		if (percentage <= 50) return { text: m["financial.status_excellent"](), color: "text-green-600" };
-		if (percentage <= 80) return { text: m["financial.status_attention"](), color: "text-yellow-600" };
+		if (percentage <= 50)
+			return {
+				text: m["financial.status_excellent"](),
+				color: "text-green-600",
+			};
+		if (percentage <= 80)
+			return {
+				text: m["financial.status_attention"](),
+				color: "text-yellow-600",
+			};
 		return { text: m["financial.status_limit"](), color: "text-red-600" };
-	}
+	};
 
 	const currentSummary =
 		viewMode === "perPerson" ? financialData.perPerson : financialData.group;
 	const hasBudget = currentSummary.budget !== null && currentSummary.budget > 0;
 	const budgetUtilization = hasBudget
 		? (currentSummary.budgetUtilization ?? 0)
-		: 0
+		: 0;
 	const status = getUtilizationStatus(budgetUtilization);
 
 	const participantsLabel =
@@ -119,13 +127,19 @@ function BudgetSection({
 			? m["financial.no_travelers"]()
 			: financialData.participantsCount === 1
 				? m["financial.traveler_count"]({ count: "1" })
-				: m["financial.traveler_count_plural"]({ count: financialData.participantsCount.toString() });
+				: m["financial.traveler_count_plural"]({
+						count: financialData.participantsCount.toString(),
+					});
 	const baseBudgetLabel =
 		financialData.budgetPerPerson !== null
-			? m["financial.base_budget"]({ amount: formatCurrencyBRL(financialData.budgetPerPerson) })
-			: null
+			? m["financial.base_budget"]({
+					amount: formatCurrencyBRL(financialData.budgetPerPerson),
+				})
+			: null;
 	const modeLabel =
-		viewMode === "perPerson" ? m["financial.per_person_mode"]() : m["financial.per_group_mode"]();
+		viewMode === "perPerson"
+			? m["financial.per_person_mode"]()
+			: m["financial.per_group_mode"]();
 
 	return (
 		<Card className="border-2 border-primary/10 bg-gradient-to-br from-primary/5 to-primary/10">
@@ -136,7 +150,9 @@ function BudgetSection({
 							<Wallet className="w-6 h-6 text-primary" />
 						</div>
 						<div>
-							<CardTitle className="text-xl">{m["financial.budget_control"]()}</CardTitle>
+							<CardTitle className="text-xl">
+								{m["financial.budget_control"]()}
+							</CardTitle>
 							<p className="text-sm text-muted-foreground">
 								{m["financial.budget_control_description"]()}
 							</p>
@@ -207,8 +223,8 @@ function BudgetSection({
 													onChange={(e) => {
 														const { numeric } = maskCurrencyInputPtBR(
 															e.target.value,
-														)
-														field.onChange(numeric ?? 0)
+														);
+														field.onChange(numeric ?? 0);
 													}}
 												/>
 											</div>
@@ -250,13 +266,17 @@ function BudgetSection({
 								<div className="text-2xl font-bold">
 									{formatCurrencyBRL(currentSummary.totalExpenses)}
 								</div>
-								<div className="text-sm text-muted-foreground">{m["financial.current_expenses"]()}</div>
+								<div className="text-sm text-muted-foreground">
+									{m["financial.current_expenses"]()}
+								</div>
 							</div>
 							<div className="text-center p-4 bg-card rounded-lg border">
 								<div className="text-2xl font-bold">
 									{formatCurrencyBRL(currentSummary.remainingBudget ?? 0)}
 								</div>
-								<div className="text-sm text-muted-foreground">{m["financial.remaining"]()}</div>
+								<div className="text-sm text-muted-foreground">
+									{m["financial.remaining"]()}
+								</div>
 							</div>
 						</div>
 
@@ -301,7 +321,7 @@ function BudgetSection({
 				)}
 			</CardContent>
 		</Card>
-	)
+	);
 }
 
 function ExpenseBreakdown({
@@ -312,7 +332,7 @@ function ExpenseBreakdown({
 			style: "currency",
 			currency: "BRL",
 		}).format(amount);
-	}
+	};
 
 	const getCategoryTitle = (category: string) => {
 		switch (category) {
@@ -325,20 +345,20 @@ function ExpenseBreakdown({
 			default:
 				return category;
 		}
-	}
+	};
 
 	const getCategoryIcon = (category: string) => {
 		switch (category) {
 			case "passagens":
 				return Plane;
 			case "acomodacoes":
-				return Home
+				return Home;
 			case "atracoes":
 				return MapPin;
 			default:
 				return MapPin;
 		}
-	}
+	};
 
 	const getCategoryStyle = (category: string) => {
 		switch (category) {
@@ -347,41 +367,45 @@ function ExpenseBreakdown({
 					color: "text-blue-600",
 					bg: "bg-blue-50",
 					border: "border-blue-200",
-				}
+				};
 			case "acomodacoes":
 				return {
 					color: "text-green-600",
 					bg: "bg-green-50",
 					border: "border-green-200",
-				}
+				};
 			case "atracoes":
 				return {
 					color: "text-purple-600",
 					bg: "bg-purple-50",
 					border: "border-purple-200",
-				}
+				};
 			default:
 				return {
 					color: "text-muted-foreground",
 					bg: "bg-muted/50",
 					border: "border-muted",
-				}
+				};
 		}
-	}
+	};
 
 	const expenseContext =
 		financialData.participantsCount === 0
 			? m["financial.expense_context_none"]()
 			: financialData.participantsCount === 1
 				? m["financial.expense_context_one"]()
-				: m["financial.expense_context_many"]({ count: financialData.participantsCount.toString() });
+				: m["financial.expense_context_many"]({
+						count: financialData.participantsCount.toString(),
+					});
 
 	return (
 		<div className="space-y-6">
 			<div className="flex items-center gap-3">
 				<BarChart3 className="w-6 h-6 text-primary" />
 				<div>
-					<h2 className="text-xl font-semibold">{m["financial.expense_summary"]()}</h2>
+					<h2 className="text-xl font-semibold">
+						{m["financial.expense_summary"]()}
+					</h2>
 					<div className="space-y-1">
 						<p className="text-sm text-muted-foreground">
 							{m["financial.expense_summary_description"]()}
@@ -415,7 +439,9 @@ function ExpenseBreakdown({
 												{getCategoryTitle(category.category)}
 											</CardTitle>
 											<p className="text-xs text-muted-foreground">
-												{m["financial.percentage_of_total"]({ percentage: category.percentage.toFixed(1) })}
+												{m["financial.percentage_of_total"]({
+													percentage: category.percentage.toFixed(1),
+												})}
 											</p>
 										</div>
 									</div>
@@ -427,11 +453,11 @@ function ExpenseBreakdown({
 								</div>
 							</CardContent>
 						</Card>
-					)
+					);
 				})}
 			</div>
 		</div>
-	)
+	);
 }
 
 function AttractionsTree({
@@ -447,18 +473,18 @@ function AttractionsTree({
 			newExpanded.add(itemId);
 		}
 		setExpandedItems(newExpanded);
-	}
+	};
 
 	const formatCurrency = (amount: number) => {
 		return new Intl.NumberFormat("pt-BR", {
 			style: "currency",
 			currency: "BRL",
 		}).format(amount);
-	}
+	};
 
 	const attractionsCategory = financialData.categories.find(
 		(cat) => cat.category === "atracoes",
-	)
+	);
 
 	if (!attractionsCategory || attractionsCategory.items.length === 0) {
 		return (
@@ -475,7 +501,7 @@ function AttractionsTree({
 					</p>
 				</CardContent>
 			</Card>
-		)
+		);
 	}
 
 	const attractionsContext =
@@ -483,19 +509,25 @@ function AttractionsTree({
 			? m["financial.expense_context_none"]()
 			: financialData.participantsCount === 1
 				? m["financial.expense_context_one"]()
-				: m["financial.expense_context_many"]({ count: financialData.participantsCount.toString() });
+				: m["financial.expense_context_many"]({
+						count: financialData.participantsCount.toString(),
+					});
 
 	return (
 		<div className="space-y-6">
 			<div className="flex items-center gap-3">
 				<TrendingUp className="w-6 h-6 text-primary" />
 				<div>
-					<h2 className="text-xl font-semibold">{m["financial.attractions_detail"]()}</h2>
+					<h2 className="text-xl font-semibold">
+						{m["financial.attractions_detail"]()}
+					</h2>
 					<p className="text-sm text-muted-foreground">
 						{m["financial.attractions_detail_description"]()}
 					</p>
 					<p className="text-xs text-muted-foreground">
-						{m["financial.expense_summary_note"]({ context: attractionsContext })}
+						{m["financial.expense_summary_note"]({
+							context: attractionsContext,
+						})}
 					</p>
 				</div>
 			</div>
@@ -507,7 +539,7 @@ function AttractionsTree({
 						const isExpanded = expandedItems.has(activity.id);
 						const childItems = attractionsCategory.items.filter(
 							(item) => item.parentId === activity.id,
-						)
+						);
 						const hasDependencies = childItems.length > 0;
 
 						return (
@@ -541,14 +573,19 @@ function AttractionsTree({
 												<div className="flex items-center gap-2 mt-1">
 													<Badge variant="outline" className="text-xs">
 														{m["financial.percentage_of_total"]({
-															percentage: ((activity.cost / attractionsCategory.total) * 100).toFixed(1)
+															percentage: (
+																(activity.cost / attractionsCategory.total) *
+																100
+															).toFixed(1),
 														})}
 													</Badge>
 													{hasDependencies && (
 														<Badge variant="secondary" className="text-xs">
 															{childItems.length === 1
 																? m["financial.related_items"]({ count: "1" })
-																: m["financial.related_items_plural"]({ count: childItems.length.toString() })}
+																: m["financial.related_items_plural"]({
+																		count: childItems.length.toString(),
+																	})}
 														</Badge>
 													)}
 												</div>
@@ -587,11 +624,11 @@ function AttractionsTree({
 									</CardContent>
 								)}
 							</Card>
-						)
+						);
 					})}
 			</div>
 		</div>
-	)
+	);
 }
 
 function FinancialPage() {
@@ -601,19 +638,19 @@ function FinancialPage() {
 	// Fetch travel data for permissions check
 	const { data: travel } = useSuspenseQuery(
 		orpc.travelRoutes.getTravel.queryOptions({ input: { id: travelId } }),
-	)
+	);
 
 	// Fetch financial summary from the new endpoint
 	const financialQuery = useSuspenseQuery({
 		...orpc.financialRoutes.getFinancialSummary.queryOptions({
 			input: { travelId },
 		}),
-	})
+	});
 
 	// Budget update mutation
 	const updateBudgetMutation = useMutation(
 		orpc.financialRoutes.updateTravelBudget.mutationOptions(),
-	)
+	);
 
 	if (financialQuery.error) {
 		return (
@@ -644,7 +681,7 @@ function FinancialPage() {
 					</CardContent>
 				</Card>
 			</div>
-		)
+		);
 	}
 
 	const financialData = financialQuery.data;
@@ -661,22 +698,22 @@ function FinancialPage() {
 			await updateBudgetMutation.mutateAsync({
 				travelId,
 				budget,
-			})
+			});
 
 			// Invalidate financial query to refetch updated data
 			queryClient.invalidateQueries(
 				orpc.financialRoutes.getFinancialSummary.queryOptions({
 					input: { travelId },
 				}),
-			)
+			);
 
 			toast.success(m["financial.budget_updated"]());
 		} catch (error) {
 			toast.error(m["financial.budget_update_error"](), {
 				description: error instanceof Error ? error.message : undefined,
-			})
+			});
 		}
-	}
+	};
 
 	return (
 		<div className="space-y-8">
@@ -705,7 +742,7 @@ function FinancialPage() {
 
 			<AttractionsTree financialData={financialData} />
 		</div>
-	)
+	);
 }
 
 function FinancialPageSkeleton() {
@@ -778,5 +815,5 @@ function FinancialPageSkeleton() {
 				</div>
 			</div>
 		</div>
-	)
+	);
 }

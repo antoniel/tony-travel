@@ -28,7 +28,9 @@ function InChatHeader({ travelName }: { travelName?: string }) {
 
 	return (
 		<div className="flex flex-col gap-2">
-			<h2 className="text-xl sm:text-2xl font-semibold tracking-tight">{heading}</h2>
+			<h2 className="text-xl sm:text-2xl font-semibold tracking-tight">
+				{heading}
+			</h2>
 		</div>
 	);
 }
@@ -71,8 +73,7 @@ export const ConciergeAgent = ({
 		}
 
 		sendMessage({
-			text:
-				message.text || m["concierge.agent.attachment_fallback"](),
+			text: message.text || m["concierge.agent.attachment_fallback"](),
 			files: message.files,
 		});
 		setInput("");
@@ -93,42 +94,42 @@ export const ConciergeAgent = ({
 							summary={pendingSummary}
 							isLoading={isPendingIssuesLoading}
 						/>
-			{showIntro ? (
-						<div className="mb-4 mt-4 rounded-lg border bg-muted/40 p-4">
-							<h3 className="mb-2 text-sm font-medium">
-								{m["concierge.agent.intro.title"]()}
-							</h3>
-							<div className="flex flex-col gap-3">
-								<div className="rounded-md border bg-background p-3 text-sm">
-									<div className="mb-1 flex items-center gap-2 font-medium">
-										<Plane className="h-4 w-4 text-muted-foreground" />
-										{m["concierge.agent.intro.flights_title"]()}
+						{showIntro ? (
+							<div className="mb-4 mt-4 rounded-lg border bg-muted/40 p-4">
+								<h3 className="mb-2 text-sm font-medium">
+									{m["concierge.agent.intro.title"]()}
+								</h3>
+								<div className="flex flex-col gap-3">
+									<div className="rounded-md border bg-background p-3 text-sm">
+										<div className="mb-1 flex items-center gap-2 font-medium">
+											<Plane className="h-4 w-4 text-muted-foreground" />
+											{m["concierge.agent.intro.flights_title"]()}
+										</div>
+										<p className="text-muted-foreground">
+											{m["concierge.agent.intro.flights_example"]()}
+										</p>
 									</div>
-									<p className="text-muted-foreground">
-										{m["concierge.agent.intro.flights_example"]()}
-									</p>
-								</div>
-								<div className="rounded-md border bg-background p-3 text-sm">
-									<div className="mb-1 flex items-center gap-2 font-medium">
-										<CalendarClock className="h-4 w-4 text-muted-foreground" />
-										{m["concierge.agent.intro.events_title"]()}
+									<div className="rounded-md border bg-background p-3 text-sm">
+										<div className="mb-1 flex items-center gap-2 font-medium">
+											<CalendarClock className="h-4 w-4 text-muted-foreground" />
+											{m["concierge.agent.intro.events_title"]()}
+										</div>
+										<p className="text-muted-foreground">
+											{m["concierge.agent.intro.events_example"]()}
+										</p>
 									</div>
-									<p className="text-muted-foreground">
-										{m["concierge.agent.intro.events_example"]()}
-									</p>
-								</div>
-								<div className="rounded-md border bg-background p-3 text-sm">
-									<div className="mb-1 flex items-center gap-2 font-medium">
-										<MapPin className="h-4 w-4 text-muted-foreground" />
-										{m["concierge.agent.intro.activities_title"]()}
+									<div className="rounded-md border bg-background p-3 text-sm">
+										<div className="mb-1 flex items-center gap-2 font-medium">
+											<MapPin className="h-4 w-4 text-muted-foreground" />
+											{m["concierge.agent.intro.activities_title"]()}
+										</div>
+										<p className="text-muted-foreground">
+											{m["concierge.agent.intro.activities_example"]()}
+										</p>
 									</div>
-									<p className="text-muted-foreground">
-										{m["concierge.agent.intro.activities_example"]()}
-									</p>
 								</div>
 							</div>
-						</div>
-					) : null}
+						) : null}
 						<Messages
 							messages={messages}
 							status={status}

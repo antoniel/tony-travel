@@ -26,7 +26,9 @@ const requireTravelMember = (role?: "owner" | "member") =>
 		const travelId = inputObj?.travelId || inputObj?.id;
 
 		if (!travelId) {
-			throw new ORPCError("BAD_REQUEST", { message: "ID da viagem é obrigatório" });
+			throw new ORPCError("BAD_REQUEST", {
+				message: "ID da viagem é obrigatório",
+			});
 		}
 
 		const contextWithUser = context as AppOrpcContext & {

@@ -54,7 +54,8 @@ export function transformToExpenseItems(
 	// Add flight expenses (passagens)
 	for (const flight of financialData.flights) {
 		const flightParticipants = Math.max(flight.participantCount ?? 0, 0);
-		const flightMultiplier = flightParticipants > 0 ? flightParticipants : multiplier;
+		const flightMultiplier =
+			flightParticipants > 0 ? flightParticipants : multiplier;
 		expenseItems.push({
 			id: flight.id,
 			name: flight.airline,
@@ -301,9 +302,7 @@ export async function getFinancialSummaryService(
 		const perPersonExpenses = totalExpenses / effectiveParticipants;
 		const budgetPerPerson = financialData.budget;
 		const groupBudget =
-			budgetPerPerson !== null
-				? budgetPerPerson * effectiveParticipants
-				: null;
+			budgetPerPerson !== null ? budgetPerPerson * effectiveParticipants : null;
 
 		const perPersonRemaining =
 			budgetPerPerson !== null ? budgetPerPerson - perPersonExpenses : null;

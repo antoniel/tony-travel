@@ -60,7 +60,10 @@ export function PendingIssuesPanel({
 	}
 
 	return (
-		<section aria-label={m["concierge.pending_section_label"]()} className="mb-5 space-y-3">
+		<section
+			aria-label={m["concierge.pending_section_label"]()}
+			className="mb-5 space-y-3"
+		>
 			<header className="space-y-1">
 				<div className="flex items-center gap-2 text-xs font-medium uppercase text-muted-foreground">
 					<AlertTriangle className="h-3.5 w-3.5" />
@@ -127,12 +130,12 @@ function PendingIssueCard({ issue }: { issue: PendingIssue }) {
 									<li key={`${range.start}-${range.end}`}>
 										{range.start === range.end
 											? m["concierge.pending_dates_single"]({
-												date: formatDate(range.start),
-											})
+													date: formatDate(range.start),
+												})
 											: m["concierge.pending_dates_range"]({
-												start: formatDate(range.start),
-												end: formatDate(range.end),
-											})}
+													start: formatDate(range.start),
+													end: formatDate(range.end),
+												})}
 									</li>
 								))}
 							</ul>

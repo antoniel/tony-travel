@@ -160,9 +160,9 @@ export function ToolEventConfirmationCard({
 						{getEventTypeLabel(eventData.type)}
 					</Badge>
 				</div>
-			<CardDescription>
-				{m["concierge.tools.event_create.card_description"]()}
-			</CardDescription>
+				<CardDescription>
+					{m["concierge.tools.event_create.card_description"]()}
+				</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-3">
 				<div className="grid grid-cols-1 gap-2 text-sm">

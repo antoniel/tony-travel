@@ -35,11 +35,11 @@ function InviteAcceptancePage() {
 
 	const inviteInfoQuery = useQuery(
 		orpc.invitationRoutes.getInviteInfo.queryOptions({ input: { token } }),
-	)
+	);
 
 	const acceptInviteMutation = useMutation(
 		orpc.invitationRoutes.acceptInvite.mutationOptions(),
-	)
+	);
 
 	const isLoading = userQuery.isLoading || inviteInfoQuery.isLoading;
 	const inviteInfo = inviteInfoQuery.data;
@@ -50,7 +50,7 @@ function InviteAcceptancePage() {
 			router.navigate({
 				to: "/auth/login",
 				search: { redirect: currentUrl },
-			})
+			});
 		}
 	}, [userQuery.isAuthenticated, userQuery.isLoading, router]);
 
@@ -63,19 +63,19 @@ function InviteAcceptancePage() {
 			if (result.success) {
 				toast.success(m["invite.accepted_success"](), {
 					description: result.message || m["invite.accepted_message"](),
-				})
+				});
 				router.navigate({ to: `/trip/${result.travelId}` });
 			} else {
 				toast.error(m["invite.accept_error"](), {
 					description: result.message || m["invite.accept_error_retry"](),
-				})
+				});
 			}
 		} catch (error) {
 			toast.error(m["invite.accept_error"](), {
 				description: m["invite.accept_error_unexpected"](),
-			})
+			});
 		}
-	}
+	};
 
 	if (isLoading) {
 		return <LoadingState />;
@@ -95,7 +95,7 @@ function InviteAcceptancePage() {
 			onAccept={handleAcceptInvite}
 			isAccepting={acceptInviteMutation.isPending}
 		/>
-	)
+	);
 }
 
 function LoadingState() {
@@ -108,7 +108,7 @@ function LoadingState() {
 				</CardContent>
 			</Card>
 		</div>
-	)
+	);
 }
 
 function InvalidInviteState({
@@ -122,7 +122,9 @@ function InvalidInviteState({
 						<AlertCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
 					</div>
 					<CardTitle className="text-red-700 dark:text-red-300">
-						{inviteInfo?.isExpired ? m["invite.expired_title"]() : m["invite.invalid_title"]()}
+						{inviteInfo?.isExpired
+							? m["invite.expired_title"]()
+							: m["invite.invalid_title"]()}
 					</CardTitle>
 					<CardDescription className="text-red-600 dark:text-red-400">
 						{inviteInfo?.message ||
@@ -142,7 +144,7 @@ function InvalidInviteState({
 				</CardContent>
 			</Card>
 		</div>
-	)
+	);
 }
 
 function LoginRequiredState() {
@@ -160,7 +162,7 @@ function LoginRequiredState() {
 				</CardHeader>
 			</Card>
 		</div>
-	)
+	);
 }
 
 function ValidInviteState({
@@ -181,10 +183,10 @@ function ValidInviteState({
 					<div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
 						<Users className="w-8 h-8 text-green-600 dark:text-green-400" />
 					</div>
-					<CardTitle className="text-2xl">{m["invite.invited_title"]()}</CardTitle>
-					<CardDescription>
-						{m["invite.invited_description"]()}
-					</CardDescription>
+					<CardTitle className="text-2xl">
+						{m["invite.invited_title"]()}
+					</CardTitle>
+					<CardDescription>{m["invite.invited_description"]()}</CardDescription>
 				</CardHeader>
 
 				<CardContent className="space-y-6">
@@ -217,7 +219,7 @@ function ValidInviteState({
 				</CardContent>
 			</Card>
 		</div>
-	)
+	);
 }
 
 function TravelDetails({
@@ -231,7 +233,7 @@ function TravelDetails({
 			month: "long",
 			year: "numeric",
 		}).format(new Date(date));
-	}
+	};
 
 	const getDuration = () => {
 		const start = new Date(travel.startDate);
@@ -239,7 +241,7 @@ function TravelDetails({
 		const diffTime = Math.abs(end.getTime() - start.getTime());
 		const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 		return diffDays;
-	}
+	};
 
 	const duration = getDuration();
 
@@ -264,11 +266,13 @@ function TravelDetails({
 							{formatDate(travel.startDate)} - {formatDate(travel.endDate)}
 						</p>
 						<p className="text-xs text-muted-foreground">
-							{duration === 1 ? m["invite.days"]({ count: duration }) : m["invite.days_plural"]({ count: duration })}
+							{duration === 1
+								? m["invite.days"]({ count: duration })
+								: m["invite.days_plural"]({ count: duration })}
 						</p>
 					</div>
 				</div>
 			</div>
 		</div>
-	)
+	);
 }

@@ -75,7 +75,8 @@ export function MemberCard({
 				setIsRemoveDialogOpen(false);
 			} else {
 				toast.error(m["members.remove_error"](), {
-					description: result.message || m["members.remove_error_description"](),
+					description:
+						result.message || m["members.remove_error_description"](),
 				});
 			}
 		} catch (error) {
@@ -192,13 +193,17 @@ export function MemberCard({
 										Remover Membro
 									</DialogTitle>
 									<DialogDescription>
-										Tem certeza de que deseja remover <strong>{member.user.name}</strong> desta viagem? Esta ação não pode ser desfeita.
+										Tem certeza de que deseja remover{" "}
+										<strong>{member.user.name}</strong> desta viagem? Esta ação
+										não pode ser desfeita.
 									</DialogDescription>
 								</DialogHeader>
 								<div className="px-6 py-4">
 									<div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
 										<p className="text-sm text-red-700 dark:text-red-300">
-											⚠️ O membro perderá acesso imediatamente a todos os dados da viagem e não poderá mais visualizar ou editar informações.
+											⚠️ O membro perderá acesso imediatamente a todos os dados
+											da viagem e não poderá mais visualizar ou editar
+											informações.
 										</p>
 									</div>
 								</div>

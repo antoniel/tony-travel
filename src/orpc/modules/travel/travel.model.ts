@@ -7,8 +7,8 @@ import {
 } from "@/lib/db/schema";
 import * as z from "zod";
 
-export const LocationOptionSchema: z.ZodType<TravelDestinationAirportOption> = z
-	.object({
+export const LocationOptionSchema: z.ZodType<TravelDestinationAirportOption> =
+	z.object({
 		value: z.string(),
 		label: z.string(),
 	});

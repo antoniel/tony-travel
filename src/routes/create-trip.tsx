@@ -34,7 +34,7 @@ function CreateTripPage() {
 		departureAirports: search.departureAirports
 			? JSON.parse(search.departureAirports)
 			: [],
-	}
+	};
 
 	return <TripWizard initialData={initialData} />;
 }

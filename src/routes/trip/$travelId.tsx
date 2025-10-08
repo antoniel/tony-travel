@@ -108,9 +108,7 @@ function TripLayoutContent({
 	const startDate = travel?.startDate ? new Date(travel.startDate) : undefined;
 	const endDate = travel?.endDate ? new Date(travel.endDate) : undefined;
 	const totalTripDays =
-		startDate && endDate
-			? calculateTripDaysUTC(startDate, endDate)
-			: undefined;
+		startDate && endDate ? calculateTripDaysUTC(startDate, endDate) : undefined;
 	const tripDaysLabel =
 		totalTripDays === undefined
 			? ""
@@ -307,9 +305,9 @@ function TripLayoutContent({
 															aria-hidden="true"
 															className={`relative inline-flex h-2 w-2 rounded-full ${indicatorDotClass}`}
 														/>
-											<span className="sr-only">
-												{m["concierge.pending_indicator"]()}
-											</span>
+														<span className="sr-only">
+															{m["concierge.pending_indicator"]()}
+														</span>
 													</span>
 												) : null}
 											</span>

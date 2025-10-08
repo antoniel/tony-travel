@@ -3,7 +3,15 @@ import type { PendingIssuesSummary } from "@/orpc/modules/concierge/concierge.mo
 import type { MyUIMessage } from "@/orpc/modules/concierge/concierge.ai";
 import { eventIteratorToStream } from "@orpc/client";
 import type { ReactNode } from "react";
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import {
+	createContext,
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
 import { useChat, type UseChatHelpers } from "@ai-sdk/react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -25,7 +33,9 @@ interface ConciergeChatContextValue {
 	refetchPendingIssues: () => Promise<void>;
 }
 
-const ConciergeChatContext = createContext<ConciergeChatContextValue | null>(null);
+const ConciergeChatContext = createContext<ConciergeChatContextValue | null>(
+	null,
+);
 
 interface ConciergeChatProviderProps {
 	children: ReactNode;
@@ -77,7 +87,9 @@ export function ConciergeChatProvider({
 	const [hasUnread, setHasUnread] = useState(false);
 
 	const lastAssistantMessageIdRef = useRef<string | null>(null);
-	const [lastSeenAssistantId, setLastSeenAssistantId] = useState<string | null>(null);
+	const [lastSeenAssistantId, setLastSeenAssistantId] = useState<string | null>(
+		null,
+	);
 
 	const [pendingStartedAt, setPendingStartedAt] = useState<number | null>(null);
 	const [now, setNow] = useState(() => Date.now());
@@ -154,33 +166,36 @@ export function ConciergeChatProvider({
 		return now - pendingStartedAt >= 30_000;
 	}, [now, pendingStartedAt]);
 
-	const value = useMemo<ConciergeChatContextValue>(() => ({
-		chat,
-		travelId,
-		travelName,
-		hasUnread,
-		isDelayedResponse,
-		isFloatingOpen,
-		isFullViewActive,
-		setFloatingOpen: setIsFloatingOpen,
-		setFullViewActive: setIsFullViewActive,
-		markConversationSeen,
-		pendingSummary,
-		isPendingIssuesLoading,
-		refetchPendingIssues,
-	}), [
-		chat,
-		hasUnread,
-		isDelayedResponse,
-		isFloatingOpen,
-		isFullViewActive,
-		markConversationSeen,
-		pendingSummary,
-		refetchPendingIssues,
-		isPendingIssuesLoading,
-		travelId,
-		travelName,
-	]);
+	const value = useMemo<ConciergeChatContextValue>(
+		() => ({
+			chat,
+			travelId,
+			travelName,
+			hasUnread,
+			isDelayedResponse,
+			isFloatingOpen,
+			isFullViewActive,
+			setFloatingOpen: setIsFloatingOpen,
+			setFullViewActive: setIsFullViewActive,
+			markConversationSeen,
+			pendingSummary,
+			isPendingIssuesLoading,
+			refetchPendingIssues,
+		}),
+		[
+			chat,
+			hasUnread,
+			isDelayedResponse,
+			isFloatingOpen,
+			isFullViewActive,
+			markConversationSeen,
+			pendingSummary,
+			refetchPendingIssues,
+			isPendingIssuesLoading,
+			travelId,
+			travelName,
+		],
+	);
 
 	return (
 		<ConciergeChatContext.Provider value={value}>

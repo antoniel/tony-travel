@@ -76,7 +76,9 @@ const flightSegmentSchema = z
 	.object({
 		id: z.string().optional(),
 		originAirport: z.string().min(1, m["validation.origin_airport_required"]()),
-		destinationAirport: z.string().min(1, m["validation.destination_airport_required"]()),
+		destinationAirport: z
+			.string()
+			.min(1, m["validation.destination_airport_required"]()),
 		departureDate: z.string().min(1, m["validation.departure_date_required"]()),
 		departureTime: z.string().min(1, m["validation.departure_time_required"]()),
 		arrivalDate: z.string().min(1, m["validation.arrival_date_required"]()),
@@ -959,7 +961,6 @@ function FlightSegmentFields({
 	);
 }
 
-
 function FlightPricingSection({
 	setDuplicateInfo,
 }: {
@@ -990,15 +991,15 @@ function FlightPricingSection({
 												R$
 											</span>
 										) : null}
-											<Input
-												value={formatDecimalStringPtBR(field.value || "")}
+										<Input
+											value={formatDecimalStringPtBR(field.value || "")}
 											type="text"
 											inputMode="numeric"
 											placeholder="0,00"
 											className={
 												form.watch("currency") === "BRL" ? "h-11 pl-8" : "h-11"
 											}
-												onChange={(event) => {
+											onChange={(event) => {
 												const { decimal } = normalizeCurrencyInputPtBR(
 													event.target.value,
 												);

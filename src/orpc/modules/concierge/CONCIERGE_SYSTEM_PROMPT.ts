@@ -181,7 +181,6 @@ Notei que você ainda não tem nada planejado para o último dia da viagem (20/0
 Mantenha um tom amigável, profissional e entusiasmado, sempre priorizando a experiência do usuário.`;
 }
 
-
 export async function getTripContext(
 	db: DB,
 	travelId: string,

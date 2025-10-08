@@ -140,9 +140,7 @@ describe("travel service", () => {
 			});
 
 			expect(travel).toBeDefined();
-			expect(travel?.destinationAirports).toEqual(
-				SAMPLE_DESTINATION_AIRPORTS,
-			);
+			expect(travel?.destinationAirports).toEqual(SAMPLE_DESTINATION_AIRPORTS);
 			// Note: accommodations are handled separately by accommodation service
 		});
 
@@ -414,7 +412,9 @@ describe("travel service", () => {
 			expect(result.name).toBe(updateData.name);
 			expect(result.description).toBe(updateData.description);
 			expect(result.destination).toBe(updateData.destination);
-			expect(result.destinationAirports).toEqual(updateData.destinationAirports);
+			expect(result.destinationAirports).toEqual(
+				updateData.destinationAirports,
+			);
 		});
 
 		it("should reject travel update for non-owner", async () => {
@@ -785,8 +785,9 @@ describe("travel service", () => {
 			});
 
 			expect(result.length).toBeGreaterThan(0);
-			expect(result.every((airport) => airport.type !== "country_group"))
-				.toBe(true);
+			expect(result.every((airport) => airport.type !== "country_group")).toBe(
+				true,
+			);
 		});
 
 		it("should expand state groups when expandGroups is true", async () => {
@@ -841,8 +842,8 @@ describe("travel service", () => {
 			});
 
 			expect(prompt).not.toContain("STATE_SP_ALL");
-			expect(prompt).toContain("\"GRU\"");
-			expect(prompt).toContain("\"CGH\"");
+			expect(prompt).toContain('"GRU"');
+			expect(prompt).toContain('"CGH"');
 		});
 	});
 });

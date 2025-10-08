@@ -189,9 +189,7 @@ export class TravelDAO {
 		return member || null;
 	}
 
-	async getTravelMembers(
-		travelId: string,
-	): Promise<TravelMemberWithUser[]> {
+	async getTravelMembers(travelId: string): Promise<TravelMemberWithUser[]> {
 		const members = await this.db.query.TravelMember.findMany({
 			where: eq(TravelMember.travelId, travelId),
 			with: {

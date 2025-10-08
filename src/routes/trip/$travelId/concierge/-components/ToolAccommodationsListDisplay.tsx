@@ -11,7 +11,10 @@ import type { MyConciergeTools } from "@/orpc/modules/concierge/concierge.ai";
 import type { InferUITools } from "ai";
 import * as m from "@/paraglide/messages";
 
-import { formatDateRange, getAccommodationTypeLabel } from "./accommodation-utils";
+import {
+	formatDateRange,
+	getAccommodationTypeLabel,
+} from "./accommodation-utils";
 
 interface ToolAccommodationsListDisplayProps {
 	report: InferUITools<MyConciergeTools>["getAccomodations"]["output"];
@@ -25,7 +28,8 @@ export function ToolAccommodationsListDisplay({
 			<Card className="w-full max-w-md mx-auto my-4">
 				<CardContent>
 					<p className="text-sm text-destructive">
-						{report.message ?? m["concierge.tools.accommodation.list_error_fallback"]()}
+						{report.message ??
+							m["concierge.tools.accommodation.list_error_fallback"]()}
 					</p>
 				</CardContent>
 			</Card>
@@ -74,8 +78,10 @@ export function ToolAccommodationsListDisplay({
 								{acc.address}
 							</span>
 							<span className="text-muted-foreground">
-								{m["concierge.tools.accommodation_create.label_estimated_value"]()}:{" "}
-								{formatCurrencyBRL(acc.price)}
+								{m[
+									"concierge.tools.accommodation_create.label_estimated_value"
+								]()}
+								: {formatCurrencyBRL(acc.price)}
 							</span>
 						</div>
 					</div>

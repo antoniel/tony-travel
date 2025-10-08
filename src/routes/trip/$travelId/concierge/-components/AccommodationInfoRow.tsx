@@ -5,7 +5,10 @@ interface AccommodationInfoRowProps {
 	children: ReactNode;
 }
 
-export function AccommodationInfoRow({ label, children }: AccommodationInfoRowProps) {
+export function AccommodationInfoRow({
+	label,
+	children,
+}: AccommodationInfoRowProps) {
 	return (
 		<div className="flex flex-col">
 			<span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">

@@ -119,12 +119,12 @@ interface LayoutEvent {
 
 export const getEventLayout = (events: AppEvent[]) => {
 	// Convert AppEvents to LayoutEvents and use unified layout function
-	const layoutEvents: LayoutEvent[] = events.map(event => ({
+	const layoutEvents: LayoutEvent[] = events.map((event) => ({
 		id: event.id,
 		startDate: event.startDate,
 		endDate: event.endDate,
 	}));
-	
+
 	return getUnifiedEventLayout(layoutEvents);
 };
 

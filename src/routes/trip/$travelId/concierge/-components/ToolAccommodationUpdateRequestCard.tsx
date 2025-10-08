@@ -76,7 +76,9 @@ export function ToolAccommodationUpdateRequestCard({
 						toolCallId,
 						output: {
 							success: false,
-							validationError: m["concierge.tools.accommodation_update.result_conflict"]({
+							validationError: m[
+								"concierge.tools.accommodation_update.result_conflict"
+							]({
 								name: result.conflictingAccommodation.name,
 							}),
 						},
@@ -124,7 +126,8 @@ export function ToolAccommodationUpdateRequestCard({
 					toolCallId,
 					output: {
 						success: false,
-						validationError: m["concierge.tools.accommodation_update.result_error"](),
+						validationError:
+							m["concierge.tools.accommodation_update.result_error"](),
 					},
 				});
 				setIsProcessed(true);
@@ -157,14 +160,14 @@ export function ToolAccommodationUpdateRequestCard({
 	);
 
 	const handleAccept = () => {
-	if (isProcessed || proposedEntries.length === 0) {
-		if (proposedEntries.length === 0) {
-			toast.info(
-				m["concierge.tools.accommodation_update.toast_no_changes"](),
-			);
+		if (isProcessed || proposedEntries.length === 0) {
+			if (proposedEntries.length === 0) {
+				toast.info(
+					m["concierge.tools.accommodation_update.toast_no_changes"](),
+				);
+			}
+			return;
 		}
-		return;
-	}
 
 		updateAccommodationMutation.mutate({
 			id: input.accommodationId,
@@ -175,15 +178,16 @@ export function ToolAccommodationUpdateRequestCard({
 	const handleReject = () => {
 		if (isProcessed) return;
 
-	toast.info(m["concierge.tools.accommodation_update.toast_reject"]());
-	void addToolResult({
-		tool: "requestToUpdateAccommodation",
-		toolCallId,
-		output: {
-			success: false,
-			validationError: m["concierge.tools.accommodation_update.result_reject"](),
-		},
-	});
+		toast.info(m["concierge.tools.accommodation_update.toast_reject"]());
+		void addToolResult({
+			tool: "requestToUpdateAccommodation",
+			toolCallId,
+			output: {
+				success: false,
+				validationError:
+					m["concierge.tools.accommodation_update.result_reject"](),
+			},
+		});
 		setIsProcessed(true);
 	};
 
@@ -207,10 +211,10 @@ export function ToolAccommodationUpdateRequestCard({
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-3 text-sm">
-	{proposedEntries.length === 0 ? (
-		<p className="text-muted-foreground">
-			{m["concierge.tools.accommodation_update.empty"]()}
-		</p>
+				{proposedEntries.length === 0 ? (
+					<p className="text-muted-foreground">
+						{m["concierge.tools.accommodation_update.empty"]()}
+					</p>
 				) : (
 					<ul className="space-y-2">
 						{proposedEntries.map(([fieldKey, value]) => (

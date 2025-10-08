@@ -23,7 +23,10 @@ import type {
 	AccommodationPayload,
 	AddToolResultType,
 } from "./component-tool-types";
-import { getAccommodationTypeLabel, formatDateRange } from "./accommodation-utils";
+import {
+	getAccommodationTypeLabel,
+	formatDateRange,
+} from "./accommodation-utils";
 
 interface ToolAccommodationCreateRequestCardProps {
 	input: InferUITools<MyConciergeTools>["requestToCreateAccommodation"]["input"];
@@ -68,7 +71,9 @@ export function ToolAccommodationCreateRequestCard({
 						toolCallId,
 						output: {
 							success: false,
-							message: m["concierge.tools.accommodation_create.result_conflict"]({
+							message: m[
+								"concierge.tools.accommodation_create.result_conflict"
+							]({
 								name: result.conflictingAccommodation.name,
 							}),
 						},
@@ -98,7 +103,8 @@ export function ToolAccommodationCreateRequestCard({
 						output: {
 							success: true,
 							accommodation: { accommodationId: result.id },
-							message: m["concierge.tools.accommodation_create.result_success"](),
+							message:
+								m["concierge.tools.accommodation_create.result_success"](),
 						},
 					});
 				}
@@ -106,9 +112,7 @@ export function ToolAccommodationCreateRequestCard({
 				setIsProcessed(true);
 			},
 			onError: async (error) => {
-				toast.error(
-					m["concierge.tools.accommodation_create.toast_error"](),
-				);
+				toast.error(m["concierge.tools.accommodation_create.toast_error"]());
 				console.error("Accommodation creation error:", error);
 				await addToolResult({
 					tool: "requestToCreateAccommodation",
@@ -179,7 +183,9 @@ export function ToolAccommodationCreateRequestCard({
 					{input.address}
 				</AccommodationInfoRow>
 				<AccommodationInfoRow
-					label={m["concierge.tools.accommodation_create.label_estimated_value"]()}
+					label={m[
+						"concierge.tools.accommodation_create.label_estimated_value"
+					]()}
 				>
 					{formatCurrencyBRL(input.price)}
 				</AccommodationInfoRow>

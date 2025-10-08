@@ -68,7 +68,10 @@ const getEventTypeVariant = (
 ): "default" | "secondary" | "outline" | "destructive" =>
 	eventTypeVariants[type] ?? "default";
 
-export function ToolEventsListDisplay({ eventsData, travelId }: ToolEventsListDisplayProps) {
+export function ToolEventsListDisplay({
+	eventsData,
+	travelId,
+}: ToolEventsListDisplayProps) {
 	const queryClient = useQueryClient();
 	const [selectedEventIds, setSelectedEventIds] = useState<string[]>([]);
 	const [deleteDialogState, setDeleteDialogState] = useState<{
@@ -139,8 +142,8 @@ export function ToolEventsListDisplay({ eventsData, travelId }: ToolEventsListDi
 				count === 1
 					? m["concierge.tools.events.toast_removed"]()
 					: m["concierge.tools.events.toast_removed_plural"]({
-						count: count.toString(),
-					}),
+							count: count.toString(),
+						}),
 			);
 		} catch (error) {
 			toast.error(m["concierge.tools.events.toast_remove_error"]());
@@ -203,17 +206,15 @@ export function ToolEventsListDisplay({ eventsData, travelId }: ToolEventsListDi
 						<CardDescription>
 							{eventsData.count === 1
 								? m["concierge.tools.events.description_count"]({
-									message:
-										eventsData.message ??
-										m["concierge.tools.events.title"](),
-									count: eventsData.count.toString(),
-								})
+										message:
+											eventsData.message ?? m["concierge.tools.events.title"](),
+										count: eventsData.count.toString(),
+									})
 								: m["concierge.tools.events.description_count_plural"]({
-									message:
-										eventsData.message ??
-										m["concierge.tools.events.title"](),
-									count: eventsData.count.toString(),
-								})}
+										message:
+											eventsData.message ?? m["concierge.tools.events.title"](),
+										count: eventsData.count.toString(),
+									})}
 						</CardDescription>
 					</div>
 					<div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
@@ -259,11 +260,11 @@ export function ToolEventsListDisplay({ eventsData, travelId }: ToolEventsListDi
 										onCheckedChange={(checked) =>
 											toggleSelection(event.id, Boolean(checked))
 										}
-									aria-label={m["concierge.tools.events.aria_event"]({
-										title: event.title,
-									})}
-								/>
-								<h4 className="font-medium">{event.title}</h4>
+										aria-label={m["concierge.tools.events.aria_event"]({
+											title: event.title,
+										})}
+									/>
+									<h4 className="font-medium">{event.title}</h4>
 								</div>
 								<Badge variant={getEventTypeVariant(event.type)}>
 									{getEventTypeLabel(event.type)}
@@ -342,13 +343,13 @@ export function ToolEventsListDisplay({ eventsData, travelId }: ToolEventsListDi
 						<AlertDialogDescription>
 							{deleteDialogState.ids.length === 1
 								? m["concierge.tools.events.dialog_single"]({
-									title:
-										eventMap.get(deleteDialogState.ids[0])?.title ??
-										deleteDialogState.ids[0],
-								})
+										title:
+											eventMap.get(deleteDialogState.ids[0])?.title ??
+											deleteDialogState.ids[0],
+									})
 								: m["concierge.tools.events.dialog_multiple"]({
-									count: deleteDialogState.ids.length.toString(),
-								})}
+										count: deleteDialogState.ids.length.toString(),
+									})}
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>

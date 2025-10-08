@@ -36,14 +36,14 @@ export const requireAuth = os
 				context: {
 					...context,
 					user: ALWAYS_USER_TEST,
-						session: {
-							id: "test-session",
-							userId: ALWAYS_USER_TEST.id,
-							expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
-							createdAt: new Date(),
-							updatedAt: new Date(),
-							token: "test-token",
-						},
+					session: {
+						id: "test-session",
+						userId: ALWAYS_USER_TEST.id,
+						expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
+						createdAt: new Date(),
+						updatedAt: new Date(),
+						token: "test-token",
+					},
 				} as AuthContext,
 			});
 		}

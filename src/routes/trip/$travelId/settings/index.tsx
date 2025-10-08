@@ -78,15 +78,13 @@ const TravelSettingsSchema = z
 	.refine((data) => data.endDate >= data.startDate, {
 		message: m["validation.end_date_after_start"](),
 		path: ["endDate"],
-	})
+	});
 
 type TravelSettingsFormData = z.infer<typeof TravelSettingsSchema>;
 
 // Delete confirmation schema
 const DeleteConfirmationSchema = z.object({
-	confirmationName: z
-		.string()
-		.min(1, m["trip.settings.delete_name_hint"]()),
+	confirmationName: z.string().min(1, m["trip.settings.delete_name_hint"]()),
 });
 
 type DeleteConfirmationData = z.infer<typeof DeleteConfirmationSchema>;
@@ -97,7 +95,7 @@ function TripSettingsPage() {
 	// Check if user is owner
 	const { data: travel } = useSuspenseQuery(
 		orpc.travelRoutes.getTravel.queryOptions({ input: { id: travelId } }),
-	)
+	);
 
 	// Redirect if not owner
 	const navigate = useNavigate();
@@ -117,7 +115,7 @@ function TripSettingsPage() {
 					{m["membership.access_denied_description"]()}
 				</p>
 			</div>
-		)
+		);
 	}
 
 	return (
@@ -135,7 +133,7 @@ function TripSettingsPage() {
 			<Separator />
 			<DangerZone travel={travel} />
 		</div>
-	)
+	);
 }
 
 function TravelSettingsForm({
@@ -150,7 +148,7 @@ function TravelSettingsForm({
 		| "description"
 		| "destinationAirports"
 		| "destination"
-	>
+	>;
 }) {
 	const queryClient = useQueryClient();
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -161,7 +159,7 @@ function TravelSettingsForm({
 		destinationSearch,
 		15,
 		true,
-	)
+	);
 
 	const destinationQueryString = useMemo(() => {
 		const raw = travel.destination?.split(",")[0]?.trim();
@@ -178,7 +176,7 @@ function TravelSettingsForm({
 			},
 		}),
 		staleTime: 5 * 60 * 1000,
-	})
+	});
 
 	const form = useForm<TravelSettingsFormData>({
 		resolver: zodResolver(TravelSettingsSchema),
@@ -197,7 +195,7 @@ function TravelSettingsForm({
 							},
 						],
 		},
-	})
+	});
 
 	const currentDestinationAirports =
 		(form.watch("destinationAirports") as LocationOption[] | undefined) || [];
@@ -211,7 +209,7 @@ function TravelSettingsForm({
 		const mappedResults = destinationResults.map((airport) => ({
 			value: airport.code,
 			label: formatAirportLabel(airport),
-		}))
+		}));
 		const merged = new Map<string, LocationOption>();
 		for (const option of [
 			...currentDestinationAirports,
@@ -233,7 +231,7 @@ function TravelSettingsForm({
 				queryKey: orpc.travelRoutes.getTravel.queryKey({
 					input: { id: travel.id },
 				}),
-			})
+			});
 		},
 		onError: (error) => {
 			toast.error(m["trip.settings.update_error"]());
@@ -242,7 +240,7 @@ function TravelSettingsForm({
 		onSettled: () => {
 			setIsSubmitting(false);
 		},
-	})
+	});
 
 	const onSubmit = (data: TravelSettingsFormData) => {
 		setIsSubmitting(true);
@@ -256,12 +254,12 @@ function TravelSettingsForm({
 				.map((airport) => airport.label)
 				.join(", "),
 			destinationAirports: data.destinationAirports,
-		}
+		};
 		updateTravelMutation.mutate({
 			travelId: travel.id,
 			updateData,
-		})
-	}
+		});
+	};
 
 	return (
 		<div className="space-y-6">
@@ -284,7 +282,10 @@ function TravelSettingsForm({
 								<FormItem>
 									<FormLabel>{m["trip.settings.name_label"]()}</FormLabel>
 									<FormControl>
-										<Input placeholder={m["trip.name_placeholder"]()} {...field} />
+										<Input
+											placeholder={m["trip.name_placeholder"]()}
+											{...field}
+										/>
 									</FormControl>
 									<FormDescription>
 										{m["trip.settings.name_description"]()}
@@ -295,13 +296,13 @@ function TravelSettingsForm({
 						/>
 
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-						<FormField
-							control={form.control}
-							name="startDate"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>{m["trip.settings.start_label"]()}</FormLabel>
-									<FormControl>
+							<FormField
+								control={form.control}
+								name="startDate"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>{m["trip.settings.start_label"]()}</FormLabel>
+										<FormControl>
 											<Input
 												type="date"
 												{...field}
@@ -320,12 +321,12 @@ function TravelSettingsForm({
 								)}
 							/>
 
-						<FormField
-							control={form.control}
-							name="endDate"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>{m["trip.settings.end_label"]()}</FormLabel>
+							<FormField
+								control={form.control}
+								name="endDate"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>{m["trip.settings.end_label"]()}</FormLabel>
 										<FormControl>
 											<Input
 												type="date"
@@ -351,14 +352,18 @@ function TravelSettingsForm({
 							name="destinationAirports"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{m["trip.settings.destinations_label"]()}</FormLabel>
+									<FormLabel>
+										{m["trip.settings.destinations_label"]()}
+									</FormLabel>
 									<FormDescription>
 										{m["trip.settings.destinations_description"]()}
 									</FormDescription>
 									<FormControl>
 										<LocationSelector
 											label={m["trip.settings.destinations_label"]()}
-											placeholder={m["trip.settings.destinations_placeholder"]()}
+											placeholder={m[
+												"trip.settings.destinations_placeholder"
+											]()}
 											searchPlaceholder={m["trip.search_city_airport"]()}
 											selectedLabel={m["trip.selected_airports"]()}
 											icon={<Plane className="h-4 w-4" />}
@@ -382,7 +387,9 @@ function TravelSettingsForm({
 							name="description"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>{m["trip.settings.description_label"]()}</FormLabel>
+									<FormLabel>
+										{m["trip.settings.description_label"]()}
+									</FormLabel>
 									<FormControl>
 										<Textarea
 											placeholder={m["trip.description_placeholder"]()}
@@ -412,7 +419,7 @@ function TravelSettingsForm({
 				</Form>
 			</div>
 		</div>
-	)
+	);
 }
 
 const formatAirportLabel = (airport: Airport) => {
@@ -446,7 +453,7 @@ function DangerZone({ travel }: { travel: Pick<Travel, "id" | "name"> }) {
 		defaultValues: {
 			confirmationName: "",
 		},
-	})
+	});
 
 	const deleteTravelMutation = useMutation({
 		...orpc.travelRoutes.deleteTravel.mutationOptions(),
@@ -462,7 +469,7 @@ function DangerZone({ travel }: { travel: Pick<Travel, "id" | "name"> }) {
 			setIsDeleting(false);
 			setIsConfirmOpen(false);
 		},
-	})
+	});
 
 	const onDelete = () => {
 		if (deleteForm.getValues().confirmationName === travel.name) {
@@ -470,9 +477,9 @@ function DangerZone({ travel }: { travel: Pick<Travel, "id" | "name"> }) {
 			deleteTravelMutation.mutate({
 				travelId: travel.id,
 				confirmationName: travel.name,
-			})
+			});
 		}
-	}
+	};
 
 	return (
 		<div className="space-y-6">
@@ -516,12 +523,14 @@ function DangerZone({ travel }: { travel: Pick<Travel, "id" | "name"> }) {
 
 						<Form {...deleteForm}>
 							<form className="space-y-4">
-							<FormField
-								control={deleteForm.control}
-								name="confirmationName"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>{m["trip.settings.delete_name_label"]()}</FormLabel>
+								<FormField
+									control={deleteForm.control}
+									name="confirmationName"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel>
+												{m["trip.settings.delete_name_label"]()}
+											</FormLabel>
 											<FormControl>
 												<Input placeholder={travel.name} {...field} />
 											</FormControl>
@@ -553,7 +562,7 @@ function DangerZone({ travel }: { travel: Pick<Travel, "id" | "name"> }) {
 				</AlertDialog>
 			</div>
 		</div>
-	)
+	);
 }
 
 function TripSettingsSkeleton() {
@@ -605,5 +614,5 @@ function TripSettingsSkeleton() {
 				</div>
 			</div>
 		</div>
-	)
+	);
 }

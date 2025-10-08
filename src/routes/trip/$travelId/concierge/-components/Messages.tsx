@@ -79,18 +79,18 @@ export function Messages({
 										{message.role === "assistant" &&
 											i === messages.length - 1 && (
 												<Actions className="mt-2">
-										<Action
-											onClick={() => {}}
-											label={m["concierge.messages.actions.retry"]()}
-										>
+													<Action
+														onClick={() => {}}
+														label={m["concierge.messages.actions.retry"]()}
+													>
 														<RefreshCcwIcon className="size-3" />
 													</Action>
 													<Action
 														onClick={() =>
 															navigator.clipboard.writeText(part.text)
 														}
-											label={m["concierge.messages.actions.copy"]()}
-										>
+														label={m["concierge.messages.actions.copy"]()}
+													>
 														<CopyIcon className="size-3" />
 													</Action>
 												</Actions>
@@ -228,7 +228,9 @@ export function Messages({
 											className="rounded-lg border border-border bg-muted/5 p-4"
 										>
 											<p className="text-sm text-muted-foreground">
-												{m["concierge.messages.success_prefix"]({ message: data.message })}
+												{m["concierge.messages.success_prefix"]({
+													message: data.message,
+												})}
 											</p>
 										</div>
 									);

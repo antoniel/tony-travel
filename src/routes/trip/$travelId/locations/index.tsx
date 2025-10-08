@@ -16,7 +16,7 @@ function LocationsPage() {
 
 	const travelQuery = useQuery(
 		orpc.travelRoutes.getTravel.queryOptions({ input: { id: travelId } }),
-	)
+	);
 	const travel = travelQuery.data;
 	const isLoading = travelQuery.isLoading;
 
@@ -35,28 +35,28 @@ function LocationsPage() {
 			return acc;
 		},
 		{} as Record<string, typeof locationsFromEvents>,
-	)
+	);
 
 	const getLocationTypeIcon = (type: string) => {
 		switch (type?.toLowerCase()) {
 			case "restaurant":
 				return "🍽️";
 			case "hotel":
-				return "🏨"
+				return "🏨";
 			case "attraction":
-				return "🎭"
+				return "🎭";
 			case "museum":
 				return "🏛️";
 			case "park":
-				return "🌳"
+				return "🌳";
 			case "shopping":
 				return "🛍️";
 			case "nightlife":
-				return "🌙"
+				return "🌙";
 			default:
-				return "📍"
+				return "📍";
 		}
-	}
+	};
 
 	// Define proper types for all locations
 	type Location = {
@@ -70,7 +70,7 @@ function LocationsPage() {
 		address?: string | null;
 		description?: string;
 		imageUrl?: string | null;
-	}
+	};
 
 	const allLocations: Location[] = [
 		...locationsFromEvents.map((event) => ({
@@ -90,14 +90,14 @@ function LocationsPage() {
 			price: event.cost || event.estimatedCost || undefined,
 			imageUrl: event.imageUrl,
 		})),
-	]
+	];
 
 	if (isLoading) {
 		return (
 			<div className="flex items-center justify-center py-12">
 				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
 			</div>
-		)
+		);
 	}
 
 	return (
@@ -122,7 +122,9 @@ function LocationsPage() {
 								<span>
 									{allLocations.length === 1
 										? m["locations.locations_count"]({ count: "1" })
-										: m["locations.locations_count_plural"]({ count: allLocations.length.toString() })}
+										: m["locations.locations_count_plural"]({
+												count: allLocations.length.toString(),
+											})}
 								</span>
 							</Badge>
 							{Object.keys(locationsByCategory).length > 0 && (
@@ -131,7 +133,10 @@ function LocationsPage() {
 									<span>
 										{Object.keys(locationsByCategory).length === 1
 											? m["locations.categories_count"]({ count: "1" })
-											: m["locations.categories_count_plural"]({ count: Object.keys(locationsByCategory).length.toString() })}
+											: m["locations.categories_count_plural"]({
+													count:
+														Object.keys(locationsByCategory).length.toString(),
+												})}
 									</span>
 								</Badge>
 							)}
@@ -140,7 +145,9 @@ function LocationsPage() {
 
 					<Button className="shadow-sm">
 						<Plus className="w-4 h-4 mr-2" />
-						<span className="hidden sm:inline">{m["locations.add_location"]()}</span>
+						<span className="hidden sm:inline">
+							{m["locations.add_location"]()}
+						</span>
 						<span className="sm:hidden">{m["common.add"]()}</span>
 					</Button>
 				</div>
@@ -174,19 +181,28 @@ function LocationsPage() {
 										<MapPin className="w-8 h-8 text-primary" />
 									</div>
 									<div className="space-y-2">
-										<h3 className="font-semibold text-lg">{m["locations.interactive_map"]()}</h3>
+										<h3 className="font-semibold text-lg">
+											{m["locations.interactive_map"]()}
+										</h3>
 										<p className="text-muted-foreground max-w-sm">
 											{m["locations.map_description"]()}
 										</p>
 									</div>
 									<div className="flex flex-wrap justify-center gap-2 text-sm">
 										<Badge variant="secondary">
-											📍 {allLocations.length === 1
+											📍{" "}
+											{allLocations.length === 1
 												? m["locations.locations_count"]({ count: "1" })
-												: m["locations.locations_count_plural"]({ count: allLocations.length.toString() })}
+												: m["locations.locations_count_plural"]({
+														count: allLocations.length.toString(),
+													})}
 										</Badge>
-										<Badge variant="secondary">{m["locations.satellite_view"]()}</Badge>
-										<Badge variant="secondary">{m["locations.optimized_routes"]()}</Badge>
+										<Badge variant="secondary">
+											{m["locations.satellite_view"]()}
+										</Badge>
+										<Badge variant="secondary">
+											{m["locations.optimized_routes"]()}
+										</Badge>
 									</div>
 								</div>
 							</div>
@@ -196,7 +212,9 @@ function LocationsPage() {
 					{/* Location Cards - Moved below map */}
 					<div className="space-y-6">
 						<div className="flex items-center justify-between">
-							<h2 className="text-xl font-semibold">{m["locations.locations_list"]()}</h2>
+							<h2 className="text-xl font-semibold">
+								{m["locations.locations_list"]()}
+							</h2>
 							<div className="flex gap-2">
 								<Button variant="outline" size="sm">
 									{m["locations.sort"]()}
@@ -313,19 +331,27 @@ function LocationsPage() {
 							<div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-md mx-auto">
 								<div className="flex flex-col items-center gap-2 p-4 bg-muted/30 rounded-lg">
 									<span className="text-2xl">🎭</span>
-									<span className="text-sm font-medium">{m["locations.category_attractions"]()}</span>
+									<span className="text-sm font-medium">
+										{m["locations.category_attractions"]()}
+									</span>
 								</div>
 								<div className="flex flex-col items-center gap-2 p-4 bg-muted/30 rounded-lg">
 									<span className="text-2xl">🍽️</span>
-									<span className="text-sm font-medium">{m["locations.category_restaurants"]()}</span>
+									<span className="text-sm font-medium">
+										{m["locations.category_restaurants"]()}
+									</span>
 								</div>
 								<div className="flex flex-col items-center gap-2 p-4 bg-muted/30 rounded-lg">
 									<span className="text-2xl">🏛️</span>
-									<span className="text-sm font-medium">{m["locations.category_museums"]()}</span>
+									<span className="text-sm font-medium">
+										{m["locations.category_museums"]()}
+									</span>
 								</div>
 								<div className="flex flex-col items-center gap-2 p-4 bg-muted/30 rounded-lg">
 									<span className="text-2xl">🌳</span>
-									<span className="text-sm font-medium">{m["locations.category_parks"]()}</span>
+									<span className="text-sm font-medium">
+										{m["locations.category_parks"]()}
+									</span>
 								</div>
 							</div>
 						</div>
@@ -381,5 +407,5 @@ function LocationsPage() {
 				</Card>
 			)}
 		</div>
-	)
+	);
 }

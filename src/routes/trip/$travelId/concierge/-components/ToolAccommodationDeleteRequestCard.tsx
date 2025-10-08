@@ -38,11 +38,15 @@ export function ToolAccommodationDeleteRequestCard({
 	const deleteAccommodationMutation = useMutation(
 		orpc.accommodationRoutes.deleteAccommodation.mutationOptions({
 			onSuccess: async () => {
-				toast.success(m["concierge.tools.accommodation_delete.toast_success"]());
+				toast.success(
+					m["concierge.tools.accommodation_delete.toast_success"](),
+				);
 				await queryClient.invalidateQueries({
-					queryKey: orpc.accommodationRoutes.getAccommodationsByTravel.queryKey({
-						input: { travelId },
-					}),
+					queryKey: orpc.accommodationRoutes.getAccommodationsByTravel.queryKey(
+						{
+							input: { travelId },
+						},
+					),
 				});
 				await queryClient.invalidateQueries({
 					queryKey: orpc.conciergeRoutes.getPendingIssues.queryKey({

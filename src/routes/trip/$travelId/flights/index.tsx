@@ -59,7 +59,7 @@ interface FlightParticipant {
 		id: string;
 		name: string;
 		image?: string | null;
-	}
+	};
 }
 
 interface FlightWithParticipants {
@@ -235,14 +235,14 @@ const getSmartCostDisplay = (flight: FlightWithSlices) => {
 			display: `${currencyLabel} ${costValue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} (${chainTypeLabel})`,
 			hasValue: true,
 			isChainTotal: true,
-		}
+		};
 	}
 
 	return {
 		display: `${currencyLabel} ${costValue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
 		hasValue: true,
 		isChainTotal: false,
-	}
+	};
 };
 
 function FlightWarnings({
@@ -262,7 +262,9 @@ function FlightWarnings({
 				<Alert>
 					<AlertTriangle className="h-4 w-4" />
 					<AlertDescription>
-						{m["flights.warnings.no_participants"]({ count: flightsWithoutParticipants.toString() })}
+						{m["flights.warnings.no_participants"]({
+							count: flightsWithoutParticipants.toString(),
+						})}
 					</AlertDescription>
 				</Alert>
 			)}
@@ -270,12 +272,14 @@ function FlightWarnings({
 				<Alert variant="default" className="border-orange-200 bg-orange-50/50">
 					<Info className="h-4 w-4 text-orange-600" />
 					<AlertDescription className="text-orange-800">
-						{m["flights.warnings.no_cost"]({ count: flightsWithoutCost.toString() })}
+						{m["flights.warnings.no_cost"]({
+							count: flightsWithoutCost.toString(),
+						})}
 					</AlertDescription>
 				</Alert>
 			)}
 		</div>
-	)
+	);
 }
 
 function FlightPageHeader({
@@ -294,7 +298,9 @@ function FlightPageHeader({
 	return (
 		<div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-6">
 			<div className="space-y-3">
-				<h1 className="text-3xl font-bold tracking-tight">{m["flights.page_title"]()}</h1>
+				<h1 className="text-3xl font-bold tracking-tight">
+					{m["flights.page_title"]()}
+				</h1>
 				<p className="text-lg text-muted-foreground">
 					{m["flights.page_description"]()}
 				</p>
@@ -313,7 +319,9 @@ function FlightPageHeader({
 					contentClassName="gap-0"
 				>
 					<DialogHeader className="border-b px-6 py-4">
-						<DialogTitle className="text-left">{m["flights.add_new_flight"]()}</DialogTitle>
+						<DialogTitle className="text-left">
+							{m["flights.add_new_flight"]()}
+						</DialogTitle>
 					</DialogHeader>
 					<div className="flex flex-1 flex-col overflow-hidden">
 						<AddOrEditFlightForm
@@ -325,7 +333,7 @@ function FlightPageHeader({
 				</ResponsiveModal>
 			) : null}
 		</div>
-	)
+	);
 }
 
 function FlightsPage() {
@@ -337,20 +345,20 @@ function FlightsPage() {
 		useState<FlightWithParticipants | null>(null);
 	const [highlightedFlightId, setHighlightedFlightId] = useState<string | null>(
 		highlightFlightId ?? null,
-	)
+	);
 
 	useEffect(() => {
 		if (typeof window === "undefined") {
-			return
+			return;
 		}
 		if (!highlightFlightId) {
 			setHighlightedFlightId(null);
-			return
+			return;
 		}
 		setHighlightedFlightId(highlightFlightId);
 		const element = document.querySelector<HTMLElement>(
 			`[data-flight-card="${highlightFlightId}"]`,
-		)
+		);
 		if (element) {
 			element.scrollIntoView({ behavior: "smooth", block: "center" });
 		}
@@ -359,13 +367,13 @@ function FlightsPage() {
 		}, 4000);
 		return () => {
 			window.clearTimeout(timeout);
-		}
+		};
 	}, [highlightFlightId]);
 	const queryClient = useQueryClient();
 
 	const { data: travel } = useSuspenseQuery(
 		orpc.travelRoutes.getTravel.queryOptions({ input: { id: travelId } }),
-	)
+	);
 
 	const canWrite = !!travel?.userMembership;
 
@@ -373,7 +381,7 @@ function FlightsPage() {
 		orpc.flightRoutes.getHierarchicalFlightsByTravel.queryOptions({
 			input: { travelId },
 		}),
-	)
+	);
 
 	// Fetch travel members (only if member)
 	const membersQuery = useQuery({
@@ -381,11 +389,11 @@ function FlightsPage() {
 			input: { travelId },
 		}),
 		enabled: canWrite,
-	})
+	});
 
 	const deleteFlightMutation = useMutation(
 		orpc.flightRoutes.deleteFlight.mutationOptions(),
-	)
+	);
 
 	const members =
 		membersQuery.data?.map((member) => ({
@@ -398,14 +406,14 @@ function FlightsPage() {
 	// Calculate stats based on hierarchical flights
 	const allHierarchicalFlights = hierarchicalFlightGroups.flatMap(
 		(group) => group.flights,
-	)
+	);
 	const totalFlights = allHierarchicalFlights.length;
 	const flightsWithoutParticipants = allHierarchicalFlights.filter(
 		(f) => f.participants.length === 0,
-	)
+	);
 	const flightsWithoutCost = allHierarchicalFlights.filter(
 		(f) => getFlightCostValue(f) === null,
-	)
+	);
 
 	const formatDate = (date: Date) => {
 		// Datas de voo são "date-only" (sem horário); formatamos em UTC para
@@ -414,12 +422,12 @@ function FlightsPage() {
 			day: "2-digit",
 			month: "short",
 			timeZone: "UTC",
-		})
-	}
+		});
+	};
 
 	const formatTime = (time: string) => {
 		return time.slice(0, 5); // Remove seconds if present
-	}
+	};
 
 	// Handle edit flight - direct edit since we have the complete flight data
 	const handleEditFlight = (flight: FlightWithSlices) => {
@@ -427,18 +435,14 @@ function FlightsPage() {
 		const editFlight: FlightWithParticipants = {
 			...flight,
 			// The edit form expects the original structure
-		}
+		};
 		setEditingFlight(editFlight);
 		setIsEditFlightOpen(true);
-	}
+	};
 
 	// Handle delete flight
 	const handleDeleteFlight = async (flightId: string) => {
-		if (
-			confirm(
-				m["flights.delete_confirm"]()
-			)
-		) {
+		if (confirm(m["flights.delete_confirm"]())) {
 			try {
 				await deleteFlightMutation.mutateAsync({ id: flightId });
 				// Refresh flights data
@@ -446,22 +450,22 @@ function FlightsPage() {
 					orpc.flightRoutes.getHierarchicalFlightsByTravel.queryOptions({
 						input: { travelId },
 					}),
-				)
+				);
 				queryClient.invalidateQueries(
 					orpc.flightRoutes.getSliceFlightsByTravel.queryOptions({
 						input: { travelId },
 					}),
-				)
+				);
 				queryClient.invalidateQueries(
 					orpc.conciergeRoutes.getPendingIssues.queryOptions({
 						input: { travelId },
 					}),
-				)
+				);
 			} catch (error) {
 				console.error("Error deleting flight:", error);
 			}
 		}
-	}
+	};
 
 	return (
 		<div className="space-y-10">
@@ -504,7 +508,9 @@ function FlightsPage() {
 					contentClassName="gap-0"
 				>
 					<DialogHeader className="border-b px-6 py-4">
-						<DialogTitle className="text-left">{m["flights.edit_flight"]()}</DialogTitle>
+						<DialogTitle className="text-left">
+							{m["flights.edit_flight"]()}
+						</DialogTitle>
 					</DialogHeader>
 					{editingFlight ? (
 						<AddOrEditFlightForm
@@ -513,14 +519,14 @@ function FlightsPage() {
 							members={members}
 							onClose={() => {
 								setIsEditFlightOpen(false);
-								setEditingFlight(null)
+								setEditingFlight(null);
 							}}
 						/>
 					) : null}
 				</ResponsiveModal>
 			) : null}
 		</div>
-	)
+	);
 }
 
 function FlightsPageSkeleton() {
@@ -580,7 +586,7 @@ function FlightsPageSkeleton() {
 				))}
 			</div>
 		</div>
-	)
+	);
 }
 
 function EmptyFlightState({
@@ -625,7 +631,7 @@ function EmptyFlightState({
 				</div>
 			</CardContent>
 		</Card>
-	)
+	);
 }
 
 function HierarchicalFlightGroupHeader({
@@ -636,11 +642,11 @@ function HierarchicalFlightGroupHeader({
 	const totalPassengers = group.flights.reduce(
 		(total, flight) => total + flight.participants.length,
 		0,
-	)
+	);
 	const totalSlices = group.flights.reduce(
 		(total, flight) => total + flight.slices.length,
 		0,
-	)
+	);
 
 	return (
 		<div className="relative">
@@ -661,13 +667,33 @@ function HierarchicalFlightGroupHeader({
 							{m["flights.departing_from"]({ airport: group.originAirport })}
 						</h2>
 						<p className="text-sm text-muted-foreground font-medium">
-							{group.flights.length === 1 ? m["flights.flights_count"]({ count: "1" }) : m["flights.flights_count_plural"]({ count: group.flights.length.toString() })} • {totalSlices === 1 ? m["flights.slices_count"]({ count: "1" }) : m["flights.slices_count_plural"]({ count: totalSlices.toString() })} • {totalPassengers === 1 ? m["flights.passengers_count"]({ count: "1" }) : m["flights.passengers_count_plural"]({ count: totalPassengers.toString() })}
+							{group.flights.length === 1
+								? m["flights.flights_count"]({ count: "1" })
+								: m["flights.flights_count_plural"]({
+										count: group.flights.length.toString(),
+									})}{" "}
+							•{" "}
+							{totalSlices === 1
+								? m["flights.slices_count"]({ count: "1" })
+								: m["flights.slices_count_plural"]({
+										count: totalSlices.toString(),
+									})}{" "}
+							•{" "}
+							{totalPassengers === 1
+								? m["flights.passengers_count"]({ count: "1" })
+								: m["flights.passengers_count_plural"]({
+										count: totalPassengers.toString(),
+									})}
 						</p>
 					</div>
 					<div className="flex items-center gap-2">
 						<div className="px-3 py-1 rounded-full bg-background/80 border border-border/50">
 							<span className="text-xs font-semibold text-primary">
-								{group.flights.length === 1 ? m["flights.flights_count"]({ count: "1" }) : m["flights.flights_count_plural"]({ count: group.flights.length.toString() })}
+								{group.flights.length === 1
+									? m["flights.flights_count"]({ count: "1" })
+									: m["flights.flights_count_plural"]({
+											count: group.flights.length.toString(),
+										})}
 							</span>
 						</div>
 						{isOpen ? (
@@ -679,7 +705,7 @@ function HierarchicalFlightGroupHeader({
 				</button>
 			</CollapsibleTrigger>
 		</div>
-	)
+	);
 }
 
 // Legacy component
@@ -716,21 +742,21 @@ function HierarchicalFlightsList({
 					// Keep existing state if it exists, otherwise default to open
 					acc[group.originAirport] =
 						prevOpenGroups[group.originAirport] ?? true;
-					return acc
+					return acc;
 				},
 				{} as Record<string, boolean>,
-			)
+			);
 
 			return initialState;
-		})
+		});
 	}, [hierarchicalFlightGroups]);
 
 	const toggleGroup = (originAirport: string) => {
 		setOpenGroups((prev) => ({
 			...prev,
 			[originAirport]: !prev[originAirport],
-		}))
-	}
+		}));
+	};
 
 	if (totalFlights === 0) {
 		return <EmptyFlightState onAddFlight={onAddFlight} canWrite={canWrite} />;
@@ -771,7 +797,7 @@ function HierarchicalFlightsList({
 				</Collapsible>
 			))}
 		</div>
-	)
+	);
 }
 
 function FlightContainer({
@@ -974,7 +1000,11 @@ function FlightContainer({
 									)}
 								</div>
 								<span className="text-sm text-muted-foreground">
-									{flight.participants.length === 1 ? m["flights.person_count"]({ count: "1" }) : m["flights.person_count_plural"]({ count: flight.participants.length.toString() })}
+									{flight.participants.length === 1
+										? m["flights.person_count"]({ count: "1" })
+										: m["flights.person_count_plural"]({
+												count: flight.participants.length.toString(),
+											})}
 								</span>
 							</div>
 						) : (
@@ -995,7 +1025,7 @@ function FlightContainer({
 				</div>
 			</CardContent>
 		</Card>
-	)
+	);
 }
 
 function SingleSliceFlightView({
@@ -1067,7 +1097,11 @@ function SingleSliceFlightView({
 			{slice.segments.length > 1 && (
 				<div className="mt-4 p-3 bg-muted/20 rounded-lg">
 					<div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
-						{slice.segments.length - 1 === 1 ? m["flights.connections_count"]({ count: "1" }) : m["flights.connections_count_plural"]({ count: (slice.segments.length - 1).toString() })}
+						{slice.segments.length - 1 === 1
+							? m["flights.connections_count"]({ count: "1" })
+							: m["flights.connections_count_plural"]({
+									count: (slice.segments.length - 1).toString(),
+								})}
 					</div>
 					<div className="space-y-2">
 						{slice.segments.map((segment, index) => (
@@ -1093,7 +1127,7 @@ function SingleSliceFlightView({
 				</div>
 			)}
 		</div>
-	)
+	);
 }
 
 function MultiSliceFlightView({
@@ -1120,7 +1154,7 @@ function MultiSliceFlightView({
 				))}
 			</div>
 		</div>
-	)
+	);
 }
 
 function SliceCard({
@@ -1186,7 +1220,11 @@ function SliceCard({
 							)}
 							{hasConnections && (
 								<span className="text-xs text-amber-600 mt-1">
-									{slice.segments.length - 1 === 1 ? m["flights.connections_count"]({ count: "1" }) : m["flights.connections_count_plural"]({ count: (slice.segments.length - 1).toString() })}
+									{slice.segments.length - 1 === 1
+										? m["flights.connections_count"]({ count: "1" })
+										: m["flights.connections_count_plural"]({
+												count: (slice.segments.length - 1).toString(),
+											})}
 								</span>
 							)}
 						</div>
@@ -1256,5 +1294,5 @@ function SliceCard({
 				)}
 			</div>
 		</div>
-	)
+	);
 }

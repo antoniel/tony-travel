@@ -68,7 +68,9 @@ export function EventCreateModal({
 			contentClassName="gap-0"
 		>
 			<DialogHeader className="border-b px-6 py-4">
-				<DialogTitle className="text-left">{m["event.create_new"]()}</DialogTitle>
+				<DialogTitle className="text-left">
+					{m["event.create_new"]()}
+				</DialogTitle>
 			</DialogHeader>
 			<div className="flex flex-1 flex-col overflow-hidden">
 				<div className="flex-1 space-y-6 overflow-y-auto px-6 py-4">
@@ -101,9 +103,15 @@ export function EventCreateModal({
 										<SelectValue placeholder={m["event.select_type"]()} />
 									</SelectTrigger>
 									<SelectContent>
-										<SelectItem value="travel">{m["event.type_transport"]()}</SelectItem>
-										<SelectItem value="food">{m["event.type_food"]()}</SelectItem>
-										<SelectItem value="activity">{m["event.type_activity"]()}</SelectItem>
+										<SelectItem value="travel">
+											{m["event.type_transport"]()}
+										</SelectItem>
+										<SelectItem value="food">
+											{m["event.type_food"]()}
+										</SelectItem>
+										<SelectItem value="activity">
+											{m["event.type_activity"]()}
+										</SelectItem>
 									</SelectContent>
 								</Select>
 							</div>
@@ -149,7 +157,9 @@ export function EventCreateModal({
 						</div>
 
 						<div className="space-y-2">
-							<Label htmlFor="description">{m["event.description_optional"]()}</Label>
+							<Label htmlFor="description">
+								{m["event.description_optional"]()}
+							</Label>
 							<Textarea
 								id="description"
 								value={newEvent.description}
@@ -183,7 +193,9 @@ export function EventCreateModal({
 
 					{/* Date & Time */}
 					<div className="space-y-4">
-						<h3 className="text-sm font-medium">{m["event.date_and_time"]()}</h3>
+						<h3 className="text-sm font-medium">
+							{m["event.date_and_time"]()}
+						</h3>
 						<div className="space-y-4">
 							<Calendar
 								mode="single"
