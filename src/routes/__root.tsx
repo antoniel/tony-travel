@@ -21,6 +21,10 @@ import {
 } from "@/lib/i18n/language-utils";
 import type { QueryClient } from "@tanstack/react-query";
 import { Meta } from "@tanstack/react-start";
+import { useEffect } from "react";
+import { usePostHog } from "posthog-js/react";
+
+import { useUser } from "@/hooks/useUser";
 
 interface MyRouterContext {
 	queryClient: QueryClient;
@@ -54,6 +58,36 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 function RootComponent() {
 	const routerState = useRouterState();
 	const isAuthRoute = routerState.location.pathname.startsWith("/auth");
+	const { user, isAuthenticated, isLoading } = useUser();
+	const userId = user?.id;
+	const userEmail = user?.email;
+	const userName = user?.name;
+	const posthog = usePostHog();
+
+	useEffect(() => {
+		if (!posthog || isLoading) {
+			return;
+		}
+
+		if (isAuthenticated && userId) {
+			const currentDistinctId = posthog.get_distinct_id();
+			const currentEmail = posthog.get_property("email") as string | undefined;
+			const currentName = posthog.get_property("name") as string | undefined;
+			if (
+				currentDistinctId !== userId ||
+				currentEmail !== userEmail ||
+				currentName !== userName
+			) {
+				posthog.identify(userId, {
+					email: userEmail,
+					name: userName,
+				});
+			}
+			return;
+		}
+
+		posthog.reset();
+	}, [isAuthenticated, isLoading, posthog, userEmail, userId, userName]);
 
 	// Detect language from URL
 	const urlLang = getLanguageFromPath(routerState.location.pathname);
