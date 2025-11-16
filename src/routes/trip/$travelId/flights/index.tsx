@@ -18,6 +18,7 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { orpc } from "@/orpc/client";
 import {
 	useMutation,
@@ -35,9 +36,11 @@ import {
 	DollarSign,
 	Edit2,
 	Info,
+	MapPin,
 	Plane,
 	Plus,
 	Trash2,
+	User,
 	Users,
 } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
@@ -149,6 +152,19 @@ interface HierarchicalFlightGroup {
 	flights: FlightWithSlices[];
 }
 
+// Person-based grouping
+interface PersonFlightGroup {
+	userId: string;
+	userName: string;
+	userImage: string | null;
+	flights: FlightWithSlices[];
+	totalCost: number | null;
+	currencies: Set<string>;
+	earliestFlight: Date;
+}
+
+type ViewMode = "by-city" | "by-person";
+
 // Utility functions for hierarchical flights
 const getFlightCostValue = (flight: FlightWithSlices) =>
 	flight.totalAmount ?? null;
@@ -245,6 +261,66 @@ const getSmartCostDisplay = (flight: FlightWithSlices) => {
 	};
 };
 
+// Group flights by person
+const groupFlightsByPerson = (
+	hierarchicalFlightGroups: HierarchicalFlightGroup[],
+): PersonFlightGroup[] => {
+	const allFlights = hierarchicalFlightGroups.flatMap((group) => group.flights);
+
+	// Map to track unique persons and their flights
+	const personMap = new Map<string, PersonFlightGroup>();
+
+	for (const flight of allFlights) {
+		for (const participant of flight.participants) {
+			const userId = participant.user.id;
+
+			if (!personMap.has(userId)) {
+				personMap.set(userId, {
+					userId,
+					userName: participant.user.name,
+					userImage: participant.user.image || null,
+					flights: [],
+					totalCost: null,
+					currencies: new Set(),
+					earliestFlight: flight.departureDate,
+				});
+			}
+
+			const personGroup = personMap.get(userId)!;
+			personGroup.flights.push(flight);
+
+			// Update earliest flight
+			if (flight.departureDate < personGroup.earliestFlight) {
+				personGroup.earliestFlight = flight.departureDate;
+			}
+
+			// Update cost and currencies
+			if (flight.totalAmount !== null) {
+				const currency = flight.currency || "BRL";
+				personGroup.currencies.add(currency);
+
+				if (personGroup.totalCost === null) {
+					personGroup.totalCost = 0;
+				}
+				personGroup.totalCost += flight.totalAmount;
+			}
+		}
+	}
+
+	// Convert map to array and sort by earliest flight (most recent first)
+	const personGroups = Array.from(personMap.values());
+	personGroups.sort((a, b) => b.earliestFlight.getTime() - a.earliestFlight.getTime());
+
+	// Sort flights within each person group by date
+	for (const personGroup of personGroups) {
+		personGroup.flights.sort(
+			(a, b) => a.departureDate.getTime() - b.departureDate.getTime(),
+		);
+	}
+
+	return personGroups;
+};
+
 function FlightWarnings({
 	flightsWithoutParticipants,
 	flightsWithoutCost,
@@ -288,50 +364,70 @@ function FlightPageHeader({
 	travelId,
 	members,
 	canWrite,
+	viewMode,
+	onViewModeChange,
 }: {
 	isAddFlightOpen: boolean;
 	setIsAddFlightOpen: (open: boolean) => void;
 	travelId: string;
 	members: Member[];
 	canWrite: boolean;
+	viewMode: ViewMode;
+	onViewModeChange: (mode: ViewMode) => void;
 }) {
 	return (
-		<div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-6">
-			<div className="space-y-3">
-				<h1 className="text-3xl font-bold tracking-tight">
-					{m["flights.page_title"]()}
-				</h1>
-				<p className="text-lg text-muted-foreground">
-					{m["flights.page_description"]()}
-				</p>
+		<div className="space-y-6">
+			<div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-6">
+				<div className="space-y-3">
+					<h1 className="text-3xl font-bold tracking-tight">
+						{m["flights.page_title"]()}
+					</h1>
+					<p className="text-lg text-muted-foreground">
+						{m["flights.page_description"]()}
+					</p>
+				</div>
+				{canWrite ? (
+					<ResponsiveModal
+						open={isAddFlightOpen}
+						onOpenChange={setIsAddFlightOpen}
+						trigger={
+							<Button className="flex items-center gap-2">
+								<Plus className="w-4 h-4" />
+								{m["flights.add_flight"]()}
+							</Button>
+						}
+						desktopClassName="sm:max-w-2xl"
+						contentClassName="gap-0"
+					>
+						<DialogHeader className="border-b px-6 py-4">
+							<DialogTitle className="text-left">
+								{m["flights.add_new_flight"]()}
+							</DialogTitle>
+						</DialogHeader>
+						<div className="flex flex-1 flex-col overflow-hidden">
+							<AddOrEditFlightForm
+								travelId={travelId}
+								members={members}
+								onClose={() => setIsAddFlightOpen(false)}
+							/>
+						</div>
+					</ResponsiveModal>
+				) : null}
 			</div>
-			{canWrite ? (
-				<ResponsiveModal
-					open={isAddFlightOpen}
-					onOpenChange={setIsAddFlightOpen}
-					trigger={
-						<Button className="flex items-center gap-2">
-							<Plus className="w-4 h-4" />
-							{m["flights.add_flight"]()}
-						</Button>
-					}
-					desktopClassName="sm:max-w-2xl"
-					contentClassName="gap-0"
-				>
-					<DialogHeader className="border-b px-6 py-4">
-						<DialogTitle className="text-left">
-							{m["flights.add_new_flight"]()}
-						</DialogTitle>
-					</DialogHeader>
-					<div className="flex flex-1 flex-col overflow-hidden">
-						<AddOrEditFlightForm
-							travelId={travelId}
-							members={members}
-							onClose={() => setIsAddFlightOpen(false)}
-						/>
-					</div>
-				</ResponsiveModal>
-			) : null}
+
+			{/* View Mode Toggle */}
+			<Tabs value={viewMode} onValueChange={(value) => onViewModeChange(value as ViewMode)}>
+				<TabsList className="grid w-full max-w-md grid-cols-2">
+					<TabsTrigger value="by-city" className="flex items-center gap-2">
+						<MapPin className="w-4 h-4" />
+						{m["flights.view_by_city"]()}
+					</TabsTrigger>
+					<TabsTrigger value="by-person" className="flex items-center gap-2">
+						<User className="w-4 h-4" />
+						{m["flights.view_by_person"]()}
+					</TabsTrigger>
+				</TabsList>
+			</Tabs>
 		</div>
 	);
 }
@@ -346,6 +442,7 @@ function FlightsPage() {
 	const [highlightedFlightId, setHighlightedFlightId] = useState<string | null>(
 		highlightFlightId ?? null,
 	);
+	const [viewMode, setViewMode] = useState<ViewMode>("by-city");
 
 	useEffect(() => {
 		if (typeof window === "undefined") {
@@ -467,6 +564,12 @@ function FlightsPage() {
 		}
 	};
 
+	// Group flights by person for by-person view
+	const personFlightGroups = groupFlightsByPerson(hierarchicalFlightGroups);
+	const flightsWithoutParticipantsForPersonView = allHierarchicalFlights.filter(
+		(f) => f.participants.length === 0,
+	);
+
 	return (
 		<div className="space-y-10">
 			<FlightPageHeader
@@ -475,6 +578,8 @@ function FlightsPage() {
 				travelId={travelId}
 				members={members}
 				canWrite={canWrite}
+				viewMode={viewMode}
+				onViewModeChange={setViewMode}
 			/>
 
 			<FlightWarnings
@@ -482,17 +587,32 @@ function FlightsPage() {
 				flightsWithoutCost={flightsWithoutCost.length}
 			/>
 
-			<HierarchicalFlightsList
-				totalFlights={totalFlights}
-				hierarchicalFlightGroups={hierarchicalFlightGroups}
-				formatDate={formatDate}
-				formatTime={formatTime}
-				onAddFlight={() => setIsAddFlightOpen(true)}
-				onEditFlight={handleEditFlight}
-				onDeleteFlight={handleDeleteFlight}
-				canWrite={canWrite}
-				highlightedFlightId={highlightedFlightId}
-			/>
+			{viewMode === "by-city" ? (
+				<HierarchicalFlightsList
+					totalFlights={totalFlights}
+					hierarchicalFlightGroups={hierarchicalFlightGroups}
+					formatDate={formatDate}
+					formatTime={formatTime}
+					onAddFlight={() => setIsAddFlightOpen(true)}
+					onEditFlight={handleEditFlight}
+					onDeleteFlight={handleDeleteFlight}
+					canWrite={canWrite}
+					highlightedFlightId={highlightedFlightId}
+				/>
+			) : (
+				<FlightsGroupedByPerson
+					totalFlights={totalFlights}
+					personFlightGroups={personFlightGroups}
+					flightsWithoutParticipants={flightsWithoutParticipantsForPersonView}
+					formatDate={formatDate}
+					formatTime={formatTime}
+					onAddFlight={() => setIsAddFlightOpen(true)}
+					onEditFlight={handleEditFlight}
+					onDeleteFlight={handleDeleteFlight}
+					canWrite={canWrite}
+					highlightedFlightId={highlightedFlightId}
+				/>
+			)}
 
 			{/* Edit Flight Dialog (members only) */}
 			{canWrite ? (
@@ -796,6 +916,250 @@ function HierarchicalFlightsList({
 					</div>
 				</Collapsible>
 			))}
+		</div>
+	);
+}
+
+function FlightsGroupedByPerson({
+	totalFlights,
+	personFlightGroups,
+	flightsWithoutParticipants,
+	formatDate,
+	formatTime,
+	onAddFlight,
+	onEditFlight,
+	onDeleteFlight,
+	canWrite,
+	highlightedFlightId,
+}: {
+	totalFlights: number;
+	personFlightGroups: PersonFlightGroup[];
+	flightsWithoutParticipants: FlightWithSlices[];
+	formatDate: (date: Date) => string;
+	formatTime: (time: string) => string;
+	onAddFlight: () => void;
+	onEditFlight: (flight: FlightWithSlices) => void;
+	onDeleteFlight: (flightId: string) => void;
+	canWrite: boolean;
+	highlightedFlightId: string | null;
+}) {
+	// State to track which person groups are open (all closed by default as per spec FR-003)
+	const [openPersons, setOpenPersons] = useState<Record<string, boolean>>({});
+
+	// Initialize openPersons when personFlightGroups change (all closed by default)
+	useEffect(() => {
+		setOpenPersons((prevOpenPersons) => {
+			const initialState = personFlightGroups.reduce(
+				(acc, group) => {
+					// Keep existing state if it exists, otherwise default to closed
+					acc[group.userId] = prevOpenPersons[group.userId] ?? false;
+					return acc;
+				},
+				{} as Record<string, boolean>,
+			);
+
+			return initialState;
+		});
+	}, [personFlightGroups]);
+
+	const togglePerson = (userId: string) => {
+		setOpenPersons((prev) => ({
+			...prev,
+			[userId]: !prev[userId],
+		}));
+	};
+
+	if (totalFlights === 0) {
+		return <EmptyFlightState onAddFlight={onAddFlight} canWrite={canWrite} />;
+	}
+
+	return (
+		<div className="space-y-8">
+			{/* Person groups */}
+			{personFlightGroups.length > 0 && (
+				<div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+					{personFlightGroups.map((personGroup) => (
+						<Collapsible
+							key={personGroup.userId}
+							open={openPersons[personGroup.userId]}
+							onOpenChange={(open) =>
+								setOpenPersons((prev) => ({ ...prev, [personGroup.userId]: open }))
+							}
+						>
+							<div className="space-y-4">
+								<PersonFlightGroupHeader
+									personGroup={personGroup}
+									isOpen={openPersons[personGroup.userId]}
+									onToggle={() => togglePerson(personGroup.userId)}
+								/>
+
+								<CollapsibleContent className="space-y-4">
+									{personGroup.flights.map((flight) => (
+										<FlightContainer
+											key={flight.id}
+											flight={flight}
+											formatDate={formatDate}
+											formatTime={formatTime}
+											onEdit={onEditFlight}
+											onDelete={onDeleteFlight}
+											canWrite={canWrite}
+											highlightedFlightId={highlightedFlightId}
+										/>
+									))}
+								</CollapsibleContent>
+							</div>
+						</Collapsible>
+					))}
+				</div>
+			)}
+
+			{/* Flights without participants section (FR-007) */}
+			{flightsWithoutParticipants.length > 0 && (
+				<div className="space-y-4">
+					<div className="flex items-center gap-3 p-4 rounded-lg bg-orange-50/50 border border-orange-200">
+						<div className="p-2 rounded-lg bg-orange-100">
+							<AlertTriangle className="w-5 h-5 text-orange-600" />
+						</div>
+						<div className="flex-1">
+							<h3 className="text-lg font-bold text-orange-900">
+								{m["flights.flights_without_participants"]()}
+							</h3>
+							<p className="text-sm text-orange-700">
+								{flightsWithoutParticipants.length === 1
+									? m["flights.flights_count"]({
+											count: flightsWithoutParticipants.length.toString(),
+										})
+									: m["flights.flights_count_plural"]({
+											count: flightsWithoutParticipants.length.toString(),
+										})}
+							</p>
+						</div>
+					</div>
+
+					<div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+						{flightsWithoutParticipants.map((flight) => (
+							<FlightContainer
+								key={flight.id}
+								flight={flight}
+								formatDate={formatDate}
+								formatTime={formatTime}
+								onEdit={onEditFlight}
+								onDelete={onDeleteFlight}
+								canWrite={canWrite}
+								highlightedFlightId={highlightedFlightId}
+							/>
+						))}
+					</div>
+				</div>
+			)}
+		</div>
+	);
+}
+
+function PersonFlightGroupHeader({
+	personGroup,
+	isOpen,
+	onToggle,
+}: {
+	personGroup: PersonFlightGroup;
+	isOpen: boolean;
+	onToggle: () => void;
+}) {
+	// Generate routes summary (FR-003)
+	const routesSummary = personGroup.flights
+		.map((flight) => getFlightRoute(flight))
+		.slice(0, 3) // Show first 3 routes
+		.join(", ");
+	const hasMoreRoutes = personGroup.flights.length > 3;
+
+	// Calculate total cost display (FR-003, FR-013)
+	const totalCostDisplay = () => {
+		if (personGroup.totalCost === null || personGroup.totalCost === 0) {
+			return m["flights.no_cost_info"]();
+		}
+
+		// For simplicity, assuming all costs are in the same currency or we show the first one
+		const currency = personGroup.currencies.size > 0 
+			? Array.from(personGroup.currencies)[0]
+			: "BRL";
+		const currencyLabel = currency === "BRL" ? "R$" : currency;
+
+		return `${currencyLabel} ${personGroup.totalCost.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+	};
+
+	const flightCount = personGroup.flights.length;
+
+	return (
+		<div className="relative">
+			<CollapsibleTrigger asChild>
+				<button
+					type="button"
+					onClick={onToggle}
+					className="w-full flex items-start gap-4 p-5 rounded-2xl bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 border border-border/50 hover:border-border transition-colors cursor-pointer"
+				>
+					{/* Avatar */}
+					<Avatar className="h-12 w-12 border-2 border-background ring-2 ring-primary/20">
+						<AvatarImage src={personGroup.userImage || undefined} />
+						<AvatarFallback className="text-sm bg-gradient-to-br from-primary/10 to-accent/10 text-primary font-semibold">
+							{personGroup.userName
+								.split(" ")
+								.map((n) => n[0])
+								.join("")}
+						</AvatarFallback>
+					</Avatar>
+
+					<div className="flex-1 text-left min-w-0">
+						{/* Name */}
+						<h3 className="text-lg font-bold text-foreground tracking-tight">
+							{personGroup.userName}
+						</h3>
+
+						{/* Flight count and routes summary (FR-003) */}
+						<div className="flex flex-wrap items-center gap-2 mt-1 text-sm text-muted-foreground">
+							<span className="font-medium">
+								{flightCount === 1
+									? m["flights.flights_count"]({ count: "1" })
+									: m["flights.flights_count_plural"]({
+											count: flightCount.toString(),
+										})}
+							</span>
+							<span>•</span>
+							<span className="truncate">
+								{routesSummary}
+								{hasMoreRoutes ? "..." : ""}
+							</span>
+						</div>
+
+						{/* Total cost (FR-003, FR-013) - prominently displayed */}
+						<div className="mt-2 flex items-center gap-2">
+							<span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+								{m["flights.total_cost"]()}:
+							</span>
+							<span className="text-base font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+								{totalCostDisplay()}
+							</span>
+						</div>
+					</div>
+
+					{/* Expand/collapse indicator */}
+					<div className="flex flex-col items-center gap-2">
+						<div className="px-3 py-1 rounded-full bg-background/80 border border-border/50">
+							<span className="text-xs font-semibold text-primary">
+								{flightCount === 1
+									? m["flights.flights_count"]({ count: "1" })
+									: m["flights.flights_count_plural"]({
+											count: flightCount.toString(),
+										})}
+							</span>
+						</div>
+						{isOpen ? (
+							<ChevronUp className="w-5 h-5 text-muted-foreground" />
+						) : (
+							<ChevronDown className="w-5 h-5 text-muted-foreground" />
+						)}
+					</div>
+				</button>
+			</CollapsibleTrigger>
 		</div>
 	);
 }

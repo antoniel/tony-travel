@@ -520,6 +520,12 @@
 		"connections_count_plural": "{count} conexões",
 		"segment_details": "Segmentos do Trecho",
 		"slice_of": "de {total}",
+		"view_by_city": "Por Cidade",
+		"view_by_person": "Por Pessoa",
+		"grouped_by_person": "Voos por Pessoa",
+		"flights_without_participants": "Voos sem Participantes",
+		"total_cost": "Custo Total",
+		"no_cost_info": "Sem informação de custo",
 		"warnings": {
 			"no_participants": "{count} voo(s) sem participantes. Adicione pessoas aos voos para melhor organização.",
 			"no_cost": "{count} voo(s) sem preço informado."

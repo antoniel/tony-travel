@@ -520,6 +520,12 @@
 		"connections_count_plural": "{count} connections",
 		"segment_details": "Slice Segments",
 		"slice_of": "of {total}",
+		"view_by_city": "By City",
+		"view_by_person": "By Person",
+		"grouped_by_person": "Flights by Person",
+		"flights_without_participants": "Flights without Participants",
+		"total_cost": "Total Cost",
+		"no_cost_info": "No cost information",
 		"warnings": {
 			"no_participants": "{count} flight(s) without participants. Add people to flights for better organization.",
 			"no_cost": "{count} flight(s) without price information."
